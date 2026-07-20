@@ -749,6 +749,7 @@ table input:focus{border-color:var(--blue)}
           <th class="r" style="width:85px" id="op-th-saco">Kg / saco</th>
           <th class="r" style="width:105px">Total producao</th>
           <th style="width:140px;text-align:center">N lote MP</th>
+          <th style="width:60px;text-align:center">Acoes</th>
         </tr></thead>
         <tbody id="op-tbody"></tbody>
         <tfoot>
@@ -760,9 +761,16 @@ table input:focus{border-color:var(--blue)}
             <td class="r" id="op-tot-sac">—</td>
             <td class="r" id="op-tot-prod" style="color:var(--blue);font-weight:700">—</td>
             <td></td>
+            <td></td>
           </tr>
         </tfoot>
       </table>
+    </div>
+    <div style="padding:12px 16px;border-top:1px solid var(--border);background:var(--s1);display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--t3)">+ Adicionar materia-prima:</span>
+      <select id="op-add-mp-sel" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;min-width:260px"></select>
+      <input type="number" id="op-add-mp-qtd" placeholder="Qtd (kg/batida)" step="0.01" min="0" style="width:150px;padding:6px 8px;border:1px solid var(--border);border-radius:6px">
+      <button class="btn btn-primary" onclick="adicionarMPNaOP('op-add-mp-sel','op-add-mp-qtd')">+ Adicionar</button>
     </div>
   </div>
   <div class="card" style="margin-top:14px">
@@ -836,6 +844,7 @@ table input:focus{border-color:var(--blue)}
           <th class="r" style="width:85px" id="opi-th-saco">Kg / saco</th>
           <th class="r" style="width:105px">Total producao</th>
           <th style="width:140px;text-align:center">N lote MP</th>
+          <th style="width:60px;text-align:center">Acoes</th>
         </tr></thead>
         <tbody id="opi-tbody"></tbody>
         <tfoot>
@@ -847,9 +856,16 @@ table input:focus{border-color:var(--blue)}
             <td class="r" id="opi-tot-sac">—</td>
             <td class="r" id="opi-tot-prod" style="color:var(--blue);font-weight:700">—</td>
             <td></td>
+            <td></td>
           </tr>
         </tfoot>
       </table>
+    </div>
+    <div style="padding:12px 16px;border-top:1px solid var(--border);background:var(--s1);display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--t3)">+ Adicionar materia-prima:</span>
+      <select id="opi-add-mp-sel" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;min-width:260px"></select>
+      <input type="number" id="opi-add-mp-qtd" placeholder="Qtd (kg/batida)" step="0.01" min="0" style="width:150px;padding:6px 8px;border:1px solid var(--border);border-radius:6px">
+      <button class="btn btn-primary" onclick="adicionarMPNaOP('opi-add-mp-sel','opi-add-mp-qtd')">+ Adicionar</button>
     </div>
   </div>
   <div class="card" style="margin-top:14px">
@@ -1268,6 +1284,7 @@ function init(){
   });
   MPitens.sort((a,b)=>a.cod-b.cod);
   popularSelectsEmbalagem();
+  popularSelectsAdicionarMP();
   renderMP(); renderIngs();
 }
 function popularSelectsEmbalagem(){
@@ -1275,6 +1292,14 @@ function popularSelectsEmbalagem(){
   var optsHtml=embs.map(function(m){return '<option value="'+MPcusto[m.cod]+'" data-cod="'+m.cod+'">'+m.cod+' — '+m.d+'</option>';}).join('')
     +'<option value="custom">Outro valor...</option>';
   ['emb-sel','op-emb-sel','opi-emb-sel'].forEach(function(id){
+    var sel=$(id);
+    if(sel)sel.innerHTML=optsHtml;
+  });
+}
+function popularSelectsAdicionarMP(){
+  var mps=MPitens.filter(function(m){return m.t==='mp';}).sort(function(a,b){return a.d.localeCompare(b.d);});
+  var optsHtml='<option value="">selecione a materia-prima...</option>'+mps.map(function(m){return '<option value="'+m.cod+'">'+m.cod+' — '+m.d+'</option>';}).join('');
+  ['op-add-mp-sel','opi-add-mp-sel'].forEach(function(id){
     var sel=$(id);
     if(sel)sel.innerHTML=optsHtml;
   });
@@ -1549,8 +1574,11 @@ function calcPV(modo='margem'){
 
 /* ─ IMPRESSÃO DA FICHA ─ */
 
-/* Edição de quantidades direto na OP */
+/* Edição de ingredientes direto na OP: quantidade, troca de MP, remoção e adição */
 let opEdits={};
+let opTrocas={};
+let opRemovidos=new Set();
+let opNovos=[];
 function marcarEdicaoOP(cod,val){
   var novo=parseFloat(val);
   if(isNaN(novo)||novo<0)novo=0;
@@ -1558,9 +1586,57 @@ function marcarEdicaoOP(cod,val){
   if(ing&&Math.abs(novo-ing.qtd)<1e-9){delete opEdits[cod];}
   else{opEdits[cod]=novo;}
   atualizarBarraEdicoesOP();
+  renderOP();renderOPIvinhema();
+}
+function marcarTrocaMP(codOriginal,novoCodVal){
+  var novoCod=parseInt(novoCodVal);
+  if(!novoCod)return;
+  if(novoCod===codOriginal){delete opTrocas[codOriginal];}
+  else{
+    if(ings.some(function(i){return i.cod==novoCod&&i.cod!=codOriginal;})){
+      alert('Este item ja existe na formula. Ajuste a quantidade dele diretamente e remova esta linha, em vez de trocar.');
+      renderOP();renderOPIvinhema();
+      return;
+    }
+    opTrocas[codOriginal]=novoCod;
+  }
+  atualizarBarraEdicoesOP();
+  renderOP();renderOPIvinhema();
+}
+function marcarRemocaoMP(cod){
+  opRemovidos.add(cod);
+  atualizarBarraEdicoesOP();
+  renderOP();renderOPIvinhema();
+}
+function desfazerRemocaoMP(cod){
+  opRemovidos.delete(cod);
+  atualizarBarraEdicoesOP();
+  renderOP();renderOPIvinhema();
+}
+function adicionarMPNaOP(selectId,qtdId){
+  var sel=$(selectId),qtdInp=$(qtdId);
+  var cod=parseInt(sel.value);
+  var qtd=parseFloat(qtdInp.value);
+  if(!cod){alert('Escolha uma materia-prima.');return;}
+  if(isNaN(qtd)||qtd<=0){alert('Informe uma quantidade maior que zero.');return;}
+  if(ings.some(function(i){return i.cod===cod;})||opNovos.some(function(i){return i.cod===cod;})){
+    alert('Esta materia-prima ja esta na formula.');return;
+  }
+  opNovos.push({cod:cod,qtd:qtd});
+  sel.value='';qtdInp.value='';
+  atualizarBarraEdicoesOP();
+  renderOP();renderOPIvinhema();
+}
+function removerNovoMP(idx){
+  opNovos.splice(idx,1);
+  atualizarBarraEdicoesOP();
+  renderOP();renderOPIvinhema();
+}
+function totalPendencias(){
+  return Object.keys(opEdits).length+Object.keys(opTrocas).length+opRemovidos.size+opNovos.length;
 }
 function atualizarBarraEdicoesOP(){
-  var n=Object.keys(opEdits).length;
+  var n=totalPendencias();
   var alertEl=$('op-edits-alert'),saveBtn=$('op-save-btn'),discBtn=$('op-discard-btn');
   if(alertEl)alertEl.style.display=n>0?'block':'none';
   if(saveBtn)saveBtn.style.display=n>0?'inline-block':'none';
@@ -1573,27 +1649,55 @@ function atualizarBarraEdicoesOP(){
   var cnt2=$('opi-edits-count');if(cnt2)cnt2.textContent=n;
 }
 function salvarEdicoesOP(){
-  var n=Object.keys(opEdits).length;
+  var n=totalPendencias();
   if(n===0)return;
-  Object.keys(opEdits).forEach(function(cod){
-    var ing=ings.find(function(i){return i.cod==cod;});
-    if(ing)ing.qtd=opEdits[cod];
+  var novaLista=[];
+  ings.forEach(function(ing){
+    if(opRemovidos.has(ing.cod))return;
+    var novoCod=opTrocas[ing.cod]!==undefined?opTrocas[ing.cod]:ing.cod;
+    var novaQtd=opEdits[ing.cod]!==undefined?opEdits[ing.cod]:ing.qtd;
+    novaLista.push({cod:novoCod,qtd:novaQtd,bal:ing.bal||0});
   });
-  opEdits={};
+  opNovos.forEach(function(item){
+    novaLista.push({cod:item.cod,qtd:item.qtd,bal:0});
+  });
+  ings.length=0;
+  novaLista.forEach(function(i){ings.push(i);});
+  opEdits={};opTrocas={};opRemovidos=new Set();opNovos=[];
   atualizarBarraEdicoesOP();
   recalc();
+  renderIngs();
   renderOP();
   renderOPIvinhema();
-  toast(n+' quantidade(s) atualizada(s) na formula carregada.');
+  toast(n+' alteracao(oes) aplicada(s) na formula carregada.');
 }
 function descartarEdicoesOP(){
-  opEdits={};
+  opEdits={};opTrocas={};opRemovidos=new Set();opNovos=[];
   atualizarBarraEdicoesOP();
   renderOP();
   renderOPIvinhema();
 }
 function salvarEdicoesOPIvi(){salvarEdicoesOP();}
 function descartarEdicoesOPIvi(){descartarEdicoesOP();}
+function opMpSelectHtml(codAtual,onchangeExpr){
+  var mps=MPitens.filter(function(m){return m.t==='mp';}).sort(function(a,b){return a.d.localeCompare(b.d);});
+  var opts=mps.map(function(m){return '<option value="'+m.cod+'"'+(m.cod==codAtual?' selected':'')+'>'+m.cod+' — '+m.d+'</option>';}).join('');
+  return '<select style="font-size:15px;font-weight:600;padding:4px 6px;border:1px solid var(--border);border-radius:5px;max-width:260px" onchange="'+onchangeExpr+'">'+opts+'</select>';
+}
+function atualizarNovoMPCod(idx,val){
+  var novoCod=parseInt(val);
+  if(!novoCod)return;
+  if(ings.some(function(i){return i.cod===novoCod;})||opNovos.some(function(i,j){return i.cod===novoCod&&j!==idx;})){
+    alert('Esta materia-prima ja esta na formula.');renderOP();renderOPIvinhema();return;
+  }
+  opNovos[idx].cod=novoCod;
+  renderOP();renderOPIvinhema();
+}
+function atualizarQtdNovo(idx,val){
+  var q=parseFloat(val);
+  opNovos[idx].qtd=isNaN(q)||q<0?0:q;
+  renderOP();renderOPIvinhema();
+}
 function renderOP(){
   const batida=gv('batida')||1000,peso=gv('peso-saco')||25,sacos=batida/peso;
   const bigBag=peso>=1000;
@@ -1610,36 +1714,66 @@ function renderOP(){
   if(opEmbSel&&embSel&&opEmbSel.selectedIndex!==embSel.selectedIndex)opEmbSel.selectedIndex=embSel.selectedIndex;
   set('op-emb-bat',fn(sacos,sacos%1===0?0:1)+' un');
   set('op-emb-tot',fn(sacos*nBat,(sacos*nBat)%1===0?0:1)+' un');
-  const totalKg=ings.reduce((s,i)=>s+i.qtd,0);
   const tbody=$('op-tbody');
   if(!tbody) return;
-  const ingsOrd=[...ings.filter(i=>i.qtd>0)].sort((a,b)=>b.qtd-a.qtd);
+  /* Monta lista de trabalho: ings existentes (com troca/qtd aplicadas em memoria) + itens removidos (mostrados riscados) + itens novos */
+  var itensExistentes=ings.map(function(ing){
+    var removido=opRemovidos.has(ing.cod);
+    var codEfetivo=opTrocas[ing.cod]!==undefined?opTrocas[ing.cod]:ing.cod;
+    var qtdEfetiva=opEdits[ing.cod]!==undefined?opEdits[ing.cod]:ing.qtd;
+    return {codOriginal:ing.cod,cod:codEfetivo,qtd:qtdEfetiva,removido:removido,novo:false};
+  });
+  var itensNovos=opNovos.map(function(item,idx){return {codOriginal:null,cod:item.cod,qtd:item.qtd,removido:false,novo:true,novoIdx:idx};});
+  var todosItens=itensExistentes.concat(itensNovos);
+  const totalKg=todosItens.filter(function(i){return !i.removido;}).reduce(function(s,i){return s+i.qtd;},0);
+  const ingsOrd=todosItens.filter(function(i){return i.removido||i.qtd>0;}).sort(function(a,b){return b.qtd-a.qtd;});
   const grupos={};
-  ingsOrd.forEach(ing=>{const b=ing.bal||balancaDoMP(ing.cod);(grupos[b]=grupos[b]||[]).push(ing);});
+  ingsOrd.forEach(function(item){const b=balancaDoMP(item.cod);(grupos[b]=grupos[b]||[]).push(item);});
   const bNomes={0:'Sem balanca definida',1:'Balanca 1 - Farelados',2:'Balanca 2 - Fosfato, Ureia e Sal',3:'Balanca 3 - Outras MP'};
   const bClr={0:'var(--t3)',1:'#92400e',2:'#1e40af',3:'#065f46'};
   const bBg={0:'var(--s2)',1:'#fef3c7',2:'#dbeafe',3:'#d1fae5'};
   let rows='',acumBal={0:0,1:0,2:0,3:0};
   [1,2,3,0].forEach(function(bk){
     if(!grupos[bk]||grupos[bk].length===0) return;
-    rows+='<tr><td colspan="8" class="op-sep-bal" style="background:'+bBg[bk]+';color:'+bClr[bk]+'">'+bNomes[bk]+'</td></tr>';
-    grupos[bk].forEach(function(ing){
-      acumBal[bk]+=ing.qtd;
-      const mp=MPcusto[ing.cod]!==undefined?{d:MPitens.find(function(m){return m.cod==ing.cod;})||{d:'—'}}:null;
-      const nome=mp?(MPitens.find(function(m){return m.cod==ing.cod;})||{d:'—'}).d:'nao encontrado';
-      const pct=totalKg>0?ing.qtd/totalKg*100:0;
-      const porSaco=bigBag?(batida>0?ing.qtd/batida:0):(sacos>0?ing.qtd/sacos:0);
-      const totProd=ing.qtd*nBat;
+    rows+='<tr><td colspan="9" class="op-sep-bal" style="background:'+bBg[bk]+';color:'+bClr[bk]+'">'+bNomes[bk]+'</td></tr>';
+    grupos[bk].forEach(function(item){
+      const nome=(MPitens.find(function(m){return m.cod==item.cod;})||{d:'nao encontrado'}).d;
+      if(item.removido){
+        rows+='<tr style="opacity:.45;text-decoration:line-through">'
+          +'<td style="font-family:monospace;font-size:13px;color:var(--t3)">'+item.cod+'</td>'
+          +'<td style="font-size:16px">'+nome+'</td>'
+          +'<td class="r">'+fd2(item.qtd)+'</td>'
+          +'<td colspan="4" style="text-align:center;font-size:12px;color:var(--red)">Marcado para remocao</td>'
+          +'<td style="text-align:center;text-decoration:none;opacity:1"><button type="button" class="nf-del-btn" title="Desfazer" onclick="desfazerRemocaoMP('+item.codOriginal+')" style="background:var(--grn-lt);color:var(--green);border-color:var(--grn-bd)">↩</button></td>'
+          +'</tr>';
+        return;
+      }
+      acumBal[bk]+=item.qtd;
+      const pct=totalKg>0?item.qtd/totalKg*100:0;
+      const porSaco=bigBag?(batida>0?item.qtd/batida:0):(sacos>0?item.qtd/sacos:0);
+      const totProd=item.qtd*nBat;
       const acB=acumBal[bk];
-      rows+='<tr>'
-        +'<td style="font-family:monospace;font-size:13px;color:var(--t3)">'+ing.cod+'</td>'
-        +'<td style="font-size:19px;font-weight:700">'+nome+'</td>'
-        +'<td class="r"><input type="number" class="op-qtd-input" value="'+(opEdits[ing.cod]!==undefined?opEdits[ing.cod]:ing.qtd)+'" step="0.01" min="0" onchange="marcarEdicaoOP('+ing.cod+',this.value)"'+(opEdits[ing.cod]!==undefined?' style="border-color:var(--amber);background:var(--amb-lt)"':'')+'></td>'
+      const qtdInputId=item.novo?('novo-'+item.novoIdx):item.codOriginal;
+      const qtdOnchange=item.novo?('atualizarQtdNovo('+item.novoIdx+',this.value)'):('marcarEdicaoOP('+item.codOriginal+',this.value)');
+      const qtdVal=item.qtd;
+      const alterado=!item.novo&&opEdits[item.codOriginal]!==undefined;
+      const trocado=!item.novo&&opTrocas[item.codOriginal]!==undefined;
+      const nomeCell=item.novo
+        ?opMpSelectHtml(item.cod,'atualizarNovoMPCod('+item.novoIdx+',this.value)')
+        :opMpSelectHtml(item.cod,'marcarTrocaMP('+item.codOriginal+',this.value)');
+      const acaoBtn=item.novo
+        ?'<button type="button" class="nf-del-btn" title="Remover" onclick="removerNovoMP('+item.novoIdx+')">×</button>'
+        :'<button type="button" class="nf-del-btn" title="Remover" onclick="marcarRemocaoMP('+item.codOriginal+')">×</button>';
+      rows+='<tr'+(item.novo?' style="background:var(--grn-lt)"':(trocado?' style="background:var(--blu-lt)"':''))+'>'
+        +'<td style="font-family:monospace;font-size:13px;color:var(--t3)">'+item.cod+(item.novo?' <span style="color:var(--green);font-size:10px;font-weight:700">NOVO</span>':'')+(trocado?' <span style="color:var(--blue);font-size:10px;font-weight:700">TROCADO</span>':'')+'</td>'
+        +'<td>'+nomeCell+'</td>'
+        +'<td class="r"><input type="number" class="op-qtd-input" value="'+qtdVal+'" step="0.01" min="0" onchange="'+qtdOnchange+'"'+(alterado?' style="border-color:var(--amber);background:var(--amb-lt)"':'')+'></td>'
         +'<td class="acum">'+fd2(acB)+'</td>'
         +'<td class="r" style="color:var(--t3)">'+fp(pct,2)+'%</td>'
         +'<td class="r">'+f6(porSaco)+'</td>'
         +'<td class="r" style="font-weight:700;color:var(--blue)">'+fd2(totProd)+'</td>'
-        +'<td class="lote-input"><input type="text" class="lote-field" placeholder="N lote" id="lote-'+ing.cod+'"></td>'
+        +'<td class="lote-input"><input type="text" class="lote-field" placeholder="N lote" id="lote-'+item.cod+'"></td>'
+        +'<td style="text-align:center">'+acaoBtn+'</td>'
         +'</tr>';
     });
     var acBTot=acumBal[bk];
@@ -1649,7 +1783,7 @@ function renderOP(){
       +'<td class="r" style="font-weight:700;color:'+bClr[bk]+'">'+fd2(acBTot)+' kg</td>'
       +'<td></td><td></td>'
       +'<td class="r" style="font-weight:700;color:'+bClr[bk]+'">'+fd2(acBTot*nBat)+' kg</td>'
-      +'<td></td></tr>';
+      +'<td></td><td></td></tr>';
   });
   tbody.innerHTML=rows;
   set('op-tot-bat',fd2(totalKg)+' kg');
@@ -1676,10 +1810,18 @@ function renderOPIvinhema(){
   if(opiEmbSel&&embSel&&opiEmbSel.selectedIndex!==embSel.selectedIndex)opiEmbSel.selectedIndex=embSel.selectedIndex;
   set('opi-emb-bat',fn(sacos,sacos%1===0?0:1)+' un');
   set('opi-emb-tot',fn(sacos*nBat,(sacos*nBat)%1===0?0:1)+' un');
-  const totalKg=ings.reduce((s,i)=>s+i.qtd,0);
-  const ingsOrd=[...ings.filter(i=>i.qtd>0)].sort((a,b)=>b.qtd-a.qtd);
+  var itensExistentes2=ings.map(function(ing){
+    var removido=opRemovidos.has(ing.cod);
+    var codEfetivo=opTrocas[ing.cod]!==undefined?opTrocas[ing.cod]:ing.cod;
+    var qtdEfetiva=opEdits[ing.cod]!==undefined?opEdits[ing.cod]:ing.qtd;
+    return {codOriginal:ing.cod,cod:codEfetivo,qtd:qtdEfetiva,removido:removido,novo:false};
+  });
+  var itensNovos2=opNovos.map(function(item,idx){return {codOriginal:null,cod:item.cod,qtd:item.qtd,removido:false,novo:true,novoIdx:idx};});
+  var todosItens2=itensExistentes2.concat(itensNovos2);
+  const totalKg=todosItens2.filter(function(i){return !i.removido;}).reduce(function(s,i){return s+i.qtd;},0);
+  const ingsOrd=todosItens2.filter(function(i){return i.removido||i.qtd>0;}).sort(function(a,b){return b.qtd-a.qtd;});
   const grupos={};
-  ingsOrd.forEach(ing=>{const b=balancaDoMPIvinhema(ing.cod);(grupos[b]=grupos[b]||[]).push(ing);});
+  ingsOrd.forEach(function(item){const b=balancaDoMPIvinhema(item.cod);(grupos[b]=grupos[b]||[]).push(item);});
   /* 133 (Calcário) sempre por ultimo dentro da Balança 1 */
   if(grupos[1]){
     var semCalcario=grupos[1].filter(function(i){return i.cod!=133;});
@@ -1692,23 +1834,43 @@ function renderOPIvinhema(){
   let rows='',acumBal={0:0,1:0,2:0};
   [1,2,0].forEach(function(bk){
     if(!grupos[bk]||grupos[bk].length===0) return;
-    rows+='<tr><td colspan="8" class="op-sep-bal" style="background:'+bBg[bk]+';color:'+bClr[bk]+'">'+bNomes[bk]+'</td></tr>';
-    grupos[bk].forEach(function(ing){
-      acumBal[bk]+=ing.qtd;
-      const nome=(MPitens.find(function(m){return m.cod==ing.cod;})||{d:'nao encontrado'}).d;
-      const pct=totalKg>0?ing.qtd/totalKg*100:0;
-      const porSaco=bigBag?(batida>0?ing.qtd/batida:0):(sacos>0?ing.qtd/sacos:0);
-      const totProd=ing.qtd*nBat;
+    rows+='<tr><td colspan="9" class="op-sep-bal" style="background:'+bBg[bk]+';color:'+bClr[bk]+'">'+bNomes[bk]+'</td></tr>';
+    grupos[bk].forEach(function(item){
+      const nome=(MPitens.find(function(m){return m.cod==item.cod;})||{d:'nao encontrado'}).d;
+      if(item.removido){
+        rows+='<tr style="opacity:.45;text-decoration:line-through">'
+          +'<td style="font-family:monospace;font-size:13px;color:var(--t3)">'+item.cod+'</td>'
+          +'<td style="font-size:16px">'+nome+'</td>'
+          +'<td class="r">'+fd2(item.qtd)+'</td>'
+          +'<td colspan="4" style="text-align:center;font-size:12px;color:var(--red)">Marcado para remocao</td>'
+          +'<td style="text-align:center;text-decoration:none;opacity:1"><button type="button" class="nf-del-btn" title="Desfazer" onclick="desfazerRemocaoMP('+item.codOriginal+')" style="background:var(--grn-lt);color:var(--green);border-color:var(--grn-bd)">↩</button></td>'
+          +'</tr>';
+        return;
+      }
+      acumBal[bk]+=item.qtd;
+      const pct=totalKg>0?item.qtd/totalKg*100:0;
+      const porSaco=bigBag?(batida>0?item.qtd/batida:0):(sacos>0?item.qtd/sacos:0);
+      const totProd=item.qtd*nBat;
       const acB=acumBal[bk];
-      rows+='<tr>'
-        +'<td style="font-family:monospace;font-size:13px;color:var(--t3)">'+ing.cod+'</td>'
-        +'<td style="font-size:19px;font-weight:700">'+nome+'</td>'
-        +'<td class="r"><input type="number" class="op-qtd-input" value="'+(opEdits[ing.cod]!==undefined?opEdits[ing.cod]:ing.qtd)+'" step="0.01" min="0" onchange="marcarEdicaoOP('+ing.cod+',this.value)"'+(opEdits[ing.cod]!==undefined?' style="border-color:var(--amber);background:var(--amb-lt)"':'')+'></td>'
+      const qtdOnchange=item.novo?('atualizarQtdNovo('+item.novoIdx+',this.value)'):('marcarEdicaoOP('+item.codOriginal+',this.value)');
+      const alterado=!item.novo&&opEdits[item.codOriginal]!==undefined;
+      const trocado=!item.novo&&opTrocas[item.codOriginal]!==undefined;
+      const nomeCell=item.novo
+        ?opMpSelectHtml(item.cod,'atualizarNovoMPCod('+item.novoIdx+',this.value)')
+        :opMpSelectHtml(item.cod,'marcarTrocaMP('+item.codOriginal+',this.value)');
+      const acaoBtn=item.novo
+        ?'<button type="button" class="nf-del-btn" title="Remover" onclick="removerNovoMP('+item.novoIdx+')">×</button>'
+        :'<button type="button" class="nf-del-btn" title="Remover" onclick="marcarRemocaoMP('+item.codOriginal+')">×</button>';
+      rows+='<tr'+(item.novo?' style="background:var(--grn-lt)"':(trocado?' style="background:var(--blu-lt)"':''))+'>'
+        +'<td style="font-family:monospace;font-size:13px;color:var(--t3)">'+item.cod+(item.novo?' <span style="color:var(--green);font-size:10px;font-weight:700">NOVO</span>':'')+(trocado?' <span style="color:var(--blue);font-size:10px;font-weight:700">TROCADO</span>':'')+'</td>'
+        +'<td>'+nomeCell+'</td>'
+        +'<td class="r"><input type="number" class="op-qtd-input" value="'+item.qtd+'" step="0.01" min="0" onchange="'+qtdOnchange+'"'+(alterado?' style="border-color:var(--amber);background:var(--amb-lt)"':'')+'></td>'
         +'<td class="acum">'+fd2(acB)+'</td>'
         +'<td class="r" style="color:var(--t3)">'+fp(pct,2)+'%</td>'
         +'<td class="r">'+f6(porSaco)+'</td>'
         +'<td class="r" style="font-weight:700;color:var(--blue)">'+fd2(totProd)+'</td>'
-        +'<td class="lote-input"><input type="text" class="lote-field" placeholder="N lote" id="lote-'+ing.cod+'"></td>'
+        +'<td class="lote-input"><input type="text" class="lote-field" placeholder="N lote" id="lote-'+item.cod+'"></td>'
+        +'<td style="text-align:center">'+acaoBtn+'</td>'
         +'</tr>';
     });
     var acBTot=acumBal[bk];
@@ -1718,7 +1880,7 @@ function renderOPIvinhema(){
       +'<td class="r" style="font-weight:700;color:'+bClr[bk]+'">'+fd2(acBTot)+' kg</td>'
       +'<td></td><td></td>'
       +'<td class="r" style="font-weight:700;color:'+bClr[bk]+'">'+fd2(acBTot*nBat)+' kg</td>'
-      +'<td></td></tr>';
+      +'<td></td><td></td></tr>';
   });
   tbody.innerHTML=rows;
   set('opi-tot-bat',fd2(totalKg)+' kg');
@@ -1827,7 +1989,7 @@ function imprimirOP(){
     +'</head>'
     +'<body>'
     +'<button class="pbtn no-print" onclick="ajustarEImprimir()">Imprimir / PDF</button>'
-    +'<div id="pw">'
+    +'<div id="pw" style="width:700px;max-width:700px">'
     +'<div style="display:flex;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:3px solid #1e293b">'
     +'<div style="display:flex;align-items:center;gap:14px"><img src="'+LOGO_RURAL+'" alt="Rural Nutricao" style="height:58px;width:auto"><div><div style="font-size:20px;font-weight:800;color:#1e293b">Rural Nutricao Animal</div>'
     +'<div style="font-size:11px;color:#6b7280">Ordem de Producao</div></div></div>'
@@ -1993,7 +2155,7 @@ function imprimirOPIvinhema(){
     +'</head>'
     +'<body>'
     +'<button class="pbtn no-print" onclick="ajustarEImprimir()">Imprimir / PDF</button>'
-    +'<div id="pw">'
+    +'<div id="pw" style="width:700px;max-width:700px">'
     +'<div style="display:flex;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:3px solid #1e293b">'
     +'<div style="display:flex;align-items:center;gap:14px"><img src="'+LOGO_RURAL+'" alt="Rural Nutricao" style="height:58px;width:auto"><div><div style="font-size:20px;font-weight:800;color:#1e293b">Rural Nutricao Animal</div>'
     +'<div style="font-size:11px;color:#6b7280">Ordem de Producao &middot; RNA - Ivinhema</div></div></div>'
