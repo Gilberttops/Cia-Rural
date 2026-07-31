@@ -74,6 +74,11 @@ table input:focus{border-color:var(--blue)}
 .btn-ghost{background:none;color:var(--t2);border-color:var(--bd2)}
 .btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
 .btn-primary:hover{opacity:.9}
+.home-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;cursor:pointer;transition:transform .12s,box-shadow .12s,border-color .12s}
+.home-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(24,24,15,.08);border-color:var(--bd2)}
+.home-card-icon{width:40px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:19px;border:1px solid;margin-bottom:12px}
+.home-card-title{font-size:14.5px;font-weight:700;margin-bottom:5px}
+.home-card-desc{font-size:12.5px;color:var(--t3);line-height:1.5}
 .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(24,24,15,.55);z-index:1000;align-items:center;justify-content:center}
 .modal-box{background:var(--surface);border-radius:10px;max-width:720px;width:92%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.35)}
 .modal-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);font-size:16px;font-weight:700}
@@ -262,125 +267,6 @@ table input:focus{border-color:var(--blue)}
 .gravar-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:var(--r);font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--green);background:var(--grn-lt);color:var(--green);font-family:inherit}
 .gravar-btn:hover{background:var(--green);color:#fff}
 
-/* ===== Tabela de Preços (módulo integrado) ===== */
-.pt-shell{display:flex;flex-direction:column;height:calc(100vh - 96px);margin:-20px -22px;}
-.pt-subtabs{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border)}
-.pt-subtab{border:1px solid var(--bd2);background:#fff;color:var(--t2);padding:7px 14px;border-radius:7px;font-size:12.5px;cursor:pointer;font-family:inherit}
-.pt-subtab.active{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600}
-.pt-builder-view{flex:1;display:flex;overflow:hidden}
-#pt-sidebar{width:300px;min-width:260px;background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
-.pt-sidebar-hdr{padding:12px 14px;border-bottom:1px solid var(--border)}
-#pt-catalog{flex:1;overflow-y:auto;padding:8px}
-.pt-brand-block{margin-bottom:6px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
-.pt-brand-title{background:var(--blue);color:#fff;font-weight:700;font-size:12.5px;padding:8px 10px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
-.pt-brand-body{display:none;padding:6px}
-.pt-brand-body.open{display:block}
-.pt-group-row{border:1px solid var(--border);border-radius:6px;margin-bottom:6px;overflow:hidden}
-.pt-group-head{background:var(--green);color:#fff;font-size:11.5px;font-weight:700;padding:6px 8px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
-.pt-group-head .pt-cnt{font-weight:400;font-size:10px;opacity:.85;margin-left:5px}
-.pt-add-btn{background:var(--amb-bd);color:#4a3a00;border:none;border-radius:5px;font-size:10.5px;font-weight:700;padding:3px 7px;cursor:pointer}
-.pt-item-list{display:none;padding:4px 6px}
-.pt-item-list.open{display:block}
-.pt-item-line{display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:3px 4px;border-bottom:1px dashed #eee;gap:6px}
-.pt-item-line .pt-nm{flex:1}
-.pt-item-line .pt-pr{color:var(--blue);font-weight:700;white-space:nowrap}
-.pt-item-line button{background:none;border:none;color:var(--blue);font-size:14px;cursor:pointer;padding:0 2px}
-#pt-doc-scroll{flex:1;overflow-y:auto;padding:26px;display:flex;flex-direction:column;align-items:center;gap:24px;background:var(--bg)}
-.pt-page{width:210mm;min-height:297mm;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.15);padding:14mm;position:relative;border:2px solid transparent}
-.pt-page.pt-active-target{border-color:var(--amb-bd)}
-.pt-page-toolbar{position:absolute;top:-16px;right:14mm;display:flex;gap:6px}
-.pt-pt-btn{background:#fff;border:1px solid var(--border);border-radius:5px;font-size:10.5px;padding:4px 8px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.12)}
-.pt-page-header{display:flex;align-items:center;gap:16px;margin-bottom:14px}
-.pt-page-header img{height:64px}
-.pt-page-title{background:var(--blue);color:#fff;font-weight:700;font-size:17px;text-align:center;padding:10px;outline:none;flex:1}
-.pt-page-title-accent{height:5px;background:var(--amb-bd)}
-.pt-doc-group{margin-bottom:16px}
-.pt-doc-group-head{background:var(--green);color:#fff;font-weight:700;font-size:12.5px;padding:6px 10px;outline:none}
-.pt-doc-group-controls{display:flex;gap:10px;font-size:10.5px;color:#666;margin:2px 0 6px}
-.pt-doc-group-controls span{cursor:pointer}
-.pt-doc-group-controls span:hover{text-decoration:underline}
-table.pt-price-table{width:100%;border-collapse:collapse;font-size:12px}
-table.pt-price-table th{background:var(--blue);color:#fff;font-size:11px;text-align:left;padding:5px 8px}
-table.pt-price-table th.pt-pr,table.pt-price-table td.pt-pr{text-align:center}
-table.pt-price-table td{padding:4px 8px;border:1px solid #e2e2e2}
-table.pt-price-table td.pt-code{color:#666;text-align:center;width:60px}
-table.pt-price-table td.pt-price{color:var(--blue);font-weight:700;text-align:center;width:110px}
-table.pt-price-table td.pt-price-edit-doc{border:1px dashed #cfd8e3;cursor:text}
-table.pt-price-table td[contenteditable="true"]:focus{outline:2px solid var(--amb-bd);outline-offset:-2px}
-.pt-add-item-row{font-size:11px;color:var(--blue);cursor:pointer;padding:4px 8px;display:inline-block}
-.pt-add-item-row:hover{text-decoration:underline}
-.pt-empty-page-hint{color:#aaa;text-align:center;font-size:13px;margin-top:60px}
-#pt-add-page-btn{width:210mm;padding:14px;border:2px dashed var(--bd2);border-radius:8px;background:transparent;color:var(--t3);font-size:13px;cursor:pointer}
-#pt-add-page-btn:hover{background:#fff;color:var(--blue);border-color:var(--blue)}
-#pt-margins-view{display:none;flex:1;overflow-y:auto;padding:18px 26px 40px}
-#pt-margins-view.visible{display:block}
-#pt-doc-scroll.pt-hidden,#pt-sidebar.pt-hidden{display:none}
-.pt-margins-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
-.pt-margins-toolbar input{flex:1;max-width:320px}
-.pt-legend{font-size:11px;color:var(--t3);display:flex;gap:14px;align-items:center;flex-wrap:wrap}
-.pt-legend-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px}
-.pt-brand-section{margin-bottom:24px}
-.pt-brand-section-title{font-size:14px;font-weight:700;color:var(--blue);border-bottom:2px solid var(--blue);padding-bottom:5px;margin-bottom:10px}
-.pt-margin-group-title{font-size:12px;font-weight:700;color:#fff;background:var(--green);padding:5px 10px;margin-top:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px}
-.pt-rate-controls{font-weight:400;font-size:10.5px;display:flex;align-items:center;gap:2px}
-.pt-rate-input{width:44px;padding:2px 4px;border:none;border-radius:4px;font-size:10.5px;text-align:center;margin:0 3px}
-table.pt-margins-table{width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:4px}
-table.pt-margins-table th{background:var(--s2);color:#555;text-align:right;padding:6px 8px;font-size:10.5px;border-bottom:2px solid var(--border);white-space:nowrap}
-table.pt-margins-table th:first-child,table.pt-margins-table th:nth-child(2){text-align:left}
-table.pt-margins-table td{padding:5px 8px;border-bottom:1px solid #eee;text-align:right;white-space:nowrap}
-table.pt-margins-table td:first-child,table.pt-margins-table td:nth-child(2){text-align:left;white-space:normal}
-table.pt-margins-table td.pt-na{color:#c8c8c8}
-td.pt-price-edit{color:var(--blue);font-weight:700;cursor:text;border:1px dashed #cfd8e3 !important}
-td.pt-price-edit:focus{outline:2px solid var(--amb-bd);outline-offset:-2px;background:#fffdf3}
-.pt-pct-pill{display:inline-block;padding:2px 8px;border-radius:20px;font-weight:700;font-size:11px}
-.pt-pct-neg{background:#fbe1e1;color:#B23A3A}
-.pt-pct-low{background:#fdedd3;color:#8a5a00}
-.pt-pct-ok{background:#e2f3e8;color:#1f7a44}
-.pt-pct-high{background:#dcedff;color:var(--blue)}
-.pt-src-tag{font-size:9.5px;padding:1px 6px;border-radius:8px;margin-left:5px;font-weight:700}
-.pt-src-live{background:#e2f3e8;color:#1f7a44}
-.pt-src-static{background:#eee;color:#888}
-.pt-link-input{font-size:10.5px;padding:2px 4px;border-radius:4px;border:1px solid var(--border);max-width:230px;width:100%}
-.pt-emb-info{font-size:9.5px;color:#8a5a00;margin-top:2px}
-.pt-embsize-input{width:44px;font-size:9.5px;padding:1px 3px;border-radius:3px;border:1px solid var(--amb-bd);text-align:center}
-
-/* ===== Tabela de Preços pública (por empresa / grupo) ===== */
-.ptp-shell{display:flex;flex-direction:column;height:calc(100vh - 96px);margin:-20px -22px;}
-.ptp-toolbar{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border)}
-.ptp-brandbar{display:flex;gap:8px}
-.ptp-brand-btn{border:1px solid var(--bd2);background:#fff;color:var(--t2);padding:8px 18px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
-.ptp-brand-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
-#ptp-content{flex:1;overflow-y:auto;padding:26px;background:var(--bg)}
-.ptp-header{display:flex;align-items:center;gap:16px;margin-bottom:18px;max-width:900px}
-.ptp-header img{height:70px}
-.ptp-title{background:var(--blue);color:#fff;font-weight:700;font-size:19px;text-align:center;padding:12px;flex:1;border-radius:2px}
-.ptp-title-accent{height:5px;background:var(--amb-bd);max-width:900px;margin-bottom:22px}
-.ptp-group{max-width:900px;margin-bottom:22px}
-.ptp-group-title{background:var(--green);color:#fff;font-weight:700;font-size:13.5px;padding:8px 12px}
-table.ptp-table{width:100%;border-collapse:collapse;font-size:13px;background:#fff}
-table.ptp-table th{background:var(--blue);color:#fff;font-size:12px;text-align:left;padding:7px 10px}
-table.ptp-table th.ptp-pr,table.ptp-table td.ptp-pr{text-align:center}
-table.ptp-table td{padding:6px 10px;border:1px solid #e2e2e2}
-table.ptp-table td.ptp-code{color:#666;text-align:center;width:70px}
-table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center;width:120px}
-@media print{
-  .tabs,.hdr,.ptp-toolbar{display:none !important}
-  body,.page,#pg-precospub,.ptp-shell,#ptp-content{background:#fff !important;overflow:visible !important;height:auto !important;padding:0 !important;margin:0 !important}
-  .page{display:none !important}
-  .page.active{display:block !important}
-  .ptp-header,.ptp-group{page-break-inside:avoid}
-  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;color-adjust:exact !important;}
-}
-@media print{
-  .tabs,.hdr,#pt-sidebar,.pt-subtabs,#pt-add-page-btn,.pt-page-toolbar,.pt-add-item-row,.pt-doc-group-controls,#pt-margins-view{display:none !important}
-  body,.page,#pg-precos,.pt-shell,#pt-doc-scroll{background:#fff !important;overflow:visible !important;height:auto !important;padding:0 !important;margin:0 !important}
-  .page{display:none !important}
-  .page.active{display:block !important}
-  .pt-page{box-shadow:none;border:none;margin:0;page-break-after:always;width:210mm;min-height:297mm}
-  @page{size:A4;margin:0}
-  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;color-adjust:exact !important;}
-}
-
 </style>
 </head>
 <body>
@@ -400,15 +286,69 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
 </div>
 
 <div class="tabs">
+  <div class="tab active" onclick="goTab('inicio',this)">🏠 Início</div>
   <div class="tab" onclick="goTab('mp',this)">🔒 Banco de Matérias-primas</div>
   <div class="tab" onclick="goTab('ficha',this)">🔒 Ficha de Custo</div>
   <div class="tab" onclick="goTab('preco',this)">🔒 Formação do Preço de Venda</div>
-  <div class="tab active" onclick="goTab('prod',this)">🏭 OP - Rural - Eldorado</div>
+  <div class="tab" onclick="goTab('prod',this)">🏭 OP - Rural - Eldorado</div>
   <div class="tab" onclick="goTab('prodivi',this)">🏭 OP - RNA - Ivinhema</div>
   <div class="tab" onclick="goTab('banco',this)">🗂️ RURAL - Eldorado</div>
   <div class="tab" onclick="goTab('rna',this)">🏷️ RNA - Ivinhema</div>
-  <div class="tab" onclick="goTab('precos',this)">🔒 Custos &amp; Precificação</div>
-  <div class="tab" onclick="goTab('precospub',this)">💲 Tabela de Preços</div>
+  <div class="tab" onclick="goTab('cotacoes',this)">📋 Cotações</div>
+</div>
+
+<!-- ═══ ABA 0 — INÍCIO ═══ -->
+<div id="pg-inicio" class="page active">
+  <div style="max-width:900px;margin:0 auto">
+    <div style="text-align:center;margin-bottom:32px;padding-top:10px">
+      <img id="inicio-logo" alt="Rural Nutrição" style="height:64px;width:auto;margin-bottom:12px">
+      <div style="font-size:22px;font-weight:800;letter-spacing:-.01em">Rural Nutrição Animal</div>
+      <div style="font-size:13px;color:var(--t3);margin-top:4px">Sistema de Custo de Produção &middot; Eldorado &amp; Ivinhema</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px">
+      <div class="home-card" onclick="irPara('mp')">
+        <div class="home-card-icon" style="background:var(--amb-lt);border-color:var(--amb-bd)">🔒</div>
+        <div class="home-card-title">Banco de Matérias-primas</div>
+        <div class="home-card-desc">Cadastro e custos das MPs e embalagens.</div>
+      </div>
+      <div class="home-card" onclick="irPara('ficha')">
+        <div class="home-card-icon" style="background:var(--amb-lt);border-color:var(--amb-bd)">🔒</div>
+        <div class="home-card-title">Ficha de Custo</div>
+        <div class="home-card-desc">Monte e calcule o custo de uma fórmula.</div>
+      </div>
+      <div class="home-card" onclick="irPara('preco')">
+        <div class="home-card-icon" style="background:var(--amb-lt);border-color:var(--amb-bd)">🔒</div>
+        <div class="home-card-title">Formação do Preço de Venda</div>
+        <div class="home-card-desc">Margem, impostos, despesas e preço final.</div>
+      </div>
+      <div class="home-card" onclick="irPara('prod')">
+        <div class="home-card-icon" style="background:var(--blu-lt);border-color:var(--blu-bd)">🏭</div>
+        <div class="home-card-title">OP - Rural - Eldorado</div>
+        <div class="home-card-desc">Ordem de produção, balanças 1/2/3.</div>
+      </div>
+      <div class="home-card" onclick="irPara('prodivi')">
+        <div class="home-card-icon" style="background:var(--blu-lt);border-color:var(--blu-bd)">🏭</div>
+        <div class="home-card-title">OP - RNA - Ivinhema</div>
+        <div class="home-card-desc">Ordem de produção, balanças 1/2.</div>
+      </div>
+      <div class="home-card" onclick="irPara('banco')">
+        <div class="home-card-icon" style="background:var(--grn-lt);border-color:var(--grn-bd)">🗂️</div>
+        <div class="home-card-title">RURAL - Eldorado</div>
+        <div class="home-card-desc">Banco de fórmulas e produtos acabados.</div>
+      </div>
+      <div class="home-card" onclick="irPara('rna')">
+        <div class="home-card-icon" style="background:var(--grn-lt);border-color:var(--grn-bd)">🏷️</div>
+        <div class="home-card-title">RNA - Ivinhema</div>
+        <div class="home-card-desc">Banco de fórmulas de terceiros/parceiros.</div>
+      </div>
+      <div class="home-card" onclick="irPara('cotacoes')">
+        <div class="home-card-icon" style="background:var(--grn-lt);border-color:var(--grn-bd)">📋</div>
+        <div class="home-card-title">Cotações</div>
+        <div class="home-card-desc">Monte receitas e precifique novos produtos.</div>
+      </div>
+    </div>
+    <div id="sync-status-inicio" style="text-align:center;margin-top:28px;font-size:12px;font-weight:600"></div>
+  </div>
 </div>
 
 <!-- ═══ ABA 1 — BANCO DE MPs ═══ -->
@@ -478,8 +418,8 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
             </select>
           </div>
           <div class="g4">
-            <div class="f"><label>Código</label><input type="text" id="p-cod" value="190"></div>
-            <div class="f" style="grid-column:span 2"><label>Nome</label><input type="text" id="p-nome" value="RURALZINHO CREEP - sc 25 kg" oninput="recalc()"></div>
+            <div class="f"><label>Código</label><input type="text" id="p-cod" value=""></div>
+            <div class="f" style="grid-column:span 2"><label>Nome</label><input type="text" id="p-nome" value="" placeholder="Nenhuma fórmula carregada — use 'Carregar fórmula cadastrada' acima ou os bancos de fórmulas" oninput="recalc()"></div>
             <div class="f"><label>Categoria</label><select id="p-cat"><option>Ração</option><option>Sal mineral</option><option>Proteico</option><option>Premix</option><option>COPACOL</option><option>Viacampus</option><option>Rural Vale</option><option>Linha Rural</option><option>Outro</option></select></div>
           </div>
         </div>
@@ -824,7 +764,7 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
 </div>
 
 
-<div id="pg-prod" class="page active">
+<div id="pg-prod" class="page">
   <div class="prod-header">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
       <div style="display:flex;align-items:center;gap:14px">
@@ -1099,40 +1039,126 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
   </div>
 </div>
 
-<div id="pg-precos" class="page">
-  <div class="pt-shell">
-    <div class="pt-subtabs">
-      <button class="pt-subtab active" data-pt-tab="builder" onclick="ptSwitchTab('builder')">Construtor de Tabela</button>
-      <button class="pt-subtab" data-pt-tab="margins" onclick="ptSwitchTab('margins')">Custos &amp; Margens</button>
-      <span style="flex:1"></span>
-      <span id="pt-save-status" style="font-size:11px;color:var(--t3);margin-right:4px"></span>
-      <button class="btn btn-ghost" onclick="ptClearDoc()">Limpar tudo</button>
-      <button class="btn btn-primary" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+<div id="pg-cotacoes" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap">
+    <div>
+      <div style="font-size:16px;font-weight:700">Cotações</div>
+      <div style="font-size:12px;color:var(--t3);margin-top:2px">Monte a receita de uma cotação com nome genérico — sem custos visíveis. A precificação e aprovação final ficam a cargo de quem tem a senha.</div>
     </div>
-
-    <div id="pt-builder-view" class="pt-builder-view">
-      <div id="pt-sidebar">
-        <div class="pt-sidebar-hdr">
-          <strong style="font-size:13px;color:var(--blue)">Catálogo Rural Nutrição Animal</strong>
-          <p style="font-size:11px;color:var(--t3);margin-top:2px">Clique em "+ grupo" para adicionar à página ativa (contorno amarelo).</p>
-        </div>
-        <div id="pt-catalog"></div>
-      </div>
-      <div id="pt-doc-scroll"></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div class="search-wrap"><span class="search-ico">🔍</span><input type="text" id="cot-busca" placeholder="Buscar por nome..." oninput="renderCotacoes()"></div>
+      <button class="btn btn-primary" onclick="abrirNovaCotacao()">+ Nova cotação</button>
     </div>
-
-    <div id="pt-margins-view"></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px">
+    <div class="kpi"><div class="kpi-lbl">Pendentes</div><div class="kpi-val" id="cot-count-pendente" style="color:var(--amber)">0</div></div>
+    <div class="kpi blue"><div class="kpi-lbl">Aprovadas</div><div class="kpi-val" id="cot-count-aprovada">0</div></div>
+  </div>
+  <div class="card" style="padding:0">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Nome da cotação</th><th style="width:100px">Banco</th><th style="width:90px">Batida</th>
+          <th style="width:110px">Criado por</th><th style="width:130px">Data</th>
+          <th style="width:110px">Status</th><th style="width:220px"></th>
+        </tr></thead>
+        <tbody id="cot-tbody"></tbody>
+      </table>
+    </div>
+    <div style="padding:8px 14px;background:var(--s1);border-top:1px solid var(--border);font-size:11px;color:var(--t3)" id="cot-footer">Carregando...</div>
   </div>
 </div>
 
-<div id="pg-precospub" class="page">
-  <div class="ptp-shell">
-    <div class="ptp-toolbar">
-      <div class="ptp-brandbar" id="ptp-brandbar"></div>
-      <span style="flex:1"></span>
-      <button class="btn btn-primary" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+<div id="nova-cotacao-modal" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>Nova cotação</span>
+      <button onclick="fecharNovaCotacao()">&times;</button>
     </div>
-    <div id="ptp-content"></div>
+    <div class="modal-body">
+      <div class="nf-row">
+        <div class="f" style="flex:2"><label>Nome genérico da cotação</label><input id="cot-nome" type="text" placeholder="Ex: Cotação Energético Cliente Tal"></div>
+        <div class="f"><label>Banco de destino</label><select id="cot-banco"><option value="banco">RURAL - Eldorado</option><option value="rna">RNA - Ivinhema</option></select></div>
+      </div>
+      <div class="nf-row">
+        <div class="f"><label>Grupo</label><select id="cot-cat"></select></div>
+        <div class="f"><label>Batida (kg)</label><input id="cot-batida" type="number" value="1000" min="1"></div>
+        <div class="f"><label>Peso do saco (kg)</label><input id="cot-peso" type="number" value="30" min="0.1" step="0.1"></div>
+      </div>
+      <div class="nf-row">
+        <div class="f"><label>Embalagem</label><select id="cot-emb"></select></div>
+      </div>
+      <div style="margin-top:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <label style="font-weight:700;font-size:12px;text-transform:uppercase;color:var(--t3)">Ingredientes (matérias-primas)</label>
+          <button class="btn btn-ghost" onclick="cotAddIngLinha()">+ Adicionar ingrediente</button>
+        </div>
+        <table class="nf-ings-table">
+          <thead><tr><th>Matéria-prima</th><th style="width:130px">Qtd (kg/batida)</th><th style="width:40px"></th></tr></thead>
+          <tbody id="cot-ings-tbody"></tbody>
+        </table>
+        <div style="text-align:right;margin-top:10px;font-size:13px;color:var(--t2)">
+          Total adicionado: <strong id="cot-total">0,00 kg</strong> de <span id="cot-batida-echo">1000</span> kg da batida
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharNovaCotacao()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarNovaCotacao()">💾 Salvar cotação</button>
+    </div>
+  </div>
+</div>
+
+<div id="precificar-cotacao-modal" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span id="pc-titulo">Precificar cotação</span>
+      <button onclick="fecharPrecificarCotacao()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--t3);margin-bottom:10px">Criado por <strong id="pc-criador">—</strong> em <span id="pc-data">—</span> · Destino: <strong id="pc-banco-nome">—</strong></div>
+      <table class="nf-ings-table" style="margin-bottom:16px">
+        <thead><tr><th>Cód.</th><th>Ingrediente</th><th style="width:100px">Kg/batida</th></tr></thead>
+        <tbody id="pc-ings-tbody"></tbody>
+      </table>
+      <div style="padding:14px 16px;background:var(--blu-lt);border:1px solid var(--blu-bd);border-radius:8px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--blue);margin-bottom:8px">Custos</div>
+        <div class="nf-row" style="margin-bottom:10px">
+          <div class="f"><label>Custo MP+Emb R$/kg</label><input id="pc-custo-kg" type="text" readonly style="background:var(--surface);font-weight:700"></div>
+          <div class="f"><label>Custo produção (R$/ton)</label><input id="pc-custo-producao-ton" type="number" value="0" min="0" step="1" oninput="atualizarPrecificacaoCotacao()"></div>
+          <div class="f"><label>Custo frete (R$/ton)</label><input id="pc-custo-frete-ton" type="number" value="0" min="0" step="1" oninput="atualizarPrecificacaoCotacao()"></div>
+        </div>
+        <div class="nf-row" style="margin-bottom:10px">
+          <div class="f"><label>Custo total R$/kg</label><input id="pc-custo-total-kg" type="text" readonly style="background:var(--surface);font-weight:700"></div>
+          <div class="f"><label>Custo total R$/saco</label><input id="pc-custo-total-saco" type="text" readonly style="background:var(--surface);font-weight:700"></div>
+        </div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--blue);margin:14px 0 8px">Comissão, impostos e margem (% sobre o preço de venda)</div>
+        <div class="nf-row" style="margin-bottom:10px">
+          <div class="f"><label>Comissão sobre PV (%)</label><input id="pc-comissao" type="number" value="0" min="0" step="0.5" oninput="atualizarPrecificacaoCotacao()"></div>
+          <div class="f"><label>Impostos sobre PV (%)</label><input id="pc-impostos" type="number" value="0" min="0" step="0.5" oninput="atualizarPrecificacaoCotacao()"></div>
+          <div class="f"><label>Margem desejada (%)</label><input id="pc-margem" type="number" value="30" min="0" step="1" oninput="atualizarPrecificacaoCotacao()"></div>
+        </div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--blue);margin:14px 0 8px">Preços calculados</div>
+        <div class="nf-row" style="margin-bottom:10px">
+          <div class="f"><label>Preço c/ margem — R$/kg</label><input id="pc-preco-kg" type="text" readonly style="background:var(--surface);font-weight:700;color:var(--blue)"></div>
+          <div class="f"><label>Preço c/ margem — R$/saco</label><input id="pc-preco-saco" type="text" readonly style="background:var(--surface);font-weight:700;color:var(--blue)"></div>
+        </div>
+        <div class="nf-row">
+          <div class="f"><label>Preço c/ margem 0 — R$/kg</label><input id="pc-preco-kg-m0" type="text" readonly style="background:var(--surface);font-weight:700;color:var(--amber)"></div>
+          <div class="f"><label>Preço c/ margem 0 — R$/saco</label><input id="pc-preco-saco-m0" type="text" readonly style="background:var(--surface);font-weight:700;color:var(--amber)"></div>
+        </div>
+        <div style="font-size:11px;color:var(--t3);margin-top:8px">"Margem 0" = preço mínimo que cobre custo + frete + comissão + impostos, sem lucro. Útil como piso de negociação.</div>
+      </div>
+      <div class="nf-row" style="margin-top:16px;background:var(--grn-lt);padding:12px;border-radius:8px;border:1px solid var(--grn-bd)">
+        <div class="f"><label>Código do produto (se aprovado)</label><input id="pc-cod-real" type="text" placeholder="Ex: 1900"></div>
+        <div class="f" style="flex:2"><label>Nome do produto (se aprovado)</label><input id="pc-nome-real" type="text" placeholder="Ex: RURAL NOVO PRODUTO - sc 30 kg"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharPrecificarCotacao()">Fechar</button>
+      <button class="btn btn-ghost" style="color:var(--red);border-color:var(--red-bd)" onclick="recusarCotacao()">🗑 Recusar/excluir</button>
+      <button class="btn btn-primary" onclick="aprovarCotacao()">✅ Aprovar e criar produto</button>
+    </div>
   </div>
 </div>
 
@@ -1143,17 +1169,23 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
       <button onclick="fecharNovaFormula()">&times;</button>
     </div>
     <div class="modal-body">
+      <div class="nf-row" style="background:var(--amb-lt);padding:10px 12px;border-radius:8px;border:1px solid var(--amb-bd);align-items:center">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--amber);margin:0;cursor:pointer">
+          <input type="checkbox" id="nf-modo-cotacao" onchange="toggleModoCotacao()" style="width:16px;height:16px">
+          🧮 Isto é uma cotação (ainda não é um produto — só quero simular o custo/preço)
+        </label>
+      </div>
       <div class="nf-row">
-        <div class="f"><label>Código</label><input id="nf-cod" type="text" placeholder="Ex: 1900"></div>
-        <div class="f" style="flex:2"><label>Nome do produto</label><input id="nf-nome" type="text" placeholder="Ex: RURAL NOVO PRODUTO - sc 30 kg"></div>
+        <div class="f"><label>Código <span id="nf-cod-opcional" style="text-transform:none;font-weight:400;display:none">(opcional na cotação)</span></label><input id="nf-cod" type="text" placeholder="Ex: 1900"></div>
+        <div class="f" style="flex:2"><label>Nome do produto <span id="nf-nome-opcional" style="text-transform:none;font-weight:400;display:none">(opcional na cotação)</span></label><input id="nf-nome" type="text" placeholder="Ex: RURAL NOVO PRODUTO - sc 30 kg"></div>
       </div>
       <div class="nf-row">
         <div class="f"><label>Grupo</label><select id="nf-cat"></select></div>
         <div class="f"><label>Batida (kg)</label><input id="nf-batida" type="number" value="1000" min="1" oninput="atualizarNFTotal()"></div>
-        <div class="f"><label>Peso do saco (kg)</label><input id="nf-peso" type="number" value="30" min="0.1" step="0.1"></div>
+        <div class="f"><label>Peso do saco (kg)</label><input id="nf-peso" type="number" value="30" min="0.1" step="0.1" oninput="atualizarNFTotal()"></div>
       </div>
       <div class="nf-row">
-        <div class="f"><label>Embalagem</label><select id="nf-emb"></select></div>
+        <div class="f"><label>Embalagem</label><select id="nf-emb" onchange="atualizarNFTotal()"></select></div>
       </div>
       <div style="margin-top:16px">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
@@ -1168,10 +1200,23 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
           Total adicionado: <strong id="nf-total">0,00 kg</strong> de <span id="nf-batida-echo">1000</span> kg da batida
         </div>
       </div>
+      <div id="nf-cotacao-painel" style="display:none;margin-top:16px;padding:14px 16px;background:var(--blu-lt);border:1px solid var(--blu-bd);border-radius:8px">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--blue);margin-bottom:10px">Simulação de custo e preço</div>
+        <div class="nf-row" style="margin-bottom:10px">
+          <div class="f"><label>Custo R$/kg</label><input id="nf-custo-kg" type="text" readonly style="background:var(--surface);font-weight:700"></div>
+          <div class="f"><label>Custo R$/saco</label><input id="nf-custo-saco" type="text" readonly style="background:var(--surface);font-weight:700"></div>
+          <div class="f"><label>Margem desejada (%)</label><input id="nf-margem" type="number" value="30" min="0" step="1" oninput="atualizarCotacaoCalc()"></div>
+        </div>
+        <div class="nf-row">
+          <div class="f"><label>Preço sugerido R$/kg</label><input id="nf-preco-kg" type="text" readonly style="background:var(--surface);font-weight:700;color:var(--blue)"></div>
+          <div class="f"><label>Preço sugerido R$/saco</label><input id="nf-preco-saco" type="text" readonly style="background:var(--surface);font-weight:700;color:var(--blue)"></div>
+        </div>
+        <div style="font-size:11px;color:var(--t3);margin-top:8px">Cálculo simplificado (custo + margem). Para uma precificação completa com impostos, frete e despesas, use a aba "Formação do Preço de Venda" depois de aprovar o produto.</div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="fecharNovaFormula()">Cancelar</button>
-      <button class="btn btn-primary" onclick="salvarNovaFormula()">💾 Salvar fórmula</button>
+      <button class="btn btn-primary" id="nf-save-btn" onclick="salvarNovaFormula()">💾 Salvar fórmula</button>
     </div>
   </div>
 </div>
@@ -1191,7 +1236,7 @@ const set=(id,v)=>{const e=$(id);if(e)e.textContent=v;};
 const MP_BASE={60:{d:"Bovipac 60 (cliente)",c:0,t:"mp"},133:{d:"Calcário calcítico",c:350,t:"mp"},136:{d:"Óxido de magnésio 54%",c:3400,t:"mp"},141:{d:"Óxido de zinco 72%",c:20000,t:"mp"},142:{d:"Sulfato de cobre 24%",c:22000,t:"mp"},145:{d:"Sulfato de cobalto 20%",c:84250,t:"mp"},147:{d:"Selenito de sódio 45%",c:134000,t:"mp"},154:{d:"Farelo de soja",c:1600,t:"mp"},155:{d:"Farelo de trigo",c:800,t:"mp"},247:{d:"Emb. Ração Branca",c:2,t:"emb"},312:{d:"Emb. Proteico Branca",c:2,t:"emb"},313:{d:"Emb. Sal Mineral Branca",c:2.5,t:"emb"},321:{d:"Sorgo P/ Ração",c:880,t:"mp"},358:{d:"Optigen",c:4950,t:"mp"},435:{d:"Fosfato Bicalcico 18% Pó",c:7500,t:"mp"},1809:{d:"Fosfato Bicalcico 18% Microgranulado",c:8000,t:"mp"},436:{d:"Cloreto de sódio",c:720,t:"mp"},440:{d:"Óxido de manganês 55%",c:5000,t:"mp"},449:{d:"Aveia preta",c:900,t:"mp"},518:{d:"Monensina 20%",c:50000,t:"mp"},543:{d:"Milho Moido",c:1100,t:"mp"},567:{d:"Emb. Viacampus Racao",c:2,t:"emb"},568:{d:"Emb. Proteico / Energetico Viacampus",c:2,t:"emb"},569:{d:"Emb. Viacampus Sal Mineral",c:2,t:"emb"},570:{d:"Uréia pecuária",c:5000,t:"mp"},595:{d:"Iodato de cálcio 62%",c:437500,t:"mp"},602:{d:"Triguilho",c:900,t:"mp"},617:{d:"Casca de soja",c:1100,t:"mp"},634:{d:"Centeio",c:900,t:"mp"},648:{d:"Sulfato de manganês 26%",c:6100,t:"mp"},719:{d:"Flavomicina",c:70000,t:"mp"},721:{d:"Nutraroma",c:18500,t:"mp"},727:{d:"Salimonicina 12%",c:22500,t:"mp"},762:{d:"V - Max 50",c:480000,t:"mp"},790:{d:"Nucleo Premix Rural",c:14000,t:"mp"},861:{d:"Emb. Rural Ração Padrão",c:2,t:"emb"},862:{d:"Emb. Proteico Rural Padrão",c:2,t:"emb"},870:{d:"Emb. Rural Sal Mineral",c:2,t:"emb"},878:{d:"Monensina 40%",c:73000,t:"mp"},905:{d:"Cloreto de Potassio",c:5440,t:"mp"},913:{d:"Multisach",c:50000,t:"mp"},971:{d:"Vitamitract ADE",c:9350,t:"mp"},990:{d:"Iodato de Potassio",c:182000,t:"mp"},1030:{d:"Kemtrace Cromo",c:21700,t:"mp"},1031:{d:"V - Max 10",c:103000,t:"mp"},1032:{d:"Bentonita",c:1750,t:"mp"},1034:{d:"Glucan Mos",c:0,t:"mp"},1037:{d:"Caulim Branco",c:640,t:"mp"},1051:{d:"Rumel",c:5250,t:"mp"},1077:{d:"Oxido de Zinco 80%",c:22000,t:"mp"},1112:{d:"Amireia 200 s",c:4850,t:"mp"},1141:{d:"Beef Fat (gordura)",c:3650,t:"mp"},1142:{d:"Zimprova Narazina",c:75000,t:"mp"},1149:{d:"Enxofre 99,5",c:9900,t:"mp"},1173:{d:"Lithonutri",c:2400,t:"mp"},1194:{d:"Biotina",c:28000,t:"mp"},1210:{d:"Farelo de Arroz",c:965,t:"mp"},1228:{d:"Narazina (Zimprova)",c:90370,t:"mp"},1263:{d:"DDG Farelo de Milho",c:1050,t:"mp"},1294:{d:"Nucleo Premix Ypoti",c:25722,t:"mp"},1297:{d:"Fosfato Bicalcico 19% SPO",c:5200,t:"mp"},1302:{d:"Silvafeed BX Tanino",c:17500,t:"mp"},1319:{d:"Emb. Proteico Rural Valvulada",c:2.5,t:"emb"},1322:{d:"Emb. Rural Ração Valvulada",c:2.5,t:"emb"},1330:{d:"Emb. Rural Sal Mineral Valvulada",c:2.5,t:"emb"},1331:{d:"Emb. Sal Mineral Branca Valvulada",c:2.5,t:"emb"},1332:{d:"Emb. Proteico Viacampus Valvulada",c:2.5,t:"emb"},1334:{d:"Emb. Viacampus Racao Valvulada",c:2.5,t:"emb"},1345:{d:"ProbMais R",c:43650,t:"mp"},1377:{d:"Premix Ovinos",c:10000,t:"mp"},1390:{d:"Yes Bov Levedura",c:10000,t:"mp"},1392:{d:"Milho a Granel II",c:1110,t:"mp"},1404:{d:"Premix Rural ADE",c:25000,t:"mp"},1421:{d:"Luctarom",c:108000,t:"mp"},1452:{d:"Ração Copagril Standart",c:1410,t:"mp"},1455:{d:"Safetox Plus",c:6500,t:"mp"},1491:{d:"Ruminatus",c:31000,t:"mp"},1501:{d:"Embalag. Rural Farelado",c:2,t:"emb"},1550:{d:"Prosina",c:4000,t:"mp"},1551:{d:"Lysoforte",c:22500,t:"mp"},1552:{d:"Zinmet 100 + cr seco",c:42500,t:"mp"},1579:{d:"Safeguard",c:5450,t:"mp"},1583:{d:"Inbeef Plus",c:29000,t:"mp"},1584:{d:"ATX",c:38000,t:"mp"},1595:{d:"Inbeef Grass",c:30000,t:"mp"},1596:{d:"Ureia Proteigida Laranja",c:6000,t:"mp"},1610:{d:"Probeef Confinamento Performa",c:4510,t:"mp"},1649:{d:"Embal. Big Bag Rural",c:25,t:"emb"},1653:{d:"Farelo de Algodão",c:850,t:"mp"},1698:{d:"Emb. valv 55 x 90 Bovimais Preto",c:2.5,t:"emb"},1699:{d:"Emb. valv 55 x 90 Bovimais Vermelho",c:2.6,t:"emb"},1709:{d:"BIG BAG 1,20 X 1,40  BRANCO 1.000 KG",c:35,t:"emb"},1721:{d:"Immunity",c:32850,t:"mp"},1802:{d:"Cromopac TP",c:15500,t:"mp"}};
 const LOGO_RURAL="data:image/png;base64,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";
 let MPcusto={},MPanterior={},MPalterado={},MPitens=[];
-let ings=[{cod:543,qtd:630,bal:0},{cod:133,qtd:32.4,bal:0},{cod:154,qtd:315,bal:0},{cod:436,qtd:5,bal:0},{cod:435,qtd:12,bal:0},{cod:1149,qtd:2.6,bal:0},{cod:790,qtd:2.5,bal:0},{cod:1030,qtd:0.5,bal:0},{cod:1491,qtd:0.25,bal:0}];
+let ings=[];
 let biblioteca=[
     {cod:'125',nome:'RURAL ENGORDA - sc 30 kg',cat:'Sal mineral',batida:1000,pesoSaco:30,_origem:'importado',emb:{custo:2.5,desc:'Emb. Rural Sal Mineral Valvulada'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:435,qtd:146.25,bal:0},{cod:1809,qtd:78.75,bal:0},{cod:133,qtd:441.5,bal:0},{cod:790,qtd:16,bal:0},{cod:1149,qtd:10.5,bal:0},{cod:436,qtd:307,bal:0}]},
     {cod:'126',nome:'RURAL RECRIA - sc 30 kg',cat:'Sal mineral',batida:1000,pesoSaco:30,_origem:'importado',emb:{custo:2.5,desc:'Emb. Rural Sal Mineral Valvulada'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:435,qtd:217.75,bal:0},{cod:1809,qtd:117.25,bal:0},{cod:133,qtd:383.5,bal:0},{cod:790,qtd:18,bal:0},{cod:1149,qtd:13.5,bal:0},{cod:436,qtd:250,bal:0}]},
@@ -1517,9 +1562,17 @@ function renomearMP(cod,novoNome){
   popularSelectsEmbalagem();
   popularSelectsAdicionarMP();
   renderMP($('mp-busca').value);
-  toast('Nome atualizado.');
+  salvarMPRemoto(cod,novoNome,MPcusto[cod],item?item.t:'mp');
+  toast('Nome atualizado e salvo para todos os colaboradores.');
 }
-function updMP(cod,val){const novo=parseFloat(val)||0;if(!MPalterado[cod])MPanterior[cod]=MPcusto[cod];MPcusto[cod]=novo;MPalterado[cod]=true;renderMP($('mp-busca').value);recalc();}
+function updMP(cod,val){
+  const novo=parseFloat(val)||0;
+  if(!MPalterado[cod])MPanterior[cod]=MPcusto[cod];
+  MPcusto[cod]=novo;MPalterado[cod]=true;
+  renderMP($('mp-busca').value);recalc();
+  var item=MPitens.find(function(m){return m.cod===cod;});
+  salvarMPRemoto(cod,item?item.d:'',novo,item?item.t:'mp');
+}
 function filtrarMP(){renderMP($('mp-busca').value);}
 function classificarTipoMP(desc){return /emb|big\s*bag|\bbag\b/i.test(desc||'')?'emb':'mp';}
 /* Grupos de balança por matéria-prima:
@@ -1542,8 +1595,71 @@ function balancaDoMPIvinhema(cod){
   if(MPcusto[cod]!==undefined)return 2;
   return 0;
 }
-function addMP(){const cod=parseInt(prompt('Codigo:'));if(!cod||MPcusto[cod]!==undefined){alert('Invalido.');return;}const desc=prompt('Descricao:');if(!desc)return;const tipoSugerido=classificarTipoMP(desc);const tipoIn=(prompt('Tipo: digite "mp" para matéria-prima ou "emb" para embalagem',tipoSugerido)||tipoSugerido).toLowerCase();const t=tipoIn==='emb'?'emb':'mp';const custo=parseFloat(prompt(t==='emb'?'Custo R$/unidade:':'Custo R$/ton:'))||0;MPcusto[cod]=custo;MPanterior[cod]=custo;MPalterado[cod]=false;MPitens.push({cod,d:desc,t});MPitens.sort((a,b)=>a.cod-b.cod);renderMP();}
+function addMP(){
+  const cod=parseInt(prompt('Codigo:'));
+  if(!cod||MPcusto[cod]!==undefined){alert('Invalido.');return;}
+  const desc=prompt('Descricao:');if(!desc)return;
+  const tipoSugerido=classificarTipoMP(desc);
+  const tipoIn=(prompt('Tipo: digite "mp" para matéria-prima ou "emb" para embalagem',tipoSugerido)||tipoSugerido).toLowerCase();
+  const t=tipoIn==='emb'?'emb':'mp';
+  const custo=parseFloat(prompt(t==='emb'?'Custo R$/unidade:':'Custo R$/ton:'))||0;
+  MPcusto[cod]=custo;MPanterior[cod]=custo;MPalterado[cod]=false;
+  MPitens.push({cod,d:desc,t});MPitens.sort((a,b)=>a.cod-b.cod);
+  renderMP();
+  popularSelectsEmbalagem();
+  popularSelectsAdicionarMP();
+  salvarMPRemoto(cod,desc,custo,t);
+}
 function delMP(cod){if(codEmFicha(cod)){alert('Item em uso.');return;}if(!confirm('Remover '+cod+'?'))return;delete MPcusto[cod];delete MPanterior[cod];delete MPalterado[cod];MPitens=MPitens.filter(m=>m.cod!==cod);renderMP();}
+
+/* ===== Sincronizacao do Banco de Materias-primas com a planilha ===== */
+let mpRemoto={};
+function salvarMPRemoto(cod,desc,custo,tipo){
+  var payload={
+    tipo:'mp',
+    cod:String(cod),
+    desc:desc,
+    custo:custo,
+    tipoMp:tipo,
+    editadoPor:getNomeColaborador(),
+    dataHora:new Date().toLocaleString('pt-BR')
+  };
+  fetch(APPS_SCRIPT_URL,{
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify(payload)
+  }).then(function(){
+    mpRemoto[payload.cod]=payload;
+    syncStatus='ok';atualizarIndicadorSync();
+  }).catch(function(err){
+    console.error('Erro ao salvar MP na planilha:',err);
+    syncStatus='erro';atualizarIndicadorSync();
+    toast('Nao foi possivel salvar na planilha (sem internet?). A alteracao ficou so neste navegador.');
+  });
+}
+function carregarMPRemoto(){
+  fetch(APPS_SCRIPT_URL+'?tipo=materiasprimas')
+    .then(function(r){return r.json();})
+    .then(function(data){
+      mpRemoto=data||{};
+      Object.keys(mpRemoto).forEach(function(codStr){
+        var r=mpRemoto[codStr];
+        var cod=parseInt(codStr);
+        var custo=parseFloat(r.custo)||0;
+        var tipo=r.tipoMp==='emb'?'emb':'mp';
+        MPcusto[cod]=custo;MPanterior[cod]=custo;MPalterado[cod]=false;
+        var item=MPitens.find(function(m){return m.cod===cod;});
+        if(item){item.d=r.desc;item.t=tipo;}
+        else{MPitens.push({cod:cod,d:r.desc,t:tipo});}
+      });
+      MPitens.sort(function(a,b){return a.cod-b.cod;});
+      popularSelectsEmbalagem();
+      popularSelectsAdicionarMP();
+      renderMP($('mp-busca')?$('mp-busca').value:'');
+      recalc();
+    })
+    .catch(function(err){console.error('Erro ao carregar materias-primas da planilha:',err);});
+}
 
 function renderIngs(){
   const batida=gv('batida')||1000,peso=gv('peso-saco')||25,sacos=batida/peso;
@@ -2458,7 +2574,8 @@ function listaTodasFormulas(){
   var localArr=Object.values(bancoLocal);
   var localTagged=localArr.map(function(f){return Object.assign({},f,{_origem:'local'});});
   var importadas=biblioteca.filter(function(b){return !bancoLocal[b.cod];}).map(function(f){return Object.assign({},f,{_origem:f._origem||'importado'});});
-  var todas=localTagged.concat(importadas);
+  var remotas=formulasRemotasDoBanco('banco',biblioteca);
+  var todas=localTagged.concat(importadas).concat(remotas);
   var ORDEM_GRUPOS=['Ração','Sal mineral','Proteico','Premix','COPACOL','Outro'];
   todas.sort(function(a,b){
     var ga=ORDEM_GRUPOS.indexOf(a.cat); if(ga<0)ga=99;
@@ -2497,6 +2614,27 @@ function alterarGrupoFormula(origem,chave,novoCat){
   atualizarSelectFormulas();
   toast('Grupo atualizado para "'+novoCat+'".');
 }
+function formulaFromRemoto(f){
+  return {
+    cod:f.cod,nome:f.nome,cat:f.cat,batida:parseFloat(f.batida)||0,pesoSaco:parseFloat(f.pesoSaco)||0,
+    emb:{custo:parseFloat(f.embCusto)||0,desc:f.embDesc||''},
+    cif:{mo:0,enc:0,ee:0,out:0},
+    ings:JSON.parse(f.ingsJSON||'[]'),
+    _remoto:true,_editadoPor:f.editadoPor,_dataHora:f.dataHora
+  };
+}
+function formulasRemotasDoBanco(banco,arrayLocal){
+  var codsLocais={};
+  arrayLocal.forEach(function(f){codsLocais[String(f.cod)]=true;});
+  var extras=[];
+  Object.keys(formulasEditadasRemoto).forEach(function(cod){
+    var f=formulasEditadasRemoto[cod];
+    if(codsLocais[String(cod)])return;
+    if(bancoDoCat(f.cat)!==banco)return;
+    extras.push(formulaFromRemoto(f));
+  });
+  return extras;
+}
 let rnaFiltroGrupo='todas';
 function filtrarRNA(){renderBancoRNA($('rna-busca').value);}
 function filtrarRNAGrupo(grp){rnaFiltroGrupo=grp;renderBancoRNA($('rna-busca')?$('rna-busca').value:'');}
@@ -2504,7 +2642,8 @@ function removerDaRNA(idx){if(!confirm('Remover esta formula do RNA - Ivinhema?'
 function renderBancoRNA(filtro){
   filtro=filtro||'';
   var f=filtro.toLowerCase();
-  var todas=bibliotecaRNA.slice().sort(function(a,b){return (parseFloat(a.cod)||0)-(parseFloat(b.cod)||0);});
+  var extras=formulasRemotasDoBanco('rna',bibliotecaRNA);
+  var todas=bibliotecaRNA.concat(extras).sort(function(a,b){return (parseFloat(a.cod)||0)-(parseFloat(b.cod)||0);});
   set('rna-count',todas.length);
   set('rna-count-via',todas.filter(function(x){return x.cat==='Viacampus';}).length);
   set('rna-count-vale',todas.filter(function(x){return x.cat==='Rural Vale';}).length);
@@ -2520,6 +2659,20 @@ function renderBancoRNA(filtro){
   if(!tbody)return;
   if(lista.length===0){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--t3);padding:20px">Nenhuma fórmula encontrada.</td></tr>';return;}
   tbody.innerHTML=lista.map(function(x){
+    if(x._remoto){
+      var nIngR=x.ings?x.ings.filter(function(i){return i.qtd>0;}).length:0;
+      var cR=custoFormula(x);
+      return '<tr style="background:var(--grn-lt)">'
+        +'<td class="mono">'+x.cod+'</td>'
+        +'<td>'+x.nome+' <span style="font-size:10px;color:var(--green);font-weight:700" title="Criado por '+(x._editadoPor||'?')+' em '+(x._dataHora||'?')+'">🌐 CRIADO POR OUTRO COLABORADOR</span></td>'
+        +'<td>'+(x.cat||'—')+'</td>'
+        +'<td class="r">'+fn(x.batida||0,0)+' kg</td>'
+        +'<td class="r">'+fn(x.pesoSaco||0,x.pesoSaco%1===0?0:2)+' kg</td>'
+        +'<td class="r">'+fn(cR.sacos,cR.sacos%1===0?0:1)+'</td>'
+        +'<td class="r">'+nIngR+'</td>'
+        +'<td style="text-align:right;white-space:nowrap"><button class="action-btn btn-load" onclick="carregarFormulaEditadaRemoto(\''+x.cod+'\')">Carregar</button></td>'
+        +'</tr>';
+    }
     var idx=bibliotecaRNA.indexOf(x);
     var nIng=x.ings?x.ings.filter(function(i){return i.qtd>0;}).length:0;
     var c=custoFormula(x);
@@ -2573,13 +2726,15 @@ function renderBancoFormulas(filtro){
       html+='<tr><td colspan="9" style="padding:6px 10px;background:var(--s1);color:var(--t2);font-size:12px;font-weight:800;text-transform:uppercase;border-top:2px solid var(--border)">'+grupo+'</td></tr>';
       lastGrupo=grupo;
     }
-    var isBuiltin=x._origem==='builtin',isLocal=x._origem==='local';
-    var origemCel=isLocal?'<span class="lib-tag lib-tag-local">Banco local</span>':'—';
+    var isBuiltin=x._origem==='builtin',isLocal=x._origem==='local',isRemoto=!!x._remoto;
+    var origemCel=isLocal?'<span class="lib-tag lib-tag-local">Banco local</span>':(isRemoto?'<span class="lib-tag" style="background:var(--grn-lt);color:var(--green);border-color:var(--grn-bd)" title="Criado por '+(x._editadoPor||'?')+' em '+(x._dataHora||'?')+'">🌐 Outro colaborador</span>':'—');
     var nIng=x.ings?x.ings.filter(function(i){return i.qtd>0;}).length:0;
     var c=custoFormula(x);
     var acoes;
     var chaveEdit,origemEdit;
-    if(isBuiltin){
+    if(isRemoto){
+      acoes='<button class="action-btn btn-load" onclick="carregarFormulaEditadaRemoto(\''+x.cod+'\')">Carregar</button>';
+    } else if(isBuiltin){
       acoes='<button class="action-btn btn-load" onclick="carregarObjFormula('+JSON.stringify(x)+')">Carregar</button>'
         +'<button class="action-btn btn-export" onclick="exportarDaBiblioteca_f('+JSON.stringify(x)+')">Exportar</button>';
     } else if(isLocal){
@@ -2595,14 +2750,14 @@ function renderBancoFormulas(filtro){
       chaveEdit=libIdx;origemEdit='importado';
     }
     var catCel;
-    if(isBuiltin){
+    if(isBuiltin||isRemoto){
       catCel=(x.cat||'—');
     } else {
       catCel='<select style="font-size:12px;padding:3px 6px;border:1px solid var(--border);border-radius:5px;background:var(--s0)" onchange="alterarGrupoFormula(\''+origemEdit+'\',\''+chaveEdit+'\',this.value)">'
         +GRUPOS_PRODUTO.map(function(g){return '<option value="'+g+'"'+(x.cat===g?' selected':'')+'>'+g+'</option>';}).join('')
         +'</select>';
     }
-    var editadaInfo=formulasEditadasRemoto[String(x.cod)];
+    var editadaInfo=isRemoto?null:formulasEditadasRemoto[String(x.cod)];
     if(editadaInfo){
       acoes=acoes.replace('>Carregar<','>Carregar padrão<');
       acoes+='<button class="action-btn btn-load" style="background:var(--grn-lt);color:var(--green);border-color:var(--grn-bd)" title="Ultima edicao: '+(editadaInfo.editadoPor||'?')+' em '+(editadaInfo.dataHora||'?')+'" onclick="carregarFormulaEditadaRemoto(\''+x.cod+'\')">☁️ Carregar c/ edições</button>';
@@ -2688,20 +2843,24 @@ let formulasEditadasRemoto={};
 let syncStatus='carregando';
 function atualizarIndicadorSync(){
   var el=$('sync-status');
-  if(!el)return;
-  if(syncStatus==='ok'){el.textContent='☁️ Edicoes sincronizadas';el.style.color='var(--green)';}
-  else if(syncStatus==='erro'){el.textContent='⚠️ Sem conexao com a planilha (edicoes ficam so neste navegador)';el.style.color='var(--amber)';}
-  else{el.textContent='☁️ Carregando edicoes...';el.style.color='var(--t3)';}
+  var el2=$('sync-status-inicio');
+  var txt,cor;
+  if(syncStatus==='ok'){txt='☁️ Edicoes sincronizadas';cor='var(--green)';}
+  else if(syncStatus==='erro'){txt='⚠️ Sem conexao com a planilha (edicoes ficam so neste navegador)';cor='var(--amber)';}
+  else{txt='☁️ Carregando edicoes...';cor='var(--t3)';}
+  if(el){el.textContent=txt;el.style.color=cor;}
+  if(el2){el2.textContent=txt;el2.style.color=cor;}
 }
 function carregarFormulasEditadasRemoto(){
   syncStatus='carregando';atualizarIndicadorSync();
-  fetch(APPS_SCRIPT_URL)
+  fetch(APPS_SCRIPT_URL+'?tipo=formulas')
     .then(function(r){return r.json();})
     .then(function(data){
       formulasEditadasRemoto=data||{};
       syncStatus='ok';atualizarIndicadorSync();
       renderBancoFormulas($('banco-busca')?$('banco-busca').value:'');
       renderBancoRNA($('rna-busca')?$('rna-busca').value:'');
+      atualizarSelectFormulas();
     })
     .catch(function(err){
       console.error('Erro ao carregar edicoes da planilha:',err);
@@ -2736,15 +2895,288 @@ function salvarEdicaoRemota(f){
   }).then(function(){
     formulasEditadasRemoto[payload.cod]=payload;
     syncStatus='ok';atualizarIndicadorSync();
-    toast('Edicao salva na planilha — visivel para todos os colaboradores.');
     renderBancoFormulas($('banco-busca')?$('banco-busca').value:'');
     renderBancoRNA($('rna-busca')?$('rna-busca').value:'');
+    atualizarSelectFormulas();
   }).catch(function(err){
     console.error('Erro ao salvar edicao na planilha:',err);
     syncStatus='erro';atualizarIndicadorSync();
     toast('Nao foi possivel salvar na planilha (sem internet?). A edicao ficou so neste navegador.');
   });
 }
+function salvarEdicaoRemota(f){
+  var payload={
+    tipo:'formula',
+    cod:String(f.cod),
+    nome:f.nome,
+    cat:f.cat,
+    batida:f.batida,
+    pesoSaco:f.pesoSaco,
+    embCusto:f.emb?f.emb.custo:0,
+    embDesc:f.emb?f.emb.desc:'',
+    ingsJSON:JSON.stringify(f.ings),
+    editadoPor:getNomeColaborador(),
+    dataHora:new Date().toLocaleString('pt-BR')
+  };
+  fetch(APPS_SCRIPT_URL,{
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify(payload)
+  }).then(function(){
+    formulasEditadasRemoto[payload.cod]=payload;
+    syncStatus='ok';atualizarIndicadorSync();
+    renderBancoFormulas($('banco-busca')?$('banco-busca').value:'');
+    renderBancoRNA($('rna-busca')?$('rna-busca').value:'');
+    atualizarSelectFormulas();
+  }).catch(function(err){
+    console.error('Erro ao salvar edicao na planilha:',err);
+    syncStatus='erro';atualizarIndicadorSync();
+    toast('Nao foi possivel salvar na planilha (sem internet?). A edicao ficou so neste navegador.');
+  });
+}
+
+/* ===== Cotações ===== */
+let cotacoesRemoto={};
+let cotIngRows=[];
+function pedirSenhaPrecificar(){
+  if(acessoLiberado)return true;
+  var s=prompt('🔒 Precificação restrita.\nDigite a senha de acesso:');
+  if(s===null)return false;
+  if(hashSenha(s)===SENHA_HASH){acessoLiberado=true;return true;}
+  alert('Senha incorreta.');
+  return false;
+}
+function carregarCotacoesRemoto(){
+  fetch(APPS_SCRIPT_URL+'?tipo=cotacoes')
+    .then(function(r){return r.json();})
+    .then(function(data){
+      cotacoesRemoto=data||{};
+      renderCotacoes();
+    })
+    .catch(function(err){console.error('Erro ao carregar cotacoes:',err);});
+}
+function popularSelectEmbCot(){
+  var embs=MPitens.filter(function(m){return m.t==='emb';}).sort(function(a,b){return a.d.localeCompare(b.d);});
+  $('cot-emb').innerHTML='<option value="">— sem embalagem —</option>'+embs.map(function(m){return '<option value="'+m.cod+'">'+m.cod+' — '+m.d+'</option>';}).join('');
+}
+function atualizarGrupoCot(){
+  var banco=$('cot-banco').value;
+  $('cot-cat').innerHTML=gruposParaBanco(banco).map(function(g){return '<option>'+g+'</option>';}).join('');
+}
+function abrirNovaCotacao(){
+  cotIngRows=[{cod:null,qtd:0}];
+  $('cot-nome').value='';
+  $('cot-banco').value='banco';
+  $('cot-batida').value=1000;
+  $('cot-peso').value=30;
+  atualizarGrupoCot();
+  popularSelectEmbCot();
+  renderCotIngs();
+  $('nova-cotacao-modal').style.display='flex';
+}
+function fecharNovaCotacao(){$('nova-cotacao-modal').style.display='none';}
+function cotAddIngLinha(){cotIngRows.push({cod:null,qtd:0});renderCotIngs();}
+function cotRemoveIngLinha(idx){cotIngRows.splice(idx,1);renderCotIngs();}
+function cotUpdateIngCod(idx,val){cotIngRows[idx].cod=val?parseInt(val):null;}
+function cotUpdateIngQtd(idx,val){cotIngRows[idx].qtd=parseFloat(val)||0;atualizarCotTotal();}
+function renderCotIngs(){
+  var mps=MPitens.filter(function(m){return m.t==='mp';}).sort(function(a,b){return a.d.localeCompare(b.d);});
+  $('cot-ings-tbody').innerHTML=cotIngRows.map(function(row,idx){
+    var opts='<option value="">selecione...</option>'+mps.map(function(m){return '<option value="'+m.cod+'"'+(row.cod===m.cod?' selected':'')+'>'+m.cod+' — '+m.d+'</option>';}).join('');
+    return '<tr>'
+      +'<td><select onchange="cotUpdateIngCod('+idx+',this.value)">'+opts+'</select></td>'
+      +'<td><input type="number" step="0.01" min="0" value="'+(row.qtd||0)+'" onchange="cotUpdateIngQtd('+idx+',this.value)"></td>'
+      +'<td><button type="button" class="nf-del-btn" onclick="cotRemoveIngLinha('+idx+')">×</button></td>'
+      +'</tr>';
+  }).join('');
+  atualizarCotTotal();
+}
+function atualizarCotTotal(){
+  var total=cotIngRows.reduce(function(s,r){return s+(r.qtd||0);},0);
+  set('cot-total',fn(total,2)+' kg');
+  set('cot-batida-echo',$('cot-batida').value||0);
+}
+function salvarNovaCotacao(){
+  var nome=$('cot-nome').value.trim();
+  var banco=$('cot-banco').value;
+  var cat=$('cot-cat').value;
+  var batida=parseFloat($('cot-batida').value)||0;
+  var peso=parseFloat($('cot-peso').value)||0;
+  var embVal=$('cot-emb').value;
+  if(!nome){alert('Dê um nome genérico para identificar esta cotação.');return;}
+  if(batida<=0||peso<=0){alert('Informe batida e peso do saco maiores que zero.');return;}
+  var ingsValidos=cotIngRows.filter(function(r){return r.cod&&r.qtd>0;});
+  if(ingsValidos.length===0){alert('Adicione ao menos 1 ingrediente com quantidade maior que zero.');return;}
+  var embItem=embVal?MPitens.find(function(m){return m.cod===parseInt(embVal);}):null;
+  var id='cot_'+Date.now();
+  var payload={
+    tipo:'cotacao',
+    id:id,
+    nomeGenerico:nome,
+    banco:banco,
+    cat:cat,
+    batida:batida,
+    pesoSaco:peso,
+    embCusto:embItem?MPcusto[embItem.cod]:0,
+    embDesc:embItem?embItem.d:'',
+    ingsJSON:JSON.stringify(ingsValidos.map(function(r){return {cod:r.cod,qtd:r.qtd,bal:0};})),
+    criadoPor:getNomeColaborador(),
+    dataHora:new Date().toLocaleString('pt-BR'),
+    status:'pendente'
+  };
+  fetch(APPS_SCRIPT_URL,{
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify(payload)
+  }).then(function(){
+    cotacoesRemoto[id]=payload;
+    fecharNovaCotacao();
+    renderCotacoes();
+    toast('Cotação "'+nome+'" salva! Aguardando precificação.');
+  }).catch(function(err){
+    console.error('Erro ao salvar cotacao:',err);
+    toast('Nao foi possivel salvar a cotacao (sem internet?).');
+  });
+}
+function renderCotacoes(){
+  var f=($('cot-busca')?$('cot-busca').value:'').toLowerCase();
+  var todas=Object.values(cotacoesRemoto).sort(function(a,b){return (b.dataHora||'').localeCompare(a.dataHora||'');});
+  set('cot-count-pendente',todas.filter(function(c){return (c.status||'')==='pendente';}).length);
+  set('cot-count-aprovada',todas.filter(function(c){return (c.status||'').indexOf('aprovada')===0;}).length);
+  var lista=todas.filter(function(c){return !f||(c.nomeGenerico||'').toLowerCase().includes(f);});
+  set('cot-footer',lista.length+' de '+todas.length+' cotações');
+  var tbody=$('cot-tbody');
+  if(!tbody)return;
+  if(lista.length===0){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--t3);padding:20px">Nenhuma cotação encontrada.</td></tr>';return;}
+  tbody.innerHTML=lista.map(function(c){
+    var pendente=(c.status||'')==='pendente';
+    var bancoNome=c.banco==='rna'?'RNA - Ivinhema':'RURAL - Eldorado';
+    var statusBadge=pendente
+      ?'<span class="badge bdg-neu" style="background:var(--amb-lt);color:var(--amber);border-color:var(--amb-bd)">Pendente</span>'
+      :'<span class="badge bdg-neu" style="background:var(--blu-lt);color:var(--blue);border-color:var(--blu-bd)">'+(c.status||'Aprovada')+'</span>';
+    var acoes=pendente
+      ?'<button class="action-btn btn-load" onclick="abrirPrecificarCotacao(\''+c.id+'\')">🔒 Precificar</button>'
+      :'<span style="font-size:11px;color:var(--t3)">já processada</span>';
+    return '<tr>'
+      +'<td>'+c.nomeGenerico+'</td>'
+      +'<td>'+bancoNome+'</td>'
+      +'<td class="r">'+fn(parseFloat(c.batida)||0,0)+' kg</td>'
+      +'<td>'+(c.criadoPor||'—')+'</td>'
+      +'<td style="font-size:11px">'+(c.dataHora||'—')+'</td>'
+      +'<td>'+statusBadge+'</td>'
+      +'<td style="text-align:right">'+acoes+'</td>'
+      +'</tr>';
+  }).join('');
+}
+let cotAtualId=null;
+function abrirPrecificarCotacao(id){
+  if(!pedirSenhaPrecificar())return;
+  var c=cotacoesRemoto[id];
+  if(!c){toast('Cotação não encontrada.');return;}
+  cotAtualId=id;
+  $('pc-titulo').textContent='Precificar — '+c.nomeGenerico;
+  $('pc-criador').textContent=c.criadoPor||'?';
+  $('pc-data').textContent=c.dataHora||'?';
+  $('pc-banco-nome').textContent=c.banco==='rna'?'RNA - Ivinhema':'RURAL - Eldorado';
+  $('pc-cod-real').value='';
+  $('pc-nome-real').value=c.nomeGenerico;
+  $('pc-margem').value=30;
+  $('pc-custo-producao-ton').value=0;
+  $('pc-custo-frete-ton').value=0;
+  $('pc-comissao').value=0;
+  $('pc-impostos').value=0;
+  var ings=JSON.parse(c.ingsJSON||'[]');
+  $('pc-ings-tbody').innerHTML=ings.map(function(i){
+    var nome=(MPitens.find(function(m){return m.cod==i.cod;})||{d:'não encontrado'}).d;
+    return '<tr><td class="mono">'+i.cod+'</td><td>'+nome+'</td><td class="r">'+fn(i.qtd,2)+'</td></tr>';
+  }).join('');
+  atualizarPrecificacaoCotacao();
+  $('precificar-cotacao-modal').style.display='flex';
+}
+function fecharPrecificarCotacao(){$('precificar-cotacao-modal').style.display='none';cotAtualId=null;}
+function atualizarPrecificacaoCotacao(){
+  var c=cotacoesRemoto[cotAtualId];
+  if(!c)return;
+  var batida=parseFloat(c.batida)||0,peso=parseFloat(c.pesoSaco)||0;
+  var sacos=peso>0?batida/peso:0;
+  var embCusto=parseFloat(c.embCusto)||0;
+  var ings=JSON.parse(c.ingsJSON||'[]');
+  var mpBat=0;
+  ings.forEach(function(i){var custo=MPcusto[i.cod]!==undefined?MPcusto[i.cod]:0;mpBat+=(i.qtd||0)*(custo/1000);});
+  var custoSaco=sacos>0?(mpBat/sacos)+embCusto:0;
+  var custoKg=peso>0?custoSaco/peso:0;
+
+  var custoProducaoTon=parseFloat($('pc-custo-producao-ton').value)||0;
+  var custoFreteTon=parseFloat($('pc-custo-frete-ton').value)||0;
+  var custoTotalKg=custoKg+(custoProducaoTon/1000)+(custoFreteTon/1000);
+  var custoTotalSaco=custoTotalKg*peso;
+
+  var comissao=(parseFloat($('pc-comissao').value)||0)/100;
+  var impostos=(parseFloat($('pc-impostos').value)||0)/100;
+  var margem=(parseFloat($('pc-margem').value)||0)/100;
+
+  var precoKg=custoTotalKg/(1-comissao-impostos-margem);
+  var precoSaco=custoTotalSaco/(1-comissao-impostos-margem);
+  var precoKgM0=custoTotalKg/(1-comissao-impostos);
+  var precoSacoM0=custoTotalSaco/(1-comissao-impostos);
+
+  $('pc-custo-kg').value='R$ '+custoKg.toFixed(3).replace('.',',');
+  $('pc-custo-total-kg').value='R$ '+custoTotalKg.toFixed(3).replace('.',',');
+  $('pc-custo-total-saco').value='R$ '+custoTotalSaco.toFixed(2).replace('.',',');
+  $('pc-preco-kg').value='R$ '+(isFinite(precoKg)&&precoKg>0?precoKg.toFixed(3).replace('.',','):'—');
+  $('pc-preco-saco').value='R$ '+(isFinite(precoSaco)&&precoSaco>0?precoSaco.toFixed(2).replace('.',','):'—');
+  $('pc-preco-kg-m0').value='R$ '+(isFinite(precoKgM0)&&precoKgM0>0?precoKgM0.toFixed(3).replace('.',','):'—');
+  $('pc-preco-saco-m0').value='R$ '+(isFinite(precoSacoM0)&&precoSacoM0>0?precoSacoM0.toFixed(2).replace('.',','):'—');
+}
+function marcarStatusCotacaoRemoto(c,novoStatus){
+  var payload=Object.assign({},c,{tipo:'cotacao',status:novoStatus});
+  fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)})
+    .catch(function(err){console.error('Erro ao atualizar status da cotacao:',err);});
+}
+function excluirCotacaoRemoto(id){
+  fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({tipo:'cotacao',id:id,_excluir:true})})
+    .catch(function(err){console.error('Erro ao excluir cotacao:',err);});
+}
+function aprovarCotacao(){
+  var c=cotacoesRemoto[cotAtualId];
+  if(!c)return;
+  var codReal=$('pc-cod-real').value.trim();
+  var nomeReal=$('pc-nome-real').value.trim();
+  if(!codReal||!nomeReal){alert('Preencha o código e o nome real do produto para aprovar.');return;}
+  var arr=c.banco==='rna'?bibliotecaRNA:biblioteca;
+  if(arr.some(function(f){return String(f.cod)===codReal;})){
+    if(!confirm('Já existe uma fórmula com o código "'+codReal+'" neste banco. Deseja continuar mesmo assim?'))return;
+  }
+  var novaFormula={
+    cod:codReal,nome:nomeReal,cat:c.cat,batida:parseFloat(c.batida),pesoSaco:parseFloat(c.pesoSaco),
+    _origem:c.banco==='rna'?'rna':'importado',
+    emb:{custo:parseFloat(c.embCusto)||0,desc:c.embDesc||''},
+    cif:{mo:0,enc:0,ee:0,out:0},
+    ings:JSON.parse(c.ingsJSON||'[]')
+  };
+  arr.push(novaFormula);
+  salvarEdicaoRemota(novaFormula);
+  c.status='aprovada -> cod '+codReal;
+  cotacoesRemoto[c.id]=c;
+  marcarStatusCotacaoRemoto(c,c.status);
+  if(c.banco==='rna'){renderBancoRNA($('rna-busca')?$('rna-busca').value:'');}
+  else{renderBancoFormulas($('banco-busca')?$('banco-busca').value:'');}
+  atualizarSelectFormulas();
+  fecharPrecificarCotacao();
+  renderCotacoes();
+  toast('Cotação aprovada! Produto "'+nomeReal+'" ('+codReal+') criado e disponível para todos.');
+}
+function recusarCotacao(){
+  var c=cotacoesRemoto[cotAtualId];
+  if(!c)return;
+  if(!confirm('Excluir esta cotação? Essa ação não pode ser desfeita.'))return;
+  excluirCotacaoRemoto(c.id);
+  delete cotacoesRemoto[c.id];
+  fecharPrecificarCotacao();
+  renderCotacoes();
+  toast('Cotação excluída.');
+}
+
 function carregarFormulaEditadaRemoto(cod){
   var f=formulasEditadasRemoto[String(cod)];
   if(!f){toast('Nenhuma edicao encontrada para este codigo.');return;}
@@ -2829,7 +3261,7 @@ function exportarLocal(cod){exportarLocalFormula(cod);}
 function removerLocalBtn(cod){removerLocal(cod);}
 
 /* Abas protegidas por senha (mp, ficha, preco). Hash djb2 — senha não fica em texto puro. */
-const ABAS_PROTEGIDAS=['mp','ficha','preco','precos'];
+const ABAS_PROTEGIDAS=['mp','ficha','preco'];
 const SENHA_HASH=3268142524;
 let acessoLiberado=false;
 function hashSenha(s){var h=5381;for(var i=0;i<s.length;i++){h=((h*33)+s.charCodeAt(i))>>>0;}return h;}
@@ -2845,8 +3277,43 @@ function verificarAcesso(id){
 /* ===== Criar fórmula do zero ===== */
 let nfBancoAlvo='banco';
 let nfIngRows=[];
+let nfModoCotacao=false;
+function toggleModoCotacao(){
+  nfModoCotacao=$('nf-modo-cotacao').checked;
+  $('nf-cotacao-painel').style.display=nfModoCotacao?'block':'none';
+  $('nf-cod-opcional').style.display=nfModoCotacao?'inline':'none';
+  $('nf-nome-opcional').style.display=nfModoCotacao?'inline':'none';
+  $('nf-save-btn').textContent=nfModoCotacao?'✅ Aprovar e criar produto':'💾 Salvar fórmula';
+  atualizarNFTotal();
+}
+function atualizarCotacaoCalc(){
+  if(!nfModoCotacao)return;
+  var batida=parseFloat($('nf-batida').value)||0;
+  var peso=parseFloat($('nf-peso').value)||0;
+  var sacos=peso>0?batida/peso:0;
+  var embVal=$('nf-emb').value;
+  var embCusto=embVal?(MPcusto[parseInt(embVal)]||0):0;
+  var mpBat=0;
+  nfIngRows.forEach(function(r){
+    if(!r.cod)return;
+    var c=MPcusto[r.cod]!==undefined?MPcusto[r.cod]:0;
+    mpBat+=(r.qtd||0)*(c/1000);
+  });
+  var custoSaco=sacos>0?(mpBat/sacos)+embCusto:0;
+  var custoKg=peso>0?custoSaco/peso:0;
+  var margem=parseFloat($('nf-margem').value)||0;
+  var precoKg=custoKg/(1-margem/100);
+  var precoSaco=custoSaco/(1-margem/100);
+  $('nf-custo-kg').value='R$ '+custoKg.toFixed(3).replace('.',',');
+  $('nf-custo-saco').value='R$ '+custoSaco.toFixed(2).replace('.',',');
+  $('nf-preco-kg').value='R$ '+(isFinite(precoKg)?precoKg.toFixed(3).replace('.',','):'—');
+  $('nf-preco-saco').value='R$ '+(isFinite(precoSaco)?precoSaco.toFixed(2).replace('.',','):'—');
+}
 function gruposParaBanco(banco){
-  return banco==='rna' ? ['Viacampus','Rural Vale','Linha Rural','Outro'] : GRUPOS_PRODUTO;
+  return banco==='rna' ? ['Viacampus','Rural Vale','Linha Rural'] : GRUPOS_PRODUTO;
+}
+function bancoDoCat(cat){
+  return ['Viacampus','Rural Vale','Linha Rural'].indexOf(cat)>=0 ? 'rna' : 'banco';
 }
 function abrirNovaFormula(banco){
   nfBancoAlvo=banco;
@@ -2855,9 +3322,12 @@ function abrirNovaFormula(banco){
   $('nf-nome').value='';
   $('nf-batida').value=1000;
   $('nf-peso').value=30;
+  $('nf-margem').value=30;
+  $('nf-modo-cotacao').checked=false;
   $('nf-cat').innerHTML=gruposParaBanco(banco).map(function(g){return '<option>'+g+'</option>';}).join('');
   popularSelectEmbNF();
   $('nf-titulo').textContent='Nova fórmula — '+(banco==='rna'?'RNA - Ivinhema':'RURAL - Eldorado');
+  toggleModoCotacao();
   renderNFIngs();
   $('nova-formula-modal').style.display='flex';
 }
@@ -2886,6 +3356,7 @@ function atualizarNFTotal(){
   var total=nfIngRows.reduce(function(s,r){return s+(r.qtd||0);},0);
   set('nf-total',fn(total,2)+' kg');
   set('nf-batida-echo',$('nf-batida').value||0);
+  atualizarCotacaoCalc();
 }
 function salvarNovaFormula(){
   var cod=$('nf-cod').value.trim();
@@ -2894,7 +3365,7 @@ function salvarNovaFormula(){
   var batida=parseFloat($('nf-batida').value)||0;
   var peso=parseFloat($('nf-peso').value)||0;
   var embVal=$('nf-emb').value;
-  if(!cod||!nome){alert('Preencha o código e o nome do produto.');return;}
+  if(!cod||!nome){alert(nfModoCotacao?'Pra aprovar e criar o produto, preencha o código e o nome.':'Preencha o código e o nome do produto.');return;}
   if(batida<=0){alert('Informe uma batida maior que zero.');return;}
   if(peso<=0){alert('Informe um peso de saco maior que zero.');return;}
   var ingsValidos=nfIngRows.filter(function(r){return r.cod&&r.qtd>0;});
@@ -2916,9 +3387,14 @@ function salvarNovaFormula(){
   if(nfBancoAlvo==='rna'){renderBancoRNA($('rna-busca')?$('rna-busca').value:'');}
   else{renderBancoFormulas($('banco-busca')?$('banco-busca').value:'');}
   atualizarSelectFormulas();
-  toast('Fórmula "'+nome+'" criada com sucesso!');
+  salvarEdicaoRemota(novaFormula);
+  toast((nfModoCotacao?'Cotação aprovada — produto ':'Fórmula ')+'"'+nome+'" criado e disponível para todos os colaboradores!');
 }
 
+function irPara(id){
+  var tab=document.querySelector('.tab[onclick*="\''+id+'\'"]');
+  if(tab) goTab(id,tab);
+}
 function goTab(id,el){
   if(!verificarAcesso(id))return;
   document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
@@ -2932,949 +3408,12 @@ function goTab(id,el){
   if(id==='prodivi') renderOPIvinhema();
   if(id==='banco') renderBancoFormulas($('banco-busca')?$('banco-busca').value:'');
   if(id==='rna') renderBancoRNA($('rna-busca')?$('rna-busca').value:'');
-  if(id==='precos') ptOnTabOpen();
-  if(id==='precospub') ptpOnTabOpen();
+  if(id==='cotacoes') renderCotacoes();
 }
-
-
-/* ======================================================================
-   TABELA DE PREÇOS — módulo integrado
-   Reaproveita biblioteca / bibliotecaRNA / MPcusto / custoFormula /
-   listaTodasFormulas já carregados acima nesta mesma página para puxar
-   o CMV diretamente das fichas técnicas, ao invés de valores estáticos.
-   ====================================================================== */
-
-const PT_CATALOG = {"Rural": {"groups": [{"name": "Sal Mineral", "hasCode": true, "items": [{"id": "Rural|Sal Mineral|0", "code": "125", "name": "Rural Engorda", "price": 105}, {"id": "Rural|Sal Mineral|1", "code": "126", "name": "Rural Recria", "price": 135}, {"id": "Rural|Sal Mineral|2", "code": "128", "name": "Rural 80 Cria", "price": 168}, {"id": "Rural|Sal Mineral|3", "code": "129", "name": "Rural 90 Cria", "price": 183}, {"id": "Rural|Sal Mineral|4", "code": "184", "name": "Rural Leite", "price": 180}, {"id": "Rural|Sal Mineral|5", "code": "187", "name": "Rural Ovinos", "price": 167}, {"id": "Rural|Sal Mineral|6", "code": "633", "name": "Rural Reprodução", "price": 201}, {"id": "Rural|Sal Mineral|7", "code": "937", "name": "Rural Equinos", "price": 134}]}, {"name": "Linha Plus", "hasCode": true, "items": [{"id": "Rural|Linha Plus|0", "code": "833", "name": "Rural Cria Aditivado", "price": 131.5}, {"id": "Rural|Linha Plus|1", "code": "938", "name": "Rural Engorda Plus", "price": 105.5}, {"id": "Rural|Linha Plus|2", "code": "939", "name": "Rural Recria Plus", "price": 135.5}, {"id": "Rural|Linha Plus|3", "code": "957", "name": "Rural Cria Plus", "price": 118.5}, {"id": "Rural|Linha Plus|4", "code": "1189", "name": "Rural Recria Plus UP", "price": 117.5}, {"id": "Rural|Linha Plus|5", "code": "1440", "name": "Rural Leite Plus ADE", "price": 133}, {"id": "Rural|Linha Plus|6", "code": "1441", "name": "Rural Produção Plus", "price": 114}, {"id": "Rural|Linha Plus|7", "code": "1447", "name": "Rural Cria Super Plus", "price": 173}, {"id": "Rural|Linha Plus|8", "code": "1475", "name": "Rural Cria Advance", "price": 135}, {"id": "Rural|Linha Plus|9", "code": "1569", "name": "Rural Recria Plus + Prot", "price": 132}, {"id": "Rural|Linha Plus|10", "code": "1667", "name": "Rural Engorda Advance Plus", "price": 112.5}, {"id": "Rural|Linha Plus|11", "code": "1668", "name": "Rural Recria Advance Plus", "price": 145}, {"id": "Rural|Linha Plus|12", "code": "1719", "name": "Rural Cria + Energia", "price": 112}, {"id": "Rural|Linha Plus|13", "code": "1755", "name": "Rural Produção Plus JT", "price": 115}, {"id": "Rural|Linha Plus|14", "code": "1767", "name": "Rural Cria Plus Nar", "price": 130}, {"id": "Rural|Linha Plus|15", "code": "1768", "name": "Rural Recria Plus Nar", "price": 143.5}, {"id": "Rural|Linha Plus|16", "code": "1769", "name": "Rural Produção Plus Nar", "price": 120}]}, {"name": "Energéticos", "hasCode": true, "items": [{"id": "Rural|Energéticos|0", "code": "844", "name": "Rural Desmama Prime", "price": 90}, {"id": "Rural|Energéticos|1", "code": "864", "name": "Rural Primíparas Prime", "price": 85}, {"id": "Rural|Energéticos|2", "code": "930", "name": "Rural Engorda Prime", "price": 87}, {"id": "Rural|Energéticos|3", "code": "946", "name": "Rural Energético Master", "price": 75}, {"id": "Rural|Energéticos|4", "code": "953", "name": "Rural Recria Prime", "price": 95}, {"id": "Rural|Energéticos|5", "code": "1267", "name": "Rural Energético Tmax", "price": 88}, {"id": "Rural|Energéticos|6", "code": "1418", "name": "Rural Flex Prob", "price": 80}, {"id": "Rural|Energéticos|7", "code": "1423", "name": "Rural Energético Max Prob", "price": 75}, {"id": "Rural|Energéticos|8", "code": "1428", "name": "Rural Energético Prime Prob", "price": 77}, {"id": "Rural|Energéticos|9", "code": "1439", "name": "Rural Energético Prob", "price": 89}, {"id": "Rural|Energéticos|10", "code": "1594", "name": "Rural Energético Max Prob - 40 kg", "price": 96}, {"id": "Rural|Energéticos|11", "code": "1628", "name": "Rural Energético Prime Nar", "price": 86.5}, {"id": "Rural|Energéticos|12", "code": "1647", "name": "Rural Precoce", "price": 81.5}, {"id": "Rural|Energéticos|13", "code": "1661", "name": "Rural Proteico Max 22", "price": 75}, {"id": "Rural|Energéticos|14", "code": "1670", "name": "Rural Proteico Prime 23", "price": 85}, {"id": "Rural|Energéticos|15", "code": "1764", "name": "Rural Energético Master Nar", "price": 82}, {"id": "Rural|Energéticos|16", "code": "1766", "name": "Rural Energético Prime Prob Nar", "price": 85}, {"id": "Rural|Energéticos|17", "code": "1775", "name": "Rural Precoce Nar", "price": 80}, {"id": "Rural|Energéticos|18", "code": "1776", "name": "Rural Energético Max Prob Nar", "price": 80}, {"id": "Rural|Energéticos|19", "code": "1803", "name": "Rural Energético Max Mon 0,5", "price": 65}, {"id": "Rural|Energéticos|20", "code": "1804", "name": "Rural Energético Master 0,3 Mon", "price": 70}, {"id": "Rural|Energéticos|21", "code": "1808", "name": "Rural Proteico Prime 0,1 Mon", "price": 74}, {"id": "Rural|Energéticos|22", "code": "190", "name": "Ruralzinho Creep", "price": 95}]}, {"name": "Rações", "hasCode": true, "items": [{"id": "Rural|Rações|0", "code": "180", "name": "Rural Equino Prime", "price": 90}, {"id": "Rural|Rações|1", "code": "997", "name": "Rural Elite Touros", "price": 87}, {"id": "Rural|Rações|2", "code": "1018", "name": "Ração MC", "price": 38.3}, {"id": "Rural|Rações|3", "code": "1227", "name": "Rural Ração Tip Junqueira", "price": 80}, {"id": "Rural|Rações|4", "code": "1287", "name": "Rural Acabamento AS", "price": 80}, {"id": "Rural|Rações|5", "code": "1513", "name": "Rural Confinamento Cana", "price": 78}, {"id": "Rural|Rações|6", "code": "1405", "name": "Rural Terminação AS - 40 kg", "price": 82}, {"id": "Rural|Rações|7", "code": "1657", "name": "Rural Elite Vacas", "price": 70}, {"id": "Rural|Rações|8", "code": "1742", "name": "Rural Terminação AS - 30 kg", "price": 65}, {"id": "Rural|Rações|9", "code": "1784", "name": "Rural Elite Touros 18% - 30 kg", "price": 62}]}, {"name": "Grupo MP", "hasCode": true, "items": [{"id": "Rural|Grupo MP|0", "code": "543", "name": "Milho a Granel - sc 30 kg", "price": 50.0}, {"id": "Rural|Grupo MP|1", "code": "543,5", "name": "Quirera de Milho - sc 25 kg", "price": 50.0}]}]}, "Viacampus": {"groups": [{"name": "Viacampus Rações", "hasCode": false, "items": [{"id": "Viacampus|Viacampus Rações|0", "code": null, "name": "Rural Equino Prime", "price": 102}, {"id": "Viacampus|Viacampus Rações|1", "code": null, "name": "Ruralzinho Creep Inicial", "price": 82}, {"id": "Viacampus|Viacampus Rações|2", "code": null, "name": "Ruralzinho Creep Final", "price": 80}, {"id": "Viacampus|Viacampus Rações|3", "code": null, "name": "Viacampus Terminação AS", "price": 82}, {"id": "Viacampus|Viacampus Rações|4", "code": null, "name": "Rural Ração 16 DR", "price": 57.5}, {"id": "Viacampus|Viacampus Rações|5", "code": null, "name": "Rural Lactação DR", "price": 62.5}, {"id": "Viacampus|Viacampus Rações|6", "code": null, "name": "Rural Lactação 22 DR", "price": 68.5}, {"id": "Viacampus|Viacampus Rações|7", "code": null, "name": "Rural Confina AS (40 kg)", "price": 87}, {"id": "Viacampus|Viacampus Rações|8", "code": null, "name": "Rural Confina AS (30 kg)", "price": 68.5}, {"id": "Viacampus|Viacampus Rações|9", "code": null, "name": "Rural Elite 16% - 40 kg", "price": 80}, {"id": "Viacampus|Viacampus Rações|10", "code": null, "name": "Rural Elite 16% - 30 kg", "price": 62.5}, {"id": "Viacampus|Viacampus Rações|11", "code": null, "name": "Rural Via Engorda 16", "price": 68.5}]}, {"name": "Viacampus Proteicos", "hasCode": false, "items": [{"id": "Viacampus|Viacampus Proteicos|0", "code": null, "name": "Viacampus Energético 20", "price": 82}, {"id": "Viacampus|Viacampus Proteicos|1", "code": null, "name": "Viacampus Energético Max", "price": 75}, {"id": "Viacampus|Viacampus Proteicos|2", "code": null, "name": "Viacampus Energético Alternativo", "price": 90}, {"id": "Viacampus|Viacampus Proteicos|3", "code": null, "name": "Viacampus Creep", "price": 92}, {"id": "Viacampus|Viacampus Proteicos|4", "code": null, "name": "Viacampus Energ. 20 AS", "price": 77.5}, {"id": "Viacampus|Viacampus Proteicos|5", "code": null, "name": "Viacampus Energ. Alternativo AS", "price": 87}, {"id": "Viacampus|Viacampus Proteicos|6", "code": null, "name": "Viacampus Energ. Equinos", "price": 69}, {"id": "Viacampus|Viacampus Proteicos|7", "code": null, "name": "Viacampus Advance Matriz", "price": 76}, {"id": "Viacampus|Viacampus Proteicos|8", "code": null, "name": "Viacampus Proteico 40", "price": 72.8}, {"id": "Viacampus|Viacampus Proteicos|9", "code": null, "name": "Rural Proteico Max 22", "price": 74}, {"id": "Viacampus|Viacampus Proteicos|10", "code": null, "name": "Rural Proteico Prime 23", "price": 78}, {"id": "Viacampus|Viacampus Proteicos|11", "code": null, "name": "Rural Energético Prime Prob Nar", "price": 80}]}, {"name": "Viacampus Mineral", "hasCode": false, "items": [{"id": "Viacampus|Viacampus Mineral|0", "code": null, "name": "Viacampus 40", "price": 96.5}, {"id": "Viacampus|Viacampus Mineral|1", "code": null, "name": "Viacampus 60", "price": 125}, {"id": "Viacampus|Viacampus Mineral|2", "code": null, "name": "Viacampus 80", "price": 155}, {"id": "Viacampus|Viacampus Mineral|3", "code": null, "name": "Viacampus Leite", "price": 160}, {"id": "Viacampus|Viacampus Mineral|4", "code": null, "name": "Viacampus Equinos", "price": 125}, {"id": "Viacampus|Viacampus Mineral|5", "code": null, "name": "Viacampus Ovinos", "price": 155}, {"id": "Viacampus|Viacampus Mineral|6", "code": null, "name": "Viacampus Cria Plus", "price": 130}, {"id": "Viacampus|Viacampus Mineral|7", "code": null, "name": "Viacampus Cria Advance", "price": 135}, {"id": "Viacampus|Viacampus Mineral|8", "code": null, "name": "Viacampus Produção Plus", "price": 134}]}, {"name": "Viacampus Núcleos", "hasCode": false, "items": [{"id": "Viacampus|Viacampus Núcleos|0", "code": null, "name": "Núcleo Via Flex", "price": 3500}, {"id": "Viacampus|Viacampus Núcleos|1", "code": null, "name": "Núcleo Via Flex Proteico", "price": 3800}, {"id": "Viacampus|Viacampus Núcleos|2", "code": null, "name": "Núcleo Via Flex FB", "price": 3800}, {"id": "Viacampus|Viacampus Núcleos|3", "code": null, "name": "Núcleo Via Creep", "price": 8000}, {"id": "Viacampus|Viacampus Núcleos|4", "code": null, "name": "Núcleo Via Creep Proteico", "price": 5200}, {"id": "Viacampus|Viacampus Núcleos|5", "code": null, "name": "Núcleo Confina Pasto", "price": 4800}]}]}, "RNA": {"groups": [{"name": "RNA Linha Fós", "hasCode": false, "items": [{"id": "RNA|RNA Linha Fós|0", "code": null, "name": "Valefós Leite 85%", "price": 170}, {"id": "RNA|RNA Linha Fós|1", "code": null, "name": "Valefós Leite 80%", "price": 160}, {"id": "RNA|RNA Linha Fós|2", "code": null, "name": "Valefós Ovinos", "price": 135}, {"id": "RNA|RNA Linha Fós|3", "code": null, "name": "Valefós Engorda 40", "price": 100}, {"id": "RNA|RNA Linha Fós|4", "code": null, "name": "Valefós Recria 60", "price": 130}, {"id": "RNA|RNA Linha Fós|5", "code": null, "name": "Valefós Cria 80", "price": 160}, {"id": "RNA|RNA Linha Fós|6", "code": null, "name": "Valefós Cria 88", "price": 170}, {"id": "RNA|RNA Linha Fós|7", "code": null, "name": "Valefós Engorda S", "price": 110}]}, {"name": "RNA Linha Farelado", "hasCode": false, "items": [{"id": "RNA|RNA Linha Farelado|0", "code": null, "name": "Miner Pro 25%", "price": 77}, {"id": "RNA|RNA Linha Farelado|1", "code": null, "name": "Proteico Vale 30", "price": 85}, {"id": "RNA|RNA Linha Farelado|2", "code": null, "name": "Proteico Vale 20", "price": 78}, {"id": "RNA|RNA Linha Farelado|3", "code": null, "name": "Rural Energético Vale Max", "price": 75.5}, {"id": "RNA|RNA Linha Farelado|4", "code": null, "name": "Rural Energético Max 25", "price": 75}, {"id": "RNA|RNA Linha Farelado|5", "code": null, "name": "Rural Energético Max R", "price": 74}, {"id": "RNA|RNA Linha Farelado|6", "code": null, "name": "Rural Vale Recria M", "price": 145}, {"id": "RNA|RNA Linha Farelado|7", "code": null, "name": "Vale Creep", "price": 112}, {"id": "RNA|RNA Linha Farelado|8", "code": null, "name": "Rural Energético Precoce Estoril", "price": 78}, {"id": "RNA|RNA Linha Farelado|9", "code": null, "name": "Rural Energético Master M", "price": 80}, {"id": "RNA|RNA Linha Farelado|10", "code": null, "name": "Rural Proteico Max 22", "price": 73}, {"id": "RNA|RNA Linha Farelado|11", "code": null, "name": "Rural Energético Master Nar", "price": 75}, {"id": "RNA|RNA Linha Farelado|12", "code": null, "name": "Rural Energ. Prime Prob Nar", "price": 78}, {"id": "RNA|RNA Linha Farelado|13", "code": null, "name": "Rural Energético Max Mon 0,5", "price": 65}, {"id": "RNA|RNA Linha Farelado|14", "code": null, "name": "Rural Energético Master 0,3 Mon", "price": 70}, {"id": "RNA|RNA Linha Farelado|15", "code": null, "name": "Rural Proteico Prime 0,1 Mon", "price": 74}, {"id": "RNA|RNA Linha Farelado|16", "code": null, "name": "Rural Vale Engorda 16", "price": 57}, {"id": "RNA|RNA Linha Farelado|17", "code": null, "name": "Rural Vale Engorda 18", "price": 60}, {"id": "RNA|RNA Linha Farelado|18", "code": null, "name": "Rural Vale Engorda 16 - 40 kg", "price": 80}, {"id": "RNA|RNA Linha Farelado|19", "code": null, "name": "Ração Vale Bezerro", "price": 68}, {"id": "RNA|RNA Linha Farelado|20", "code": null, "name": "Ração Vale Engorda 16 S", "price": 78}, {"id": "RNA|RNA Linha Farelado|21", "code": null, "name": "Rural Ração Tip - 30 kg", "price": 62}, {"id": "RNA|RNA Linha Farelado|22", "code": null, "name": "Ração Vale Leite 18%", "price": 67}, {"id": "RNA|RNA Linha Farelado|23", "code": null, "name": "Ração Vale Leite 22%", "price": 70}]}, {"name": "Rural Linha Farelado", "hasCode": false, "items": [{"id": "RNA|Rural Linha Farelado|0", "code": null, "name": "Rural Ração Equino Prime", "price": 90}, {"id": "RNA|Rural Linha Farelado|1", "code": null, "name": "Rural Acabamento AS", "price": 75}]}, {"name": "Rural Linha Fós", "hasCode": false, "items": [{"id": "RNA|Rural Linha Fós|0", "code": null, "name": "Rural Equinos", "price": 140}, {"id": "RNA|Rural Linha Fós|1", "code": null, "name": "Rural Engorda Plus", "price": 112}, {"id": "RNA|Rural Linha Fós|2", "code": null, "name": "Rural Recria Plus", "price": 130}, {"id": "RNA|Rural Linha Fós|3", "code": null, "name": "Rural Recria Plus UP", "price": 125}, {"id": "RNA|Rural Linha Fós|4", "code": null, "name": "Rural Cria Advance", "price": 135}, {"id": "RNA|Rural Linha Fós|5", "code": null, "name": "Rural Recria Plus + Prot", "price": 135}, {"id": "RNA|Rural Linha Fós|6", "code": null, "name": "Rural Cria Plus Nar", "price": 125}, {"id": "RNA|Rural Linha Fós|7", "code": null, "name": "Rural Recria Plus Nar", "price": 142}, {"id": "RNA|Rural Linha Fós|8", "code": null, "name": "Rural Produção Plus Nar", "price": 130}, {"id": "RNA|Rural Linha Fós|9", "code": null, "name": "Rural Min Salino 600", "price": 110}]}, {"name": "Rural Linha Núcleos", "hasCode": false, "items": [{"id": "RNA|Rural Linha Núcleos|0", "code": null, "name": "Rural Núcleo Confinamento SLM", "price": 5200}, {"id": "RNA|Rural Linha Núcleos|1", "code": null, "name": "Rural Núcleo Proteico SLM", "price": 4200}, {"id": "RNA|Rural Linha Núcleos|2", "code": null, "name": "Rural Núcleo Concentrado Flex", "price": 4100}]}, {"name": "Grupo MP", "hasCode": true, "items": [{"id": "RNA|Grupo MP|0", "code": "543", "name": "Milho a Granel - sc 30 kg", "price": 50.0}, {"id": "RNA|Grupo MP|1", "code": "543,5", "name": "Quirera de Milho - sc 25 kg", "price": 50.0}]}]}, "Copacol": {"groups": [{"name": "Copacol", "hasCode": true, "items": [{"id": "Copacol|Copacol|0", "code": "1700", "name": "Bovimais 40", "price": 100}, {"id": "Copacol|Copacol|1", "code": "1705", "name": "Bovimais Energético 20", "price": 65}, {"id": "Copacol|Copacol|2", "code": "1706", "name": "Bovimais Proteico 30", "price": 73.5}, {"id": "Copacol|Copacol|3", "code": "1708", "name": "Bovimais Proteico 25", "price": 72}, {"id": "Copacol|Copacol|4", "code": "1710", "name": "Bovimais Cria Plus", "price": 107}, {"id": "Copacol|Copacol|5", "code": "1711", "name": "Bovimais 80 Cria", "price": 160}, {"id": "Copacol|Copacol|6", "code": "1712", "name": "Bovimais Pronto 45", "price": 107}, {"id": "Copacol|Copacol|7", "code": "1713", "name": "Bovimais Engorda Plus", "price": 99}, {"id": "Copacol|Copacol|8", "code": "1715", "name": "Bovimais Produção Seca", "price": 130}, {"id": "Copacol|Copacol|9", "code": "1724", "name": "Bovimais Vacas SLA", "price": 138}, {"id": "Copacol|Copacol|10", "code": "1725", "name": "Bovimais Proteico Recria SLA", "price": 80.5}, {"id": "Copacol|Copacol|11", "code": "1751", "name": "Bovimais 20 Especial", "price": 120.5}, {"id": "Copacol|Copacol|12", "code": "1752", "name": "Bovimais Cria Águas Salino", "price": 453}, {"id": "Copacol|Copacol|13", "code": "1753", "name": "Bovimais Proteico 30 Águas", "price": 168}, {"id": "Copacol|Copacol|14", "code": "1765", "name": "Bovimais Recria", "price": 128.5}]}]}};
-const PT_STATIC_COSTS = {"Rural": {"Sal Mineral": {"rural engorda": {"cmv": 74.2304, "cdf": 10.0}, "rural recria": {"cmv": 98.8713, "cdf": 10.0}, "rural 80 cria": {"cmv": 125.08, "cdf": 10.0}, "rural 90 cria": {"cmv": 137.8667, "cdf": 10.0}, "rural leite": {"cmv": 126.335, "cdf": 10.0}, "rural ovinos": {"cmv": 124.8692, "cdf": 10.0}, "rural reproducao": {"cmv": 142.3293, "cdf": 10.0}, "rural equinos": {"cmv": 97.8764, "cdf": 10.0}}, "Linha Plus": {"rural cria aditivado": {"cmv": 90.157, "cdf": 10.0}, "rural engorda plus": {"cmv": 75.1819, "cdf": 10.0}, "rural recria plus": {"cmv": 99.4099, "cdf": 10.0}, "rural cria plus": {"cmv": 85.3376, "cdf": 10.0}, "rural recria plus up": {"cmv": 84.4396, "cdf": 10.0}, "rural leite plus ade": {"cmv": 90.7278, "cdf": 10.0}, "rural producao plus": {"cmv": 79.8738, "cdf": 10.0}, "rural cria super plus": {"cmv": 120.8995, "cdf": 10.0}, "rural cria advance": {"cmv": 98.7452, "cdf": 10.0}, "rural recria plus + prot": {"cmv": 96.1024, "cdf": 10.0}, "rural engorda advance plus": {"cmv": 75.1819, "cdf": 10.0}, "rural recria advance plus": {"cmv": 99.6691, "cdf": 10.0}, "rural cria + energia": {"cmv": 75.1144, "cdf": 10.0}, "rural producao plus jt": {"cmv": 76.7832, "cdf": 10.0}, "rural cria plus nar": {"cmv": 94.9856, "cdf": 10.0}, "rural recria plus nar": {"cmv": 106.0366, "cdf": 10.0}, "rural producao plus nar": {"cmv": 86.8127, "cdf": 10.0}}, "Energéticos": {"rural desmama prime": {"cmv": 52.1156, "cdf": 10.0}, "rural primiparas prime": {"cmv": 48.0214, "cdf": 10.0}, "rural engorda prime": {"cmv": 51.1723, "cdf": 10.0}, "rural energetico master": {"cmv": 42.3493, "cdf": 10.0}, "rural recria prime": {"cmv": 60.7669, "cdf": 10.0}, "rural energetico tmax": {"cmv": 39.892, "cdf": 10.0}, "rural flex prob": {"cmv": 45.9808, "cdf": 10.0}, "rural energetico max prob": {"cmv": 41.9818, "cdf": 10.0}, "rural energetico prime prob": {"cmv": 42.0648, "cdf": 10.0}, "rural energetico prob": {"cmv": 52.609, "cdf": 10.0}, "rural energetico max prob  40 kg": {"cmv": 56.5144, "cdf": 10.0}, "rural energetico prime nar": {"cmv": 48.7326, "cdf": 10.0}, "rural precoce": {"cmv": 45.6961, "cdf": 10.0}, "rural proteico max 22": {"cmv": 43.015, "cdf": 10.0}, "rural proteico prime 23": {"cmv": 49.0387, "cdf": 10.0}, "rural energetico master nar": {"cmv": 43.1918, "cdf": 10.0}, "rural energetico prime prob nar": {"cmv": 48.0145, "cdf": 10.0}, "rural precoce nar": {"cmv": 45.123, "cdf": 10.0}, "rural energetico max prob nar": {"cmv": 43.8628, "cdf": 10.0}, "rural energetico max mon 0,5": {"cmv": 41.9503, "cdf": 10.0}, "rural energetico master 0,3 mon": {"cmv": 47.4468, "cdf": 10.0}, "ruralzinho creep": {"cmv": 51.102, "cdf": 10.0}}, "Rações": {"rural equino prime": {"cmv": 49.9572, "cdf": 10.0}, "rural elite touros": {"cmv": 47.499, "cdf": 10.0}, "racao mc": {"cmv": 11.3948, "cdf": 10.0}, "rural racao tip junqueira": {"cmv": 42.9388, "cdf": 10.0}, "rural acabamento as": {"cmv": 43.6088, "cdf": 10.0}, "rural confinamento cana": {"cmv": null, "cdf": 10.0}, "rural terminacao as  40 kg": {"cmv": 45.9396, "cdf": 10.0}, "rural elite vacas": {"cmv": 34.128, "cdf": 10.0}, "rural terminacao as  30 kg": {"cmv": 35.0797, "cdf": 10.0}, "rural elite touros 18%  30 kg": {"cmv": 35.1048, "cdf": 10.0}}}, "Copacol": {"Copacol": {"bovimais 40": {"cmv": 74.4393, "cdf": 10.0}, "bovimais energetico 20": {"cmv": 44.7061, "cdf": 10.0}, "bovimais proteico 30": {"cmv": 52.1905, "cdf": 10.0}, "bovimais proteico 25": {"cmv": 51.0981, "cdf": 10.0}, "bovimais cria plus": {"cmv": 80.5166, "cdf": 10.0}, "bovimais 80 cria": {"cmv": 125.315, "cdf": 10.0}, "bovimais pronto 45": {"cmv": 80.5431, "cdf": 10.0}, "bovimais engorda plus": {"cmv": 73.6864, "cdf": 10.0}, "bovimais producao seca": {"cmv": 99.9885, "cdf": 10.0}, "bovimais vacas sla": {"cmv": 107.1327, "cdf": 10.0}, "bovimais proteico recria sla": {"cmv": 58.0846, "cdf": 10.0}, "bovimais 20 especial": {"cmv": 92.1247, "cdf": 10.0}, "bovimais cria aguas salino": {"cmv": 119.6006, "cdf": 10.0}, "bovimais proteico 30 aguas": {"cmv": 132.0124, "cdf": 10.0}, "bovimais recria": {"cmv": 99.0823, "cdf": 10.0}}}, "Viacampus": {"Viacampus Rações": {"rural equino prime": {"cmv": 48.9392, "cdf": 10.0}, "ruralzinho creep inicial": {"cmv": 40.117, "cdf": 10.0}, "ruralzinho creep final": {"cmv": 37.9528, "cdf": 10.0}, "viacampus terminacao as": {"cmv": 46.0102, "cdf": 10.0}, "rural racao 16 dr": {"cmv": 34.3991, "cdf": 10.0}, "rural lactacao dr": {"cmv": 39.4591, "cdf": 10.0}, "rural lactacao 22 dr": {"cmv": 39.5068, "cdf": 10.0}, "rural confina as 40 kg": {"cmv": 43.8392, "cdf": 10.0}, "rural confina as 30 kg": {"cmv": 33.2414, "cdf": 10.0}, "rural elite 16%  40 kg": {"cmv": 3.113, "cdf": 10.0}, "rural elite 16%  30 kg": {"cmv": 34.3595, "cdf": 10.0}, "rural via engorda 16": {"cmv": 34.7018, "cdf": 10.0}}, "Viacampus Proteicos": {"viacampus energetico 20": {"cmv": 45.1819, "cdf": 10.0}, "viacampus energetico max": {"cmv": 45.4265, "cdf": 10.0}, "viacampus energetico alternativo": {"cmv": 56.9993, "cdf": 10.0}, "viacampus creep": {"cmv": 46.2415, "cdf": 10.0}, "viacampus energ 20 as": {"cmv": 47.5499, "cdf": 10.0}, "viacampus energ alternativo as": {"cmv": 51.3936, "cdf": 10.0}, "viacampus energ equinos": {"cmv": null, "cdf": 10.0}, "viacampus advance matriz": {"cmv": null, "cdf": 10.0}, "viacampus proteico 40": {"cmv": null, "cdf": 10.0}, "rural proteico max 22": {"cmv": 40.7341, "cdf": 10.0}, "rural proteico prime 23": {"cmv": 47.1171, "cdf": 10.0}}, "Viacampus Mineral": {"viacampus 40": {"cmv": 73.1649, "cdf": 10.0}, "viacampus 60": {"cmv": 96.7102, "cdf": 10.0}, "viacampus 80": {"cmv": 122.9645, "cdf": 10.0}, "viacampus leite": {"cmv": 126.2197, "cdf": 10.0}, "viacampus equinos": {"cmv": 97.2979, "cdf": 10.0}, "viacampus ovinos": {"cmv": 122.0532, "cdf": 10.0}, "viacampus cria plus": {"cmv": 79.5526, "cdf": 10.0}, "viacampus cria advance": {"cmv": 84.2742, "cdf": 10.0}, "viacampus producao plus": {"cmv": 95.4136, "cdf": 10.0}}, "Viacampus Núcleos": {"nucleo via flex": {"cmv": 1822.32, "cdf": 450.0}, "nucleo via flex proteico": {"cmv": 2011.7056, "cdf": 450.0}, "nucleo via flex fb": {"cmv": 1774.4206, "cdf": 450.0}, "nucleo via creep": {"cmv": 5201.955, "cdf": 450.0}, "nucleo via creep proteico": {"cmv": 2890.56, "cdf": 450.0}, "nucleo confina pasto": {"cmv": 2167.6, "cdf": 450.0}}}, "RNA": {"RNA Linha Fós": {"valefos leite 85%": {"cmv": 131.8606, "cdf": 10.0}, "valefos leite 80%": {"cmv": 124.2105, "cdf": 10.0}, "valefos ovinos": {"cmv": 103.7933, "cdf": 10.0}, "valefos engorda 40": {"cmv": 72.3751, "cdf": 10.0}, "valefos recria 60": {"cmv": 97.6029, "cdf": 10.0}, "valefos cria 80": {"cmv": 121.3601, "cdf": 10.0}, "valefos cria 88": {"cmv": 131.6809, "cdf": 10.0}, "valefos engorda s": {"cmv": 79.5079, "cdf": 10.0}}, "RNA Linha Farelado": {"miner pro 25%": {"cmv": 46.0816, "cdf": 10.0}, "proteico vale 30": {"cmv": 53.4283, "cdf": 10.0}, "proteico vale 20": {"cmv": 46.115, "cdf": 10.0}, "rural energetico vale max": {"cmv": 44.9112, "cdf": 10.0}, "rural energetico max 25": {"cmv": 44.5394, "cdf": 10.0}, "rural energetico max r": {"cmv": 44.4395, "cdf": 10.0}, "rural vale recria m": {"cmv": 99.5606, "cdf": 10.0}, "vale creep": {"cmv": 52.4076, "cdf": 10.0}, "rural energetico precoce estoril": {"cmv": 46.2588, "cdf": 10.0}, "rural energetico master m": {"cmv": 48.0688, "cdf": 10.0}, "rural proteico max 22": {"cmv": 41.6941, "cdf": 10.0}, "rural energetico master nar": {"cmv": 43.1007, "cdf": 10.0}, "rural energ prime prob nar": {"cmv": 47.3383, "cdf": 10.0}, "rural energetico max mon 0,5": {"cmv": 41.0143, "cdf": 10.0}, "rural energetico master 0,3 mon": {"cmv": null, "cdf": 10.0}, "rural vale engorda 16": {"cmv": 31.9991, "cdf": 10.0}, "rural vale engorda 18": {"cmv": 32.9781, "cdf": 10.0}, "rural vale engorda 16  40 kg": {"cmv": 46.0744, "cdf": 10.0}, "racao vale ovinos": {"cmv": 34.8518, "cdf": 10.0}, "racao vale bezerro": {"cmv": 37.9721, "cdf": 10.0}, "racao vale engorda 16 s": {"cmv": 45.343, "cdf": 10.0}, "rural racao tip  30 kg": {"cmv": 33.9515, "cdf": 10.0}, "racao vale leite 18%": {"cmv": 37.2636, "cdf": 10.0}, "racao vale leite 22%": {"cmv": 39.234, "cdf": 10.0}}, "Rural Linha Farelado": {"rural racao equino prime": {"cmv": 49.2392, "cdf": 10.0}, "rural acabamento as": {"cmv": 43.5636, "cdf": 10.0}}, "Rural Linha Fós": {"rural equinos": {"cmv": 100.9379, "cdf": 10.0}, "rural engorda plus": {"cmv": 83.4716, "cdf": 10.0}, "rural recria plus": {"cmv": 98.9099, "cdf": 10.0}, "rural recria plus up": {"cmv": 85.1501, "cdf": 10.0}, "rural cria advance": {"cmv": 95.8775, "cdf": 10.0}, "rural recria plus + prot": {"cmv": 95.2784, "cdf": 10.0}, "rural cria plus nar": {"cmv": 88.0559, "cdf": 10.0}, "rural recria plus nar": {"cmv": 106.5696, "cdf": 10.0}, "rural producao plus nar": {"cmv": 89.4207, "cdf": 10.0}, "rural min salino 600": {"cmv": 78.3974, "cdf": 10.0}}, "Rural Linha Núcleos": {"rural nucleo confinamento slm": {"cmv": 2331.603, "cdf": 10.0}, "rural nucleo proteico slm": {"cmv": 2545.525, "cdf": 10.0}, "rural nucleo concentrado flex": {"cmv": 1801.52, "cdf": 10.0}}}};
-const PT_GROUP_RATES_DEFAULT = {"Rural|Sal Mineral": {"imposto": 7.0, "comissao": 7.0}, "Rural|Linha Plus": {"imposto": 7.0, "comissao": 7.0}, "Rural|Energéticos": {"imposto": 7.0, "comissao": 7.0}, "Rural|Rações": {"imposto": 7.0, "comissao": 7.0}, "Copacol|Copacol": {"imposto": 11.0, "comissao": 2.0}, "Viacampus|Viacampus Rações": {"imposto": 7.0, "comissao": 3.5}, "Viacampus|Viacampus Proteicos": {"imposto": 7.0, "comissao": 3.5}, "Viacampus|Viacampus Mineral": {"imposto": 7.0, "comissao": 3.5}, "Viacampus|Viacampus Núcleos": {"imposto": 7.0, "comissao": 4.0}, "RNA|RNA Linha Fós": {"imposto": 7.0, "comissao": 7.0}, "RNA|RNA Linha Farelado": {"imposto": 7.0, "comissao": 7.0}, "RNA|Rural Linha Farelado": {"imposto": 7.0, "comissao": 7.0}, "RNA|Rural Linha Fós": {"imposto": 7.0, "comissao": 7.0}, "RNA|Rural Linha Núcleos": {"imposto": 7.0, "comissao": 7.0}};
-
-let PT_CATALOG_STATE = JSON.parse(JSON.stringify(PT_CATALOG));
-const PT_CATALOG_INDEX = {};
-Object.keys(PT_CATALOG_STATE).forEach(brand=>{
-  PT_CATALOG_STATE[brand].groups.forEach(g=>{
-    g.items.forEach(it=> PT_CATALOG_INDEX[it.id]=it);
-  });
-});
-let PT_GROUP_RATES = JSON.parse(JSON.stringify(PT_GROUP_RATES_DEFAULT));
-let PT_LINKS = {};
-let PT_EXTRA_PRICES = {};
-let PT_EMB_SIZES = {}; // override por código de fórmula: tamanho real da embalagem em kg (para fórmulas com pesoSaco=1)
-let PT_CDF_TON = 450; // CD+F padrão (R$) para qualquer produto precificado por tonelada (núcleos etc.)
-let PT_ACTIVE = {}; // id do item do catálogo -> false quando marcado como inativo (default: ativo)
-
-let ptDoc = [];
-let ptActivePageId = null;
-let ptCurrentSubTab = 'builder';
-let ptBooted = false;
-let ptDataLoaded = false;
-
-const PT_KEY_DOC='RURAL_TABELA_DOC_v1', PT_KEY_OV='RURAL_TABELA_CATALOG_OV_v1',
-      PT_KEY_RATES='RURAL_TABELA_RATES_v1', PT_KEY_LINKS='RURAL_TABELA_LINKS_v1',
-      PT_KEY_EXTRA='RURAL_TABELA_EXTRA_PRICES_v1', PT_KEY_EMBSIZE='RURAL_TABELA_EMBSIZE_v1',
-      PT_KEY_CDFTON='RURAL_TABELA_CDFTON_v1', PT_KEY_ACTIVE='RURAL_TABELA_ACTIVE_v1';
-
-function ptUid(){ return Math.random().toString(36).slice(2,10); }
-function ptFmtPrice(v){
-  const n=parseFloat(v);
-  if(isNaN(n)) return 'R$ 0,00';
-  return 'R$ '+n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-}
-function ptParseBRL(text){
-  if(!text) return 0;
-  let t=text.toString().replace(/[^\d,.\-]/g,'').trim();
-  if(t.includes(',')){ t=t.replace(/\./g,'').replace(',', '.'); }
-  const n=parseFloat(t);
-  return isNaN(n)?0:n;
-}
-function ptNormName(s){
-  if(!s) return '';
-  s=s.toString().trim().replace(/\s+/g,' ');
-  s=s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  s=s.toLowerCase();
-  s=s.replace(/[^a-z0-9%+, ]/g,'');
-  return s.trim();
-}
-
-/* ---------- persistência (localStorage — arquivo roda direto no navegador) ---------- */
-function ptLoadAll(){
-  try{ const ov=JSON.parse(localStorage.getItem(PT_KEY_OV)||'{}');
-    Object.keys(ov).forEach(id=>{ if(PT_CATALOG_INDEX[id]) PT_CATALOG_INDEX[id].price=ov[id]; });
-  }catch(e){}
-  try{ const r=JSON.parse(localStorage.getItem(PT_KEY_RATES)||'{}'); PT_GROUP_RATES=Object.assign({},PT_GROUP_RATES,r); }catch(e){}
-  try{ PT_LINKS=JSON.parse(localStorage.getItem(PT_KEY_LINKS)||'{}'); }catch(e){}
-  try{ PT_EXTRA_PRICES=JSON.parse(localStorage.getItem(PT_KEY_EXTRA)||'{}'); }catch(e){}
-  try{ PT_EMB_SIZES=JSON.parse(localStorage.getItem(PT_KEY_EMBSIZE)||'{}'); }catch(e){}
-  try{ const cv=localStorage.getItem(PT_KEY_CDFTON); if(cv!==null) PT_CDF_TON=parseFloat(cv); }catch(e){}
-  try{ PT_ACTIVE=JSON.parse(localStorage.getItem(PT_KEY_ACTIVE)||'{}'); }catch(e){}
-  try{
-    const raw=localStorage.getItem(PT_KEY_DOC);
-    if(raw){ const parsed=JSON.parse(raw); ptDoc=parsed.doc||[]; ptActivePageId=parsed.activePageId||(ptDoc.length?ptDoc[0].id:null); return true; }
-  }catch(e){}
-  return false;
-}
-function ptSaveDoc(){
-  try{ localStorage.setItem(PT_KEY_DOC, JSON.stringify({doc:ptDoc, activePageId:ptActivePageId}));
-    const s=$('pt-save-status'); if(s){ s.textContent='salvo ✓'; setTimeout(()=>{ if(s.textContent==='salvo ✓') s.textContent=''; },1200); }
-  }catch(e){}
-}
-function ptSaveOverrides(){
-  const ov={};
-  Object.keys(PT_CATALOG_STATE).forEach(brand=>{
-    PT_CATALOG_STATE[brand].groups.forEach((g,gi)=>{
-      g.items.forEach((it,ii)=>{
-        const orig=PT_CATALOG[brand].groups[gi].items[ii];
-        if(orig && orig.price!==it.price) ov[it.id]=it.price;
-      });
-    });
-  });
-  try{ localStorage.setItem(PT_KEY_OV, JSON.stringify(ov)); }catch(e){}
-}
-function ptSaveRates(){ try{ localStorage.setItem(PT_KEY_RATES, JSON.stringify(PT_GROUP_RATES)); }catch(e){} }
-function ptSaveLinks(){ try{ localStorage.setItem(PT_KEY_LINKS, JSON.stringify(PT_LINKS)); }catch(e){} }
-function ptSaveExtraPrices(){ try{ localStorage.setItem(PT_KEY_EXTRA, JSON.stringify(PT_EXTRA_PRICES)); }catch(e){} }
-function ptSaveEmbSizes(){ try{ localStorage.setItem(PT_KEY_EMBSIZE, JSON.stringify(PT_EMB_SIZES)); }catch(e){} }
-function ptSaveCdfTon(){ try{ localStorage.setItem(PT_KEY_CDFTON, String(PT_CDF_TON)); }catch(e){} }
-function ptSaveActive(){ try{ localStorage.setItem(PT_KEY_ACTIVE, JSON.stringify(PT_ACTIVE)); }catch(e){} }
-function ptIsActive(itemId){ return PT_ACTIVE[itemId]!==false; }
-function ptToggleActive(itemId){
-  PT_ACTIVE[itemId] = !ptIsActive(itemId);
-  ptSaveActive();
-}
-
-/* ---------- CMV ao vivo, a partir das fichas técnicas já carregadas ---------- */
-function ptFormulaIndex(){
-  const idx={};
-  // listaTodasFormulas() já mescla biblioteca + banco local (RURAL_FORMULAS)
-  if(typeof listaTodasFormulas==='function'){
-    listaTodasFormulas().forEach(f=>{ idx[String(f.cod)]=f; });
-  }
-  // bibliotecaRNA é um array separado (fórmulas Viacampus/RNA) — mescla também
-  if(typeof bibliotecaRNA!=='undefined'){
-    bibliotecaRNA.forEach(f=>{ if(!idx[String(f.cod)]) idx[String(f.cod)]=f; });
-  }
-  return idx;
-}
-function ptFindFormula(item){
-  const idx=ptFormulaIndex();
-  if(item.code && idx[String(item.code)]) return idx[String(item.code)];
-  const link=PT_LINKS[item.id];
-  if(link && idx[String(link)]) return idx[String(link)];
-  return null;
-}
-function ptDetectEmbSize(f){
-  const nome=f.nome||'';
-  const matches=[...nome.matchAll(/(\d{2,4}(?:[.,]\d+)?)\s*kg/gi)];
-  if(!matches.length) return null;
-  const last=matches[matches.length-1][1].replace(',', '.');
-  const val=parseFloat(last);
-  return isNaN(val)? null : val;
-}
-function ptGetEmbSize(f){
-  const override=PT_EMB_SIZES[f.cod];
-  if(override!==undefined && override!==null && override!=='') return {size:parseFloat(override), auto:false};
-  const detected=ptDetectEmbSize(f);
-  if(detected!==null) return {size:detected, auto:true};
-  return {size:null, auto:false};
-}
-function ptComputeLiveCost(f){
-  if(typeof custoFormula!=='function') return {cmv:null, unidade:'saco'};
-  const c=custoFormula(f); // {sacos, custoSaco, custoKg} — custoSaco = custo de MP por unidade da ficha (kg quando pesoSaco=1) + embCusto cru
-  const embCusto=(f.emb && f.emb.custo) ? f.emb.custo : 0;
-  if(f.pesoSaco===1){
-    // A ficha usa "pesoSaco=1kg" só como referência de custo por kg — a embalagem real
-    // (o saco/bag físico) é bem maior. Precisamos saber o tamanho real pra saber quantas
-    // embalagens cabem numa tonelada, em vez de multiplicar o custo de embalagem por 1000.
-    const mpCustoPorKg = c.custoSaco - embCusto; // custoSaco já inclui embCusto cru; removemos pra tratar embalagem à parte
-    const mpCustoPorTon = mpCustoPorKg*1000;
-    const embInfo=ptGetEmbSize(f);
-    let embCustoPorTon, embPorTon;
-    if(embInfo.size && embInfo.size>0){
-      embPorTon = 1000/embInfo.size;
-      embCustoPorTon = embCusto*embPorTon;
-    } else {
-      // tamanho real desconhecido — não dá pra escalar corretamente; soma a embalagem "crua" (1x) e sinaliza
-      embPorTon = null;
-      embCustoPorTon = embCusto;
-    }
-    return {
-      cmv: mpCustoPorTon + embCustoPorTon,
-      unidade:'ton',
-      embInfo: {tamanho: embInfo.size, auto: embInfo.auto, custoUnitario: embCusto, embalagensPorTon: embPorTon, custoEmbPorTon: embCustoPorTon}
-    };
-  }
-  return {cmv:c.custoSaco, unidade:'saco'};
-}
-function ptEmbInfoHtml(embInfo, cod){
-  if(!embInfo) return '';
-  const per = embInfo.embalagensPorTon!==null && embInfo.embalagensPorTon!==undefined
-    ? embInfo.embalagensPorTon.toFixed(2)+' emb/ton'
-    : '⚠ informe o tamanho real';
-  const autoTag = embInfo.tamanho && embInfo.auto ? ' <em>(detectado do nome)</em>' : '';
-  return `<div class="pt-emb-info">📦 Embalagem real: <input type="number" step="0.1" min="0" class="pt-embsize-input" data-cod="${cod}" value="${embInfo.tamanho||''}" placeholder="kg"> kg${autoTag} → ${per} (custo emb.: ${ptFmtPrice(embInfo.custoEmbPorTon)}/ton)</div>`;
-}
-function ptWireEmbInput(tr, cod, build, filterGetter){
-  const inp=tr.querySelector('.pt-embsize-input');
-  if(!inp) return;
-  inp.addEventListener('click', e=>e.stopPropagation());
-  inp.addEventListener('change', e=>{
-    const val=parseFloat(e.target.value.replace(',','.'));
-    if(val>0) PT_EMB_SIZES[cod]=val; else delete PT_EMB_SIZES[cod];
-    ptSaveEmbSizes();
-    build(filterGetter());
-  });
-}
-function ptGetCost(brand, groupName, item){
-  const staticG = PT_STATIC_COSTS[brand] && PT_STATIC_COSTS[brand][groupName];
-  const staticItem = staticG ? staticG[ptNormName(item.name)] : null;
-  const isNucleoGroup = ptNormName(groupName).includes('nucleo');
-
-  const f=ptFindFormula(item);
-  if(f){
-    const live=ptComputeLiveCost(f);
-    const cdf = (live.unidade==='ton' || isNucleoGroup) ? PT_CDF_TON : (staticItem ? staticItem.cdf : null);
-    return {cmv:live.cmv, cdf, source:'live', formulaNome:f.nome, formulaCod:String(f.cod), unidade:live.unidade, embInfo:live.embInfo, formulaObj:f};
-  }
-  const staticCdf = isNucleoGroup ? PT_CDF_TON : (staticItem ? staticItem.cdf : null);
-  if(staticItem && staticItem.cmv!==null && staticItem.cmv!==undefined){
-    return {cmv:staticItem.cmv, cdf:staticCdf, source:'static'};
-  }
-  return {cmv:null, cdf:staticCdf, source:'none'};
-}
-function ptEnsureFormulaDatalist(){
-  let dl = document.getElementById('pt-formula-datalist');
-  if(!dl){
-    dl = document.createElement('datalist');
-    dl.id = 'pt-formula-datalist';
-    document.body.appendChild(dl);
-  }
-  const idx=ptFormulaIndex();
-  const list=Object.values(idx).sort((a,b)=>(a.nome||'').localeCompare(b.nome||''));
-  dl.innerHTML = list.map(f=>`<option value="${f.cod} — ${f.nome}">`).join('');
-  return dl;
-}
-function ptFormulaLabelFor(cod){
-  if(!cod) return '';
-  const idx=ptFormulaIndex();
-  const f=idx[String(cod)];
-  return f ? `${f.cod} — ${f.nome}` : String(cod);
-}
-function ptParseFormulaCode(text){
-  if(!text) return '';
-  const m = text.match(/^\s*(\S+)\s*—/);
-  return m ? m[1] : text.trim();
-}
-function ptUsedFormulaCodes(){
-  const used=new Set();
-  Object.keys(PT_CATALOG_STATE).forEach(brand=>{
-    PT_CATALOG_STATE[brand].groups.forEach(g=>{
-      g.items.forEach(it=>{
-        if(it.code) used.add(String(it.code));
-        if(PT_LINKS[it.id]) used.add(String(PT_LINKS[it.id]));
-      });
-    });
-  });
-  return used;
-}
-function ptExtraFormulasGrouped(){
-  const used=ptUsedFormulaCodes();
-  const idx=ptFormulaIndex();
-  const groups={};
-  Object.values(idx).forEach(f=>{
-    if(used.has(String(f.cod))) return;
-    const cat=f.cat||'Outro';
-    if(!groups[cat]) groups[cat]=[];
-    groups[cat].push(f);
-  });
-  Object.values(groups).forEach(list=>list.sort((a,b)=>(a.nome||'').localeCompare(b.nome||'')));
-  return groups;
-}
-function ptFindStaticCdfByName(name){
-  const norm=ptNormName(name);
-  for(const brand in PT_STATIC_COSTS){
-    for(const group in PT_STATIC_COSTS[brand]){
-      const item=PT_STATIC_COSTS[brand][group][norm];
-      if(item && item.cdf!==null && item.cdf!==undefined) return item.cdf;
-    }
-  }
-  return null;
-}
-function ptGetExtraCost(f){
-  const live=ptComputeLiveCost(f);
-  const cdf = live.unidade==='ton' ? PT_CDF_TON : ptFindStaticCdfByName(f.nome);
-  return {cmv:live.cmv, cdf, unidade:live.unidade, embInfo:live.embInfo};
-}
-
-function ptGetGroupRate(brand, groupName){
-  const key=brand+'|'+groupName;
-  return PT_GROUP_RATES[key] || {imposto:7, comissao:7};
-}
-function ptSetGroupRate(brand, groupName, field, value){
-  const key=brand+'|'+groupName;
-  if(!PT_GROUP_RATES[key]) PT_GROUP_RATES[key]={imposto:7, comissao:7};
-  PT_GROUP_RATES[key][field]=value;
-  ptSaveRates();
-}
-function ptPctClass(pct){
-  if(pct===null) return '';
-  if(pct<0) return 'pt-pct-neg';
-  if(pct<8) return 'pt-pct-low';
-  if(pct<20) return 'pt-pct-ok';
-  return 'pt-pct-high';
-}
-
-/* ---------- Catálogo (barra lateral) ---------- */
-function ptRenderCatalog(){
-  const el=$('pt-catalog');
-  if(!el) return;
-  el.innerHTML='';
-  Object.keys(PT_CATALOG_STATE).forEach(brand=>{
-    const bBlock=document.createElement('div');
-    bBlock.className='pt-brand-block';
-    const bTitle=document.createElement('div');
-    bTitle.className='pt-brand-title';
-    bTitle.innerHTML=`<span>${brand}</span><span>▾</span>`;
-    const bBody=document.createElement('div');
-    bBody.className='pt-brand-body';
-    bTitle.onclick=()=>bBody.classList.toggle('open');
-    PT_CATALOG_STATE[brand].groups.forEach(g=>{
-      const gRow=document.createElement('div');
-      gRow.className='pt-group-row';
-      const gHead=document.createElement('div');
-      gHead.className='pt-group-head';
-      gHead.innerHTML=`<span>${g.name}<span class="pt-cnt">(${g.items.length})</span></span>`;
-      const addBtn=document.createElement('button');
-      addBtn.className='pt-add-btn';
-      addBtn.textContent='+ grupo';
-      addBtn.onclick=(e)=>{ e.stopPropagation(); ptAddGroupToActivePage(brand, g); };
-      gHead.appendChild(addBtn);
-      const itemList=document.createElement('div');
-      itemList.className='pt-item-list';
-      g.items.forEach(it=>{
-        const line=document.createElement('div');
-        line.className='pt-item-line';
-        line.innerHTML=`<span class="pt-nm">${it.code? '['+it.code+'] ':''}${it.name}</span><span class="pt-pr">${ptFmtPrice(it.price)}</span>`;
-        const btn=document.createElement('button');
-        btn.textContent='+';
-        btn.title='Adicionar item avulso à página ativa';
-        btn.onclick=()=>ptAddSingleItemToActivePage(g, it);
-        line.appendChild(btn);
-        itemList.appendChild(line);
-      });
-      gHead.onclick=()=>itemList.classList.toggle('open');
-      gRow.appendChild(gHead);
-      gRow.appendChild(itemList);
-      bBody.appendChild(gRow);
-    });
-    bBlock.appendChild(bTitle);
-    bBlock.appendChild(bBody);
-    el.appendChild(bBlock);
-  });
-}
-
-/* ---------- Construtor de páginas ---------- */
-function ptDefaultTemplate(){
-  const pages=[];
-  function pageFrom(title, groupNames){
-    const groups=[];
-    for(const brand in PT_CATALOG_STATE){
-      PT_CATALOG_STATE[brand].groups.forEach(g=>{
-        if(groupNames.includes(g.name)){
-          groups.push({
-            id:ptUid(), name:g.name, hasCode:g.hasCode,
-            items:g.items.map(it=>({id:ptUid(), catalogId:it.id, code:it.code||'', name:it.name, price:it.price}))
-          });
-        }
-      });
-    }
-    pages.push({id:ptUid(), title, groups});
-  }
-  pageFrom('Tabela de Preços - Rural', ['Sal Mineral','Linha Plus']);
-  pageFrom('Tabela de Preços - Rural', ['Energéticos','Rações','Grupo MP']);
-  pageFrom('Tabela de Preços - Viacampus', ['Viacampus Rações','Viacampus Proteicos']);
-  pageFrom('Tabela de Preços - Viacampus', ['Viacampus Mineral','Viacampus Núcleos']);
-  pageFrom('Tabela de Preços - RNA', ['RNA Linha Fós','RNA Linha Farelado']);
-  pageFrom('Tabela de Preços - RNA', ['Rural Linha Farelado','Rural Linha Fós','Rural Linha Núcleos','Grupo MP']);
-  pageFrom('Tabela de Preços - Copacol', ['Copacol']);
-  return pages;
-}
-function ptEnsureActivePage(){
-  if(!ptDoc.length){
-    const p={id:ptUid(), title:'Tabela de Preços - Rural', groups:[]};
-    ptDoc.push(p); ptActivePageId=p.id;
-  }
-  if(!ptDoc.find(p=>p.id===ptActivePageId)) ptActivePageId=ptDoc[ptDoc.length-1].id;
-}
-function ptAddGroupToActivePage(brand, g){
-  ptEnsureActivePage();
-  const page=ptDoc.find(p=>p.id===ptActivePageId);
-  page.groups.push({
-    id:ptUid(), name:g.name, hasCode:g.hasCode,
-    items:g.items.map(it=>({id:ptUid(), catalogId:it.id, code:it.code||'', name:it.name, price:it.price}))
-  });
-  ptRenderDoc(); ptSaveDoc();
-}
-function ptAddSingleItemToActivePage(g, it){
-  ptEnsureActivePage();
-  const page=ptDoc.find(p=>p.id===ptActivePageId);
-  let grp=page.groups.find(x=>x.name===g.name);
-  if(!grp){ grp={id:ptUid(), name:g.name, hasCode:g.hasCode, items:[]}; page.groups.push(grp); }
-  grp.items.push({id:ptUid(), catalogId:it.id, code:it.code||'', name:it.name, price:it.price});
-  ptRenderDoc(); ptSaveDoc();
-}
-function ptAddBlankPage(){
-  const p={id:ptUid(), title:'Nova Página', groups:[]};
-  ptDoc.push(p); ptActivePageId=p.id; ptRenderDoc(); ptSaveDoc();
-}
-function ptDeletePage(id){
-  if(!confirm('Remover esta página inteira?')) return;
-  ptDoc=ptDoc.filter(p=>p.id!==id);
-  if(ptActivePageId===id) ptActivePageId=ptDoc.length? ptDoc[ptDoc.length-1].id : null;
-  ptRenderDoc(); ptSaveDoc();
-}
-function ptMovePage(id, dir){
-  const i=ptDoc.findIndex(p=>p.id===id), j=i+dir;
-  if(j<0||j>=ptDoc.length) return;
-  [ptDoc[i],ptDoc[j]]=[ptDoc[j],ptDoc[i]]; ptRenderDoc(); ptSaveDoc();
-}
-function ptMoveGroup(pageId, groupId, dir){
-  const page=ptDoc.find(p=>p.id===pageId);
-  const i=page.groups.findIndex(g=>g.id===groupId), j=i+dir;
-  if(j<0||j>=page.groups.length) return;
-  [page.groups[i],page.groups[j]]=[page.groups[j],page.groups[i]]; ptRenderDoc(); ptSaveDoc();
-}
-function ptDeleteGroup(pageId, groupId){
-  const page=ptDoc.find(p=>p.id===pageId);
-  page.groups=page.groups.filter(g=>g.id!==groupId); ptRenderDoc(); ptSaveDoc();
-}
-function ptToggleCode(pageId, groupId){
-  const page=ptDoc.find(p=>p.id===pageId);
-  const g=page.groups.find(g=>g.id===groupId);
-  g.hasCode=!g.hasCode; ptRenderDoc(); ptSaveDoc();
-}
-function ptAddBlankItem(pageId, groupId){
-  const page=ptDoc.find(p=>p.id===pageId);
-  const g=page.groups.find(g=>g.id===groupId);
-  g.items.push({id:ptUid(), code:'', name:'Novo produto', price:0}); ptRenderDoc(); ptSaveDoc();
-}
-function ptDeleteItem(pageId, groupId, itemId){
-  const page=ptDoc.find(p=>p.id===pageId);
-  const g=page.groups.find(g=>g.id===groupId);
-  g.items=g.items.filter(it=>it.id!==itemId); ptRenderDoc(); ptSaveDoc();
-}
-function ptAddBlankGroup(pageId){
-  const page=ptDoc.find(p=>p.id===pageId);
-  page.groups.push({id:ptUid(), name:'Novo Grupo', hasCode:false, items:[]}); ptRenderDoc(); ptSaveDoc();
-}
-function ptUpdatePrice(catalogId, newPrice){
-  if(!PT_CATALOG_INDEX[catalogId]) return;
-  PT_CATALOG_INDEX[catalogId].price=newPrice;
-  ptDoc.forEach(page=>page.groups.forEach(g=>g.items.forEach(it=>{
-    if(it.catalogId===catalogId) it.price=newPrice;
-  })));
-  ptRenderCatalog(); ptRenderDoc(); ptSaveDoc(); ptSaveOverrides();
-}
-
-function ptRenderDoc(){
-  const el=$('pt-doc-scroll');
-  if(!el) return;
-  el.innerHTML='';
-  ptDoc.forEach(page=>{
-    const pageDiv=document.createElement('div');
-    pageDiv.className='pt-page'+(page.id===ptActivePageId?' pt-active-target':'');
-    pageDiv.onclick=(e)=>{
-      if(e.target.closest('[contenteditable], button, .pt-pt-btn')) return;
-      ptActivePageId=page.id; ptRenderDoc();
-    };
-    const pt=document.createElement('div');
-    pt.className='pt-page-toolbar';
-    pt.innerHTML=`
-      <button class="pt-pt-btn" data-act="up">▲</button>
-      <button class="pt-pt-btn" data-act="down">▼</button>
-      <button class="pt-pt-btn" data-act="addgroup">+ grupo em branco</button>
-      <button class="pt-pt-btn" data-act="del">Excluir página</button>`;
-    pt.querySelector('[data-act="up"]').onclick=()=>ptMovePage(page.id,-1);
-    pt.querySelector('[data-act="down"]').onclick=()=>ptMovePage(page.id,1);
-    pt.querySelector('[data-act="addgroup"]').onclick=()=>ptAddBlankGroup(page.id);
-    pt.querySelector('[data-act="del"]').onclick=()=>ptDeletePage(page.id);
-    pageDiv.appendChild(pt);
-
-    const header=document.createElement('div');
-    header.className='pt-page-header';
-    header.innerHTML=`<img src="${LOGO_RURAL}"><div style="flex:1"><div class="pt-page-title" contenteditable="true">${page.title}</div><div class="pt-page-title-accent"></div></div>`;
-    header.querySelector('.pt-page-title').addEventListener('input',(e)=>{ page.title=e.target.textContent; ptSaveDoc(); });
-    pageDiv.appendChild(header);
-
-    if(!page.groups.length){
-      const hint=document.createElement('div');
-      hint.className='pt-empty-page-hint';
-      hint.textContent='Página vazia — clique em um grupo no catálogo à esquerda para adicioná-lo aqui.';
-      pageDiv.appendChild(hint);
-    }
-
-    page.groups.forEach(g=>{
-      const gDiv=document.createElement('div');
-      gDiv.className='pt-doc-group';
-      const gHead=document.createElement('div');
-      gHead.className='pt-doc-group-head';
-      gHead.contentEditable='true';
-      gHead.innerHTML=g.name;
-      gDiv.appendChild(gHead);
-      gHead.addEventListener('blur',()=>{ g.name=gHead.textContent.trim(); ptSaveDoc(); });
-
-      const controls=document.createElement('div');
-      controls.className='pt-doc-group-controls';
-      controls.innerHTML=`
-        <span data-act="up">▲ subir</span>
-        <span data-act="down">▼ descer</span>
-        <span data-act="code">${g.hasCode?'ocultar':'mostrar'} código</span>
-        <span data-act="del" style="color:#c0392b">excluir grupo</span>`;
-      controls.querySelector('[data-act="up"]').onclick=()=>ptMoveGroup(page.id,g.id,-1);
-      controls.querySelector('[data-act="down"]').onclick=()=>ptMoveGroup(page.id,g.id,1);
-      controls.querySelector('[data-act="code"]').onclick=()=>ptToggleCode(page.id,g.id);
-      controls.querySelector('[data-act="del"]').onclick=()=>{ if(confirm('Excluir este grupo da página?')) ptDeleteGroup(page.id,g.id); };
-      gDiv.appendChild(controls);
-
-      const table=document.createElement('table');
-      table.className='pt-price-table';
-      const thead=document.createElement('thead');
-      thead.innerHTML=g.hasCode
-        ? '<tr><th style="width:60px">Código</th><th>Produto</th><th class="pt-pr">Preço Sugerido</th><th style="width:24px"></th></tr>'
-        : '<tr><th>Produto</th><th class="pt-pr">Preço Sugerido</th><th style="width:24px"></th></tr>';
-      table.appendChild(thead);
-      const tbody=document.createElement('tbody');
-      g.items.forEach(it=>{
-        const tr=document.createElement('tr');
-        const linked=!!it.catalogId;
-        const priceCellHtml=linked
-          ? `<td class="pt-price">${ptFmtPrice(it.price)}</td>`
-          : `<td class="pt-price pt-price-edit-doc" contenteditable="true" title="Item manual — preço editável aqui">${ptFmtPrice(it.price)}</td>`;
-        if(g.hasCode){
-          tr.innerHTML=`<td class="pt-code" contenteditable="true">${it.code}</td><td contenteditable="true">${it.name}</td>${priceCellHtml}<td><button class="row-del" style="background:none;border:none;color:#c0392b;cursor:pointer">✕</button></td>`;
-        } else {
-          tr.innerHTML=`<td contenteditable="true">${it.name}</td>${priceCellHtml}<td><button class="row-del" style="background:none;border:none;color:#c0392b;cursor:pointer">✕</button></td>`;
-        }
-        const tds=tr.querySelectorAll('td');
-        const codeCell=g.hasCode?tds[0]:null;
-        const nameCell=g.hasCode?tds[1]:tds[0];
-        const priceCell=g.hasCode?tds[2]:tds[1];
-        if(codeCell) codeCell.addEventListener('blur', e=>{ it.code=e.target.textContent.trim(); ptSaveDoc(); });
-        nameCell.addEventListener('blur', e=>{ it.name=e.target.textContent.trim(); ptSaveDoc(); });
-        if(!linked){
-          priceCell.addEventListener('blur', e=>{ it.price=ptParseBRL(e.target.textContent); ptRenderDoc(); ptSaveDoc(); });
-          priceCell.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); e.target.blur(); } });
-        }
-        tr.querySelector('.row-del').onclick=()=>ptDeleteItem(page.id, g.id, it.id);
-        tbody.appendChild(tr);
-      });
-      table.appendChild(tbody);
-      gDiv.appendChild(table);
-
-      const addItemBtn=document.createElement('div');
-      addItemBtn.className='pt-add-item-row';
-      addItemBtn.textContent='+ adicionar linha em branco';
-      addItemBtn.onclick=()=>ptAddBlankItem(page.id, g.id);
-      gDiv.appendChild(addItemBtn);
-
-      pageDiv.appendChild(gDiv);
-    });
-    el.appendChild(pageDiv);
-  });
-
-  const addPageBtn=document.createElement('button');
-  addPageBtn.id='pt-add-page-btn';
-  addPageBtn.textContent='+ Adicionar nova página';
-  addPageBtn.onclick=ptAddBlankPage;
-  el.appendChild(addPageBtn);
-}
-
-function ptClearDoc(){
-  if(!confirm('Isso vai apagar todas as páginas do documento atual. Continuar?')) return;
-  ptDoc=[]; ptActivePageId=null; ptRenderDoc(); ptSaveDoc();
-}
-
-function ptRenderMargins(){
-  const el=$('pt-margins-view');
-  if(!el) return;
-  el.innerHTML='';
-  ptEnsureFormulaDatalist();
-
-  const toolbar=document.createElement('div');
-  toolbar.className='pt-margins-toolbar';
-  toolbar.innerHTML=`
-    <input type="text" id="pt-margins-search" placeholder="Buscar produto...">
-    <span style="font-size:11px;color:var(--t3);white-space:nowrap">CD+F por tonelada (núcleos): R$ <input type="number" step="1" min="0" id="pt-cdfton-input" style="width:60px;font-size:11px;padding:2px 4px" value="${PT_CDF_TON}"></span>
-    <div class="pt-legend">
-      <span><span class="pt-legend-dot" style="background:#B23A3A"></span>margem negativa</span>
-      <span><span class="pt-legend-dot" style="background:#c98a00"></span>abaixo de 8%</span>
-      <span><span class="pt-legend-dot" style="background:#1f7a44"></span>8% a 20%</span>
-      <span><span class="pt-legend-dot" style="background:#2463AA"></span>acima de 20%</span>
-      <span><span class="pt-src-tag pt-src-live">CMV vivo</span> = matérias-primas calculadas agora pela ficha técnica</span>
-      <span><span class="pt-src-tag pt-src-static">estático</span> = CMV da última planilha de cálculo (sem ficha vinculada)</span>
-      <span>CD+F: R$10 padrão / R$${PT_CDF_TON} para produtos por tonelada (núcleos)</span>
-    </div>`;
-  el.appendChild(toolbar);
-
-  const contentWrap=document.createElement('div');
-  el.appendChild(contentWrap);
-
-  function build(filterText){
-    contentWrap.innerHTML='';
-    const q=(filterText||'').toLowerCase();
-    Object.keys(PT_CATALOG_STATE).forEach(brand=>{
-      const groups=PT_CATALOG_STATE[brand].groups;
-      const brandRows=[];
-      groups.forEach(g=>{
-        const rows=g.items.filter(it=>!q || it.name.toLowerCase().includes(q) || (it.code||'').includes(q));
-        if(rows.length) brandRows.push({group:g, rows});
-      });
-      if(!brandRows.length) return;
-
-      const section=document.createElement('div');
-      section.className='pt-brand-section';
-      section.innerHTML=`<div class="pt-brand-section-title">${brand}</div>`;
-
-      brandRows.forEach(({group:g, rows})=>{
-        const rate=ptGetGroupRate(brand, g.name);
-        const gt=document.createElement('div');
-        gt.className='pt-margin-group-title';
-        gt.innerHTML=`
-          <span>${g.name}</span>
-          <span class="pt-rate-controls">
-            Imposto <input type="number" step="0.1" min="0" class="pt-rate-input" data-field="imposto" value="${rate.imposto}">%
-            &nbsp;&nbsp;Comissão <input type="number" step="0.1" min="0" class="pt-rate-input" data-field="comissao" value="${rate.comissao}">%
-          </span>`;
-        gt.querySelectorAll('.pt-rate-input').forEach(inp=>{
-          inp.addEventListener('change', e=>{
-            const val=parseFloat(e.target.value.replace(',','.'))||0;
-            ptSetGroupRate(brand, g.name, e.target.dataset.field, val);
-            build($('pt-margins-search').value);
-          });
-          inp.addEventListener('click', e=>e.stopPropagation());
-        });
-        section.appendChild(gt);
-
-        const table=document.createElement('table');
-        table.className='pt-margins-table';
-        table.innerHTML=`<thead><tr>
-          <th style="width:50px">Ativo</th>
-          ${g.hasCode?'<th>Código</th>':''}
-          <th>Produto</th>
-          <th>CMV</th>
-          <th>CD+F</th>
-          <th>Imposto (${rate.imposto}%)</th>
-          <th>Comissão (${rate.comissao}%)</th>
-          <th>Custo Total</th>
-          <th>Preço Sugerido</th>
-          <th>Lucro</th>
-          <th>Margem</th>
-        </tr></thead>`;
-        const tbody=document.createElement('tbody');
-        rows.forEach(it=>{
-          const cost=ptGetCost(brand, g.name, it);
-          const isActive=ptIsActive(it.id);
-          const tr=document.createElement('tr');
-          if(!isActive) tr.style.opacity='0.5';
-          let cells=`<td style="text-align:center"><input type="checkbox" class="pt-active-toggle" data-id="${it.id}" ${isActive?'checked':''} title="Aparece na Tabela de Preços pública"></td>`;
-          if(g.hasCode) cells+=`<td>${it.code||''}</td>`;
-
-          let nomeCell=it.name;
-          if(cost.source==='live'){
-            nomeCell+=`<span class="pt-src-tag pt-src-live" title="Ficha: ${cost.formulaCod} — ${cost.formulaNome}">CMV vivo${cost.unidade==='ton'?' /ton':''}</span>`;
-            if(cost.embInfo) nomeCell+=ptEmbInfoHtml(cost.embInfo, cost.formulaCod);
-          } else if(cost.source==='static'){
-            nomeCell+=`<span class="pt-src-tag pt-src-static">estático</span>`;
-          } else {
-            nomeCell+=`<span class="pt-src-tag pt-src-static">sem custo</span>`;
-          }
-          if(!it.code){
-            // produto sem código próprio (Viacampus/RNA) — permite vincular manualmente a uma ficha técnica
-            nomeCell+=`<br><input type="text" class="pt-link-input" list="pt-formula-datalist" data-item="${it.id}" placeholder="código ou nome da fórmula..." value="${ptFormulaLabelFor(PT_LINKS[it.id])}">`;
-          }
-          cells+=`<td>${nomeCell}</td>`;
-
-          if(cost.cmv!==null && cost.cmv!==undefined){
-            const imposto=it.price*(rate.imposto/100);
-            const comissao=it.price*(rate.comissao/100);
-            const custoTotal=(cost.cmv||0)+(cost.cdf||0)+imposto+comissao;
-            const lucro=it.price-custoTotal;
-            const pct=it.price?(lucro/it.price*100):null;
-            cells+=`<td>${ptFmtPrice(cost.cmv)}</td>`;
-            cells+=`<td>${ptFmtPrice(cost.cdf)}</td>`;
-            cells+=`<td>${ptFmtPrice(imposto)}</td>`;
-            cells+=`<td>${ptFmtPrice(comissao)}</td>`;
-            cells+=`<td>${ptFmtPrice(custoTotal)}</td>`;
-            cells+=`<td class="pt-price-edit" contenteditable="true" data-id="${it.id}">${ptFmtPrice(it.price)}</td>`;
-            cells+=`<td>${ptFmtPrice(lucro)}</td>`;
-            cells+=`<td><span class="pt-pct-pill ${ptPctClass(pct)}">${pct.toFixed(1)}%</span></td>`;
-          } else {
-            const cdfCell = (cost.cdf!==null && cost.cdf!==undefined) ? ptFmtPrice(cost.cdf) : '—';
-            cells+=`<td class="pt-na">—</td><td>${cdfCell}</td><td class="pt-na">—</td><td class="pt-na">—</td><td class="pt-na">—</td>`;
-            cells+=`<td class="pt-price-edit" contenteditable="true" data-id="${it.id}">${ptFmtPrice(it.price)}</td><td class="pt-na">—</td><td class="pt-na">vincule uma ficha</td>`;
-          }
-          tr.innerHTML=cells;
-          if(cost.formulaCod) ptWireEmbInput(tr, cost.formulaCod, build, ()=>$('pt-margins-search').value);
-          const activeToggle=tr.querySelector('.pt-active-toggle');
-          activeToggle.addEventListener('click', e=>e.stopPropagation());
-          activeToggle.addEventListener('change', e=>{
-            ptToggleActive(it.id);
-            build($('pt-margins-search').value);
-          });
-
-          const priceCell=tr.querySelector('.pt-price-edit');
-          priceCell.addEventListener('blur', e=>{
-            const val=ptParseBRL(e.target.textContent);
-            ptUpdatePrice(it.id, val);
-            build($('pt-margins-search').value);
-          });
-          priceCell.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); e.target.blur(); } });
-
-          const linkInput=tr.querySelector('.pt-link-input');
-          if(linkInput){
-            linkInput.addEventListener('click', e=>e.stopPropagation());
-            linkInput.addEventListener('change', e=>{
-              const raw=e.target.value.trim();
-              if(!raw){ delete PT_LINKS[it.id]; ptSaveLinks(); build($('pt-margins-search').value); return; }
-              const cod=ptParseFormulaCode(raw);
-              const idx=ptFormulaIndex();
-              if(idx[String(cod)]){
-                PT_LINKS[it.id]=String(cod);
-                ptSaveLinks();
-                build($('pt-margins-search').value);
-              } else {
-                alert('Não encontrei nenhuma fórmula com esse código ou nome: "'+raw+'". Escolha uma das sugestões da lista.');
-                e.target.value = ptFormulaLabelFor(PT_LINKS[it.id]);
-              }
-            });
-          }
-          tbody.appendChild(tr);
-        });
-        table.appendChild(tbody);
-        section.appendChild(table);
-      });
-      contentWrap.appendChild(section);
-    });
-
-    // ---- Banco de Fórmulas: fichas técnicas que existem mas não estão na Tabela de Preços ----
-    const extraGroups=ptExtraFormulasGrouped();
-    const extraCatNames=Object.keys(extraGroups).sort();
-    const extraFiltered={};
-    let extraTotal=0;
-    extraCatNames.forEach(cat=>{
-      const list=extraGroups[cat].filter(f=>!q || (f.nome||'').toLowerCase().includes(q) || String(f.cod).includes(q));
-      if(list.length){ extraFiltered[cat]=list; extraTotal+=list.length; }
-    });
-    if(extraTotal>0){
-      const extraSection=document.createElement('div');
-      extraSection.className='pt-brand-section';
-      const extraHead=document.createElement('div');
-      extraHead.className='pt-brand-section-title';
-      extraHead.style.cursor='pointer';
-      extraHead.innerHTML=`📦 Banco de Fórmulas — fora da Tabela de Preços atual (${extraTotal}) <span style="font-size:11px;font-weight:400;color:#999">clique para expandir/recolher</span>`;
-      const extraBody=document.createElement('div');
-      extraBody.style.display = q ? 'block' : 'none'; // se estiver buscando, já mostra aberto
-      extraHead.onclick=()=>{ extraBody.style.display = extraBody.style.display==='none' ? 'block' : 'none'; };
-      extraSection.appendChild(extraHead);
-      extraSection.appendChild(extraBody);
-
-      Object.keys(extraFiltered).forEach(cat=>{
-        const rate=ptGetGroupRate('Banco', cat);
-        const gt=document.createElement('div');
-        gt.className='pt-margin-group-title';
-        gt.innerHTML=`
-          <span>${cat}<span class="pt-cnt" style="opacity:.8"> (${extraFiltered[cat].length})</span></span>
-          <span class="pt-rate-controls">
-            Imposto <input type="number" step="0.1" min="0" class="pt-rate-input" data-field="imposto" value="${rate.imposto}">%
-            &nbsp;&nbsp;Comissão <input type="number" step="0.1" min="0" class="pt-rate-input" data-field="comissao" value="${rate.comissao}">%
-          </span>`;
-        gt.querySelectorAll('.pt-rate-input').forEach(inp=>{
-          inp.addEventListener('change', e=>{
-            const val=parseFloat(e.target.value.replace(',','.'))||0;
-            ptSetGroupRate('Banco', cat, e.target.dataset.field, val);
-            build($('pt-margins-search').value);
-          });
-          inp.addEventListener('click', e=>e.stopPropagation());
-        });
-        extraBody.appendChild(gt);
-
-        const table=document.createElement('table');
-        table.className='pt-margins-table';
-        table.innerHTML=`<thead><tr>
-          <th>Código</th><th>Produto</th><th>CMV</th><th>CD+F</th>
-          <th>Imposto (${rate.imposto}%)</th><th>Comissão (${rate.comissao}%)</th>
-          <th>Custo Total</th><th>Preço (opcional)</th><th>Lucro</th><th>Margem</th>
-        </tr></thead>`;
-        const tbody=document.createElement('tbody');
-        extraFiltered[cat].forEach(f=>{
-          const cost=ptGetExtraCost(f);
-          const price=parseFloat(PT_EXTRA_PRICES[f.cod])||0;
-          const tr=document.createElement('tr');
-          let nomeCell=f.nome;
-          nomeCell+=`<span class="pt-src-tag pt-src-live">CMV vivo${cost.unidade==='ton'?' /ton':''}</span>`;
-          if(cost.embInfo) nomeCell+=ptEmbInfoHtml(cost.embInfo, f.cod);
-          let cells=`<td>${f.cod}</td><td>${nomeCell}</td>`;
-          if(cost.cmv!==null){
-            const cdf = cost.cdf!==null && cost.cdf!==undefined ? cost.cdf : 0;
-            const imposto=price*(rate.imposto/100);
-            const comissao=price*(rate.comissao/100);
-            const custoTotal=cost.cmv+cdf+imposto+comissao;
-            const lucro=price-custoTotal;
-            const pct=price?(lucro/price*100):null;
-            cells+=`<td>${ptFmtPrice(cost.cmv)}</td>`;
-            cells+=`<td>${cost.cdf!==null && cost.cdf!==undefined ? ptFmtPrice(cost.cdf) : '—'}</td>`;
-            cells+=`<td>${price?ptFmtPrice(imposto):'—'}</td>`;
-            cells+=`<td>${price?ptFmtPrice(comissao):'—'}</td>`;
-            cells+=`<td>${price?ptFmtPrice(custoTotal):'—'}</td>`;
-            cells+=`<td class="pt-price-edit" contenteditable="true" data-cod="${f.cod}">${price?ptFmtPrice(price):''}</td>`;
-            cells+=`<td>${price?ptFmtPrice(lucro):'—'}</td>`;
-            cells+=`<td>${pct!==null?`<span class="pt-pct-pill ${ptPctClass(pct)}">${pct.toFixed(1)}%</span>`:'<span class="pt-na">informe um preço</span>'}</td>`;
-          } else {
-            cells+=`<td class="pt-na">—</td><td class="pt-na">—</td><td class="pt-na">—</td><td class="pt-na">—</td><td class="pt-na">—</td>`;
-            cells+=`<td class="pt-price-edit" contenteditable="true" data-cod="${f.cod}">${price?ptFmtPrice(price):''}</td><td class="pt-na">—</td><td class="pt-na">—</td>`;
-          }
-          tr.innerHTML=cells;
-          ptWireEmbInput(tr, f.cod, build, ()=>$('pt-margins-search').value);
-          const priceCell=tr.querySelector('.pt-price-edit');
-          priceCell.addEventListener('blur', e=>{
-            const val=ptParseBRL(e.target.textContent);
-            if(val>0) PT_EXTRA_PRICES[f.cod]=val; else delete PT_EXTRA_PRICES[f.cod];
-            ptSaveExtraPrices();
-            build($('pt-margins-search').value);
-          });
-          priceCell.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); e.target.blur(); } });
-          tbody.appendChild(tr);
-        });
-        table.appendChild(tbody);
-        extraBody.appendChild(table);
-      });
-      contentWrap.appendChild(extraSection);
-    }
-    if(!contentWrap.children.length){
-      contentWrap.innerHTML='<p style="color:#999">Nenhum produto encontrado.</p>';
-    }
-  }
-
-  build('');
-  $('pt-margins-search').addEventListener('input', e=>build(e.target.value));
-  $('pt-cdfton-input').addEventListener('change', e=>{
-    const val=parseFloat(e.target.value.replace(',','.'))||0;
-    PT_CDF_TON=val;
-    ptSaveCdfTon();
-    build($('pt-margins-search').value);
-  });
-}
-
-function ptSwitchTab(tab){
-  ptCurrentSubTab=tab;
-  document.querySelectorAll('.pt-subtab').forEach(b=>b.classList.toggle('active', b.dataset.ptTab===tab));
-  const sidebar=$('pt-sidebar'), docScroll=$('pt-doc-scroll'), marginsView=$('pt-margins-view');
-  if(tab==='builder'){
-    sidebar.classList.remove('pt-hidden');
-    docScroll.classList.remove('pt-hidden');
-    marginsView.classList.remove('visible');
-  } else {
-    sidebar.classList.add('pt-hidden');
-    docScroll.classList.add('pt-hidden');
-    marginsView.classList.add('visible');
-    ptRenderMargins();
-  }
-}
-
-function ptOnTabOpen(){
-  if(!ptDataLoaded){ ptLoadAll(); ptDataLoaded=true; }
-  if(!ptBooted){
-    ptRenderCatalog();
-    if(!ptDoc.length){ ptDoc=ptDefaultTemplate(); ptActivePageId=ptDoc[ptDoc.length-1].id; }
-    ptRenderDoc();
-    ptBooted=true;
-  } else if(ptCurrentSubTab==='margins'){
-    ptRenderMargins(); // atualiza CMV vivo caso custos de MP tenham mudado em outra aba
-  }
-}
-
-/* ======================================================================
-   TABELA DE PREÇOS — visão pública (sem senha), por empresa e grupo
-   Usa a mesma PT_CATALOG_STATE (preços) do módulo de Custos & Margens —
-   qualquer alteração de preço lá aparece aqui também.
-   ====================================================================== */
-let ptpBooted=false;
-let ptpActiveBrand='Rural';
-const PTP_BRANDS=['Rural','Viacampus','RNA','Copacol'];
-
-function ptpRenderBrandBar(){
-  const bar=$('ptp-brandbar');
-  bar.innerHTML='';
-  PTP_BRANDS.forEach(brand=>{
-    if(!PT_CATALOG_STATE[brand]) return;
-    const btn=document.createElement('button');
-    btn.className='ptp-brand-btn'+(brand===ptpActiveBrand?' active':'');
-    btn.textContent=brand;
-    btn.onclick=()=>{ ptpActiveBrand=brand; ptpRenderBrandBar(); ptpRenderCompany(brand); };
-    bar.appendChild(btn);
-  });
-}
-
-function ptpRenderCompany(brand){
-  const el=$('ptp-content');
-  el.innerHTML='';
-  const data=PT_CATALOG_STATE[brand];
-  if(!data){ el.innerHTML='<p style="color:#999">Nenhum produto cadastrado para esta empresa.</p>'; return; }
-
-  const header=document.createElement('div');
-  header.className='ptp-header';
-  header.innerHTML=`<img src="${LOGO_RURAL}"><div class="ptp-title">Tabela de Preços - ${brand}</div>`;
-  el.appendChild(header);
-  const accent=document.createElement('div');
-  accent.className='ptp-title-accent';
-  el.appendChild(accent);
-
-  data.groups.forEach(g=>{
-    const activeItems=g.items.filter(it=>ptIsActive(it.id));
-    if(!activeItems.length) return; // grupo inteiro inativo — não mostra nem o título
-
-    const gDiv=document.createElement('div');
-    gDiv.className='ptp-group';
-    const gt=document.createElement('div');
-    gt.className='ptp-group-title';
-    gt.textContent=g.name;
-    gDiv.appendChild(gt);
-
-    const table=document.createElement('table');
-    table.className='ptp-table';
-    table.innerHTML=g.hasCode
-      ? '<thead><tr><th style="width:70px">Código</th><th>Produto</th><th class="ptp-pr">Preço Sugerido</th></tr></thead>'
-      : '<thead><tr><th>Produto</th><th class="ptp-pr">Preço Sugerido</th></tr></thead>';
-    const tbody=document.createElement('tbody');
-    activeItems.forEach(it=>{
-      const tr=document.createElement('tr');
-      if(g.hasCode){
-        tr.innerHTML=`<td class="ptp-code">${it.code||''}</td><td>${it.name}</td><td class="ptp-price">${ptFmtPrice(it.price)}</td>`;
-      } else {
-        tr.innerHTML=`<td>${it.name}</td><td class="ptp-price">${ptFmtPrice(it.price)}</td>`;
-      }
-      tbody.appendChild(tr);
-    });
-    table.appendChild(tbody);
-    gDiv.appendChild(table);
-    el.appendChild(gDiv);
-  });
-}
-
-function ptpOnTabOpen(){
-  // Garante que o catálogo (preços) já esteja carregado, mesmo que o usuário
-  // nunca tenha aberto a aba protegida de Custos & Margens nesta sessão.
-  if(!ptDataLoaded){ ptLoadAll(); ptDataLoaded=true; }
-  if(!ptpBooted){
-    ptpRenderBrandBar();
-    ptpRenderCompany(ptpActiveBrand);
-    ptpBooted=true;
-  } else {
-    ptpRenderCompany(ptpActiveBrand); // reflete qualquer edição de preço feita enquanto isso
-  }
-}
-
 
 /* BOOT */
 if($('op-logo'))$('op-logo').src=LOGO_RURAL;
+if($('inicio-logo'))$('inicio-logo').src=LOGO_RURAL;
 if($('opi-logo'))$('opi-logo').src=LOGO_RURAL;
 $('emb-custo').readOnly=true;
 var hoje=new Date().toISOString().split('T')[0];
@@ -3885,6 +3424,8 @@ atualizarSelectFormulas();
 renderOP();
 renderOPIvinhema();
 carregarFormulasEditadasRemoto();
+carregarCotacoesRemoto();
+carregarMPRemoto();
 
 </script>
 </body>
