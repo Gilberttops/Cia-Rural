@@ -793,12 +793,13 @@ table input:focus{border-color:var(--blue)}
       <div class="f"><label style="font-size:11px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.04em">Resp. Industria</label><input type="text" id="op-resp-ind" placeholder="Nome"></div>
     </div>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px">
+  <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:14px">
     <div class="prod-kpi"><div class="prod-kpi-lbl">Produto</div><div class="prod-kpi-val" id="op-produto" style="font-size:13px">—</div></div>
     <div class="prod-kpi"><div class="prod-kpi-lbl">Batida (kg)</div><div class="prod-kpi-val" id="op-bat-kg">—</div></div>
     <div class="prod-kpi"><div class="prod-kpi-lbl">Sacos / batida</div><div class="prod-kpi-val" id="op-sac-bat">—</div></div>
     <div class="prod-kpi blue"><div class="prod-kpi-lbl">Total de sacos</div><div class="prod-kpi-val" id="op-sac-tot">—</div></div>
     <div class="prod-kpi blue"><div class="prod-kpi-lbl">Producao total (kg)</div><div class="prod-kpi-val" id="op-kg-tot">—</div></div>
+    <div class="prod-kpi" style="background:var(--grn-lt);border-color:var(--grn-bd)" id="op-pb-box"><div class="prod-kpi-lbl">Proteína Bruta (calc.)</div><div class="prod-kpi-val" id="op-pb" style="color:var(--green)">—</div></div>
   </div>
   <div class="card" style="padding:0">
     <div style="padding:10px 16px;background:var(--s1);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
@@ -888,12 +889,13 @@ table input:focus{border-color:var(--blue)}
       <div class="f"><label style="font-size:11px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.04em">Resp. Industria</label><input type="text" id="opi-resp-ind" placeholder="Nome"></div>
     </div>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px">
+  <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:14px">
     <div class="prod-kpi"><div class="prod-kpi-lbl">Produto</div><div class="prod-kpi-val" id="opi-produto" style="font-size:13px">—</div></div>
     <div class="prod-kpi"><div class="prod-kpi-lbl">Batida (kg)</div><div class="prod-kpi-val" id="opi-bat-kg">—</div></div>
     <div class="prod-kpi"><div class="prod-kpi-lbl">Sacos / batida</div><div class="prod-kpi-val" id="opi-sac-bat">—</div></div>
     <div class="prod-kpi blue"><div class="prod-kpi-lbl">Total de sacos</div><div class="prod-kpi-val" id="opi-sac-tot">—</div></div>
     <div class="prod-kpi blue"><div class="prod-kpi-lbl">Producao total (kg)</div><div class="prod-kpi-val" id="opi-kg-tot">—</div></div>
+    <div class="prod-kpi" style="background:var(--grn-lt);border-color:var(--grn-bd)" id="opi-pb-box"><div class="prod-kpi-lbl">Proteína Bruta (calc.)</div><div class="prod-kpi-val" id="opi-pb" style="color:var(--green)">—</div></div>
   </div>
   <div class="card" style="padding:0">
     <div style="padding:10px 16px;background:var(--s1);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
@@ -1811,6 +1813,26 @@ function calcularNiveisGarantia(formula){
   });
   return Object.values(acumulado).sort(function(a,b){return a.nome.localeCompare(b.nome);});
 }
+/* Calcula o % de Proteina Bruta do produto acabado, a partir da composicao das MPs.
+   Retorna null se nao houver dado de PB em nenhum ingrediente da formula. */
+function calcularProteinaBruta(formula){
+  var ings=(formula.ings||[]).filter(function(i){return i.qtd>0;});
+  if(ings.length===0)return null;
+  var comIngredientes=ings.filter(function(i){
+    return (MPNutri[i.cod]||[]).some(function(n){return n.nome.trim().toLowerCase()==='proteína bruta';});
+  });
+  if(comIngredientes.length===0)return null;
+  var garantias=calcularNiveisGarantia(formula);
+  var pb=garantias.find(function(g){return g.nome.trim().toLowerCase()==='proteína bruta';});
+  if(!pb)return null;
+  var valorGkg=pb.unidade==='g'?pb.valor:(pb.unidade==='mg'?pb.valor/1000:(pb.unidade==='%'?pb.valor*10:pb.valor));
+  return {
+    percentual:valorGkg/10,
+    cobertura:comIngredientes.length,
+    total:ings.length,
+    completo:comIngredientes.length===ings.length
+  };
+}
 function renderComposicaoTabela(){
   var tbody=$('nutri-tbody');
   if(!tbody)return;
@@ -2310,6 +2332,16 @@ function renderOP(){
   set('op-sac-bat',fn(sacos,sacos%1===0?0:1)+' sc');
   set('op-sac-tot',fn(sacos*nBat,(sacos*nBat)%1===0?0:1)+' sc');
   set('op-kg-tot',fn(batida*nBat)+' kg');
+  var pbCalc=calcularProteinaBruta({batida:batida,ings:ings});
+  if(!pbCalc){
+    set('op-pb','—');
+    $('op-pb-box').title='Nenhuma matéria-prima desta fórmula tem "Proteína Bruta" cadastrada na composição nutricional.';
+  } else {
+    set('op-pb',fn(pbCalc.percentual,2)+'%'+(pbCalc.completo?'':' *'));
+    $('op-pb-box').title=pbCalc.completo
+      ?'Calculado com base em todas as matérias-primas da fórmula.'
+      :'Cálculo parcial: '+pbCalc.cobertura+' de '+pbCalc.total+' matérias-primas têm Proteína Bruta cadastrada. O valor real pode ser diferente.';
+  }
   const embSel=$('emb-sel');
   var opEmbSel=$('op-emb-sel');
   if(opEmbSel&&embSel&&opEmbSel.selectedIndex!==embSel.selectedIndex)opEmbSel.selectedIndex=embSel.selectedIndex;
@@ -2406,6 +2438,16 @@ function renderOPIvinhema(){
   set('opi-sac-bat',fn(sacos,sacos%1===0?0:1)+' sc');
   set('opi-sac-tot',fn(sacos*nBat,(sacos*nBat)%1===0?0:1)+' sc');
   set('opi-kg-tot',fn(batida*nBat)+' kg');
+  var pbCalcI=calcularProteinaBruta({batida:batida,ings:ings});
+  if(!pbCalcI){
+    set('opi-pb','—');
+    $('opi-pb-box').title='Nenhuma matéria-prima desta fórmula tem "Proteína Bruta" cadastrada na composição nutricional.';
+  } else {
+    set('opi-pb',fn(pbCalcI.percentual,2)+'%'+(pbCalcI.completo?'':' *'));
+    $('opi-pb-box').title=pbCalcI.completo
+      ?'Calculado com base em todas as matérias-primas da fórmula.'
+      :'Cálculo parcial: '+pbCalcI.cobertura+' de '+pbCalcI.total+' matérias-primas têm Proteína Bruta cadastrada. O valor real pode ser diferente.';
+  }
   const embSel=$('emb-sel');
   var opiEmbSel=$('opi-emb-sel');
   if(opiEmbSel&&embSel&&opiEmbSel.selectedIndex!==embSel.selectedIndex)opiEmbSel.selectedIndex=embSel.selectedIndex;
