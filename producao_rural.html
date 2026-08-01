@@ -1201,9 +1201,9 @@ table input:focus{border-color:var(--blue)}
       <button onclick="fecharComposicaoMP()">&times;</button>
     </div>
     <div class="modal-body">
-      <div style="font-size:12px;color:var(--t3);margin-bottom:14px">Informe quanto de cada nutriente/ativo tem <strong>por kg</strong> desta matéria-prima. Isso é usado para calcular os "Níveis de garantia" dos produtos que a usam.</div>
+      <div style="font-size:12px;color:var(--t3);margin-bottom:14px">Informe o <strong>mínimo garantido/referência</strong> (o que consta na especificação do laudo) e, se tiver, o <strong>resultado real</strong> daquele lote — tudo <strong>por kg</strong> desta matéria-prima. O cálculo dos "Níveis de garantia" usa o valor de referência (mais conservador e estável entre lotes).</div>
       <table class="nf-ings-table">
-        <thead><tr><th>Nutriente / ativo</th><th style="width:110px">Valor por kg</th><th style="width:90px">Unidade</th><th style="width:40px"></th></tr></thead>
+        <thead><tr><th>Nutriente / ativo</th><th style="width:120px">Referência / mín.</th><th style="width:120px">Resultado real</th><th style="width:80px">Unidade</th><th style="width:40px"></th></tr></thead>
         <tbody id="cm-tbody"></tbody>
       </table>
       <button class="btn btn-ghost" style="margin-top:10px" onclick="cmAddLinha()">+ Adicionar nutriente</button>
@@ -1307,7 +1307,7 @@ const $=id=>document.getElementById(id);
 const gv=id=>parseFloat($(id)?.value)||0;
 const f2=v=>'R$ '+v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
 const f3=v=>'R$ '+v.toFixed(3).replace('.',',');
-const fn=(v,d=2)=>v.toFixed(d).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+const fn=(v,d=2)=>{var partes=v.toFixed(d).split('.');partes[0]=partes[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return partes.join(',');};
 const fd2=v=>v.toFixed(2).replace('.',',');
 const f6=v=>v.toFixed(6).replace('.',',');
 const fp=(v,d=2)=>v.toFixed(d).replace('.',',');
@@ -1696,24 +1696,36 @@ function delMP(cod){if(codEmFicha(cod)){alert('Item em uso.');return;}if(!confir
 
 /* ===== Composição nutricional das matérias-primas (para Níveis de Garantia) ===== */
 /* Composicao nutricional confirmada por laudo/certificado de analise (ver conversa) */
+/* Cada item: {nome, ref (minimo/referencia declarada), real (resultado medido, se disponivel), unidade} */
 const MPNutriPadrao={
-  142:[{nome:'Cobre',valor:250.5,unidade:'g'}], // Sulfato de cobre 24% - laudo RayQuimica, Cu 25,05%
-  145:[{nome:'Cobalto',valor:200.2,unidade:'g'}], // Sulfato de cobalto 20% - laudo Microsal, Co 20,02%
-  595:[{nome:'Iodo',valor:619.2,unidade:'g'}], // Iodato de calcio 62% - laudo INCASA, I 61,92%
-  435:[{nome:'Fósforo',valor:182.1,unidade:'g'},{nome:'Cálcio',valor:218.2,unidade:'g'}], // Fosfato Bicalcico 18% Po - laudo Carbotex
-  1149:[{nome:'Enxofre',valor:999.14,unidade:'g'}], // Enxofre 99,5 - laudo Carbotex, S 99,914%
-  570:[{nome:'Nitrogênio',valor:464,unidade:'g'},{nome:'NNP equivalente proteico',valor:2900,unidade:'g'}], // Ureia pecuaria - laudo Nitrogen/PR
-  1051:[{nome:'Cálcio',valor:324.10,unidade:'g'},{nome:'Proteína Bruta',valor:137.34,unidade:'g'}], // Rumel - laudo ICC
-  518:[{nome:'Monensina',valor:211.22,unidade:'g'}], // Monensina 20% - laudo Nutron/Cargill (RUMENSIN 200 PREMIX)
-  762:[{nome:'Virginiamicina',valor:513,unidade:'g'}], // V-Max 50 - laudo Phibro, media de 2 lotes (515 e 511 g/kg)
-  1077:[{nome:'Zinco',valor:801.7,unidade:'g'}], // Oxido de Zinco 80% - laudo Rayquimica, Zn 80,17%
-  971:[{nome:'Vitamina A',valor:15000000,unidade:'UI'},{nome:'Vitamina D3',valor:3000000,unidade:'UI'},{nome:'Vitamina E',valor:12000,unidade:'UI'}], // Vitamitract ADE - laudo Nuctramix
-  1263:[{nome:'Proteína Bruta',valor:328.9,unidade:'g'},{nome:'Extrato Etéreo',valor:54.4,unidade:'g'},{nome:'Fibra Bruta',valor:92.2,unidade:'g'},{nome:'Matéria Mineral',valor:51.9,unidade:'g'}], // DDG Farelo de Milho - laudo Inpasa
-  727:[{nome:'Salinomicina',valor:121.8,unidade:'g'}], // Salimonicina 12% - laudo Shandong Qilu King-Phar
-  1210:[{nome:'Proteína Bruta',valor:115,unidade:'g'},{nome:'Extrato Etéreo',valor:130,unidade:'g'},{nome:'Matéria Fibrosa',valor:120,unidade:'g'},{nome:'Matéria Mineral',valor:100,unidade:'g'}], // Farelo de Arroz - laudo Guacira
-  1345:[{nome:'Bacillus subtilis',valor:6.15e12,unidade:'UFC'},{nome:'Bifidobacterium bifidum',valor:4.18e12,unidade:'UFC'},{nome:'Enterococcus faecium',valor:4.18e12,unidade:'UFC'},{nome:'Lactobacillus acidophilus',valor:4.18e12,unidade:'UFC'},{nome:'Lactobacillus casei',valor:3.94e12,unidade:'UFC'},{nome:'Lactobacillus lactis',valor:1.97e12,unidade:'UFC'}], // ProbMais R - laudo Biomart
-  1802:[{nome:'Cromo',valor:5000,unidade:'mg'}], // Cromopac TP - certificado MCassab (garantia de formulacao)
-  1579:[{nome:'Bentonita',valor:700,unidade:'g'},{nome:'Beta-glucanas',valor:40,unidade:'g'},{nome:'Mananoligossacarídeos',valor:40,unidade:'g'}] // Safeguard - MAM - laudo Safeeds
+  142:[{nome:'Cobre',ref:250,real:250.5,unidade:'g'}], // Sulfato de cobre 24% - laudo RayQuimica: min 25,00% / result 25,05%
+  145:[{nome:'Cobalto',ref:200,real:200.2,unidade:'g'}], // Sulfato de cobalto 20% - laudo Microsal: min 20,00% / result 20,02%
+  595:[{nome:'Iodo',ref:616.3,real:619.2,unidade:'g'}], // Iodato de calcio 62% - laudo INCASA: min 61,63% / result 61,92%
+  435:[{nome:'Fósforo',ref:180,real:182.1,unidade:'g'},{nome:'Cálcio',ref:210,real:218.2,unidade:'g'}], // Fosfato Bicalcico 18% Po - laudo Carbotex
+  1149:[{nome:'Enxofre',ref:990,real:999.14,unidade:'g'}], // Enxofre 99,5 - laudo Carbotex: min 99,00% / result 99,914%
+  570:[{nome:'Nitrogênio',ref:460,real:464,unidade:'g'},{nome:'NNP equivalente proteico',ref:2800,real:2900,unidade:'g'}], // Ureia pecuaria - laudo Nitrogen/PR
+  1051:[{nome:'Cálcio',ref:85,real:324.10,unidade:'g'},{nome:'Proteína Bruta',ref:100,real:137.34,unidade:'g'}], // Rumel - laudo ICC
+  518:[{nome:'Monensina',ref:170,real:211.22,unidade:'g'}], // Monensina 20% - laudo Nutron/Cargill: min regulatorio 170 g/kg / media 211,22
+  762:[{nome:'Virginiamicina',ref:450,real:513,unidade:'g'}], // V-Max 50 - laudo Phibro: min 450 g/kg / media de 2 lotes (515 e 511)
+  1077:[{nome:'Zinco',ref:800,real:801.7,unidade:'g'}], // Oxido de Zinco 80% - laudo Rayquimica: min 80,00% / result 80,17%
+  971:[{nome:'Vitamina A',ref:15000000,real:null,unidade:'UI'},{nome:'Vitamina D3',ref:3000000,real:null,unidade:'UI'},{nome:'Vitamina E',ref:12000,real:null,unidade:'UI'}], // Vitamitract ADE - laudo Nuctramix (garantia declarada, sem resultado de lote)
+  1263:[{nome:'Proteína Bruta',ref:320,real:328.9,unidade:'g'},{nome:'Extrato Etéreo',ref:50,real:54.4,unidade:'g'},{nome:'Fibra Bruta',ref:100,real:92.2,unidade:'g'},{nome:'Matéria Mineral',ref:60,real:51.9,unidade:'g'}], // DDG Farelo de Milho - laudo Inpasa
+  727:[{nome:'Salinomicina',ref:120,real:121.8,unidade:'g'}], // Salimonicina 12% - laudo Shandong Qilu King-Phar (nominal 12% / real 12,18%)
+  1210:[{nome:'Proteína Bruta',ref:115,real:null,unidade:'g'},{nome:'Extrato Etéreo',ref:130,real:null,unidade:'g'},{nome:'Matéria Fibrosa',ref:120,real:null,unidade:'g'},{nome:'Matéria Mineral',ref:100,real:null,unidade:'g'}], // Farelo de Arroz - laudo Guacira (garantia declarada)
+  1345:[{nome:'Bacillus subtilis',ref:6.15e12,real:6.15e12,unidade:'UFC'},{nome:'Bifidobacterium bifidum',ref:4.18e12,real:4.18e12,unidade:'UFC'},{nome:'Enterococcus faecium',ref:4.18e12,real:4.18e12,unidade:'UFC'},{nome:'Lactobacillus acidophilus',ref:4.18e12,real:4.18e12,unidade:'UFC'},{nome:'Lactobacillus casei',ref:3.94e12,real:3.94e12,unidade:'UFC'},{nome:'Lactobacillus lactis',ref:1.97e12,real:1.97e12,unidade:'UFC'}], // ProbMais R - laudo Biomart (so ha "resultado", sem minimo declarado separado)
+  1802:[{nome:'Cromo',ref:5000,real:null,unidade:'mg'}], // Cromopac TP - certificado MCassab (garantia de formulacao, nao e laudo analitico)
+  1579:[{nome:'Bentonita',ref:700,real:null,unidade:'g'},{nome:'Beta-glucanas',ref:40,real:null,unidade:'g'},{nome:'Mananoligossacarídeos',ref:40,real:null,unidade:'g'}], // Safeguard - MAM - laudo Safeeds (nivel esperado, resultado so "conforme")
+  1583:[{nome:'Lisina',ref:1970,real:null,unidade:'mg'},{nome:'Metionina',ref:410,real:null,unidade:'mg'},{nome:'Treonina',ref:255,real:null,unidade:'mg'}], // Inbeef Plus - laudo INBRA (garantia declarada)
+  1584:[{nome:'Taninos',ref:630,real:664,unidade:'g'}], // ATX (Silvafeed ATX Plus) - laudo Indunor/SilvaTeam: min 63,0% / result 66,4%
+  1302:[{nome:'Taninos',ref:630,real:635,unidade:'g'},{nome:'Saponinas',ref:7,real:71,unidade:'g'}], // Silvafeed BX Tanino - laudo Indunor/SilvaTeam
+  147:[{nome:'Selênio',ref:450,real:451.1,unidade:'g'}], // Selenito de sodio 45% - laudo INCASA: min 45,00% / result 45,11%
+  1551:[{nome:'Lisofosfatídeos totais',ref:300,real:null,unidade:'g'}], // Lysoforte eXtend Dry - laudo Kemin (min 300, unidade nao explicita no laudo - confirmar)
+  440:[{nome:'Manganês',ref:550,real:558,unidade:'g'}], // Oxido de manganes 55% - laudo Fermavi: min 55% / result 55,80%
+  721:[{nome:'Aroma de frutas vermelhas',ref:100,real:null,unidade:'g'},{nome:'Ciclamato de sódio',ref:24.5,real:null,unidade:'g'}], // Nutraroma - laudo Konkreta (garantia declarada)
+  719:[{nome:'Flavophospholipol',ref:76,real:80,unidade:'g'}], // Flavomicina 80 - laudo Huvepharma (76-84 ug/mg = g/kg; result 80)
+  1491:[{nome:'Ácido Fumárico',ref:38,real:null,unidade:'g'},{nome:'Ácido Sórbico',ref:12,real:null,unidade:'g'},{nome:'Ácido Cítrico',ref:26,real:null,unidade:'g'},{nome:'Ácido Fórmico',ref:19,real:null,unidade:'g'},{nome:'Cardanol',ref:7000,real:null,unidade:'mg'},{nome:'Timol',ref:64,real:null,unidade:'g'},{nome:'Carvacrol',ref:2000,real:null,unidade:'mg'},{nome:'Vanilina',ref:1000,real:null,unidade:'mg'}], // Ruminatus - laudo Safeeds (nivel esperado, resultado so "conforme")
+  1721:[{nome:'Bentonita',ref:300,real:null,unidade:'g'},{nome:'Cromo',ref:10,real:null,unidade:'mg'},{nome:'Selênio',ref:10,real:null,unidade:'mg'},{nome:'Zinco',ref:1000,real:null,unidade:'mg'},{nome:'Bacillus cereus',ref:2.8e11,real:null,unidade:'UFC'},{nome:'Enterococcus faecium',ref:2.8e11,real:null,unidade:'UFC'},{nome:'Lactobacillus acidophilus',ref:2.8e11,real:null,unidade:'UFC'},{nome:'Ruminobacter amylophilum',ref:2.4e11,real:null,unidade:'UFC'},{nome:'Ruminobacter succinogenes',ref:2.4e11,real:null,unidade:'UFC'},{nome:'Succinovibrio dextrinosolvens',ref:3.52e11,real:null,unidade:'UFC'}], // Immunity - laudo Nutrivital (certificado de garantia, nao e laudo analitico)
+  133:[{nome:'Cálcio',ref:360,real:388.57,unidade:'g'},{nome:'Magnésio',ref:0.5,real:12.50,unidade:'g'}] // Calcário calcítico - laudo Horii Agro
 };
 let MPNutri=JSON.parse(JSON.stringify(MPNutriPadrao));
 let cmCodAtual=null;
@@ -1723,24 +1735,26 @@ function abrirComposicaoMP(cod){
   var item=MPitens.find(function(m){return m.cod===cod;});
   $('cm-titulo').textContent='Composição — '+cod+' '+(item?item.d:'');
   var lista=MPNutri[cod]?JSON.parse(JSON.stringify(MPNutri[cod])):[];
-  if(lista.length===0)lista.push({nome:'',valor:0,unidade:'g'});
+  if(lista.length===0)lista.push({nome:'',ref:0,real:null,unidade:'g'});
   cmLista=lista;
   renderComposicaoMP();
   $('composicao-mp-modal').style.display='flex';
 }
 function fecharComposicaoMP(){$('composicao-mp-modal').style.display='none';cmCodAtual=null;}
 let cmLista=[];
-function cmAddLinha(){cmLista.push({nome:'',valor:0,unidade:'g'});renderComposicaoMP();}
+function cmAddLinha(){cmLista.push({nome:'',ref:0,real:null,unidade:'g'});renderComposicaoMP();}
 function cmRemoverLinha(idx){cmLista.splice(idx,1);renderComposicaoMP();}
 function cmAtualizarNome(idx,val){cmLista[idx].nome=val;}
-function cmAtualizarValor(idx,val){cmLista[idx].valor=parseFloat(val)||0;}
+function cmAtualizarRef(idx,val){cmLista[idx].ref=parseFloat(val)||0;}
+function cmAtualizarReal(idx,val){cmLista[idx].real=val===''?null:(parseFloat(val)||0);}
 function cmAtualizarUnidade(idx,val){cmLista[idx].unidade=val;}
 function renderComposicaoMP(){
   $('cm-tbody').innerHTML=cmLista.map(function(n,idx){
     return '<tr>'
       +'<td><input type="text" value="'+(n.nome||'')+'" placeholder="Ex: Cálcio, Zinco, Bacillus subtilis..." onchange="cmAtualizarNome('+idx+',this.value)"></td>'
-      +'<td><input type="number" step="any" value="'+(n.valor||0)+'" onchange="cmAtualizarValor('+idx+',this.value)"></td>'
-      +'<td><select onchange="cmAtualizarUnidade('+idx+',this.value)">'+UNIDADES_NUTRI.map(function(u){return '<option value="'+u+'"'+(n.unidade===u?' selected':'')+'>'+u+(u==='UFC'||u==='UI'?'/kg':'/kg')+'</option>';}).join('')+'</select></td>'
+      +'<td><input type="number" step="any" value="'+(n.ref||0)+'" onchange="cmAtualizarRef('+idx+',this.value)"></td>'
+      +'<td><input type="number" step="any" value="'+(n.real===null||n.real===undefined?'':n.real)+'" placeholder="opcional" onchange="cmAtualizarReal('+idx+',this.value)"></td>'
+      +'<td><select onchange="cmAtualizarUnidade('+idx+',this.value)">'+UNIDADES_NUTRI.map(function(u){return '<option value="'+u+'"'+(n.unidade===u?' selected':'')+'>'+u+'/kg</option>';}).join('')+'</select></td>'
       +'<td><button type="button" class="nf-del-btn" onclick="cmRemoverLinha('+idx+')">×</button></td>'
       +'</tr>';
   }).join('');
@@ -1760,7 +1774,7 @@ function salvarNutriRemoto(cod,lista){
   var nomeColab=getNomeColaborador();
   var dataHora=new Date().toLocaleString('pt-BR');
   var linhas=lista.map(function(n){
-    return {cod:String(cod),descricao:item?item.d:'',nutriente:n.nome,valor:n.valor,unidade:n.unidade,editadoPor:nomeColab,dataHora:dataHora};
+    return {cod:String(cod),descricao:item?item.d:'',nutriente:n.nome,valorReferencia:n.ref,valorReal:(n.real===null||n.real===undefined?'':n.real),unidade:n.unidade,editadoPor:nomeColab,dataHora:dataHora};
   });
   var payload={tipo:'nutri',cod:String(cod),_excluirTodosDoCod:true,linhas:linhas};
   fetch(APPS_SCRIPT_URL,{
@@ -1783,7 +1797,7 @@ function carregarNutriRemoto(){
       Object.keys(data).forEach(function(codStr){
         var linhas=data[codStr]||[];
         MPNutri[parseInt(codStr)]=linhas.map(function(r){
-          return {nome:r.nutriente,valor:parseFloat(r.valor)||0,unidade:r.unidade};
+          return {nome:r.nutriente,ref:parseFloat(r.valorReferencia)||0,real:(r.valorReal===''||r.valorReal===undefined||r.valorReal===null?null:parseFloat(r.valorReal)),unidade:r.unidade};
         }).filter(function(n){return n.nome;});
       });
       /* Auto-semeia a planilha com os valores confirmados por laudo que ainda nao estao la */
@@ -1806,7 +1820,7 @@ function calcularNiveisGarantia(formula){
     if(!lista||lista.length===0)return;
     lista.forEach(function(n){
       var chave=n.nome+'|'+n.unidade;
-      var contribuicao=(ing.qtd||0)*(n.valor||0)/batida;
+      var contribuicao=(ing.qtd||0)*(n.ref||0)/batida;
       if(!acumulado[chave])acumulado[chave]={nome:n.nome,unidade:n.unidade,valor:0};
       acumulado[chave].valor+=contribuicao;
     });
@@ -1818,19 +1832,33 @@ function calcularNiveisGarantia(formula){
 function calcularProteinaBruta(formula){
   var ings=(formula.ings||[]).filter(function(i){return i.qtd>0;});
   if(ings.length===0)return null;
+  function ehProteinaOuNNP(n){
+    var nome=n.nome.trim().toLowerCase();
+    return nome==='proteína bruta'||nome==='nnp equivalente proteico'||nome==='nnp equivalente proteina';
+  }
   var comIngredientes=ings.filter(function(i){
-    return (MPNutri[i.cod]||[]).some(function(n){return n.nome.trim().toLowerCase()==='proteína bruta';});
+    return (MPNutri[i.cod]||[]).some(ehProteinaOuNNP);
   });
   if(comIngredientes.length===0)return null;
   var garantias=calcularNiveisGarantia(formula);
-  var pb=garantias.find(function(g){return g.nome.trim().toLowerCase()==='proteína bruta';});
-  if(!pb)return null;
-  var valorGkg=pb.unidade==='g'?pb.valor:(pb.unidade==='mg'?pb.valor/1000:(pb.unidade==='%'?pb.valor*10:pb.valor));
+  function paraGkg(g){
+    return g.unidade==='g'?g.valor:(g.unidade==='mg'?g.valor/1000:(g.unidade==='%'?g.valor*10:g.valor));
+  }
+  var totalGkg=0;
+  var temPB=false,temNNP=false;
+  garantias.forEach(function(g){
+    if(ehProteinaOuNNP(g)){
+      totalGkg+=paraGkg(g);
+      if(g.nome.trim().toLowerCase()==='proteína bruta')temPB=true; else temNNP=true;
+    }
+  });
+  if(!temPB&&!temNNP)return null;
   return {
-    percentual:valorGkg/10,
+    percentual:totalGkg/10,
     cobertura:comIngredientes.length,
     total:ings.length,
-    completo:comIngredientes.length===ings.length
+    completo:comIngredientes.length===ings.length,
+    incluiNNP:temNNP
   };
 }
 function renderComposicaoTabela(){
@@ -1852,7 +1880,10 @@ function renderComposicaoTabela(){
     var nutrientes=MPNutri[m.cod]||[];
     var resumo=nutrientes.length===0
       ?'<span style="color:var(--t3);font-size:12px">— sem composição cadastrada —</span>'
-      :nutrientes.map(function(n){return '<span style="display:inline-block;background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:2px 9px;margin:2px;font-size:11px">'+n.nome+': '+fn(n.valor,n.valor<1?4:2)+' '+n.unidade+'/kg</span>';}).join('');
+      :nutrientes.map(function(n){
+        var realTxt=(n.real===null||n.real===undefined)?'':' <span style="color:var(--t3)">(real: '+fn(n.real,n.real<1?4:2)+')</span>';
+        return '<span style="display:inline-block;background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:2px 9px;margin:2px;font-size:11px">'+n.nome+': '+fn(n.ref,n.ref<1?4:2)+' '+n.unidade+'/kg'+realTxt+'</span>';
+      }).join('');
     return '<tr>'
       +'<td class="mono">'+m.cod+'</td>'
       +'<td>'+m.d+'</td>'
@@ -2335,12 +2366,13 @@ function renderOP(){
   var pbCalc=calcularProteinaBruta({batida:batida,ings:ings});
   if(!pbCalc){
     set('op-pb','—');
-    $('op-pb-box').title='Nenhuma matéria-prima desta fórmula tem "Proteína Bruta" cadastrada na composição nutricional.';
+    $('op-pb-box').title='Nenhuma matéria-prima desta fórmula tem "Proteína Bruta" ou "NNP equivalente proteico" cadastrada na composição nutricional.';
   } else {
     set('op-pb',fn(pbCalc.percentual,2)+'%'+(pbCalc.completo?'':' *'));
-    $('op-pb-box').title=pbCalc.completo
-      ?'Calculado com base em todas as matérias-primas da fórmula.'
-      :'Cálculo parcial: '+pbCalc.cobertura+' de '+pbCalc.total+' matérias-primas têm Proteína Bruta cadastrada. O valor real pode ser diferente.';
+    var baseTxt=(pbCalc.incluiNNP?'Inclui Proteína Bruta + NNP equivalente proteico (ureia).':'Calculado a partir da Proteína Bruta das matérias-primas.');
+    $('op-pb-box').title=baseTxt+' '+(pbCalc.completo
+      ?'Considerando todas as matérias-primas da fórmula.'
+      :'Cálculo parcial: '+pbCalc.cobertura+' de '+pbCalc.total+' matérias-primas têm dado cadastrado. O valor real pode ser diferente.');
   }
   const embSel=$('emb-sel');
   var opEmbSel=$('op-emb-sel');
@@ -2441,12 +2473,13 @@ function renderOPIvinhema(){
   var pbCalcI=calcularProteinaBruta({batida:batida,ings:ings});
   if(!pbCalcI){
     set('opi-pb','—');
-    $('opi-pb-box').title='Nenhuma matéria-prima desta fórmula tem "Proteína Bruta" cadastrada na composição nutricional.';
+    $('opi-pb-box').title='Nenhuma matéria-prima desta fórmula tem "Proteína Bruta" ou "NNP equivalente proteico" cadastrada na composição nutricional.';
   } else {
     set('opi-pb',fn(pbCalcI.percentual,2)+'%'+(pbCalcI.completo?'':' *'));
-    $('opi-pb-box').title=pbCalcI.completo
-      ?'Calculado com base em todas as matérias-primas da fórmula.'
-      :'Cálculo parcial: '+pbCalcI.cobertura+' de '+pbCalcI.total+' matérias-primas têm Proteína Bruta cadastrada. O valor real pode ser diferente.';
+    var baseTxtI=(pbCalcI.incluiNNP?'Inclui Proteína Bruta + NNP equivalente proteico (ureia).':'Calculado a partir da Proteína Bruta das matérias-primas.');
+    $('opi-pb-box').title=baseTxtI+' '+(pbCalcI.completo
+      ?'Considerando todas as matérias-primas da fórmula.'
+      :'Cálculo parcial: '+pbCalcI.cobertura+' de '+pbCalcI.total+' matérias-primas têm dado cadastrado. O valor real pode ser diferente.');
   }
   const embSel=$('emb-sel');
   var opiEmbSel=$('opi-emb-sel');
@@ -2621,7 +2654,7 @@ function imprimirOP(){
     +'tfoot td{background:#e2dfd7;font-weight:700;font-size:14px;padding:8px 8px;border-top:2px solid #1e293b}'
     +'.emb-box{margin-top:10px;padding:10px;background:#f4f3ef;border-radius:8px;display:flex;gap:24px;font-size:12px}'
     +'.el{font-size:9px;font-weight:700;text-transform:uppercase;color:#8a8980;margin-bottom:2px}'
-    +'.sign-grid{display:grid;grid-template-columns:1.2fr 1.2fr 0.8fr 0.8fr 1fr;gap:16px;margin-top:16px}'
+    +'.sign-grid{display:grid;grid-template-columns:1.4fr 0.8fr 0.8fr 0.8fr 1fr;gap:16px;margin-top:16px}'
     +'.sign-box{font-size:11px;color:#52524a}'
     +'.sign-line{border-bottom:1px solid #18180f;margin-bottom:4px;padding-bottom:22px}'
     +'.pbtn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;background:#1e293b;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:14px}';
@@ -2669,11 +2702,11 @@ function imprimirOP(){
     +'<td></td></tr></tfoot></table>'
     
     +'<div class="sign-grid">'
-    +'<div class="sign-box"><div class="sign-line" style="padding-bottom:46px"></div>Resp. Tecnico'+(respTec?': '+respTec:'')+'</div>'
     +'<div class="sign-box"><div class="sign-line" style="padding-bottom:46px"></div>Resp. Industria'+(respInd?': '+respInd:'')+'</div>'
     +'<div class="sign-box"><div class="sign-line" style="padding-bottom:46px"></div>Data</div>'
     +'<div class="sign-box"><div class="sign-line" style="padding-bottom:46px"></div>Hora inicio</div>'
-    +'<div class="sign-box"><div class="sign-line" style="padding-bottom:46px"></div>Hora final / Qtd sacos</div>'
+    +'<div class="sign-box"><div class="sign-line" style="padding-bottom:46px"></div>Hora final</div>'
+    +'<div class="sign-box"><div class="sign-line" style="padding-bottom:46px"></div>Qtd sacos produzida</div>'
     +'</div>'
     +'</div>'
     +'<script>'
@@ -2787,7 +2820,7 @@ function imprimirOPIvinhema(){
     +'tfoot td{background:#e2dfd7;font-weight:700;font-size:14px;padding:8px 8px;border-top:2px solid #1e293b}'
     +'.emb-box{margin-top:10px;padding:10px;background:#f4f3ef;border-radius:8px;display:flex;gap:24px;font-size:12px}'
     +'.el{font-size:9px;font-weight:700;text-transform:uppercase;color:#8a8980;margin-bottom:2px}'
-    +'.sign-grid{display:grid;grid-template-columns:1.2fr 1.2fr 0.8fr 0.8fr 1fr;gap:16px;margin-top:16px}'
+    +'.sign-grid{display:grid;grid-template-columns:1.4fr 0.8fr 0.8fr 0.8fr 1fr;gap:16px;margin-top:16px}'
     +'.sign-box{font-size:11px;color:#52524a}'
     +'.sign-line{border-bottom:1px solid #18180f;margin-bottom:4px;padding-bottom:22px}'
     +'.pbtn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;background:#1e293b;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:14px}';
@@ -2835,11 +2868,11 @@ function imprimirOPIvinhema(){
     +'<td></td></tr></tfoot></table>'
     
     +'<div class="sign-grid">'
-    +'<div class="sign-box"><div class="sign-line" style="padding-bottom:46px"></div>Resp. Tecnico'+(respTec?': '+respTec:'')+'</div>'
     +'<div class="sign-box"><div class="sign-line" style="padding-bottom:46px"></div>Resp. Industria'+(respInd?': '+respInd:'')+'</div>'
     +'<div class="sign-box"><div class="sign-line" style="padding-bottom:46px"></div>Data</div>'
     +'<div class="sign-box"><div class="sign-line" style="padding-bottom:46px"></div>Hora inicio</div>'
-    +'<div class="sign-box"><div class="sign-line" style="padding-bottom:46px"></div>Hora final / Qtd sacos</div>'
+    +'<div class="sign-box"><div class="sign-line" style="padding-bottom:46px"></div>Hora final</div>'
+    +'<div class="sign-box"><div class="sign-line" style="padding-bottom:46px"></div>Qtd sacos produzida</div>'
     +'</div>'
     +'</div>'
     +'<script>'
