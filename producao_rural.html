@@ -295,6 +295,7 @@ table input:focus{border-color:var(--blue)}
   <div class="tab" onclick="goTab('banco',this)">🗂️ RURAL - Eldorado</div>
   <div class="tab" onclick="goTab('rna',this)">🏷️ RNA - Ivinhema</div>
   <div class="tab" onclick="goTab('cotacoes',this)">📋 Cotações</div>
+  <div class="tab" onclick="goTab('nutricao',this)">🧪 Composição Nutricional</div>
 </div>
 
 <!-- ═══ ABA 0 — INÍCIO ═══ -->
@@ -387,6 +388,7 @@ table input:focus{border-color:var(--blue)}
           <th class="r" style="width:110px">Anterior (R$/ton)</th>
           <th style="width:80px;text-align:center">Variação</th>
           <th style="width:80px;text-align:center">Ficha</th>
+          <th style="width:40px;text-align:center">Nutri.</th>
           <th style="width:30px"></th>
         </tr></thead>
         <tbody id="mp-tbody"></tbody>
@@ -406,6 +408,7 @@ table input:focus{border-color:var(--blue)}
           <div style="display:flex;gap:7px">
             <button class="gravar-btn" onclick="gravarFormula()" title="Salvar fórmula no banco local (localStorage)">💾 Gravar no banco</button>
             <button class="action-btn btn-export" onclick="exportarFormula()" title="Exportar fórmula como arquivo CSV">⬇ Exportar .csv</button>
+            <button class="action-btn" style="background:var(--grn-lt);color:var(--green);border-color:var(--grn-bd)" onclick="abrirApresentacaoProduto()" title="Gerar ficha de apresentação com níveis de garantia">📄 Apresentação do produto</button>
           </div>
         </div>
         <div class="card-body">
@@ -1069,6 +1072,33 @@ table input:focus{border-color:var(--blue)}
   </div>
 </div>
 
+<div id="pg-nutricao" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap">
+    <div>
+      <div style="font-size:16px;font-weight:700">Composição Nutricional das Matérias-primas</div>
+      <div style="font-size:12px;color:var(--t3);margin-top:2px">Base de dados usada para calcular os "Níveis de garantia" dos produtos. Editável aqui, direto na planilha (aba "ComposicaoMP"), ou pelo botão 🧪 no Banco de Matérias-primas.</div>
+    </div>
+    <div class="search-wrap"><span class="search-ico">🔍</span><input type="text" id="nutri-busca" placeholder="Buscar por nome, código ou nutriente..." oninput="renderComposicaoTabela()"></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px">
+    <div class="kpi"><div class="kpi-lbl">Com composição cadastrada</div><div class="kpi-val" id="nutri-count-ok" style="color:var(--green)">0</div></div>
+    <div class="kpi" style="background:var(--amb-lt)"><div class="kpi-lbl">Sem composição ainda</div><div class="kpi-val" id="nutri-count-pendente" style="color:var(--amber)">0</div></div>
+  </div>
+  <div class="card" style="padding:0">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th style="width:65px">Código</th><th>Matéria-prima</th>
+          <th>Nutrientes cadastrados</th>
+          <th style="width:110px"></th>
+        </tr></thead>
+        <tbody id="nutri-tbody"></tbody>
+      </table>
+    </div>
+    <div style="padding:8px 14px;background:var(--s1);border-top:1px solid var(--border);font-size:11px;color:var(--t3)" id="nutri-footer">Carregando...</div>
+  </div>
+</div>
+
 <div id="nova-cotacao-modal" class="modal-overlay" style="display:none">
   <div class="modal-box">
     <div class="modal-header">
@@ -1158,6 +1188,54 @@ table input:focus{border-color:var(--blue)}
       <button class="btn btn-ghost" onclick="fecharPrecificarCotacao()">Fechar</button>
       <button class="btn btn-ghost" style="color:var(--red);border-color:var(--red-bd)" onclick="recusarCotacao()">🗑 Recusar/excluir</button>
       <button class="btn btn-primary" onclick="aprovarCotacao()">✅ Aprovar e criar produto</button>
+    </div>
+  </div>
+</div>
+
+<div id="composicao-mp-modal" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span id="cm-titulo">Composição nutricional</span>
+      <button onclick="fecharComposicaoMP()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--t3);margin-bottom:14px">Informe quanto de cada nutriente/ativo tem <strong>por kg</strong> desta matéria-prima. Isso é usado para calcular os "Níveis de garantia" dos produtos que a usam.</div>
+      <table class="nf-ings-table">
+        <thead><tr><th>Nutriente / ativo</th><th style="width:110px">Valor por kg</th><th style="width:90px">Unidade</th><th style="width:40px"></th></tr></thead>
+        <tbody id="cm-tbody"></tbody>
+      </table>
+      <button class="btn btn-ghost" style="margin-top:10px" onclick="cmAddLinha()">+ Adicionar nutriente</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharComposicaoMP()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarComposicaoMP()">💾 Salvar composição</button>
+    </div>
+  </div>
+</div>
+
+<div id="apresentacao-produto-modal" class="modal-overlay" style="display:none">
+  <div class="modal-box" style="max-width:640px">
+    <div class="modal-header">
+      <span id="ap-titulo">Apresentação do produto</span>
+      <button onclick="fecharApresentacaoProduto()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="ap-nome-produto">
+      <div id="ap-aviso" style="display:none;background:var(--amb-lt);border:1px solid var(--amb-bd);color:var(--amber);padding:10px 12px;border-radius:8px;font-size:12px;margin-bottom:14px"></div>
+      <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--t3);margin-bottom:8px">Níveis de garantia (calculado automaticamente)</div>
+      <div id="ap-niveis" style="margin-bottom:18px"></div>
+      <div class="f" style="margin-bottom:12px">
+        <label>Recomendações de uso</label>
+        <textarea id="ap-recomendacoes" rows="4" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:13px" placeholder="Ex: Produto de pronto uso. Consumo médio esperado de..."></textarea>
+      </div>
+      <div class="f">
+        <label>Restrições e outras recomendações</label>
+        <textarea id="ap-restricoes" rows="4" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:13px" placeholder="Ex: Não permitir que cavalos ou outros equídeos tenham acesso a este produto..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharApresentacaoProduto()">Fechar</button>
+      <button class="btn btn-primary" onclick="imprimirApresentacaoProduto()">🖨️ Gerar / Imprimir</button>
     </div>
   </div>
 </div>
@@ -1540,6 +1618,7 @@ function renderMP(filtro=''){
     const unitCol=m.t==='emb'
       ?(c>0?'<span style="font-weight:600">'+fp(c)+'</span><span style="color:var(--t3);font-size:10px"> /un</span>':'—')
       :(c>0?'<span style="font-weight:600">'+f3(c/1000)+'</span><span style="color:var(--t3);font-size:10px"> /kg</span>':'—');
+    const nNutri=(MPNutri[m.cod]||[]).length;
     return '<tr class="'+(a?'changed':'')+'">'
       +'<td class="mono">'+m.cod+'</td>'
       +'<td><input type="text" class="mp-nome-input" value="'+m.d+'" onchange="renomearMP('+m.cod+',this.value)">'+(usada?' <span style="font-size:10px;color:var(--blue);font-weight:600">ficha</span>':'')+'</td>'
@@ -1549,6 +1628,7 @@ function renderMP(filtro=''){
       +'<td class="r" style="color:var(--t3);font-size:12px">'+(a?fn(ant):'—')+'</td>'
       +'<td style="text-align:center">'+bdg+'</td>'
       +'<td style="text-align:center;font-size:12px">'+(usada?'<span style="color:var(--blue);font-weight:600">em uso</span>':'—')+'</td>'
+      +'<td style="text-align:center"><button type="button" class="action-btn" style="background:'+(nNutri>0?'var(--grn-lt)':'var(--s1)')+';color:'+(nNutri>0?'var(--green)':'var(--t3)')+';border-color:'+(nNutri>0?'var(--grn-bd)':'var(--border)')+'" title="Composição nutricional" onclick="abrirComposicaoMP('+m.cod+')">🧪'+(nNutri>0?' '+nNutri:'')+'</button></td>'
       +'<td><button class="del" onclick="delMP('+m.cod+')">x</button></td>'
       +'</tr>';
   }).join('');
@@ -1612,6 +1692,226 @@ function addMP(){
 }
 function delMP(cod){if(codEmFicha(cod)){alert('Item em uso.');return;}if(!confirm('Remover '+cod+'?'))return;delete MPcusto[cod];delete MPanterior[cod];delete MPalterado[cod];MPitens=MPitens.filter(m=>m.cod!==cod);renderMP();}
 
+/* ===== Composição nutricional das matérias-primas (para Níveis de Garantia) ===== */
+/* Composicao nutricional confirmada por laudo/certificado de analise (ver conversa) */
+const MPNutriPadrao={
+  142:[{nome:'Cobre',valor:250.5,unidade:'g'}], // Sulfato de cobre 24% - laudo RayQuimica, Cu 25,05%
+  145:[{nome:'Cobalto',valor:200.2,unidade:'g'}], // Sulfato de cobalto 20% - laudo Microsal, Co 20,02%
+  595:[{nome:'Iodo',valor:619.2,unidade:'g'}], // Iodato de calcio 62% - laudo INCASA, I 61,92%
+  435:[{nome:'Fósforo',valor:182.1,unidade:'g'},{nome:'Cálcio',valor:218.2,unidade:'g'}], // Fosfato Bicalcico 18% Po - laudo Carbotex
+  1149:[{nome:'Enxofre',valor:999.14,unidade:'g'}], // Enxofre 99,5 - laudo Carbotex, S 99,914%
+  570:[{nome:'Nitrogênio',valor:464,unidade:'g'},{nome:'NNP equivalente proteico',valor:2900,unidade:'g'}], // Ureia pecuaria - laudo Nitrogen/PR
+  1051:[{nome:'Cálcio',valor:324.10,unidade:'g'},{nome:'Proteína Bruta',valor:137.34,unidade:'g'}], // Rumel - laudo ICC
+  518:[{nome:'Monensina',valor:211.22,unidade:'g'}], // Monensina 20% - laudo Nutron/Cargill (RUMENSIN 200 PREMIX)
+  762:[{nome:'Virginiamicina',valor:513,unidade:'g'}], // V-Max 50 - laudo Phibro, media de 2 lotes (515 e 511 g/kg)
+  1077:[{nome:'Zinco',valor:801.7,unidade:'g'}], // Oxido de Zinco 80% - laudo Rayquimica, Zn 80,17%
+  971:[{nome:'Vitamina A',valor:15000000,unidade:'UI'},{nome:'Vitamina D3',valor:3000000,unidade:'UI'},{nome:'Vitamina E',valor:12000,unidade:'UI'}], // Vitamitract ADE - laudo Nuctramix
+  1263:[{nome:'Proteína Bruta',valor:328.9,unidade:'g'},{nome:'Extrato Etéreo',valor:54.4,unidade:'g'},{nome:'Fibra Bruta',valor:92.2,unidade:'g'},{nome:'Matéria Mineral',valor:51.9,unidade:'g'}], // DDG Farelo de Milho - laudo Inpasa
+  727:[{nome:'Salinomicina',valor:121.8,unidade:'g'}], // Salimonicina 12% - laudo Shandong Qilu King-Phar
+  1210:[{nome:'Proteína Bruta',valor:115,unidade:'g'},{nome:'Extrato Etéreo',valor:130,unidade:'g'},{nome:'Matéria Fibrosa',valor:120,unidade:'g'},{nome:'Matéria Mineral',valor:100,unidade:'g'}], // Farelo de Arroz - laudo Guacira
+  1345:[{nome:'Bacillus subtilis',valor:6.15e12,unidade:'UFC'},{nome:'Bifidobacterium bifidum',valor:4.18e12,unidade:'UFC'},{nome:'Enterococcus faecium',valor:4.18e12,unidade:'UFC'},{nome:'Lactobacillus acidophilus',valor:4.18e12,unidade:'UFC'},{nome:'Lactobacillus casei',valor:3.94e12,unidade:'UFC'},{nome:'Lactobacillus lactis',valor:1.97e12,unidade:'UFC'}], // ProbMais R - laudo Biomart
+  1802:[{nome:'Cromo',valor:5000,unidade:'mg'}], // Cromopac TP - certificado MCassab (garantia de formulacao)
+  1579:[{nome:'Bentonita',valor:700,unidade:'g'},{nome:'Beta-glucanas',valor:40,unidade:'g'},{nome:'Mananoligossacarídeos',valor:40,unidade:'g'}] // Safeguard - MAM - laudo Safeeds
+};
+let MPNutri=JSON.parse(JSON.stringify(MPNutriPadrao));
+let cmCodAtual=null;
+const UNIDADES_NUTRI=['g','mg','mcg','UFC','UI','%'];
+function abrirComposicaoMP(cod){
+  cmCodAtual=cod;
+  var item=MPitens.find(function(m){return m.cod===cod;});
+  $('cm-titulo').textContent='Composição — '+cod+' '+(item?item.d:'');
+  var lista=MPNutri[cod]?JSON.parse(JSON.stringify(MPNutri[cod])):[];
+  if(lista.length===0)lista.push({nome:'',valor:0,unidade:'g'});
+  cmLista=lista;
+  renderComposicaoMP();
+  $('composicao-mp-modal').style.display='flex';
+}
+function fecharComposicaoMP(){$('composicao-mp-modal').style.display='none';cmCodAtual=null;}
+let cmLista=[];
+function cmAddLinha(){cmLista.push({nome:'',valor:0,unidade:'g'});renderComposicaoMP();}
+function cmRemoverLinha(idx){cmLista.splice(idx,1);renderComposicaoMP();}
+function cmAtualizarNome(idx,val){cmLista[idx].nome=val;}
+function cmAtualizarValor(idx,val){cmLista[idx].valor=parseFloat(val)||0;}
+function cmAtualizarUnidade(idx,val){cmLista[idx].unidade=val;}
+function renderComposicaoMP(){
+  $('cm-tbody').innerHTML=cmLista.map(function(n,idx){
+    return '<tr>'
+      +'<td><input type="text" value="'+(n.nome||'')+'" placeholder="Ex: Cálcio, Zinco, Bacillus subtilis..." onchange="cmAtualizarNome('+idx+',this.value)"></td>'
+      +'<td><input type="number" step="any" value="'+(n.valor||0)+'" onchange="cmAtualizarValor('+idx+',this.value)"></td>'
+      +'<td><select onchange="cmAtualizarUnidade('+idx+',this.value)">'+UNIDADES_NUTRI.map(function(u){return '<option value="'+u+'"'+(n.unidade===u?' selected':'')+'>'+u+(u==='UFC'||u==='UI'?'/kg':'/kg')+'</option>';}).join('')+'</select></td>'
+      +'<td><button type="button" class="nf-del-btn" onclick="cmRemoverLinha('+idx+')">×</button></td>'
+      +'</tr>';
+  }).join('');
+}
+function salvarComposicaoMP(){
+  var cod=cmCodAtual;
+  var listaLimpa=cmLista.filter(function(n){return n.nome&&n.nome.trim();});
+  MPNutri[cod]=listaLimpa;
+  fecharComposicaoMP();
+  renderMP($('mp-busca')?$('mp-busca').value:'');
+  renderComposicaoTabela();
+  salvarNutriRemoto(cod,listaLimpa);
+  toast('Composição nutricional salva para todos os colaboradores.');
+}
+function salvarNutriRemoto(cod,lista){
+  var item=MPitens.find(function(m){return m.cod===cod;});
+  var nomeColab=getNomeColaborador();
+  var dataHora=new Date().toLocaleString('pt-BR');
+  var linhas=lista.map(function(n){
+    return {cod:String(cod),descricao:item?item.d:'',nutriente:n.nome,valor:n.valor,unidade:n.unidade,editadoPor:nomeColab,dataHora:dataHora};
+  });
+  var payload={tipo:'nutri',cod:String(cod),_excluirTodosDoCod:true,linhas:linhas};
+  fetch(APPS_SCRIPT_URL,{
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify(payload)
+  }).then(function(){
+    syncStatus='ok';atualizarIndicadorSync();
+  }).catch(function(err){
+    console.error('Erro ao salvar composicao na planilha:',err);
+    syncStatus='erro';atualizarIndicadorSync();
+    toast('Nao foi possivel salvar na planilha (sem internet?). A composicao ficou so neste navegador.');
+  });
+}
+function carregarNutriRemoto(){
+  fetch(APPS_SCRIPT_URL+'?tipo=nutricaomp')
+    .then(function(r){return r.json();})
+    .then(function(data){
+      data=data||{};
+      Object.keys(data).forEach(function(codStr){
+        var linhas=data[codStr]||[];
+        MPNutri[parseInt(codStr)]=linhas.map(function(r){
+          return {nome:r.nutriente,valor:parseFloat(r.valor)||0,unidade:r.unidade};
+        }).filter(function(n){return n.nome;});
+      });
+      /* Auto-semeia a planilha com os valores confirmados por laudo que ainda nao estao la */
+      Object.keys(MPNutriPadrao).forEach(function(codStr){
+        var cod=parseInt(codStr);
+        if(!data[codStr]){salvarNutriRemoto(cod,MPNutriPadrao[codStr]);}
+      });
+      renderMP($('mp-busca')?$('mp-busca').value:'');
+      renderComposicaoTabela();
+    })
+    .catch(function(err){console.error('Erro ao carregar composicao nutricional da planilha:',err);});
+}
+/* Calcula os niveis de garantia por kg de produto final, a partir dos ingredientes de uma formula */
+function calcularNiveisGarantia(formula){
+  var batida=parseFloat(formula.batida)||0;
+  if(batida<=0)return [];
+  var acumulado={}; // chave: "nome|unidade" -> {nome,unidade,valor}
+  (formula.ings||[]).forEach(function(ing){
+    var lista=MPNutri[ing.cod];
+    if(!lista||lista.length===0)return;
+    lista.forEach(function(n){
+      var chave=n.nome+'|'+n.unidade;
+      var contribuicao=(ing.qtd||0)*(n.valor||0)/batida;
+      if(!acumulado[chave])acumulado[chave]={nome:n.nome,unidade:n.unidade,valor:0};
+      acumulado[chave].valor+=contribuicao;
+    });
+  });
+  return Object.values(acumulado).sort(function(a,b){return a.nome.localeCompare(b.nome);});
+}
+function renderComposicaoTabela(){
+  var tbody=$('nutri-tbody');
+  if(!tbody)return;
+  var f=($('nutri-busca')?$('nutri-busca').value:'').toLowerCase();
+  var mps=MPitens.filter(function(m){return m.t==='mp';}).slice().sort(function(a,b){return a.cod-b.cod;});
+  set('nutri-count-ok',mps.filter(function(m){return MPNutri[m.cod]&&MPNutri[m.cod].length>0;}).length);
+  set('nutri-count-pendente',mps.filter(function(m){return !MPNutri[m.cod]||MPNutri[m.cod].length===0;}).length);
+  var lista=mps.filter(function(m){
+    if(!f)return true;
+    if(String(m.cod).includes(f)||m.d.toLowerCase().includes(f))return true;
+    var nutrientes=MPNutri[m.cod]||[];
+    return nutrientes.some(function(n){return n.nome.toLowerCase().includes(f);});
+  });
+  set('nutri-footer',lista.length+' de '+mps.length+' matérias-primas');
+  if(lista.length===0){tbody.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--t3);padding:20px">Nenhuma encontrada.</td></tr>';return;}
+  tbody.innerHTML=lista.map(function(m){
+    var nutrientes=MPNutri[m.cod]||[];
+    var resumo=nutrientes.length===0
+      ?'<span style="color:var(--t3);font-size:12px">— sem composição cadastrada —</span>'
+      :nutrientes.map(function(n){return '<span style="display:inline-block;background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:2px 9px;margin:2px;font-size:11px">'+n.nome+': '+fn(n.valor,n.valor<1?4:2)+' '+n.unidade+'/kg</span>';}).join('');
+    return '<tr>'
+      +'<td class="mono">'+m.cod+'</td>'
+      +'<td>'+m.d+'</td>'
+      +'<td>'+resumo+'</td>'
+      +'<td style="text-align:center"><button type="button" class="action-btn" style="background:'+(nutrientes.length>0?'var(--grn-lt)':'var(--s1)')+';color:'+(nutrientes.length>0?'var(--green)':'var(--t3)')+';border-color:'+(nutrientes.length>0?'var(--grn-bd)':'var(--border)')+'" onclick="abrirComposicaoMP('+m.cod+')">🧪 Editar</button></td>'
+      +'</tr>';
+  }).join('');
+}
+function mpsSemComposicao(formula){
+  return (formula.ings||[]).filter(function(ing){
+    return !MPNutri[ing.cod]||MPNutri[ing.cod].length===0;
+  }).map(function(ing){
+    var item=MPitens.find(function(m){return m.cod===ing.cod;});
+    return {cod:ing.cod,nome:item?item.d:'?'};
+  });
+}
+
+/* ===== Apresentação de Produto (Níveis de Garantia) ===== */
+function abrirApresentacaoProduto(){
+  var cod=$('p-cod').value||'—';
+  var nome=$('p-nome').value||'—';
+  if(ings.length===0){alert('Carregue uma fórmula antes de gerar a apresentação do produto.');return;}
+  var formulaAtual={batida:gv('batida')||1000,ings:ings};
+  var garantias=calcularNiveisGarantia(formulaAtual);
+  var faltando=mpsSemComposicao(formulaAtual);
+  $('ap-titulo').textContent='Apresentação — '+nome;
+  $('ap-nome-produto').value=nome;
+  if(faltando.length>0){
+    $('ap-aviso').style.display='block';
+    $('ap-aviso').innerHTML='⚠️ '+faltando.length+' matéria(s)-prima(s) desta fórmula ainda não têm composição nutricional cadastrada, então os níveis abaixo podem estar incompletos: '+faltando.map(function(f){return f.cod+' - '+f.nome;}).join(', ');
+  } else {
+    $('ap-aviso').style.display='none';
+  }
+  if(garantias.length===0){
+    $('ap-niveis').innerHTML='<div style="color:var(--t3);font-size:13px">Nenhum nível de garantia calculado ainda — cadastre a composição nutricional das matérias-primas desta fórmula (botão 🧪 no Banco de Matérias-primas).</div>';
+  } else {
+    $('ap-niveis').innerHTML=garantias.map(function(g){
+      return '<div style="padding:4px 0;border-bottom:1px solid var(--border);font-size:13px">'+g.nome+' (mín) '+fn(g.valor,g.valor<1?4:2)+' '+g.unidade+'/kg</div>';
+    }).join('');
+  }
+  if(!$('ap-recomendacoes').value)$('ap-recomendacoes').value='';
+  if(!$('ap-restricoes').value)$('ap-restricoes').value='';
+  $('apresentacao-produto-modal').style.display='flex';
+}
+function fecharApresentacaoProduto(){$('apresentacao-produto-modal').style.display='none';}
+function imprimirApresentacaoProduto(){
+  var nome=$('ap-nome-produto').value||$('p-nome').value||'—';
+  var cod=$('p-cod').value||'—';
+  var niveisHtml=$('ap-niveis').innerHTML;
+  var recom=($('ap-recomendacoes').value||'').replace(/\n/g,'<br>');
+  var restr=($('ap-restricoes').value||'').replace(/\n/g,'<br>');
+  var doc='<html><head><meta charset="UTF-8"><title>Apresentação — '+nome+'</title>'
+    +'<style>'
+    +'*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:-apple-system,sans-serif;font-size:14px;color:#18180f;padding:24px}'
+    +'@media print{@page{margin:14mm;size:A4 portrait}}'
+    +'.hdr{display:flex;align-items:center;gap:16px;border-bottom:3px solid #1d4ed8;padding-bottom:14px;margin-bottom:20px}'
+    +'.hdr img{height:56px}'
+    +'.hdr-titulo{font-size:20px;font-weight:800;color:#1d4ed8}'
+    +'.produto-nome{font-size:24px;font-weight:800;margin-bottom:18px;text-align:center}'
+    +'.sec-titulo{font-size:15px;font-weight:800;margin:18px 0 8px;color:#1e293b}'
+    +'.niveis div{padding:4px 0;border-bottom:1px solid #e2dfd7;font-size:13px}'
+    +'.texto-livre{font-size:12.5px;line-height:1.6;text-align:justify}'
+    +'.footer{margin-top:30px;border-top:2px solid #1d4ed8;padding-top:10px;text-align:center;font-size:12px;font-weight:700;color:#1d4ed8}'
+    +'.pbtn{position:fixed;top:16px;right:16px;padding:10px 18px;background:#1d4ed8;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer}'
+    +'@media print{.pbtn{display:none}}'
+    +'</style></head><body>'
+    +'<button class="pbtn" onclick="window.print()">Imprimir / PDF</button>'
+    +'<div class="hdr"><img src="'+LOGO_RURAL+'" alt="Rural"><div class="hdr-titulo">Apresentação de Produto</div></div>'
+    +'<div class="produto-nome">'+cod+' - '+nome+'</div>'
+    +'<div class="sec-titulo">Níveis de garantia por kg de produto:</div>'
+    +'<div class="niveis">'+niveisHtml+'</div>'
+    +(recom?'<div class="sec-titulo">Recomendações de uso:</div><div class="texto-livre">'+recom+'</div>':'')
+    +(restr?'<div class="sec-titulo">Restrições e outras recomendações:</div><div class="texto-livre">'+restr+'</div>':'')
+    +'<div class="footer">Rural Nutrição Animal</div>'
+    +'</body></html>';
+  var win=window.open('','_blank','width=900,height=900');
+  win.document.write(doc);
+  win.document.close();
+}
+
 /* ===== Sincronizacao do Banco de Materias-primas com a planilha ===== */
 let mpRemoto={};
 function salvarMPRemoto(cod,desc,custo,tipo){
@@ -1646,11 +1946,14 @@ function carregarMPRemoto(){
         var r=mpRemoto[codStr];
         var cod=parseInt(codStr);
         var custo=parseFloat(r.custo)||0;
-        var tipo=r.tipoMp==='emb'?'emb':'mp';
-        MPcusto[cod]=custo;MPanterior[cod]=custo;MPalterado[cod]=false;
         var item=MPitens.find(function(m){return m.cod===cod;});
+        /* Nunca deixa a planilha rebaixar uma embalagem pra "mp" por engano:
+           confia no nome (classificarTipoMP) e no tipo local ja conhecido, alem do campo da planilha */
+        var tipo=(r.tipoMp==='emb'||classificarTipoMP(r.desc)==='emb'||(item&&item.t==='emb'))?'emb':'mp';
+        MPcusto[cod]=custo;MPanterior[cod]=custo;MPalterado[cod]=false;
         if(item){item.d=r.desc;item.t=tipo;}
         else{MPitens.push({cod:cod,d:r.desc,t:tipo});}
+        if(r.tipoMp!==tipo){salvarMPRemoto(cod,r.desc,custo,tipo);}
       });
       MPitens.sort(function(a,b){return a.cod-b.cod;});
       popularSelectsEmbalagem();
@@ -3409,6 +3712,7 @@ function goTab(id,el){
   if(id==='banco') renderBancoFormulas($('banco-busca')?$('banco-busca').value:'');
   if(id==='rna') renderBancoRNA($('rna-busca')?$('rna-busca').value:'');
   if(id==='cotacoes') renderCotacoes();
+  if(id==='nutricao') renderComposicaoTabela();
 }
 
 /* BOOT */
@@ -3426,6 +3730,7 @@ renderOPIvinhema();
 carregarFormulasEditadasRemoto();
 carregarCotacoesRemoto();
 carregarMPRemoto();
+carregarNutriRemoto();
 
 </script>
 </body>
