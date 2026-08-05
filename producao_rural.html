@@ -267,6 +267,127 @@ table input:focus{border-color:var(--blue)}
 .gravar-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:var(--r);font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--green);background:var(--grn-lt);color:var(--green);font-family:inherit}
 .gravar-btn:hover{background:var(--green);color:#fff}
 
+
+/* ===== Tabela de Preços (módulo integrado) ===== */
+.pt-shell{display:flex;flex-direction:column;height:calc(100vh - 96px);margin:-20px -22px;}
+.pt-subtabs{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border)}
+.pt-subtab{border:1px solid var(--bd2);background:#fff;color:var(--t2);padding:7px 14px;border-radius:7px;font-size:12.5px;cursor:pointer;font-family:inherit}
+.pt-subtab.active{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600}
+.pt-builder-view{flex:1;display:flex;overflow:hidden}
+#pt-sidebar{width:300px;min-width:260px;background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.pt-sidebar-hdr{padding:12px 14px;border-bottom:1px solid var(--border)}
+#pt-catalog{flex:1;overflow-y:auto;padding:8px}
+.pt-brand-block{margin-bottom:6px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.pt-brand-title{background:var(--blue);color:#fff;font-weight:700;font-size:12.5px;padding:8px 10px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.pt-brand-body{display:none;padding:6px}
+.pt-brand-body.open{display:block}
+.pt-group-row{border:1px solid var(--border);border-radius:6px;margin-bottom:6px;overflow:hidden}
+.pt-group-head{background:var(--green);color:#fff;font-size:11.5px;font-weight:700;padding:6px 8px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.pt-group-head .pt-cnt{font-weight:400;font-size:10px;opacity:.85;margin-left:5px}
+.pt-add-btn{background:var(--amb-bd);color:#4a3a00;border:none;border-radius:5px;font-size:10.5px;font-weight:700;padding:3px 7px;cursor:pointer}
+.pt-item-list{display:none;padding:4px 6px}
+.pt-item-list.open{display:block}
+.pt-item-line{display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:3px 4px;border-bottom:1px dashed #eee;gap:6px}
+.pt-item-line .pt-nm{flex:1}
+.pt-item-line .pt-pr{color:var(--blue);font-weight:700;white-space:nowrap}
+.pt-item-line button{background:none;border:none;color:var(--blue);font-size:14px;cursor:pointer;padding:0 2px}
+#pt-doc-scroll{flex:1;overflow-y:auto;padding:26px;display:flex;flex-direction:column;align-items:center;gap:24px;background:var(--bg)}
+.pt-page{width:210mm;min-height:297mm;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.15);padding:14mm;position:relative;border:2px solid transparent}
+.pt-page.pt-active-target{border-color:var(--amb-bd)}
+.pt-page-toolbar{position:absolute;top:-16px;right:14mm;display:flex;gap:6px}
+.pt-pt-btn{background:#fff;border:1px solid var(--border);border-radius:5px;font-size:10.5px;padding:4px 8px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.pt-page-header{display:flex;align-items:center;gap:16px;margin-bottom:14px}
+.pt-page-header img{height:64px}
+.pt-page-title{background:var(--blue);color:#fff;font-weight:700;font-size:17px;text-align:center;padding:10px;outline:none;flex:1}
+.pt-page-title-accent{height:5px;background:var(--amb-bd)}
+.pt-doc-group{margin-bottom:16px}
+.pt-doc-group-head{background:var(--green);color:#fff;font-weight:700;font-size:12.5px;padding:6px 10px;outline:none}
+.pt-doc-group-controls{display:flex;gap:10px;font-size:10.5px;color:#666;margin:2px 0 6px}
+.pt-doc-group-controls span{cursor:pointer}
+.pt-doc-group-controls span:hover{text-decoration:underline}
+table.pt-price-table{width:100%;border-collapse:collapse;font-size:12px}
+table.pt-price-table th{background:var(--blue);color:#fff;font-size:11px;text-align:left;padding:5px 8px}
+table.pt-price-table th.pt-pr,table.pt-price-table td.pt-pr{text-align:center}
+table.pt-price-table td{padding:4px 8px;border:1px solid #e2e2e2}
+table.pt-price-table td.pt-code{color:#666;text-align:center;width:60px}
+table.pt-price-table td.pt-price{color:var(--blue);font-weight:700;text-align:center;width:110px}
+table.pt-price-table td.pt-price-edit-doc{border:1px dashed #cfd8e3;cursor:text}
+table.pt-price-table td[contenteditable="true"]:focus{outline:2px solid var(--amb-bd);outline-offset:-2px}
+.pt-add-item-row{font-size:11px;color:var(--blue);cursor:pointer;padding:4px 8px;display:inline-block}
+.pt-add-item-row:hover{text-decoration:underline}
+.pt-empty-page-hint{color:#aaa;text-align:center;font-size:13px;margin-top:60px}
+#pt-add-page-btn{width:210mm;padding:14px;border:2px dashed var(--bd2);border-radius:8px;background:transparent;color:var(--t3);font-size:13px;cursor:pointer}
+#pt-add-page-btn:hover{background:#fff;color:var(--blue);border-color:var(--blue)}
+#pt-margins-view{display:none;flex:1;overflow-y:auto;padding:18px 26px 40px}
+#pt-margins-view.visible{display:block}
+#pt-doc-scroll.pt-hidden,#pt-sidebar.pt-hidden{display:none}
+.pt-margins-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.pt-margins-toolbar input{flex:1;max-width:320px}
+.pt-legend{font-size:11px;color:var(--t3);display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.pt-legend-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px}
+.pt-brand-section{margin-bottom:24px}
+.pt-brand-section-title{font-size:14px;font-weight:700;color:var(--blue);border-bottom:2px solid var(--blue);padding-bottom:5px;margin-bottom:10px}
+.pt-margin-group-title{font-size:12px;font-weight:700;color:#fff;background:var(--green);padding:5px 10px;margin-top:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px}
+.pt-rate-controls{font-weight:400;font-size:10.5px;display:flex;align-items:center;gap:2px}
+.pt-rate-input{width:44px;padding:2px 4px;border:none;border-radius:4px;font-size:10.5px;text-align:center;margin:0 3px}
+table.pt-margins-table{width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:4px}
+table.pt-margins-table th{background:var(--s2);color:#555;text-align:right;padding:6px 8px;font-size:10.5px;border-bottom:2px solid var(--border);white-space:nowrap}
+table.pt-margins-table th:first-child,table.pt-margins-table th:nth-child(2){text-align:left}
+table.pt-margins-table td{padding:5px 8px;border-bottom:1px solid #eee;text-align:right;white-space:nowrap}
+table.pt-margins-table td:first-child,table.pt-margins-table td:nth-child(2){text-align:left;white-space:normal}
+table.pt-margins-table td.pt-na{color:#c8c8c8}
+td.pt-price-edit{color:var(--blue);font-weight:700;cursor:text;border:1px dashed #cfd8e3 !important}
+td.pt-price-edit:focus{outline:2px solid var(--amb-bd);outline-offset:-2px;background:#fffdf3}
+.pt-pct-pill{display:inline-block;padding:2px 8px;border-radius:20px;font-weight:700;font-size:11px}
+.pt-pct-neg{background:#fbe1e1;color:#B23A3A}
+.pt-pct-low{background:#fdedd3;color:#8a5a00}
+.pt-pct-ok{background:#e2f3e8;color:#1f7a44}
+.pt-pct-high{background:#dcedff;color:var(--blue)}
+.pt-src-tag{font-size:9.5px;padding:1px 6px;border-radius:8px;margin-left:5px;font-weight:700}
+.pt-src-live{background:#e2f3e8;color:#1f7a44}
+.pt-src-static{background:#eee;color:#888}
+.pt-link-input{font-size:10.5px;padding:2px 4px;border-radius:4px;border:1px solid var(--border);max-width:230px;width:100%}
+.pt-emb-info{font-size:9.5px;color:#8a5a00;margin-top:2px}
+.pt-embsize-input{width:44px;font-size:9.5px;padding:1px 3px;border-radius:3px;border:1px solid var(--amb-bd);text-align:center}
+
+/* ===== Tabela de Preços pública (por empresa / grupo) ===== */
+.ptp-shell{display:flex;flex-direction:column;height:calc(100vh - 96px);margin:-20px -22px;}
+.ptp-toolbar{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border)}
+.ptp-brandbar{display:flex;gap:8px}
+.ptp-brand-btn{border:1px solid var(--bd2);background:#fff;color:var(--t2);padding:8px 18px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.ptp-brand-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+#ptp-content{flex:1;overflow-y:auto;padding:26px;background:var(--bg)}
+.ptp-header{display:flex;align-items:center;gap:16px;margin-bottom:18px;max-width:900px}
+.ptp-header img{height:70px}
+.ptp-title{background:var(--blue);color:#fff;font-weight:700;font-size:19px;text-align:center;padding:12px;flex:1;border-radius:2px}
+.ptp-title-accent{height:5px;background:var(--amb-bd);max-width:900px;margin-bottom:22px}
+.ptp-group{max-width:900px;margin-bottom:22px}
+.ptp-group-title{background:var(--green);color:#fff;font-weight:700;font-size:13.5px;padding:8px 12px}
+table.ptp-table{width:100%;border-collapse:collapse;font-size:13px;background:#fff}
+table.ptp-table th{background:var(--blue);color:#fff;font-size:12px;text-align:left;padding:7px 10px}
+table.ptp-table th.ptp-pr,table.ptp-table td.ptp-pr{text-align:center}
+table.ptp-table td{padding:6px 10px;border:1px solid #e2e2e2}
+table.ptp-table td.ptp-code{color:#666;text-align:center;width:70px}
+table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center;width:120px}
+@media print{
+  .tabs,.hdr,.ptp-toolbar{display:none !important}
+  body,.page,#pg-precospub,.ptp-shell,#ptp-content{background:#fff !important;overflow:visible !important;height:auto !important;padding:0 !important;margin:0 !important}
+  .page{display:none !important}
+  .page.active{display:block !important}
+  .ptp-header,.ptp-group{page-break-inside:avoid}
+  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;color-adjust:exact !important;}
+}
+@media print{
+  .tabs,.hdr,#pt-sidebar,.pt-subtabs,#pt-add-page-btn,.pt-page-toolbar,.pt-add-item-row,.pt-doc-group-controls,#pt-margins-view{display:none !important}
+  body,.page,#pg-precos,.pt-shell,#pt-doc-scroll{background:#fff !important;overflow:visible !important;height:auto !important;padding:0 !important;margin:0 !important}
+  .page{display:none !important}
+  .page.active{display:block !important}
+  .pt-page{box-shadow:none;border:none;margin:0;page-break-after:always;width:210mm;min-height:297mm}
+  @page{size:A4;margin:0}
+  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;color-adjust:exact !important;}
+}
+
+
 </style>
 </head>
 <body>
@@ -296,6 +417,8 @@ table input:focus{border-color:var(--blue)}
   <div class="tab" onclick="goTab('rna',this)">🏷️ RNA - Ivinhema</div>
   <div class="tab" onclick="goTab('cotacoes',this)">📋 Cotações</div>
   <div class="tab" onclick="goTab('nutricao',this)">🧪 Composição Nutricional</div>
+  <div class="tab" onclick="goTab('precos',this)">🔒 Custos &amp; Precificação</div>
+  <div class="tab" onclick="goTab('precospub',this)">💲 Tabela de Preços</div>
 </div>
 
 <!-- ═══ ABA 0 — INÍCIO ═══ -->
@@ -346,6 +469,16 @@ table input:focus{border-color:var(--blue)}
         <div class="home-card-icon" style="background:var(--grn-lt);border-color:var(--grn-bd)">📋</div>
         <div class="home-card-title">Cotações</div>
         <div class="home-card-desc">Monte receitas e precifique novos produtos.</div>
+      </div>
+      <div class="home-card" onclick="irPara('precos')">
+        <div class="home-card-icon" style="background:var(--amb-lt);border-color:var(--amb-bd)">🔒</div>
+        <div class="home-card-title">Custos & Precificação</div>
+        <div class="home-card-desc">Construtor de tabela de preços por marca/grupo.</div>
+      </div>
+      <div class="home-card" onclick="irPara('precospub')">
+        <div class="home-card-icon" style="background:var(--grn-lt);border-color:var(--grn-bd)">💲</div>
+        <div class="home-card-title">Tabela de Preços</div>
+        <div class="home-card-desc">Visualização e impressão da tabela por empresa.</div>
       </div>
     </div>
     <div id="sync-status-inicio" style="text-align:center;margin-top:28px;font-size:12px;font-weight:600"></div>
@@ -1098,6 +1231,43 @@ table input:focus{border-color:var(--blue)}
       </table>
     </div>
     <div style="padding:8px 14px;background:var(--s1);border-top:1px solid var(--border);font-size:11px;color:var(--t3)" id="nutri-footer">Carregando...</div>
+  </div>
+</div>
+
+<div id="pg-precos" class="page">
+  <div class="pt-shell">
+    <div class="pt-subtabs">
+      <button class="pt-subtab active" data-pt-tab="builder" onclick="ptSwitchTab('builder')">Construtor de Tabela</button>
+      <button class="pt-subtab" data-pt-tab="margins" onclick="ptSwitchTab('margins')">Custos &amp; Margens</button>
+      <span style="flex:1"></span>
+      <span id="pt-save-status" style="font-size:11px;color:var(--t3);margin-right:4px"></span>
+      <button class="btn btn-ghost" onclick="ptClearDoc()">Limpar tudo</button>
+      <button class="btn btn-primary" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+    </div>
+
+    <div id="pt-builder-view" class="pt-builder-view">
+      <div id="pt-sidebar">
+        <div class="pt-sidebar-hdr">
+          <strong style="font-size:13px;color:var(--blue)">Catálogo Rural Nutrição Animal</strong>
+          <p style="font-size:11px;color:var(--t3);margin-top:2px">Clique em "+ grupo" para adicionar à página ativa (contorno amarelo).</p>
+        </div>
+        <div id="pt-catalog"></div>
+      </div>
+      <div id="pt-doc-scroll"></div>
+    </div>
+
+    <div id="pt-margins-view"></div>
+  </div>
+</div>
+
+<div id="pg-precospub" class="page">
+  <div class="ptp-shell">
+    <div class="ptp-toolbar">
+      <div class="ptp-brandbar" id="ptp-brandbar"></div>
+      <span style="flex:1"></span>
+      <button class="btn btn-primary" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+    </div>
+    <div id="ptp-content"></div>
   </div>
 </div>
 
@@ -3667,7 +3837,7 @@ function exportarLocal(cod){exportarLocalFormula(cod);}
 function removerLocalBtn(cod){removerLocal(cod);}
 
 /* Abas protegidas por senha (mp, ficha, preco). Hash djb2 — senha não fica em texto puro. */
-const ABAS_PROTEGIDAS=['mp','ficha','preco'];
+const ABAS_PROTEGIDAS=['mp','ficha','preco','precos'];
 const SENHA_HASH=3268142524;
 let acessoLiberado=false;
 function hashSenha(s){var h=5381;for(var i=0;i<s.length;i++){h=((h*33)+s.charCodeAt(i))>>>0;}return h;}
@@ -3816,7 +3986,946 @@ function goTab(id,el){
   if(id==='rna') renderBancoRNA($('rna-busca')?$('rna-busca').value:'');
   if(id==='cotacoes') renderCotacoes();
   if(id==='nutricao') renderComposicaoTabela();
+  if(id==='precos') ptOnTabOpen();
+  if(id==='precospub') ptpOnTabOpen();
 }
+
+/* ======================================================================
+   TABELA DE PREÇOS — módulo integrado
+   Reaproveita biblioteca / bibliotecaRNA / MPcusto / custoFormula /
+   listaTodasFormulas já carregados acima nesta mesma página para puxar
+   o CMV diretamente das fichas técnicas, ao invés de valores estáticos.
+   ====================================================================== */
+
+const PT_CATALOG = {"Rural": {"groups": [{"name": "Sal Mineral", "hasCode": true, "items": [{"id": "Rural|Sal Mineral|0", "code": "125", "name": "Rural Engorda", "price": 105}, {"id": "Rural|Sal Mineral|1", "code": "126", "name": "Rural Recria", "price": 135}, {"id": "Rural|Sal Mineral|2", "code": "128", "name": "Rural 80 Cria", "price": 168}, {"id": "Rural|Sal Mineral|3", "code": "129", "name": "Rural 90 Cria", "price": 183}, {"id": "Rural|Sal Mineral|4", "code": "184", "name": "Rural Leite", "price": 180}, {"id": "Rural|Sal Mineral|5", "code": "187", "name": "Rural Ovinos", "price": 167}, {"id": "Rural|Sal Mineral|6", "code": "633", "name": "Rural Reprodução", "price": 201}, {"id": "Rural|Sal Mineral|7", "code": "937", "name": "Rural Equinos", "price": 134}]}, {"name": "Linha Plus", "hasCode": true, "items": [{"id": "Rural|Linha Plus|0", "code": "833", "name": "Rural Cria Aditivado", "price": 131.5}, {"id": "Rural|Linha Plus|1", "code": "938", "name": "Rural Engorda Plus", "price": 105.5}, {"id": "Rural|Linha Plus|2", "code": "939", "name": "Rural Recria Plus", "price": 135.5}, {"id": "Rural|Linha Plus|3", "code": "957", "name": "Rural Cria Plus", "price": 118.5}, {"id": "Rural|Linha Plus|4", "code": "1189", "name": "Rural Recria Plus UP", "price": 117.5}, {"id": "Rural|Linha Plus|5", "code": "1440", "name": "Rural Leite Plus ADE", "price": 133}, {"id": "Rural|Linha Plus|6", "code": "1441", "name": "Rural Produção Plus", "price": 114}, {"id": "Rural|Linha Plus|7", "code": "1447", "name": "Rural Cria Super Plus", "price": 173}, {"id": "Rural|Linha Plus|8", "code": "1475", "name": "Rural Cria Advance", "price": 135}, {"id": "Rural|Linha Plus|9", "code": "1569", "name": "Rural Recria Plus + Prot", "price": 132}, {"id": "Rural|Linha Plus|10", "code": "1667", "name": "Rural Engorda Advance Plus", "price": 112.5}, {"id": "Rural|Linha Plus|11", "code": "1668", "name": "Rural Recria Advance Plus", "price": 145}, {"id": "Rural|Linha Plus|12", "code": "1719", "name": "Rural Cria + Energia", "price": 112}, {"id": "Rural|Linha Plus|13", "code": "1755", "name": "Rural Produção Plus JT", "price": 115}, {"id": "Rural|Linha Plus|14", "code": "1767", "name": "Rural Cria Plus Nar", "price": 130}, {"id": "Rural|Linha Plus|15", "code": "1768", "name": "Rural Recria Plus Nar", "price": 143.5}, {"id": "Rural|Linha Plus|16", "code": "1769", "name": "Rural Produção Plus Nar", "price": 120}]}, {"name": "Energéticos", "hasCode": true, "items": [{"id": "Rural|Energéticos|0", "code": "844", "name": "Rural Desmama Prime", "price": 90}, {"id": "Rural|Energéticos|1", "code": "864", "name": "Rural Primíparas Prime", "price": 85}, {"id": "Rural|Energéticos|2", "code": "930", "name": "Rural Engorda Prime", "price": 87}, {"id": "Rural|Energéticos|3", "code": "946", "name": "Rural Energético Master", "price": 75}, {"id": "Rural|Energéticos|4", "code": "953", "name": "Rural Recria Prime", "price": 95}, {"id": "Rural|Energéticos|5", "code": "1267", "name": "Rural Energético Tmax", "price": 88}, {"id": "Rural|Energéticos|6", "code": "1418", "name": "Rural Flex Prob", "price": 80}, {"id": "Rural|Energéticos|7", "code": "1423", "name": "Rural Energético Max Prob", "price": 75}, {"id": "Rural|Energéticos|8", "code": "1428", "name": "Rural Energético Prime Prob", "price": 77}, {"id": "Rural|Energéticos|9", "code": "1439", "name": "Rural Energético Prob", "price": 89}, {"id": "Rural|Energéticos|10", "code": "1594", "name": "Rural Energético Max Prob - 40 kg", "price": 96}, {"id": "Rural|Energéticos|11", "code": "1628", "name": "Rural Energético Prime Nar", "price": 86.5}, {"id": "Rural|Energéticos|12", "code": "1647", "name": "Rural Precoce", "price": 81.5}, {"id": "Rural|Energéticos|13", "code": "1661", "name": "Rural Proteico Max 22", "price": 75}, {"id": "Rural|Energéticos|14", "code": "1670", "name": "Rural Proteico Prime 23", "price": 85}, {"id": "Rural|Energéticos|15", "code": "1764", "name": "Rural Energético Master Nar", "price": 82}, {"id": "Rural|Energéticos|16", "code": "1766", "name": "Rural Energético Prime Prob Nar", "price": 85}, {"id": "Rural|Energéticos|17", "code": "1775", "name": "Rural Precoce Nar", "price": 80}, {"id": "Rural|Energéticos|18", "code": "1776", "name": "Rural Energético Max Prob Nar", "price": 80}, {"id": "Rural|Energéticos|19", "code": "1803", "name": "Rural Energético Max Mon 0,5", "price": 65}, {"id": "Rural|Energéticos|20", "code": "1804", "name": "Rural Energético Master 0,3 Mon", "price": 70}, {"id": "Rural|Energéticos|21", "code": "1808", "name": "Rural Proteico Prime 0,1 Mon", "price": 74}, {"id": "Rural|Energéticos|22", "code": "190", "name": "Ruralzinho Creep", "price": 95}]}, {"name": "Rações", "hasCode": true, "items": [{"id": "Rural|Rações|0", "code": "180", "name": "Rural Equino Prime", "price": 90}, {"id": "Rural|Rações|1", "code": "997", "name": "Rural Elite Touros", "price": 87}, {"id": "Rural|Rações|2", "code": "1018", "name": "Ração MC", "price": 38.3}, {"id": "Rural|Rações|3", "code": "1227", "name": "Rural Ração Tip Junqueira", "price": 80}, {"id": "Rural|Rações|4", "code": "1287", "name": "Rural Acabamento AS", "price": 80}, {"id": "Rural|Rações|5", "code": "1513", "name": "Rural Confinamento Cana", "price": 78}, {"id": "Rural|Rações|6", "code": "1405", "name": "Rural Terminação AS - 40 kg", "price": 82}, {"id": "Rural|Rações|7", "code": "1657", "name": "Rural Elite Vacas", "price": 70}, {"id": "Rural|Rações|8", "code": "1742", "name": "Rural Terminação AS - 30 kg", "price": 65}, {"id": "Rural|Rações|9", "code": "1784", "name": "Rural Elite Touros 18% - 30 kg", "price": 62}]}, {"name": "Grupo MP", "hasCode": true, "items": [{"id": "Rural|Grupo MP|0", "code": "543", "name": "Milho a Granel - sc 30 kg", "price": 50.0}, {"id": "Rural|Grupo MP|1", "code": "543,5", "name": "Quirera de Milho - sc 25 kg", "price": 50.0}]}]}, "Viacampus": {"groups": [{"name": "Viacampus Rações", "hasCode": false, "items": [{"id": "Viacampus|Viacampus Rações|0", "code": null, "name": "Rural Equino Prime", "price": 102}, {"id": "Viacampus|Viacampus Rações|1", "code": null, "name": "Ruralzinho Creep Inicial", "price": 82}, {"id": "Viacampus|Viacampus Rações|2", "code": null, "name": "Ruralzinho Creep Final", "price": 80}, {"id": "Viacampus|Viacampus Rações|3", "code": null, "name": "Viacampus Terminação AS", "price": 82}, {"id": "Viacampus|Viacampus Rações|4", "code": null, "name": "Rural Ração 16 DR", "price": 57.5}, {"id": "Viacampus|Viacampus Rações|5", "code": null, "name": "Rural Lactação DR", "price": 62.5}, {"id": "Viacampus|Viacampus Rações|6", "code": null, "name": "Rural Lactação 22 DR", "price": 68.5}, {"id": "Viacampus|Viacampus Rações|7", "code": null, "name": "Rural Confina AS (40 kg)", "price": 87}, {"id": "Viacampus|Viacampus Rações|8", "code": null, "name": "Rural Confina AS (30 kg)", "price": 68.5}, {"id": "Viacampus|Viacampus Rações|9", "code": null, "name": "Rural Elite 16% - 40 kg", "price": 80}, {"id": "Viacampus|Viacampus Rações|10", "code": null, "name": "Rural Elite 16% - 30 kg", "price": 62.5}, {"id": "Viacampus|Viacampus Rações|11", "code": null, "name": "Rural Via Engorda 16", "price": 68.5}]}, {"name": "Viacampus Proteicos", "hasCode": false, "items": [{"id": "Viacampus|Viacampus Proteicos|0", "code": null, "name": "Viacampus Energético 20", "price": 82}, {"id": "Viacampus|Viacampus Proteicos|1", "code": null, "name": "Viacampus Energético Max", "price": 75}, {"id": "Viacampus|Viacampus Proteicos|2", "code": null, "name": "Viacampus Energético Alternativo", "price": 90}, {"id": "Viacampus|Viacampus Proteicos|3", "code": null, "name": "Viacampus Creep", "price": 92}, {"id": "Viacampus|Viacampus Proteicos|4", "code": null, "name": "Viacampus Energ. 20 AS", "price": 77.5}, {"id": "Viacampus|Viacampus Proteicos|5", "code": null, "name": "Viacampus Energ. Alternativo AS", "price": 87}, {"id": "Viacampus|Viacampus Proteicos|6", "code": null, "name": "Viacampus Energ. Equinos", "price": 69}, {"id": "Viacampus|Viacampus Proteicos|7", "code": null, "name": "Viacampus Advance Matriz", "price": 76}, {"id": "Viacampus|Viacampus Proteicos|8", "code": null, "name": "Viacampus Proteico 40", "price": 72.8}, {"id": "Viacampus|Viacampus Proteicos|9", "code": null, "name": "Rural Proteico Max 22", "price": 74}, {"id": "Viacampus|Viacampus Proteicos|10", "code": null, "name": "Rural Proteico Prime 23", "price": 78}, {"id": "Viacampus|Viacampus Proteicos|11", "code": null, "name": "Rural Energético Prime Prob Nar", "price": 80}]}, {"name": "Viacampus Mineral", "hasCode": false, "items": [{"id": "Viacampus|Viacampus Mineral|0", "code": null, "name": "Viacampus 40", "price": 96.5}, {"id": "Viacampus|Viacampus Mineral|1", "code": null, "name": "Viacampus 60", "price": 125}, {"id": "Viacampus|Viacampus Mineral|2", "code": null, "name": "Viacampus 80", "price": 155}, {"id": "Viacampus|Viacampus Mineral|3", "code": null, "name": "Viacampus Leite", "price": 160}, {"id": "Viacampus|Viacampus Mineral|4", "code": null, "name": "Viacampus Equinos", "price": 125}, {"id": "Viacampus|Viacampus Mineral|5", "code": null, "name": "Viacampus Ovinos", "price": 155}, {"id": "Viacampus|Viacampus Mineral|6", "code": null, "name": "Viacampus Cria Plus", "price": 130}, {"id": "Viacampus|Viacampus Mineral|7", "code": null, "name": "Viacampus Cria Advance", "price": 135}, {"id": "Viacampus|Viacampus Mineral|8", "code": null, "name": "Viacampus Produção Plus", "price": 134}]}, {"name": "Viacampus Núcleos", "hasCode": false, "items": [{"id": "Viacampus|Viacampus Núcleos|0", "code": null, "name": "Núcleo Via Flex", "price": 3500}, {"id": "Viacampus|Viacampus Núcleos|1", "code": null, "name": "Núcleo Via Flex Proteico", "price": 3800}, {"id": "Viacampus|Viacampus Núcleos|2", "code": null, "name": "Núcleo Via Flex FB", "price": 3800}, {"id": "Viacampus|Viacampus Núcleos|3", "code": null, "name": "Núcleo Via Creep", "price": 8000}, {"id": "Viacampus|Viacampus Núcleos|4", "code": null, "name": "Núcleo Via Creep Proteico", "price": 5200}, {"id": "Viacampus|Viacampus Núcleos|5", "code": null, "name": "Núcleo Confina Pasto", "price": 4800}]}]}, "RNA": {"groups": [{"name": "RNA Linha Fós", "hasCode": false, "items": [{"id": "RNA|RNA Linha Fós|0", "code": null, "name": "Valefós Leite 85%", "price": 170}, {"id": "RNA|RNA Linha Fós|1", "code": null, "name": "Valefós Leite 80%", "price": 160}, {"id": "RNA|RNA Linha Fós|2", "code": null, "name": "Valefós Ovinos", "price": 135}, {"id": "RNA|RNA Linha Fós|3", "code": null, "name": "Valefós Engorda 40", "price": 100}, {"id": "RNA|RNA Linha Fós|4", "code": null, "name": "Valefós Recria 60", "price": 130}, {"id": "RNA|RNA Linha Fós|5", "code": null, "name": "Valefós Cria 80", "price": 160}, {"id": "RNA|RNA Linha Fós|6", "code": null, "name": "Valefós Cria 88", "price": 170}, {"id": "RNA|RNA Linha Fós|7", "code": null, "name": "Valefós Engorda S", "price": 110}]}, {"name": "RNA Linha Farelado", "hasCode": false, "items": [{"id": "RNA|RNA Linha Farelado|0", "code": null, "name": "Miner Pro 25%", "price": 77}, {"id": "RNA|RNA Linha Farelado|1", "code": null, "name": "Proteico Vale 30", "price": 85}, {"id": "RNA|RNA Linha Farelado|2", "code": null, "name": "Proteico Vale 20", "price": 78}, {"id": "RNA|RNA Linha Farelado|3", "code": null, "name": "Rural Energético Vale Max", "price": 75.5}, {"id": "RNA|RNA Linha Farelado|4", "code": null, "name": "Rural Energético Max 25", "price": 75}, {"id": "RNA|RNA Linha Farelado|5", "code": null, "name": "Rural Energético Max R", "price": 74}, {"id": "RNA|RNA Linha Farelado|6", "code": null, "name": "Rural Vale Recria M", "price": 145}, {"id": "RNA|RNA Linha Farelado|7", "code": null, "name": "Vale Creep", "price": 112}, {"id": "RNA|RNA Linha Farelado|8", "code": null, "name": "Rural Energético Precoce Estoril", "price": 78}, {"id": "RNA|RNA Linha Farelado|9", "code": null, "name": "Rural Energético Master M", "price": 80}, {"id": "RNA|RNA Linha Farelado|10", "code": null, "name": "Rural Proteico Max 22", "price": 73}, {"id": "RNA|RNA Linha Farelado|11", "code": null, "name": "Rural Energético Master Nar", "price": 75}, {"id": "RNA|RNA Linha Farelado|12", "code": null, "name": "Rural Energ. Prime Prob Nar", "price": 78}, {"id": "RNA|RNA Linha Farelado|13", "code": null, "name": "Rural Energético Max Mon 0,5", "price": 65}, {"id": "RNA|RNA Linha Farelado|14", "code": null, "name": "Rural Energético Master 0,3 Mon", "price": 70}, {"id": "RNA|RNA Linha Farelado|15", "code": null, "name": "Rural Proteico Prime 0,1 Mon", "price": 74}, {"id": "RNA|RNA Linha Farelado|16", "code": null, "name": "Rural Vale Engorda 16", "price": 57}, {"id": "RNA|RNA Linha Farelado|17", "code": null, "name": "Rural Vale Engorda 18", "price": 60}, {"id": "RNA|RNA Linha Farelado|18", "code": null, "name": "Rural Vale Engorda 16 - 40 kg", "price": 80}, {"id": "RNA|RNA Linha Farelado|19", "code": null, "name": "Ração Vale Bezerro", "price": 68}, {"id": "RNA|RNA Linha Farelado|20", "code": null, "name": "Ração Vale Engorda 16 S", "price": 78}, {"id": "RNA|RNA Linha Farelado|21", "code": null, "name": "Rural Ração Tip - 30 kg", "price": 62}, {"id": "RNA|RNA Linha Farelado|22", "code": null, "name": "Ração Vale Leite 18%", "price": 67}, {"id": "RNA|RNA Linha Farelado|23", "code": null, "name": "Ração Vale Leite 22%", "price": 70}]}, {"name": "Rural Linha Farelado", "hasCode": false, "items": [{"id": "RNA|Rural Linha Farelado|0", "code": null, "name": "Rural Ração Equino Prime", "price": 90}, {"id": "RNA|Rural Linha Farelado|1", "code": null, "name": "Rural Acabamento AS", "price": 75}]}, {"name": "Rural Linha Fós", "hasCode": false, "items": [{"id": "RNA|Rural Linha Fós|0", "code": null, "name": "Rural Equinos", "price": 140}, {"id": "RNA|Rural Linha Fós|1", "code": null, "name": "Rural Engorda Plus", "price": 112}, {"id": "RNA|Rural Linha Fós|2", "code": null, "name": "Rural Recria Plus", "price": 130}, {"id": "RNA|Rural Linha Fós|3", "code": null, "name": "Rural Recria Plus UP", "price": 125}, {"id": "RNA|Rural Linha Fós|4", "code": null, "name": "Rural Cria Advance", "price": 135}, {"id": "RNA|Rural Linha Fós|5", "code": null, "name": "Rural Recria Plus + Prot", "price": 135}, {"id": "RNA|Rural Linha Fós|6", "code": null, "name": "Rural Cria Plus Nar", "price": 125}, {"id": "RNA|Rural Linha Fós|7", "code": null, "name": "Rural Recria Plus Nar", "price": 142}, {"id": "RNA|Rural Linha Fós|8", "code": null, "name": "Rural Produção Plus Nar", "price": 130}, {"id": "RNA|Rural Linha Fós|9", "code": null, "name": "Rural Min Salino 600", "price": 110}]}, {"name": "Rural Linha Núcleos", "hasCode": false, "items": [{"id": "RNA|Rural Linha Núcleos|0", "code": null, "name": "Rural Núcleo Confinamento SLM", "price": 5200}, {"id": "RNA|Rural Linha Núcleos|1", "code": null, "name": "Rural Núcleo Proteico SLM", "price": 4200}, {"id": "RNA|Rural Linha Núcleos|2", "code": null, "name": "Rural Núcleo Concentrado Flex", "price": 4100}]}, {"name": "Grupo MP", "hasCode": true, "items": [{"id": "RNA|Grupo MP|0", "code": "543", "name": "Milho a Granel - sc 30 kg", "price": 50.0}, {"id": "RNA|Grupo MP|1", "code": "543,5", "name": "Quirera de Milho - sc 25 kg", "price": 50.0}]}]}, "Copacol": {"groups": [{"name": "Copacol", "hasCode": true, "items": [{"id": "Copacol|Copacol|0", "code": "1700", "name": "Bovimais 40", "price": 100}, {"id": "Copacol|Copacol|1", "code": "1705", "name": "Bovimais Energético 20", "price": 65}, {"id": "Copacol|Copacol|2", "code": "1706", "name": "Bovimais Proteico 30", "price": 73.5}, {"id": "Copacol|Copacol|3", "code": "1708", "name": "Bovimais Proteico 25", "price": 72}, {"id": "Copacol|Copacol|4", "code": "1710", "name": "Bovimais Cria Plus", "price": 107}, {"id": "Copacol|Copacol|5", "code": "1711", "name": "Bovimais 80 Cria", "price": 160}, {"id": "Copacol|Copacol|6", "code": "1712", "name": "Bovimais Pronto 45", "price": 107}, {"id": "Copacol|Copacol|7", "code": "1713", "name": "Bovimais Engorda Plus", "price": 99}, {"id": "Copacol|Copacol|8", "code": "1715", "name": "Bovimais Produção Seca", "price": 130}, {"id": "Copacol|Copacol|9", "code": "1724", "name": "Bovimais Vacas SLA", "price": 138}, {"id": "Copacol|Copacol|10", "code": "1725", "name": "Bovimais Proteico Recria SLA", "price": 80.5}, {"id": "Copacol|Copacol|11", "code": "1751", "name": "Bovimais 20 Especial", "price": 120.5}, {"id": "Copacol|Copacol|12", "code": "1752", "name": "Bovimais Cria Águas Salino", "price": 453}, {"id": "Copacol|Copacol|13", "code": "1753", "name": "Bovimais Proteico 30 Águas", "price": 168}, {"id": "Copacol|Copacol|14", "code": "1765", "name": "Bovimais Recria", "price": 128.5}]}]}};
+const PT_STATIC_COSTS = {"Rural": {"Sal Mineral": {"rural engorda": {"cmv": 74.2304, "cdf": 10.0}, "rural recria": {"cmv": 98.8713, "cdf": 10.0}, "rural 80 cria": {"cmv": 125.08, "cdf": 10.0}, "rural 90 cria": {"cmv": 137.8667, "cdf": 10.0}, "rural leite": {"cmv": 126.335, "cdf": 10.0}, "rural ovinos": {"cmv": 124.8692, "cdf": 10.0}, "rural reproducao": {"cmv": 142.3293, "cdf": 10.0}, "rural equinos": {"cmv": 97.8764, "cdf": 10.0}}, "Linha Plus": {"rural cria aditivado": {"cmv": 90.157, "cdf": 10.0}, "rural engorda plus": {"cmv": 75.1819, "cdf": 10.0}, "rural recria plus": {"cmv": 99.4099, "cdf": 10.0}, "rural cria plus": {"cmv": 85.3376, "cdf": 10.0}, "rural recria plus up": {"cmv": 84.4396, "cdf": 10.0}, "rural leite plus ade": {"cmv": 90.7278, "cdf": 10.0}, "rural producao plus": {"cmv": 79.8738, "cdf": 10.0}, "rural cria super plus": {"cmv": 120.8995, "cdf": 10.0}, "rural cria advance": {"cmv": 98.7452, "cdf": 10.0}, "rural recria plus + prot": {"cmv": 96.1024, "cdf": 10.0}, "rural engorda advance plus": {"cmv": 75.1819, "cdf": 10.0}, "rural recria advance plus": {"cmv": 99.6691, "cdf": 10.0}, "rural cria + energia": {"cmv": 75.1144, "cdf": 10.0}, "rural producao plus jt": {"cmv": 76.7832, "cdf": 10.0}, "rural cria plus nar": {"cmv": 94.9856, "cdf": 10.0}, "rural recria plus nar": {"cmv": 106.0366, "cdf": 10.0}, "rural producao plus nar": {"cmv": 86.8127, "cdf": 10.0}}, "Energéticos": {"rural desmama prime": {"cmv": 52.1156, "cdf": 10.0}, "rural primiparas prime": {"cmv": 48.0214, "cdf": 10.0}, "rural engorda prime": {"cmv": 51.1723, "cdf": 10.0}, "rural energetico master": {"cmv": 42.3493, "cdf": 10.0}, "rural recria prime": {"cmv": 60.7669, "cdf": 10.0}, "rural energetico tmax": {"cmv": 39.892, "cdf": 10.0}, "rural flex prob": {"cmv": 45.9808, "cdf": 10.0}, "rural energetico max prob": {"cmv": 41.9818, "cdf": 10.0}, "rural energetico prime prob": {"cmv": 42.0648, "cdf": 10.0}, "rural energetico prob": {"cmv": 52.609, "cdf": 10.0}, "rural energetico max prob  40 kg": {"cmv": 56.5144, "cdf": 10.0}, "rural energetico prime nar": {"cmv": 48.7326, "cdf": 10.0}, "rural precoce": {"cmv": 45.6961, "cdf": 10.0}, "rural proteico max 22": {"cmv": 43.015, "cdf": 10.0}, "rural proteico prime 23": {"cmv": 49.0387, "cdf": 10.0}, "rural energetico master nar": {"cmv": 43.1918, "cdf": 10.0}, "rural energetico prime prob nar": {"cmv": 48.0145, "cdf": 10.0}, "rural precoce nar": {"cmv": 45.123, "cdf": 10.0}, "rural energetico max prob nar": {"cmv": 43.8628, "cdf": 10.0}, "rural energetico max mon 0,5": {"cmv": 41.9503, "cdf": 10.0}, "rural energetico master 0,3 mon": {"cmv": 47.4468, "cdf": 10.0}, "ruralzinho creep": {"cmv": 51.102, "cdf": 10.0}}, "Rações": {"rural equino prime": {"cmv": 49.9572, "cdf": 10.0}, "rural elite touros": {"cmv": 47.499, "cdf": 10.0}, "racao mc": {"cmv": 11.3948, "cdf": 10.0}, "rural racao tip junqueira": {"cmv": 42.9388, "cdf": 10.0}, "rural acabamento as": {"cmv": 43.6088, "cdf": 10.0}, "rural confinamento cana": {"cmv": null, "cdf": 10.0}, "rural terminacao as  40 kg": {"cmv": 45.9396, "cdf": 10.0}, "rural elite vacas": {"cmv": 34.128, "cdf": 10.0}, "rural terminacao as  30 kg": {"cmv": 35.0797, "cdf": 10.0}, "rural elite touros 18%  30 kg": {"cmv": 35.1048, "cdf": 10.0}}}, "Copacol": {"Copacol": {"bovimais 40": {"cmv": 74.4393, "cdf": 10.0}, "bovimais energetico 20": {"cmv": 44.7061, "cdf": 10.0}, "bovimais proteico 30": {"cmv": 52.1905, "cdf": 10.0}, "bovimais proteico 25": {"cmv": 51.0981, "cdf": 10.0}, "bovimais cria plus": {"cmv": 80.5166, "cdf": 10.0}, "bovimais 80 cria": {"cmv": 125.315, "cdf": 10.0}, "bovimais pronto 45": {"cmv": 80.5431, "cdf": 10.0}, "bovimais engorda plus": {"cmv": 73.6864, "cdf": 10.0}, "bovimais producao seca": {"cmv": 99.9885, "cdf": 10.0}, "bovimais vacas sla": {"cmv": 107.1327, "cdf": 10.0}, "bovimais proteico recria sla": {"cmv": 58.0846, "cdf": 10.0}, "bovimais 20 especial": {"cmv": 92.1247, "cdf": 10.0}, "bovimais cria aguas salino": {"cmv": 119.6006, "cdf": 10.0}, "bovimais proteico 30 aguas": {"cmv": 132.0124, "cdf": 10.0}, "bovimais recria": {"cmv": 99.0823, "cdf": 10.0}}}, "Viacampus": {"Viacampus Rações": {"rural equino prime": {"cmv": 48.9392, "cdf": 10.0}, "ruralzinho creep inicial": {"cmv": 40.117, "cdf": 10.0}, "ruralzinho creep final": {"cmv": 37.9528, "cdf": 10.0}, "viacampus terminacao as": {"cmv": 46.0102, "cdf": 10.0}, "rural racao 16 dr": {"cmv": 34.3991, "cdf": 10.0}, "rural lactacao dr": {"cmv": 39.4591, "cdf": 10.0}, "rural lactacao 22 dr": {"cmv": 39.5068, "cdf": 10.0}, "rural confina as 40 kg": {"cmv": 43.8392, "cdf": 10.0}, "rural confina as 30 kg": {"cmv": 33.2414, "cdf": 10.0}, "rural elite 16%  40 kg": {"cmv": 3.113, "cdf": 10.0}, "rural elite 16%  30 kg": {"cmv": 34.3595, "cdf": 10.0}, "rural via engorda 16": {"cmv": 34.7018, "cdf": 10.0}}, "Viacampus Proteicos": {"viacampus energetico 20": {"cmv": 45.1819, "cdf": 10.0}, "viacampus energetico max": {"cmv": 45.4265, "cdf": 10.0}, "viacampus energetico alternativo": {"cmv": 56.9993, "cdf": 10.0}, "viacampus creep": {"cmv": 46.2415, "cdf": 10.0}, "viacampus energ 20 as": {"cmv": 47.5499, "cdf": 10.0}, "viacampus energ alternativo as": {"cmv": 51.3936, "cdf": 10.0}, "viacampus energ equinos": {"cmv": null, "cdf": 10.0}, "viacampus advance matriz": {"cmv": null, "cdf": 10.0}, "viacampus proteico 40": {"cmv": null, "cdf": 10.0}, "rural proteico max 22": {"cmv": 40.7341, "cdf": 10.0}, "rural proteico prime 23": {"cmv": 47.1171, "cdf": 10.0}}, "Viacampus Mineral": {"viacampus 40": {"cmv": 73.1649, "cdf": 10.0}, "viacampus 60": {"cmv": 96.7102, "cdf": 10.0}, "viacampus 80": {"cmv": 122.9645, "cdf": 10.0}, "viacampus leite": {"cmv": 126.2197, "cdf": 10.0}, "viacampus equinos": {"cmv": 97.2979, "cdf": 10.0}, "viacampus ovinos": {"cmv": 122.0532, "cdf": 10.0}, "viacampus cria plus": {"cmv": 79.5526, "cdf": 10.0}, "viacampus cria advance": {"cmv": 84.2742, "cdf": 10.0}, "viacampus producao plus": {"cmv": 95.4136, "cdf": 10.0}}, "Viacampus Núcleos": {"nucleo via flex": {"cmv": 1822.32, "cdf": 450.0}, "nucleo via flex proteico": {"cmv": 2011.7056, "cdf": 450.0}, "nucleo via flex fb": {"cmv": 1774.4206, "cdf": 450.0}, "nucleo via creep": {"cmv": 5201.955, "cdf": 450.0}, "nucleo via creep proteico": {"cmv": 2890.56, "cdf": 450.0}, "nucleo confina pasto": {"cmv": 2167.6, "cdf": 450.0}}}, "RNA": {"RNA Linha Fós": {"valefos leite 85%": {"cmv": 131.8606, "cdf": 10.0}, "valefos leite 80%": {"cmv": 124.2105, "cdf": 10.0}, "valefos ovinos": {"cmv": 103.7933, "cdf": 10.0}, "valefos engorda 40": {"cmv": 72.3751, "cdf": 10.0}, "valefos recria 60": {"cmv": 97.6029, "cdf": 10.0}, "valefos cria 80": {"cmv": 121.3601, "cdf": 10.0}, "valefos cria 88": {"cmv": 131.6809, "cdf": 10.0}, "valefos engorda s": {"cmv": 79.5079, "cdf": 10.0}}, "RNA Linha Farelado": {"miner pro 25%": {"cmv": 46.0816, "cdf": 10.0}, "proteico vale 30": {"cmv": 53.4283, "cdf": 10.0}, "proteico vale 20": {"cmv": 46.115, "cdf": 10.0}, "rural energetico vale max": {"cmv": 44.9112, "cdf": 10.0}, "rural energetico max 25": {"cmv": 44.5394, "cdf": 10.0}, "rural energetico max r": {"cmv": 44.4395, "cdf": 10.0}, "rural vale recria m": {"cmv": 99.5606, "cdf": 10.0}, "vale creep": {"cmv": 52.4076, "cdf": 10.0}, "rural energetico precoce estoril": {"cmv": 46.2588, "cdf": 10.0}, "rural energetico master m": {"cmv": 48.0688, "cdf": 10.0}, "rural proteico max 22": {"cmv": 41.6941, "cdf": 10.0}, "rural energetico master nar": {"cmv": 43.1007, "cdf": 10.0}, "rural energ prime prob nar": {"cmv": 47.3383, "cdf": 10.0}, "rural energetico max mon 0,5": {"cmv": 41.0143, "cdf": 10.0}, "rural energetico master 0,3 mon": {"cmv": null, "cdf": 10.0}, "rural vale engorda 16": {"cmv": 31.9991, "cdf": 10.0}, "rural vale engorda 18": {"cmv": 32.9781, "cdf": 10.0}, "rural vale engorda 16  40 kg": {"cmv": 46.0744, "cdf": 10.0}, "racao vale ovinos": {"cmv": 34.8518, "cdf": 10.0}, "racao vale bezerro": {"cmv": 37.9721, "cdf": 10.0}, "racao vale engorda 16 s": {"cmv": 45.343, "cdf": 10.0}, "rural racao tip  30 kg": {"cmv": 33.9515, "cdf": 10.0}, "racao vale leite 18%": {"cmv": 37.2636, "cdf": 10.0}, "racao vale leite 22%": {"cmv": 39.234, "cdf": 10.0}}, "Rural Linha Farelado": {"rural racao equino prime": {"cmv": 49.2392, "cdf": 10.0}, "rural acabamento as": {"cmv": 43.5636, "cdf": 10.0}}, "Rural Linha Fós": {"rural equinos": {"cmv": 100.9379, "cdf": 10.0}, "rural engorda plus": {"cmv": 83.4716, "cdf": 10.0}, "rural recria plus": {"cmv": 98.9099, "cdf": 10.0}, "rural recria plus up": {"cmv": 85.1501, "cdf": 10.0}, "rural cria advance": {"cmv": 95.8775, "cdf": 10.0}, "rural recria plus + prot": {"cmv": 95.2784, "cdf": 10.0}, "rural cria plus nar": {"cmv": 88.0559, "cdf": 10.0}, "rural recria plus nar": {"cmv": 106.5696, "cdf": 10.0}, "rural producao plus nar": {"cmv": 89.4207, "cdf": 10.0}, "rural min salino 600": {"cmv": 78.3974, "cdf": 10.0}}, "Rural Linha Núcleos": {"rural nucleo confinamento slm": {"cmv": 2331.603, "cdf": 10.0}, "rural nucleo proteico slm": {"cmv": 2545.525, "cdf": 10.0}, "rural nucleo concentrado flex": {"cmv": 1801.52, "cdf": 10.0}}}};
+const PT_GROUP_RATES_DEFAULT = {"Rural|Sal Mineral": {"imposto": 7.0, "comissao": 7.0}, "Rural|Linha Plus": {"imposto": 7.0, "comissao": 7.0}, "Rural|Energéticos": {"imposto": 7.0, "comissao": 7.0}, "Rural|Rações": {"imposto": 7.0, "comissao": 7.0}, "Copacol|Copacol": {"imposto": 11.0, "comissao": 2.0}, "Viacampus|Viacampus Rações": {"imposto": 7.0, "comissao": 3.5}, "Viacampus|Viacampus Proteicos": {"imposto": 7.0, "comissao": 3.5}, "Viacampus|Viacampus Mineral": {"imposto": 7.0, "comissao": 3.5}, "Viacampus|Viacampus Núcleos": {"imposto": 7.0, "comissao": 4.0}, "RNA|RNA Linha Fós": {"imposto": 7.0, "comissao": 7.0}, "RNA|RNA Linha Farelado": {"imposto": 7.0, "comissao": 7.0}, "RNA|Rural Linha Farelado": {"imposto": 7.0, "comissao": 7.0}, "RNA|Rural Linha Fós": {"imposto": 7.0, "comissao": 7.0}, "RNA|Rural Linha Núcleos": {"imposto": 7.0, "comissao": 7.0}};
+
+let PT_CATALOG_STATE = JSON.parse(JSON.stringify(PT_CATALOG));
+const PT_CATALOG_INDEX = {};
+Object.keys(PT_CATALOG_STATE).forEach(brand=>{
+  PT_CATALOG_STATE[brand].groups.forEach(g=>{
+    g.items.forEach(it=> PT_CATALOG_INDEX[it.id]=it);
+  });
+});
+let PT_GROUP_RATES = JSON.parse(JSON.stringify(PT_GROUP_RATES_DEFAULT));
+const PT_LINKS_PADRAO = {"Viacampus|Viacampus Rações|0": "180", "Viacampus|Viacampus Rações|1": "1747", "Viacampus|Viacampus Rações|2": "1736", "Viacampus|Viacampus Rações|4": "1726", "Viacampus|Viacampus Rações|5": "1727", "Viacampus|Viacampus Rações|6": "1743", "Viacampus|Viacampus Rações|11": "1509", "Viacampus|Viacampus Proteicos|0": "505", "Viacampus|Viacampus Proteicos|1": "654", "Viacampus|Viacampus Proteicos|2": "818", "Viacampus|Viacampus Proteicos|3": "1027", "Viacampus|Viacampus Proteicos|9": "1638", "Viacampus|Viacampus Proteicos|10": "1637", "Viacampus|Viacampus Proteicos|11": "1766", "Viacampus|Viacampus Mineral|4": "586", "Viacampus|Viacampus Mineral|5": "588", "Viacampus|Viacampus Mineral|6": "1015", "Viacampus|Viacampus Mineral|7": "1231", "Viacampus|Viacampus Mineral|8": "1478", "RNA|RNA Linha Farelado|3": "1556", "RNA|RNA Linha Farelado|4": "1627", "RNA|RNA Linha Farelado|5": "1702", "RNA|RNA Linha Farelado|6": "1614", "RNA|RNA Linha Farelado|8": "1479", "RNA|RNA Linha Farelado|10": "1638", "RNA|RNA Linha Farelado|11": "1764", "RNA|RNA Linha Farelado|13": "1803", "RNA|RNA Linha Farelado|21": "1650", "RNA|Rural Linha Farelado|1": "1287", "RNA|Rural Linha Fós|0": "937", "RNA|Rural Linha Fós|1": "938", "RNA|Rural Linha Fós|2": "939", "RNA|Rural Linha Fós|3": "1189", "RNA|Rural Linha Fós|4": "1475", "RNA|Rural Linha Fós|5": "1569", "RNA|Rural Linha Fós|7": "1768", "RNA|Rural Linha Fós|8": "1769", "RNA|Rural Linha Fós|9": "1801", "RNA|Rural Linha Núcleos|0": "1499", "RNA|Rural Linha Núcleos|1": "1578"}; // vinculos automaticos por nome (itens Viacampus/RNA sem codigo -> formula real)
+let PT_LINKS = JSON.parse(JSON.stringify(PT_LINKS_PADRAO));
+let PT_EXTRA_PRICES = {};
+let PT_EMB_SIZES = {}; // override por código de fórmula: tamanho real da embalagem em kg (para fórmulas com pesoSaco=1)
+let PT_CDF_TON = 450; // CD+F padrão (R$) para qualquer produto precificado por tonelada (núcleos etc.)
+let PT_ACTIVE = {}; // id do item do catálogo -> false quando marcado como inativo (default: ativo)
+
+let ptDoc = [];
+let ptActivePageId = null;
+let ptCurrentSubTab = 'builder';
+let ptBooted = false;
+let ptDataLoaded = false;
+
+const PT_KEY_DOC='RURAL_TABELA_DOC_v1', PT_KEY_OV='RURAL_TABELA_CATALOG_OV_v1',
+      PT_KEY_RATES='RURAL_TABELA_RATES_v1', PT_KEY_LINKS='RURAL_TABELA_LINKS_v1',
+      PT_KEY_EXTRA='RURAL_TABELA_EXTRA_PRICES_v1', PT_KEY_EMBSIZE='RURAL_TABELA_EMBSIZE_v1',
+      PT_KEY_CDFTON='RURAL_TABELA_CDFTON_v1', PT_KEY_ACTIVE='RURAL_TABELA_ACTIVE_v1';
+
+function ptUid(){ return Math.random().toString(36).slice(2,10); }
+function ptFmtPrice(v){
+  const n=parseFloat(v);
+  if(isNaN(n)) return 'R$ 0,00';
+  return 'R$ '+n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function ptParseBRL(text){
+  if(!text) return 0;
+  let t=text.toString().replace(/[^\d,.\-]/g,'').trim();
+  if(t.includes(',')){ t=t.replace(/\./g,'').replace(',', '.'); }
+  const n=parseFloat(t);
+  return isNaN(n)?0:n;
+}
+function ptNormName(s){
+  if(!s) return '';
+  s=s.toString().trim().replace(/\s+/g,' ');
+  s=s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  s=s.toLowerCase();
+  s=s.replace(/[^a-z0-9%+, ]/g,'');
+  return s.trim();
+}
+
+/* ---------- persistência (localStorage — arquivo roda direto no navegador) ---------- */
+function ptLoadAll(){
+  try{ const ov=JSON.parse(localStorage.getItem(PT_KEY_OV)||'{}');
+    Object.keys(ov).forEach(id=>{ if(PT_CATALOG_INDEX[id]) PT_CATALOG_INDEX[id].price=ov[id]; });
+  }catch(e){}
+  try{ const r=JSON.parse(localStorage.getItem(PT_KEY_RATES)||'{}'); PT_GROUP_RATES=Object.assign({},PT_GROUP_RATES,r); }catch(e){}
+  try{ PT_LINKS=Object.assign({},PT_LINKS,JSON.parse(localStorage.getItem(PT_KEY_LINKS)||'{}')); }catch(e){}
+  try{ PT_EXTRA_PRICES=JSON.parse(localStorage.getItem(PT_KEY_EXTRA)||'{}'); }catch(e){}
+  try{ PT_EMB_SIZES=JSON.parse(localStorage.getItem(PT_KEY_EMBSIZE)||'{}'); }catch(e){}
+  try{ const cv=localStorage.getItem(PT_KEY_CDFTON); if(cv!==null) PT_CDF_TON=parseFloat(cv); }catch(e){}
+  try{ PT_ACTIVE=JSON.parse(localStorage.getItem(PT_KEY_ACTIVE)||'{}'); }catch(e){}
+  try{
+    const raw=localStorage.getItem(PT_KEY_DOC);
+    if(raw){ const parsed=JSON.parse(raw); ptDoc=parsed.doc||[]; ptActivePageId=parsed.activePageId||(ptDoc.length?ptDoc[0].id:null); return true; }
+  }catch(e){}
+  return false;
+}
+function ptSaveDoc(){
+  try{ localStorage.setItem(PT_KEY_DOC, JSON.stringify({doc:ptDoc, activePageId:ptActivePageId}));
+    const s=$('pt-save-status'); if(s){ s.textContent='salvo ✓'; setTimeout(()=>{ if(s.textContent==='salvo ✓') s.textContent=''; },1200); }
+  }catch(e){}
+}
+function ptSaveOverrides(){
+  const ov={};
+  Object.keys(PT_CATALOG_STATE).forEach(brand=>{
+    PT_CATALOG_STATE[brand].groups.forEach((g,gi)=>{
+      g.items.forEach((it,ii)=>{
+        const orig=PT_CATALOG[brand].groups[gi].items[ii];
+        if(orig && orig.price!==it.price) ov[it.id]=it.price;
+      });
+    });
+  });
+  try{ localStorage.setItem(PT_KEY_OV, JSON.stringify(ov)); }catch(e){}
+}
+function ptSaveRates(){ try{ localStorage.setItem(PT_KEY_RATES, JSON.stringify(PT_GROUP_RATES)); }catch(e){} }
+function ptSaveLinks(){ try{ localStorage.setItem(PT_KEY_LINKS, JSON.stringify(PT_LINKS)); }catch(e){} }
+function ptSaveExtraPrices(){ try{ localStorage.setItem(PT_KEY_EXTRA, JSON.stringify(PT_EXTRA_PRICES)); }catch(e){} }
+function ptSaveEmbSizes(){ try{ localStorage.setItem(PT_KEY_EMBSIZE, JSON.stringify(PT_EMB_SIZES)); }catch(e){} }
+function ptSaveCdfTon(){ try{ localStorage.setItem(PT_KEY_CDFTON, String(PT_CDF_TON)); }catch(e){} }
+function ptSaveActive(){ try{ localStorage.setItem(PT_KEY_ACTIVE, JSON.stringify(PT_ACTIVE)); }catch(e){} }
+function ptIsActive(itemId){ return PT_ACTIVE[itemId]!==false; }
+function ptToggleActive(itemId){
+  PT_ACTIVE[itemId] = !ptIsActive(itemId);
+  ptSaveActive();
+}
+
+/* ---------- CMV ao vivo, a partir das fichas técnicas já carregadas ---------- */
+function ptFormulaIndex(){
+  const idx={};
+  // listaTodasFormulas() já mescla biblioteca + banco local (RURAL_FORMULAS)
+  if(typeof listaTodasFormulas==='function'){
+    listaTodasFormulas().forEach(f=>{ idx[String(f.cod)]=f; });
+  }
+  // bibliotecaRNA é um array separado (fórmulas Viacampus/RNA) — mescla também
+  if(typeof bibliotecaRNA!=='undefined'){
+    bibliotecaRNA.forEach(f=>{ if(!idx[String(f.cod)]) idx[String(f.cod)]=f; });
+  }
+  return idx;
+}
+function ptFindFormula(item){
+  const idx=ptFormulaIndex();
+  if(item.code && idx[String(item.code)]) return idx[String(item.code)];
+  const link=PT_LINKS[item.id];
+  if(link && idx[String(link)]) return idx[String(link)];
+  return null;
+}
+function ptDetectEmbSize(f){
+  const nome=f.nome||'';
+  const matches=[...nome.matchAll(/(\d{2,4}(?:[.,]\d+)?)\s*kg/gi)];
+  if(!matches.length) return null;
+  const last=matches[matches.length-1][1].replace(',', '.');
+  const val=parseFloat(last);
+  return isNaN(val)? null : val;
+}
+function ptGetEmbSize(f){
+  const override=PT_EMB_SIZES[f.cod];
+  if(override!==undefined && override!==null && override!=='') return {size:parseFloat(override), auto:false};
+  const detected=ptDetectEmbSize(f);
+  if(detected!==null) return {size:detected, auto:true};
+  return {size:null, auto:false};
+}
+function ptComputeLiveCost(f){
+  if(typeof custoFormula!=='function') return {cmv:null, unidade:'saco'};
+  const c=custoFormula(f); // {sacos, custoSaco, custoKg} — custoSaco = custo de MP por unidade da ficha (kg quando pesoSaco=1) + embCusto cru
+  const embCusto=(f.emb && f.emb.custo) ? f.emb.custo : 0;
+  if(f.pesoSaco===1){
+    // A ficha usa "pesoSaco=1kg" só como referência de custo por kg — a embalagem real
+    // (o saco/bag físico) é bem maior. Precisamos saber o tamanho real pra saber quantas
+    // embalagens cabem numa tonelada, em vez de multiplicar o custo de embalagem por 1000.
+    const mpCustoPorKg = c.custoSaco - embCusto; // custoSaco já inclui embCusto cru; removemos pra tratar embalagem à parte
+    const mpCustoPorTon = mpCustoPorKg*1000;
+    const embInfo=ptGetEmbSize(f);
+    let embCustoPorTon, embPorTon;
+    if(embInfo.size && embInfo.size>0){
+      embPorTon = 1000/embInfo.size;
+      embCustoPorTon = embCusto*embPorTon;
+    } else {
+      // tamanho real desconhecido — não dá pra escalar corretamente; soma a embalagem "crua" (1x) e sinaliza
+      embPorTon = null;
+      embCustoPorTon = embCusto;
+    }
+    return {
+      cmv: mpCustoPorTon + embCustoPorTon,
+      unidade:'ton',
+      embInfo: {tamanho: embInfo.size, auto: embInfo.auto, custoUnitario: embCusto, embalagensPorTon: embPorTon, custoEmbPorTon: embCustoPorTon}
+    };
+  }
+  return {cmv:c.custoSaco, unidade:'saco'};
+}
+function ptEmbInfoHtml(embInfo, cod){
+  if(!embInfo) return '';
+  const per = embInfo.embalagensPorTon!==null && embInfo.embalagensPorTon!==undefined
+    ? embInfo.embalagensPorTon.toFixed(2)+' emb/ton'
+    : '⚠ informe o tamanho real';
+  const autoTag = embInfo.tamanho && embInfo.auto ? ' <em>(detectado do nome)</em>' : '';
+  return `<div class="pt-emb-info">📦 Embalagem real: <input type="number" step="0.1" min="0" class="pt-embsize-input" data-cod="${cod}" value="${embInfo.tamanho||''}" placeholder="kg"> kg${autoTag} → ${per} (custo emb.: ${ptFmtPrice(embInfo.custoEmbPorTon)}/ton)</div>`;
+}
+function ptWireEmbInput(tr, cod, build, filterGetter){
+  const inp=tr.querySelector('.pt-embsize-input');
+  if(!inp) return;
+  inp.addEventListener('click', e=>e.stopPropagation());
+  inp.addEventListener('change', e=>{
+    const val=parseFloat(e.target.value.replace(',','.'));
+    if(val>0) PT_EMB_SIZES[cod]=val; else delete PT_EMB_SIZES[cod];
+    ptSaveEmbSizes();
+    build(filterGetter());
+  });
+}
+function ptGetCost(brand, groupName, item){
+  const staticG = PT_STATIC_COSTS[brand] && PT_STATIC_COSTS[brand][groupName];
+  const staticItem = staticG ? staticG[ptNormName(item.name)] : null;
+  const isNucleoGroup = ptNormName(groupName).includes('nucleo');
+
+  const f=ptFindFormula(item);
+  if(f){
+    const live=ptComputeLiveCost(f);
+    const cdf = (live.unidade==='ton' || isNucleoGroup) ? PT_CDF_TON : (staticItem ? staticItem.cdf : null);
+    return {cmv:live.cmv, cdf, source:'live', formulaNome:f.nome, formulaCod:String(f.cod), unidade:live.unidade, embInfo:live.embInfo, formulaObj:f};
+  }
+  const staticCdf = isNucleoGroup ? PT_CDF_TON : (staticItem ? staticItem.cdf : null);
+  if(staticItem && staticItem.cmv!==null && staticItem.cmv!==undefined){
+    return {cmv:staticItem.cmv, cdf:staticCdf, source:'static'};
+  }
+  return {cmv:null, cdf:staticCdf, source:'none'};
+}
+function ptEnsureFormulaDatalist(){
+  let dl = document.getElementById('pt-formula-datalist');
+  if(!dl){
+    dl = document.createElement('datalist');
+    dl.id = 'pt-formula-datalist';
+    document.body.appendChild(dl);
+  }
+  const idx=ptFormulaIndex();
+  const list=Object.values(idx).sort((a,b)=>(a.nome||'').localeCompare(b.nome||''));
+  dl.innerHTML = list.map(f=>`<option value="${f.cod} — ${f.nome}">`).join('');
+  return dl;
+}
+function ptFormulaLabelFor(cod){
+  if(!cod) return '';
+  const idx=ptFormulaIndex();
+  const f=idx[String(cod)];
+  return f ? `${f.cod} — ${f.nome}` : String(cod);
+}
+function ptParseFormulaCode(text){
+  if(!text) return '';
+  const m = text.match(/^\s*(\S+)\s*—/);
+  return m ? m[1] : text.trim();
+}
+function ptUsedFormulaCodes(){
+  const used=new Set();
+  Object.keys(PT_CATALOG_STATE).forEach(brand=>{
+    PT_CATALOG_STATE[brand].groups.forEach(g=>{
+      g.items.forEach(it=>{
+        if(it.code) used.add(String(it.code));
+        if(PT_LINKS[it.id]) used.add(String(PT_LINKS[it.id]));
+      });
+    });
+  });
+  return used;
+}
+function ptExtraFormulasGrouped(){
+  const used=ptUsedFormulaCodes();
+  const idx=ptFormulaIndex();
+  const groups={};
+  Object.values(idx).forEach(f=>{
+    if(used.has(String(f.cod))) return;
+    const cat=f.cat||'Outro';
+    if(!groups[cat]) groups[cat]=[];
+    groups[cat].push(f);
+  });
+  Object.values(groups).forEach(list=>list.sort((a,b)=>(a.nome||'').localeCompare(b.nome||'')));
+  return groups;
+}
+function ptFindStaticCdfByName(name){
+  const norm=ptNormName(name);
+  for(const brand in PT_STATIC_COSTS){
+    for(const group in PT_STATIC_COSTS[brand]){
+      const item=PT_STATIC_COSTS[brand][group][norm];
+      if(item && item.cdf!==null && item.cdf!==undefined) return item.cdf;
+    }
+  }
+  return null;
+}
+function ptGetExtraCost(f){
+  const live=ptComputeLiveCost(f);
+  const cdf = live.unidade==='ton' ? PT_CDF_TON : ptFindStaticCdfByName(f.nome);
+  return {cmv:live.cmv, cdf, unidade:live.unidade, embInfo:live.embInfo};
+}
+
+function ptGetGroupRate(brand, groupName){
+  const key=brand+'|'+groupName;
+  return PT_GROUP_RATES[key] || {imposto:7, comissao:7};
+}
+function ptSetGroupRate(brand, groupName, field, value){
+  const key=brand+'|'+groupName;
+  if(!PT_GROUP_RATES[key]) PT_GROUP_RATES[key]={imposto:7, comissao:7};
+  PT_GROUP_RATES[key][field]=value;
+  ptSaveRates();
+}
+function ptPctClass(pct){
+  if(pct===null) return '';
+  if(pct<0) return 'pt-pct-neg';
+  if(pct<8) return 'pt-pct-low';
+  if(pct<20) return 'pt-pct-ok';
+  return 'pt-pct-high';
+}
+
+/* ---------- Catálogo (barra lateral) ---------- */
+function ptRenderCatalog(){
+  const el=$('pt-catalog');
+  if(!el) return;
+  el.innerHTML='';
+  Object.keys(PT_CATALOG_STATE).forEach(brand=>{
+    const bBlock=document.createElement('div');
+    bBlock.className='pt-brand-block';
+    const bTitle=document.createElement('div');
+    bTitle.className='pt-brand-title';
+    bTitle.innerHTML=`<span>${brand}</span><span>▾</span>`;
+    const bBody=document.createElement('div');
+    bBody.className='pt-brand-body';
+    bTitle.onclick=()=>bBody.classList.toggle('open');
+    PT_CATALOG_STATE[brand].groups.forEach(g=>{
+      const gRow=document.createElement('div');
+      gRow.className='pt-group-row';
+      const gHead=document.createElement('div');
+      gHead.className='pt-group-head';
+      gHead.innerHTML=`<span>${g.name}<span class="pt-cnt">(${g.items.length})</span></span>`;
+      const addBtn=document.createElement('button');
+      addBtn.className='pt-add-btn';
+      addBtn.textContent='+ grupo';
+      addBtn.onclick=(e)=>{ e.stopPropagation(); ptAddGroupToActivePage(brand, g); };
+      gHead.appendChild(addBtn);
+      const itemList=document.createElement('div');
+      itemList.className='pt-item-list';
+      g.items.forEach(it=>{
+        const line=document.createElement('div');
+        line.className='pt-item-line';
+        line.innerHTML=`<span class="pt-nm">${it.code? '['+it.code+'] ':''}${it.name}</span><span class="pt-pr">${ptFmtPrice(it.price)}</span>`;
+        const btn=document.createElement('button');
+        btn.textContent='+';
+        btn.title='Adicionar item avulso à página ativa';
+        btn.onclick=()=>ptAddSingleItemToActivePage(g, it);
+        line.appendChild(btn);
+        itemList.appendChild(line);
+      });
+      gHead.onclick=()=>itemList.classList.toggle('open');
+      gRow.appendChild(gHead);
+      gRow.appendChild(itemList);
+      bBody.appendChild(gRow);
+    });
+    bBlock.appendChild(bTitle);
+    bBlock.appendChild(bBody);
+    el.appendChild(bBlock);
+  });
+}
+
+/* ---------- Construtor de páginas ---------- */
+function ptDefaultTemplate(){
+  const pages=[];
+  function pageFrom(title, groupNames){
+    const groups=[];
+    for(const brand in PT_CATALOG_STATE){
+      PT_CATALOG_STATE[brand].groups.forEach(g=>{
+        if(groupNames.includes(g.name)){
+          groups.push({
+            id:ptUid(), name:g.name, hasCode:g.hasCode,
+            items:g.items.map(it=>({id:ptUid(), catalogId:it.id, code:it.code||'', name:it.name, price:it.price}))
+          });
+        }
+      });
+    }
+    pages.push({id:ptUid(), title, groups});
+  }
+  pageFrom('Tabela de Preços - Rural', ['Sal Mineral','Linha Plus']);
+  pageFrom('Tabela de Preços - Rural', ['Energéticos','Rações','Grupo MP']);
+  pageFrom('Tabela de Preços - Viacampus', ['Viacampus Rações','Viacampus Proteicos']);
+  pageFrom('Tabela de Preços - Viacampus', ['Viacampus Mineral','Viacampus Núcleos']);
+  pageFrom('Tabela de Preços - RNA', ['RNA Linha Fós','RNA Linha Farelado']);
+  pageFrom('Tabela de Preços - RNA', ['Rural Linha Farelado','Rural Linha Fós','Rural Linha Núcleos','Grupo MP']);
+  pageFrom('Tabela de Preços - Copacol', ['Copacol']);
+  return pages;
+}
+function ptEnsureActivePage(){
+  if(!ptDoc.length){
+    const p={id:ptUid(), title:'Tabela de Preços - Rural', groups:[]};
+    ptDoc.push(p); ptActivePageId=p.id;
+  }
+  if(!ptDoc.find(p=>p.id===ptActivePageId)) ptActivePageId=ptDoc[ptDoc.length-1].id;
+}
+function ptAddGroupToActivePage(brand, g){
+  ptEnsureActivePage();
+  const page=ptDoc.find(p=>p.id===ptActivePageId);
+  page.groups.push({
+    id:ptUid(), name:g.name, hasCode:g.hasCode,
+    items:g.items.map(it=>({id:ptUid(), catalogId:it.id, code:it.code||'', name:it.name, price:it.price}))
+  });
+  ptRenderDoc(); ptSaveDoc();
+}
+function ptAddSingleItemToActivePage(g, it){
+  ptEnsureActivePage();
+  const page=ptDoc.find(p=>p.id===ptActivePageId);
+  let grp=page.groups.find(x=>x.name===g.name);
+  if(!grp){ grp={id:ptUid(), name:g.name, hasCode:g.hasCode, items:[]}; page.groups.push(grp); }
+  grp.items.push({id:ptUid(), catalogId:it.id, code:it.code||'', name:it.name, price:it.price});
+  ptRenderDoc(); ptSaveDoc();
+}
+function ptAddBlankPage(){
+  const p={id:ptUid(), title:'Nova Página', groups:[]};
+  ptDoc.push(p); ptActivePageId=p.id; ptRenderDoc(); ptSaveDoc();
+}
+function ptDeletePage(id){
+  if(!confirm('Remover esta página inteira?')) return;
+  ptDoc=ptDoc.filter(p=>p.id!==id);
+  if(ptActivePageId===id) ptActivePageId=ptDoc.length? ptDoc[ptDoc.length-1].id : null;
+  ptRenderDoc(); ptSaveDoc();
+}
+function ptMovePage(id, dir){
+  const i=ptDoc.findIndex(p=>p.id===id), j=i+dir;
+  if(j<0||j>=ptDoc.length) return;
+  [ptDoc[i],ptDoc[j]]=[ptDoc[j],ptDoc[i]]; ptRenderDoc(); ptSaveDoc();
+}
+function ptMoveGroup(pageId, groupId, dir){
+  const page=ptDoc.find(p=>p.id===pageId);
+  const i=page.groups.findIndex(g=>g.id===groupId), j=i+dir;
+  if(j<0||j>=page.groups.length) return;
+  [page.groups[i],page.groups[j]]=[page.groups[j],page.groups[i]]; ptRenderDoc(); ptSaveDoc();
+}
+function ptDeleteGroup(pageId, groupId){
+  const page=ptDoc.find(p=>p.id===pageId);
+  page.groups=page.groups.filter(g=>g.id!==groupId); ptRenderDoc(); ptSaveDoc();
+}
+function ptToggleCode(pageId, groupId){
+  const page=ptDoc.find(p=>p.id===pageId);
+  const g=page.groups.find(g=>g.id===groupId);
+  g.hasCode=!g.hasCode; ptRenderDoc(); ptSaveDoc();
+}
+function ptAddBlankItem(pageId, groupId){
+  const page=ptDoc.find(p=>p.id===pageId);
+  const g=page.groups.find(g=>g.id===groupId);
+  g.items.push({id:ptUid(), code:'', name:'Novo produto', price:0}); ptRenderDoc(); ptSaveDoc();
+}
+function ptDeleteItem(pageId, groupId, itemId){
+  const page=ptDoc.find(p=>p.id===pageId);
+  const g=page.groups.find(g=>g.id===groupId);
+  g.items=g.items.filter(it=>it.id!==itemId); ptRenderDoc(); ptSaveDoc();
+}
+function ptAddBlankGroup(pageId){
+  const page=ptDoc.find(p=>p.id===pageId);
+  page.groups.push({id:ptUid(), name:'Novo Grupo', hasCode:false, items:[]}); ptRenderDoc(); ptSaveDoc();
+}
+function ptUpdatePrice(catalogId, newPrice){
+  if(!PT_CATALOG_INDEX[catalogId]) return;
+  PT_CATALOG_INDEX[catalogId].price=newPrice;
+  ptDoc.forEach(page=>page.groups.forEach(g=>g.items.forEach(it=>{
+    if(it.catalogId===catalogId) it.price=newPrice;
+  })));
+  ptRenderCatalog(); ptRenderDoc(); ptSaveDoc(); ptSaveOverrides();
+}
+
+function ptRenderDoc(){
+  const el=$('pt-doc-scroll');
+  if(!el) return;
+  el.innerHTML='';
+  ptDoc.forEach(page=>{
+    const pageDiv=document.createElement('div');
+    pageDiv.className='pt-page'+(page.id===ptActivePageId?' pt-active-target':'');
+    pageDiv.onclick=(e)=>{
+      if(e.target.closest('[contenteditable], button, .pt-pt-btn')) return;
+      ptActivePageId=page.id; ptRenderDoc();
+    };
+    const pt=document.createElement('div');
+    pt.className='pt-page-toolbar';
+    pt.innerHTML=`
+      <button class="pt-pt-btn" data-act="up">▲</button>
+      <button class="pt-pt-btn" data-act="down">▼</button>
+      <button class="pt-pt-btn" data-act="addgroup">+ grupo em branco</button>
+      <button class="pt-pt-btn" data-act="del">Excluir página</button>`;
+    pt.querySelector('[data-act="up"]').onclick=()=>ptMovePage(page.id,-1);
+    pt.querySelector('[data-act="down"]').onclick=()=>ptMovePage(page.id,1);
+    pt.querySelector('[data-act="addgroup"]').onclick=()=>ptAddBlankGroup(page.id);
+    pt.querySelector('[data-act="del"]').onclick=()=>ptDeletePage(page.id);
+    pageDiv.appendChild(pt);
+
+    const header=document.createElement('div');
+    header.className='pt-page-header';
+    header.innerHTML=`<img src="${LOGO_RURAL}"><div style="flex:1"><div class="pt-page-title" contenteditable="true">${page.title}</div><div class="pt-page-title-accent"></div></div>`;
+    header.querySelector('.pt-page-title').addEventListener('input',(e)=>{ page.title=e.target.textContent; ptSaveDoc(); });
+    pageDiv.appendChild(header);
+
+    if(!page.groups.length){
+      const hint=document.createElement('div');
+      hint.className='pt-empty-page-hint';
+      hint.textContent='Página vazia — clique em um grupo no catálogo à esquerda para adicioná-lo aqui.';
+      pageDiv.appendChild(hint);
+    }
+
+    page.groups.forEach(g=>{
+      const gDiv=document.createElement('div');
+      gDiv.className='pt-doc-group';
+      const gHead=document.createElement('div');
+      gHead.className='pt-doc-group-head';
+      gHead.contentEditable='true';
+      gHead.innerHTML=g.name;
+      gDiv.appendChild(gHead);
+      gHead.addEventListener('blur',()=>{ g.name=gHead.textContent.trim(); ptSaveDoc(); });
+
+      const controls=document.createElement('div');
+      controls.className='pt-doc-group-controls';
+      controls.innerHTML=`
+        <span data-act="up">▲ subir</span>
+        <span data-act="down">▼ descer</span>
+        <span data-act="code">${g.hasCode?'ocultar':'mostrar'} código</span>
+        <span data-act="del" style="color:#c0392b">excluir grupo</span>`;
+      controls.querySelector('[data-act="up"]').onclick=()=>ptMoveGroup(page.id,g.id,-1);
+      controls.querySelector('[data-act="down"]').onclick=()=>ptMoveGroup(page.id,g.id,1);
+      controls.querySelector('[data-act="code"]').onclick=()=>ptToggleCode(page.id,g.id);
+      controls.querySelector('[data-act="del"]').onclick=()=>{ if(confirm('Excluir este grupo da página?')) ptDeleteGroup(page.id,g.id); };
+      gDiv.appendChild(controls);
+
+      const table=document.createElement('table');
+      table.className='pt-price-table';
+      const thead=document.createElement('thead');
+      thead.innerHTML=g.hasCode
+        ? '<tr><th style="width:60px">Código</th><th>Produto</th><th class="pt-pr">Preço Sugerido</th><th style="width:24px"></th></tr>'
+        : '<tr><th>Produto</th><th class="pt-pr">Preço Sugerido</th><th style="width:24px"></th></tr>';
+      table.appendChild(thead);
+      const tbody=document.createElement('tbody');
+      g.items.forEach(it=>{
+        const tr=document.createElement('tr');
+        const linked=!!it.catalogId;
+        const priceCellHtml=linked
+          ? `<td class="pt-price">${ptFmtPrice(it.price)}</td>`
+          : `<td class="pt-price pt-price-edit-doc" contenteditable="true" title="Item manual — preço editável aqui">${ptFmtPrice(it.price)}</td>`;
+        if(g.hasCode){
+          tr.innerHTML=`<td class="pt-code" contenteditable="true">${it.code}</td><td contenteditable="true">${it.name}</td>${priceCellHtml}<td><button class="row-del" style="background:none;border:none;color:#c0392b;cursor:pointer">✕</button></td>`;
+        } else {
+          tr.innerHTML=`<td contenteditable="true">${it.name}</td>${priceCellHtml}<td><button class="row-del" style="background:none;border:none;color:#c0392b;cursor:pointer">✕</button></td>`;
+        }
+        const tds=tr.querySelectorAll('td');
+        const codeCell=g.hasCode?tds[0]:null;
+        const nameCell=g.hasCode?tds[1]:tds[0];
+        const priceCell=g.hasCode?tds[2]:tds[1];
+        if(codeCell) codeCell.addEventListener('blur', e=>{ it.code=e.target.textContent.trim(); ptSaveDoc(); });
+        nameCell.addEventListener('blur', e=>{ it.name=e.target.textContent.trim(); ptSaveDoc(); });
+        if(!linked){
+          priceCell.addEventListener('blur', e=>{ it.price=ptParseBRL(e.target.textContent); ptRenderDoc(); ptSaveDoc(); });
+          priceCell.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); e.target.blur(); } });
+        }
+        tr.querySelector('.row-del').onclick=()=>ptDeleteItem(page.id, g.id, it.id);
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      gDiv.appendChild(table);
+
+      const addItemBtn=document.createElement('div');
+      addItemBtn.className='pt-add-item-row';
+      addItemBtn.textContent='+ adicionar linha em branco';
+      addItemBtn.onclick=()=>ptAddBlankItem(page.id, g.id);
+      gDiv.appendChild(addItemBtn);
+
+      pageDiv.appendChild(gDiv);
+    });
+    el.appendChild(pageDiv);
+  });
+
+  const addPageBtn=document.createElement('button');
+  addPageBtn.id='pt-add-page-btn';
+  addPageBtn.textContent='+ Adicionar nova página';
+  addPageBtn.onclick=ptAddBlankPage;
+  el.appendChild(addPageBtn);
+}
+
+function ptClearDoc(){
+  if(!confirm('Isso vai apagar todas as páginas do documento atual. Continuar?')) return;
+  ptDoc=[]; ptActivePageId=null; ptRenderDoc(); ptSaveDoc();
+}
+
+function ptRenderMargins(){
+  const el=$('pt-margins-view');
+  if(!el) return;
+  el.innerHTML='';
+  ptEnsureFormulaDatalist();
+
+  const toolbar=document.createElement('div');
+  toolbar.className='pt-margins-toolbar';
+  toolbar.innerHTML=`
+    <input type="text" id="pt-margins-search" placeholder="Buscar produto...">
+    <span style="font-size:11px;color:var(--t3);white-space:nowrap">CD+F por tonelada (núcleos): R$ <input type="number" step="1" min="0" id="pt-cdfton-input" style="width:60px;font-size:11px;padding:2px 4px" value="${PT_CDF_TON}"></span>
+    <div class="pt-legend">
+      <span><span class="pt-legend-dot" style="background:#B23A3A"></span>margem negativa</span>
+      <span><span class="pt-legend-dot" style="background:#c98a00"></span>abaixo de 8%</span>
+      <span><span class="pt-legend-dot" style="background:#1f7a44"></span>8% a 20%</span>
+      <span><span class="pt-legend-dot" style="background:#2463AA"></span>acima de 20%</span>
+      <span><span class="pt-src-tag pt-src-live">CMV vivo</span> = matérias-primas calculadas agora pela ficha técnica</span>
+      <span><span class="pt-src-tag pt-src-static">estático</span> = CMV da última planilha de cálculo (sem ficha vinculada)</span>
+      <span>CD+F: R$10 padrão / R$${PT_CDF_TON} para produtos por tonelada (núcleos)</span>
+    </div>`;
+  el.appendChild(toolbar);
+
+  const contentWrap=document.createElement('div');
+  el.appendChild(contentWrap);
+
+  function build(filterText){
+    contentWrap.innerHTML='';
+    const q=(filterText||'').toLowerCase();
+    Object.keys(PT_CATALOG_STATE).forEach(brand=>{
+      const groups=PT_CATALOG_STATE[brand].groups;
+      const brandRows=[];
+      groups.forEach(g=>{
+        const rows=g.items.filter(it=>!q || it.name.toLowerCase().includes(q) || (it.code||'').includes(q));
+        if(rows.length) brandRows.push({group:g, rows});
+      });
+      if(!brandRows.length) return;
+
+      const section=document.createElement('div');
+      section.className='pt-brand-section';
+      section.innerHTML=`<div class="pt-brand-section-title">${brand}</div>`;
+
+      brandRows.forEach(({group:g, rows})=>{
+        const rate=ptGetGroupRate(brand, g.name);
+        const gt=document.createElement('div');
+        gt.className='pt-margin-group-title';
+        gt.innerHTML=`
+          <span>${g.name}</span>
+          <span class="pt-rate-controls">
+            Imposto <input type="number" step="0.1" min="0" class="pt-rate-input" data-field="imposto" value="${rate.imposto}">%
+            &nbsp;&nbsp;Comissão <input type="number" step="0.1" min="0" class="pt-rate-input" data-field="comissao" value="${rate.comissao}">%
+          </span>`;
+        gt.querySelectorAll('.pt-rate-input').forEach(inp=>{
+          inp.addEventListener('change', e=>{
+            const val=parseFloat(e.target.value.replace(',','.'))||0;
+            ptSetGroupRate(brand, g.name, e.target.dataset.field, val);
+            build($('pt-margins-search').value);
+          });
+          inp.addEventListener('click', e=>e.stopPropagation());
+        });
+        section.appendChild(gt);
+
+        const table=document.createElement('table');
+        table.className='pt-margins-table';
+        table.innerHTML=`<thead><tr>
+          <th style="width:50px">Ativo</th>
+          ${g.hasCode?'<th>Código</th>':''}
+          <th>Produto</th>
+          <th>CMV</th>
+          <th>CD+F</th>
+          <th>Imposto (${rate.imposto}%)</th>
+          <th>Comissão (${rate.comissao}%)</th>
+          <th>Custo Total</th>
+          <th>Preço Sugerido</th>
+          <th>Lucro</th>
+          <th>Margem</th>
+        </tr></thead>`;
+        const tbody=document.createElement('tbody');
+        rows.forEach(it=>{
+          const cost=ptGetCost(brand, g.name, it);
+          const isActive=ptIsActive(it.id);
+          const tr=document.createElement('tr');
+          if(!isActive) tr.style.opacity='0.5';
+          let cells=`<td style="text-align:center"><input type="checkbox" class="pt-active-toggle" data-id="${it.id}" ${isActive?'checked':''} title="Aparece na Tabela de Preços pública"></td>`;
+          if(g.hasCode) cells+=`<td>${it.code||''}</td>`;
+
+          let nomeCell=it.name;
+          if(cost.source==='live'){
+            nomeCell+=`<span class="pt-src-tag pt-src-live" title="Ficha: ${cost.formulaCod} — ${cost.formulaNome}">CMV vivo${cost.unidade==='ton'?' /ton':''}</span>`;
+            if(cost.embInfo) nomeCell+=ptEmbInfoHtml(cost.embInfo, cost.formulaCod);
+          } else if(cost.source==='static'){
+            nomeCell+=`<span class="pt-src-tag pt-src-static">estático</span>`;
+          } else {
+            nomeCell+=`<span class="pt-src-tag pt-src-static">sem custo</span>`;
+          }
+          if(!it.code){
+            // produto sem código próprio (Viacampus/RNA) — permite vincular manualmente a uma ficha técnica
+            nomeCell+=`<br><input type="text" class="pt-link-input" list="pt-formula-datalist" data-item="${it.id}" placeholder="código ou nome da fórmula..." value="${ptFormulaLabelFor(PT_LINKS[it.id])}">`;
+          }
+          cells+=`<td>${nomeCell}</td>`;
+
+          if(cost.cmv!==null && cost.cmv!==undefined){
+            const imposto=it.price*(rate.imposto/100);
+            const comissao=it.price*(rate.comissao/100);
+            const custoTotal=(cost.cmv||0)+(cost.cdf||0)+imposto+comissao;
+            const lucro=it.price-custoTotal;
+            const pct=it.price?(lucro/it.price*100):null;
+            cells+=`<td>${ptFmtPrice(cost.cmv)}</td>`;
+            cells+=`<td>${ptFmtPrice(cost.cdf)}</td>`;
+            cells+=`<td>${ptFmtPrice(imposto)}</td>`;
+            cells+=`<td>${ptFmtPrice(comissao)}</td>`;
+            cells+=`<td>${ptFmtPrice(custoTotal)}</td>`;
+            cells+=`<td class="pt-price-edit" contenteditable="true" data-id="${it.id}">${ptFmtPrice(it.price)}</td>`;
+            cells+=`<td>${ptFmtPrice(lucro)}</td>`;
+            cells+=`<td><span class="pt-pct-pill ${ptPctClass(pct)}">${pct.toFixed(1)}%</span></td>`;
+          } else {
+            const cdfCell = (cost.cdf!==null && cost.cdf!==undefined) ? ptFmtPrice(cost.cdf) : '—';
+            cells+=`<td class="pt-na">—</td><td>${cdfCell}</td><td class="pt-na">—</td><td class="pt-na">—</td><td class="pt-na">—</td>`;
+            cells+=`<td class="pt-price-edit" contenteditable="true" data-id="${it.id}">${ptFmtPrice(it.price)}</td><td class="pt-na">—</td><td class="pt-na">vincule uma ficha</td>`;
+          }
+          tr.innerHTML=cells;
+          if(cost.formulaCod) ptWireEmbInput(tr, cost.formulaCod, build, ()=>$('pt-margins-search').value);
+          const activeToggle=tr.querySelector('.pt-active-toggle');
+          activeToggle.addEventListener('click', e=>e.stopPropagation());
+          activeToggle.addEventListener('change', e=>{
+            ptToggleActive(it.id);
+            build($('pt-margins-search').value);
+          });
+
+          const priceCell=tr.querySelector('.pt-price-edit');
+          priceCell.addEventListener('blur', e=>{
+            const val=ptParseBRL(e.target.textContent);
+            ptUpdatePrice(it.id, val);
+            build($('pt-margins-search').value);
+          });
+          priceCell.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); e.target.blur(); } });
+
+          const linkInput=tr.querySelector('.pt-link-input');
+          if(linkInput){
+            linkInput.addEventListener('click', e=>e.stopPropagation());
+            linkInput.addEventListener('change', e=>{
+              const raw=e.target.value.trim();
+              if(!raw){ delete PT_LINKS[it.id]; ptSaveLinks(); build($('pt-margins-search').value); return; }
+              const cod=ptParseFormulaCode(raw);
+              const idx=ptFormulaIndex();
+              if(idx[String(cod)]){
+                PT_LINKS[it.id]=String(cod);
+                ptSaveLinks();
+                build($('pt-margins-search').value);
+              } else {
+                alert('Não encontrei nenhuma fórmula com esse código ou nome: "'+raw+'". Escolha uma das sugestões da lista.');
+                e.target.value = ptFormulaLabelFor(PT_LINKS[it.id]);
+              }
+            });
+          }
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        section.appendChild(table);
+      });
+      contentWrap.appendChild(section);
+    });
+
+    // ---- Banco de Fórmulas: fichas técnicas que existem mas não estão na Tabela de Preços ----
+    const extraGroups=ptExtraFormulasGrouped();
+    const extraCatNames=Object.keys(extraGroups).sort();
+    const extraFiltered={};
+    let extraTotal=0;
+    extraCatNames.forEach(cat=>{
+      const list=extraGroups[cat].filter(f=>!q || (f.nome||'').toLowerCase().includes(q) || String(f.cod).includes(q));
+      if(list.length){ extraFiltered[cat]=list; extraTotal+=list.length; }
+    });
+    if(extraTotal>0){
+      const extraSection=document.createElement('div');
+      extraSection.className='pt-brand-section';
+      const extraHead=document.createElement('div');
+      extraHead.className='pt-brand-section-title';
+      extraHead.style.cursor='pointer';
+      extraHead.innerHTML=`📦 Banco de Fórmulas — fora da Tabela de Preços atual (${extraTotal}) <span style="font-size:11px;font-weight:400;color:#999">clique para expandir/recolher</span>`;
+      const extraBody=document.createElement('div');
+      extraBody.style.display = q ? 'block' : 'none'; // se estiver buscando, já mostra aberto
+      extraHead.onclick=()=>{ extraBody.style.display = extraBody.style.display==='none' ? 'block' : 'none'; };
+      extraSection.appendChild(extraHead);
+      extraSection.appendChild(extraBody);
+
+      Object.keys(extraFiltered).forEach(cat=>{
+        const rate=ptGetGroupRate('Banco', cat);
+        const gt=document.createElement('div');
+        gt.className='pt-margin-group-title';
+        gt.innerHTML=`
+          <span>${cat}<span class="pt-cnt" style="opacity:.8"> (${extraFiltered[cat].length})</span></span>
+          <span class="pt-rate-controls">
+            Imposto <input type="number" step="0.1" min="0" class="pt-rate-input" data-field="imposto" value="${rate.imposto}">%
+            &nbsp;&nbsp;Comissão <input type="number" step="0.1" min="0" class="pt-rate-input" data-field="comissao" value="${rate.comissao}">%
+          </span>`;
+        gt.querySelectorAll('.pt-rate-input').forEach(inp=>{
+          inp.addEventListener('change', e=>{
+            const val=parseFloat(e.target.value.replace(',','.'))||0;
+            ptSetGroupRate('Banco', cat, e.target.dataset.field, val);
+            build($('pt-margins-search').value);
+          });
+          inp.addEventListener('click', e=>e.stopPropagation());
+        });
+        extraBody.appendChild(gt);
+
+        const table=document.createElement('table');
+        table.className='pt-margins-table';
+        table.innerHTML=`<thead><tr>
+          <th>Código</th><th>Produto</th><th>CMV</th><th>CD+F</th>
+          <th>Imposto (${rate.imposto}%)</th><th>Comissão (${rate.comissao}%)</th>
+          <th>Custo Total</th><th>Preço (opcional)</th><th>Lucro</th><th>Margem</th>
+        </tr></thead>`;
+        const tbody=document.createElement('tbody');
+        extraFiltered[cat].forEach(f=>{
+          const cost=ptGetExtraCost(f);
+          const price=parseFloat(PT_EXTRA_PRICES[f.cod])||0;
+          const tr=document.createElement('tr');
+          let nomeCell=f.nome;
+          nomeCell+=`<span class="pt-src-tag pt-src-live">CMV vivo${cost.unidade==='ton'?' /ton':''}</span>`;
+          if(cost.embInfo) nomeCell+=ptEmbInfoHtml(cost.embInfo, f.cod);
+          let cells=`<td>${f.cod}</td><td>${nomeCell}</td>`;
+          if(cost.cmv!==null){
+            const cdf = cost.cdf!==null && cost.cdf!==undefined ? cost.cdf : 0;
+            const imposto=price*(rate.imposto/100);
+            const comissao=price*(rate.comissao/100);
+            const custoTotal=cost.cmv+cdf+imposto+comissao;
+            const lucro=price-custoTotal;
+            const pct=price?(lucro/price*100):null;
+            cells+=`<td>${ptFmtPrice(cost.cmv)}</td>`;
+            cells+=`<td>${cost.cdf!==null && cost.cdf!==undefined ? ptFmtPrice(cost.cdf) : '—'}</td>`;
+            cells+=`<td>${price?ptFmtPrice(imposto):'—'}</td>`;
+            cells+=`<td>${price?ptFmtPrice(comissao):'—'}</td>`;
+            cells+=`<td>${price?ptFmtPrice(custoTotal):'—'}</td>`;
+            cells+=`<td class="pt-price-edit" contenteditable="true" data-cod="${f.cod}">${price?ptFmtPrice(price):''}</td>`;
+            cells+=`<td>${price?ptFmtPrice(lucro):'—'}</td>`;
+            cells+=`<td>${pct!==null?`<span class="pt-pct-pill ${ptPctClass(pct)}">${pct.toFixed(1)}%</span>`:'<span class="pt-na">informe um preço</span>'}</td>`;
+          } else {
+            cells+=`<td class="pt-na">—</td><td class="pt-na">—</td><td class="pt-na">—</td><td class="pt-na">—</td><td class="pt-na">—</td>`;
+            cells+=`<td class="pt-price-edit" contenteditable="true" data-cod="${f.cod}">${price?ptFmtPrice(price):''}</td><td class="pt-na">—</td><td class="pt-na">—</td>`;
+          }
+          tr.innerHTML=cells;
+          ptWireEmbInput(tr, f.cod, build, ()=>$('pt-margins-search').value);
+          const priceCell=tr.querySelector('.pt-price-edit');
+          priceCell.addEventListener('blur', e=>{
+            const val=ptParseBRL(e.target.textContent);
+            if(val>0) PT_EXTRA_PRICES[f.cod]=val; else delete PT_EXTRA_PRICES[f.cod];
+            ptSaveExtraPrices();
+            build($('pt-margins-search').value);
+          });
+          priceCell.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); e.target.blur(); } });
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        extraBody.appendChild(table);
+      });
+      contentWrap.appendChild(extraSection);
+    }
+    if(!contentWrap.children.length){
+      contentWrap.innerHTML='<p style="color:#999">Nenhum produto encontrado.</p>';
+    }
+  }
+
+  build('');
+  $('pt-margins-search').addEventListener('input', e=>build(e.target.value));
+  $('pt-cdfton-input').addEventListener('change', e=>{
+    const val=parseFloat(e.target.value.replace(',','.'))||0;
+    PT_CDF_TON=val;
+    ptSaveCdfTon();
+    build($('pt-margins-search').value);
+  });
+}
+
+function ptSwitchTab(tab){
+  ptCurrentSubTab=tab;
+  document.querySelectorAll('.pt-subtab').forEach(b=>b.classList.toggle('active', b.dataset.ptTab===tab));
+  const sidebar=$('pt-sidebar'), docScroll=$('pt-doc-scroll'), marginsView=$('pt-margins-view');
+  if(tab==='builder'){
+    sidebar.classList.remove('pt-hidden');
+    docScroll.classList.remove('pt-hidden');
+    marginsView.classList.remove('visible');
+  } else {
+    sidebar.classList.add('pt-hidden');
+    docScroll.classList.add('pt-hidden');
+    marginsView.classList.add('visible');
+    ptRenderMargins();
+  }
+}
+
+function ptOnTabOpen(){
+  if(!ptDataLoaded){ ptLoadAll(); ptDataLoaded=true; }
+  if(!ptBooted){
+    ptRenderCatalog();
+    if(!ptDoc.length){ ptDoc=ptDefaultTemplate(); ptActivePageId=ptDoc[ptDoc.length-1].id; }
+    ptRenderDoc();
+    ptBooted=true;
+  } else if(ptCurrentSubTab==='margins'){
+    ptRenderMargins(); // atualiza CMV vivo caso custos de MP tenham mudado em outra aba
+  }
+}
+
+/* ======================================================================
+   TABELA DE PREÇOS — visão pública (sem senha), por empresa e grupo
+   Usa a mesma PT_CATALOG_STATE (preços) do módulo de Custos & Margens —
+   qualquer alteração de preço lá aparece aqui também.
+   ====================================================================== */
+let ptpBooted=false;
+let ptpActiveBrand='Rural';
+const PTP_BRANDS=['Rural','Viacampus','RNA','Copacol'];
+
+function ptpRenderBrandBar(){
+  const bar=$('ptp-brandbar');
+  bar.innerHTML='';
+  PTP_BRANDS.forEach(brand=>{
+    if(!PT_CATALOG_STATE[brand]) return;
+    const btn=document.createElement('button');
+    btn.className='ptp-brand-btn'+(brand===ptpActiveBrand?' active':'');
+    btn.textContent=brand;
+    btn.onclick=()=>{ ptpActiveBrand=brand; ptpRenderBrandBar(); ptpRenderCompany(brand); };
+    bar.appendChild(btn);
+  });
+}
+
+function ptpRenderCompany(brand){
+  const el=$('ptp-content');
+  el.innerHTML='';
+  const data=PT_CATALOG_STATE[brand];
+  if(!data){ el.innerHTML='<p style="color:#999">Nenhum produto cadastrado para esta empresa.</p>'; return; }
+
+  const header=document.createElement('div');
+  header.className='ptp-header';
+  header.innerHTML=`<img src="${LOGO_RURAL}"><div class="ptp-title">Tabela de Preços - ${brand}</div>`;
+  el.appendChild(header);
+  const accent=document.createElement('div');
+  accent.className='ptp-title-accent';
+  el.appendChild(accent);
+
+  data.groups.forEach(g=>{
+    const activeItems=g.items.filter(it=>ptIsActive(it.id));
+    if(!activeItems.length) return; // grupo inteiro inativo — não mostra nem o título
+
+    const gDiv=document.createElement('div');
+    gDiv.className='ptp-group';
+    const gt=document.createElement('div');
+    gt.className='ptp-group-title';
+    gt.textContent=g.name;
+    gDiv.appendChild(gt);
+
+    const table=document.createElement('table');
+    table.className='ptp-table';
+    table.innerHTML=g.hasCode
+      ? '<thead><tr><th style="width:70px">Código</th><th>Produto</th><th class="ptp-pr">Preço Sugerido</th></tr></thead>'
+      : '<thead><tr><th>Produto</th><th class="ptp-pr">Preço Sugerido</th></tr></thead>';
+    const tbody=document.createElement('tbody');
+    activeItems.forEach(it=>{
+      const tr=document.createElement('tr');
+      if(g.hasCode){
+        tr.innerHTML=`<td class="ptp-code">${it.code||''}</td><td>${it.name}</td><td class="ptp-price">${ptFmtPrice(it.price)}</td>`;
+      } else {
+        tr.innerHTML=`<td>${it.name}</td><td class="ptp-price">${ptFmtPrice(it.price)}</td>`;
+      }
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    gDiv.appendChild(table);
+    el.appendChild(gDiv);
+  });
+}
+
+function ptpOnTabOpen(){
+  // Garante que o catálogo (preços) já esteja carregado, mesmo que o usuário
+  // nunca tenha aberto a aba protegida de Custos & Margens nesta sessão.
+  if(!ptDataLoaded){ ptLoadAll(); ptDataLoaded=true; }
+  if(!ptpBooted){
+    ptpRenderBrandBar();
+    ptpRenderCompany(ptpActiveBrand);
+    ptpBooted=true;
+  } else {
+    ptpRenderCompany(ptpActiveBrand); // reflete qualquer edição de preço feita enquanto isso
+  }
+}
+
 
 /* BOOT */
 if($('op-logo'))$('op-logo').src=LOGO_RURAL;
