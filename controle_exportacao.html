@@ -147,13 +147,6 @@
     color:var(--gold);
     background:var(--gold-soft);
   }
-  .sales-total-row td{
-    font-family:'IBM Plex Mono',monospace;
-    font-size:12.5px;
-    border-top:2px solid var(--border-strong);
-    background:var(--gold-soft);
-    padding:8px 10px;
-  }
   .kpi-card{
     background:var(--surface);
     border:1px solid var(--border);
@@ -401,7 +394,7 @@
   .print-bar .btn{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;}
   .period-filter{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
   .period-filter label{font-size:12.5px;color:var(--ink-soft);}
-  .period-filter input[type=date], .period-filter select{
+  .period-filter input[type=date]{
     font-family:'Inter',sans-serif;font-size:13px;padding:6px 8px;
     border:1px solid var(--border-strong);border-radius:8px;background:var(--surface);color:var(--ink);
   }
@@ -462,9 +455,9 @@
     table.control, .pending-table{min-width:0 !important;width:100%;font-size:10.5px;}
     table.control thead, .pending-table thead{display:table-header-group;}
     table.control tr, .pending-table tr{break-inside:avoid;}
-    table.control input, .pending-table input, table.control select, .pending-table select{
+    table.control input, .pending-table input{
       border:none !important;background:transparent !important;color:#000 !important;
-      pointer-events:none;padding:3px 2px;appearance:none;-webkit-appearance:none;
+      pointer-events:none;padding:3px 2px;
     }
     table.control th:first-child, table.control td:first-child{display:none;}
     .rate-edit, .row-del{display:none !important;}
@@ -564,15 +557,16 @@
     <div class="print-meta" id="printMetaSales"></div>
     <div class="print-bar no-print">
       <span class="period-filter">
-        <label>Filtrar por</label>
-        <select id="salesDateFilterField">
-          <option value="dataFatura">Data da fatura</option>
-          <option value="vencimento">Data de vencimento</option>
-        </select>
-        <label>de</label>
+        <label>Data da fatura, de</label>
         <input type="date" id="salesDateFrom">
         <label>até</label>
         <input type="date" id="salesDateTo">
+      </span>
+      <span class="period-filter">
+        <label>Vencimento, de</label>
+        <input type="date" id="salesVencFrom">
+        <label>até</label>
+        <input type="date" id="salesVencTo">
       </span>
       <button class="btn" data-print="sales"><i class="ti ti-printer" aria-hidden="true"></i> Gerar relatório PDF</button>
     </div>
@@ -609,13 +603,13 @@
             <th>Valor USD fatura</th>
             <th>Câmbio venda</th>
             <th>Valor NF (R$)</th>
+            <th>Saldo em aberto (US$)</th>
             <th>Situação</th>
             <th>Fatura comercial</th>
             <th></th>
           </tr>
         </thead>
         <tbody id="salesBody"></tbody>
-        <tfoot id="salesFoot"></tfoot>
       </table>
     </div>
   </div>
@@ -652,17 +646,6 @@
         <div class="form-field span2" id="settleBalanceNote" style="display:none;">
           <div class="badge soon" style="width:fit-content;" id="settleBalanceText"></div>
         </div>
-        <div class="form-field span2">
-          <label>Tipo de recebimento</label>
-          <select id="settleTipo">
-            <option value="cambio">Câmbio normal — o dinheiro entra na conta</option>
-            <option value="acc">Quitação de ACC — o dinheiro vai direto para pagar um contrato de ACC</option>
-          </select>
-        </div>
-        <div class="form-field span2" id="settleAccWrap" style="display:none;">
-          <label>Contrato de ACC a quitar</label>
-          <select id="settleAccSelect"><option value="">Selecione um contrato em aberto</option></select>
-        </div>
         <div class="form-field">
           <label>Data do recebimento</label>
           <input type="date" id="settleDate">
@@ -682,6 +665,22 @@
         <div class="form-field">
           <label>Observação</label>
           <input type="text" class="txt" id="settleObs" placeholder="opcional">
+        </div>
+        <div class="form-field span2" style="flex-direction:row;align-items:center;gap:8px;border-top:1px solid var(--border);padding-top:14px;margin-top:4px;">
+          <input type="checkbox" id="settleUseForAcc" style="width:16px;height:16px;">
+          <label for="settleUseForAcc" style="font-size:13px;color:var(--ink);">Usar este recebimento para quitar um ACC</label>
+        </div>
+        <div class="form-field span2" id="settleAccWrap" style="display:none;">
+          <label>Contrato de ACC em aberto</label>
+          <select id="settleAccSelect"><option value="">Selecione um contrato em aberto</option></select>
+        </div>
+        <div class="form-field" id="settleAccUsdWrap" style="display:none;">
+          <label>Valor USD a abater do ACC</label>
+          <input type="number" step="0.01" id="settleAccUSD">
+        </div>
+        <div class="form-field span2" id="settleAccPartialWrap" style="display:none;flex-direction:row;align-items:center;gap:8px;">
+          <input type="checkbox" id="settleAccPartial" style="width:16px;height:16px;">
+          <label for="settleAccPartial" style="font-size:13px;color:var(--ink);">Essa baixa do ACC também é parcial — ainda falta liquidar o restante do contrato</label>
         </div>
       </div>
       <div style="display:flex;gap:24px;align-items:center;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
@@ -707,8 +706,6 @@
               <th>Fatura</th>
               <th>Embalagem</th>
               <th>Situação</th>
-              <th>Tipo de recebimento</th>
-              <th>Contrato de ACC</th>
               <th>Data receb.</th>
               <th>USD recebido</th>
               <th>Cotação receb.</th>
@@ -890,7 +887,6 @@
         <option value="all">Todas as origens</option>
         <option value="cambio">Câmbio (venda)</option>
         <option value="acc">ACC (financiamento)</option>
-        <option value="quitacaoAcc">Quitação de ACC via exportação</option>
       </select>
     </div>
     <div class="table-scroll">
@@ -1340,7 +1336,7 @@
     return recs.length ? recs[recs.length-1].data : null;
   }
 
-  function addReceipt(row, usd, rate, dateStr, isPartial, obs, tipo, accId){
+  function addReceipt(row, usd, rate, dateStr, isPartial, obs){
     var recs = row.recebimentos || (row.recebimentos = []);
     var priorNF = recs.reduce(function(s,x){ return s + (x.nf||0); }, 0);
     var brl = round2(usd * rate);
@@ -1353,9 +1349,7 @@
       nf = row.valorNF != null ? round2(row.valorNF - priorNF) : null;
     }
     var gp = (brl != null && nf != null) ? round2(brl - nf) : null;
-    var rec = { id: uid(), data: dateStr, usd: usd, rate: rate, brl: brl, nf: nf, gp: gp, parcial: !!isPartial, obs: obs || null, tipo: tipo === 'acc' ? 'acc' : 'cambio', accId: (tipo === 'acc' && accId) ? accId : null, accBaixaId: null };
-    recs.push(rec);
-    return rec;
+    recs.push({ id: uid(), data: dateStr, usd: usd, rate: rate, brl: brl, nf: nf, gp: gp, parcial: !!isPartial, obs: obs || null });
   }
 
   function recomputeReceipt(row, receiptId){
@@ -1373,52 +1367,6 @@
       rec.nf = row.valorNF != null ? round2(row.valorNF - priorNF) : null;
     }
     rec.gp = (rec.brl != null && rec.nf != null) ? round2(rec.brl - rec.nf) : null;
-    syncReceiptAccBaixa(row, rec);
-  }
-
-  // Keeps a receipt tagged tipo:'acc' and the ACC baixa it created mirrored:
-  // whatever usd/rate/data/parcial/obs the receipt has, the linked baixa gets too.
-  function syncReceiptAccBaixa(row, rec){
-    if(!rec || rec.tipo !== 'acc' || !rec.accId || !rec.accBaixaId) return;
-    var c = findAcc(rec.accId);
-    if(!c) return;
-    var b = (c.baixas||[]).filter(function(x){ return x.id === rec.accBaixaId; })[0];
-    if(!b) return;
-    b.usd = rec.usd;
-    b.rate = rec.rate;
-    b.data = rec.data;
-    b.parcial = rec.parcial;
-    b.obs = rec.obs;
-    accRecomputeBaixa(c, b.id);
-    scheduleAccSave();
-  }
-
-  // Removes the ACC baixa a receipt created (if any) and clears the link,
-  // e.g. when the receipt is estornado or switched back to tipo:'cambio'.
-  function unlinkReceiptFromAcc(rec){
-    if(!rec || !rec.accId || !rec.accBaixaId) return;
-    var c = findAcc(rec.accId);
-    if(c){
-      c.baixas = (c.baixas||[]).filter(function(x){ return x.id !== rec.accBaixaId; });
-      scheduleAccSave();
-    }
-    rec.accId = null;
-    rec.accBaixaId = null;
-  }
-
-  // Links a receipt to an ACC contract, creating the corresponding baixa on
-  // that contract (or moving it, if the receipt was already linked elsewhere).
-  function linkReceiptToAcc(row, rec, accId){
-    if(!rec) return;
-    if(rec.accBaixaId) unlinkReceiptFromAcc(rec);
-    var c = findAcc(accId);
-    if(!c) return;
-    var baixa = accAddBaixa(c, rec.usd, rec.rate, rec.data, row.id, null, rec.parcial, rec.obs);
-    baixa.receiptId = rec.id;
-    rec.tipo = 'acc';
-    rec.accId = accId;
-    rec.accBaixaId = baixa.id;
-    scheduleAccSave();
   }
 
   function migrateRow(r){
@@ -1519,9 +1467,7 @@
       alocado = c.valorReais != null ? round2(c.valorReais - priorAlocado) : null;
     }
     var resultado = (alocado != null && brl != null) ? round2(alocado - brl) : null;
-    var baixa = { id: uid(), data: dateStr, usd: usd, rate: rate, brl: brl, faturaId: faturaId || null, fatura: faturaText || null, alocado: alocado, resultado: resultado, parcial: !!isPartial, obs: obs || null, receiptId: null };
-    baixas.push(baixa);
-    return baixa;
+    baixas.push({ id: uid(), data: dateStr, usd: usd, rate: rate, brl: brl, faturaId: faturaId || null, fatura: faturaText || null, alocado: alocado, resultado: resultado, parcial: !!isPartial, obs: obs || null });
   }
   function accRecomputeBaixa(c, baixaId){
     var baixas = c.baixas || [];
@@ -2039,10 +1985,10 @@
     var year = document.getElementById('salesYearFilter').value;
     var status = document.getElementById('salesStatusFilter').value;
     var sortBy = document.getElementById('salesSortBy').value;
-    var dateField = document.getElementById('salesDateFilterField').value || 'dataFatura';
     var rows = data.filter(function(r){
       if(year !== 'all' && String(r.ano) !== year) return false;
-      if(!inDateRange(r[dateField], 'salesDateFrom', 'salesDateTo')) return false;
+      if(!inDateRange(r.dataFatura, 'salesDateFrom', 'salesDateTo')) return false;
+      if(!inDateRange(r.vencimento, 'salesVencFrom', 'salesVencTo')) return false;
       var st = rowStatus(r);
       if(status === 'open_or_partial' && st === 'baixada') return false;
       if(status === 'pending' && st !== 'aberta') return false;
@@ -2072,8 +2018,8 @@
     var st = rowStatus(row);
     if(st === 'aberta') return '<span class="badge open">em aberto</span>';
     if(st === 'parcial'){
-      var saldoAberto = saldoUSD(row);
-      return '<span class="badge soon">parcial · '+fmtUSD.format(Math.max(0, saldoAberto||0))+' em aberto</span>';
+      var recebido = totalReceivedUSD(row);
+      return '<span class="badge soon">parcial · '+fmtUSD.format(recebido)+' de '+fmtUSD.format(row.valorDolarFatura||0)+'</span>';
     }
     var d = lastReceiptDate(row);
     return '<span class="badge ok">baixada'+(d ? ' em '+dLabel(d) : '')+'</span>';
@@ -2098,39 +2044,18 @@
       (currentRate != null ? ' (' + fmtBRL.format(totalSaldo * currentRate) + ' na cotação de hoje)' : '');
   }
 
-  function renderSalesTotalRow(rows){
-    var foot = document.getElementById('salesFoot');
-    if(!foot) return;
-    if(rows.length === 0){ foot.innerHTML = ''; return; }
-    var totalSaldo = 0;
-    rows.forEach(function(r){
-      var saldo = saldoUSD(r);
-      if(saldo != null) totalSaldo += Math.max(0, saldo);
-    });
-    var totalSaldoBRL = currentRate != null ? totalSaldo * currentRate : null;
-    var cotacaoLabel = currentRate != null ? ' (cotação de hoje: ' + fmtBRL.format(currentRate) + ')' : '';
-    foot.innerHTML = '<tr class="sales-total-row">'
-      + '<td colspan="8" style="text-align:right;font-weight:600;">Total em aberto ('+rows.length+' fatura(s))'+cotacaoLabel+'</td>'
-      + '<td style="font-weight:600;">'+ fmtUSD.format(totalSaldo) +'</td>'
-      + '<td></td>'
-      + '<td style="font-weight:600;">'+ (totalSaldoBRL != null ? fmtBRL.format(totalSaldoBRL) : '—') +'</td>'
-      + '<td></td>'
-      + '<td></td>'
-      + '<td></td>'
-      + '</tr>';
-  }
-
   function renderSalesTable(){
     var rows = salesFilteredData();
     renderSalesFilterSummary(rows);
     var body = document.getElementById('salesBody');
     if(rows.length === 0){
-      body.innerHTML = '<tr><td colspan="13" style="padding:20px;color:var(--ink-faint);font-family:Inter,sans-serif;">Nenhuma venda encontrada para este filtro.</td></tr>';
-      renderSalesTotalRow(rows);
+      body.innerHTML = '<tr><td colspan="14" style="padding:20px;color:var(--ink-faint);font-family:Inter,sans-serif;">Nenhuma venda encontrada para este filtro.</td></tr>';
       return;
     }
     body.innerHTML = rows.map(function(r){
       var justImported = !!recentlyImportedVendaIds[r.id];
+      var st = rowStatus(r);
+      var saldo = st === 'baixada' ? 0 : Math.max(0, saldoUSD(r) || 0);
       return '<tr data-row="'+r.id+'"'+(justImported ? ' class="row-just-imported"' : '')+'>'
         + '<td><button class="row-del" data-del="'+r.id+'" title="Excluir venda" aria-label="Excluir venda">×</button></td>'
         + '<td>'+ inputCell(r.id,'ano', r.ano, 'number') +'</td>'
@@ -2143,12 +2068,12 @@
         + '<td>'+ inputCell(r.id,'valorDolarFatura', r.valorDolarFatura, 'number', '', 2) +'</td>'
         + '<td>'+ inputCell(r.id,'taxaCambioVenda', r.taxaCambioVenda, 'number', '', 4) +'</td>'
         + '<td class="readonly">'+ (r.valorNF!=null ? fmtNum.format(r.valorNF) : '—') +'</td>'
+        + '<td class="readonly">'+ (st==='baixada' ? '—' : fmtUSD.format(saldo)) +'</td>'
         + '<td>'+ statusBadge(r) + (justImported ? ' <span class="badge new-import">novo</span>' : '') +'</td>'
         + '<td>'+ fcSelectCell(r.id, r.faturaComercialId || null) +'</td>'
         + '<td><button class="btn" data-nf-print="'+r.id+'" style="padding:4px 8px;font-size:11.5px;white-space:nowrap;">Ver NF</button></td>'
         + '</tr>';
     }).join('');
-    renderSalesTotalRow(rows);
   }
 
   function handleSalesInput(e){
@@ -2322,14 +2247,18 @@
     document.getElementById('settleInvoiceUSD').value = '';
     document.getElementById('settleSaleRate').value = '';
     document.getElementById('settleBalanceNote').style.display = 'none';
-    document.getElementById('settleTipo').value = 'cambio';
-    document.getElementById('settleAccWrap').style.display = 'none';
-    document.getElementById('settleAccSelect').value = '';
     document.getElementById('settleDate').value = '';
     document.getElementById('settleUSD').value = '';
     document.getElementById('settleRate').value = '';
     document.getElementById('settlePartial').checked = false;
     document.getElementById('settleObs').value = '';
+    document.getElementById('settleUseForAcc').checked = false;
+    document.getElementById('settleAccWrap').style.display = 'none';
+    document.getElementById('settleAccUsdWrap').style.display = 'none';
+    document.getElementById('settleAccPartialWrap').style.display = 'none';
+    document.getElementById('settleAccSelect').value = '';
+    document.getElementById('settleAccUSD').value = '';
+    document.getElementById('settleAccPartial').checked = false;
     document.getElementById('settlePreviewUSD').textContent = '—';
     document.getElementById('settlePreviewBRL').textContent = '—';
     document.getElementById('settlePreviewGP').textContent = '—';
@@ -2337,26 +2266,33 @@
     document.getElementById('btnConfirmSettle').disabled = true;
   }
 
-  function populateSettleAccSelect(){
+  function populateSettleAccOptions(){
     var sel = document.getElementById('settleAccSelect');
     var current = sel.value;
     var open = accOpenList();
     sel.innerHTML = '<option value="">Selecione um contrato em aberto</option>' + open.map(function(c){
-      var venc = c.vencimento ? ' · vence ' + dLabel(c.vencimento) : '';
       var saldo = accSaldoUSD(c);
-      var valorTxt = accStatus(c) === 'parcial'
-        ? 'saldo ' + fmtUSD.format(saldo) + ' (de ' + fmtUSD.format(c.valorUSD||0) + ')'
-        : fmtUSD.format(c.valorUSD||0);
-      return '<option value="'+c.id+'">ACC '+(c.codAcc||'s/n')+' · '+valorTxt+venc+'</option>';
+      var venc = c.vencimento ? ' · vence ' + dLabel(c.vencimento) : '';
+      return '<option value="'+c.id+'">ACC '+(c.codAcc||'s/n')+' · saldo '+fmtUSD.format(saldo)+venc+'</option>';
     }).join('');
     if(open.some(function(c){ return c.id === current; })) sel.value = current;
   }
 
-  function onSettleTipoChange(){
-    var tipo = document.getElementById('settleTipo').value;
-    document.getElementById('settleAccWrap').style.display = tipo === 'acc' ? 'block' : 'none';
-    if(tipo === 'acc') populateSettleAccSelect();
-    updateSettlePreview();
+  function onSettleUseForAccChange(){
+    var checked = document.getElementById('settleUseForAcc').checked;
+    document.getElementById('settleAccWrap').style.display = checked ? 'block' : 'none';
+    document.getElementById('settleAccUsdWrap').style.display = checked ? 'block' : 'none';
+    document.getElementById('settleAccPartialWrap').style.display = checked ? 'flex' : 'none';
+    if(checked) populateSettleAccOptions();
+  }
+
+  function onSettleAccSelectChange(){
+    var accId = document.getElementById('settleAccSelect').value;
+    var c = accId ? findAcc(accId) : null;
+    if(!c) return;
+    var saldo = accSaldoUSD(c) || 0;
+    var receiptUsd = parseNum(document.getElementById('settleUSD').value) || 0;
+    document.getElementById('settleAccUSD').value = Math.min(saldo, receiptUsd) || saldo;
   }
 
   function onSettleSelectChange(){
@@ -2374,9 +2310,6 @@
     } else {
       note.style.display = 'none';
     }
-    document.getElementById('settleTipo').value = 'cambio';
-    document.getElementById('settleAccWrap').style.display = 'none';
-    document.getElementById('settleAccSelect').value = '';
     document.getElementById('settleDate').value = new Date().toISOString().slice(0,10);
     document.getElementById('settleUSD').value = saldo != null ? saldo : '';
     document.getElementById('settleRate').value = currentRate != null ? currentRate : '';
@@ -2391,8 +2324,6 @@
     var usd = parseNum(document.getElementById('settleUSD').value);
     var rate = parseNum(document.getElementById('settleRate').value);
     var isPartial = document.getElementById('settlePartial').checked;
-    var tipo = document.getElementById('settleTipo').value;
-    var accId = document.getElementById('settleAccSelect').value;
     var usdEl = document.getElementById('settlePreviewUSD');
     var brlEl = document.getElementById('settlePreviewBRL');
     var gpEl = document.getElementById('settlePreviewGP');
@@ -2418,7 +2349,7 @@
     brlEl.textContent = fmtBRL.format(brl);
     gpEl.textContent = gp == null ? '—' : fmtBRL.format(gp);
     gpEl.className = 'kpi-value ' + (gp == null ? '' : (gp >= 0 ? 'pos' : 'neg'));
-    btn.disabled = !document.getElementById('settleDate').value || (tipo === 'acc' && !accId);
+    btn.disabled = !document.getElementById('settleDate').value;
   }
 
   function confirmSettle(){
@@ -2430,38 +2361,40 @@
     var dateStr = document.getElementById('settleDate').value;
     var isPartial = document.getElementById('settlePartial').checked;
     var obs = document.getElementById('settleObs').value.trim();
-    var tipo = document.getElementById('settleTipo').value;
-    var accId = tipo === 'acc' ? document.getElementById('settleAccSelect').value : null;
     if(usd == null || rate == null || !dateStr) return;
-    if(tipo === 'acc' && !accId) return;
-    var rec = addReceipt(row, usd, rate, dateStr, isPartial, obs || null, tipo, accId);
-    if(tipo === 'acc' && accId){
-      var c = findAcc(accId);
-      if(c){
-        var baixa = accAddBaixa(c, usd, rate, dateStr, row.id, null, isPartial, ('Quitação automática via recebimento da fatura ' + (row.ano||'') + ' / ' + (row.fatura||'')) + (obs ? ' — ' + obs : ''));
-        baixa.receiptId = rec.id;
-        rec.accBaixaId = baixa.id;
-        scheduleAccSave();
+    if(!isPartial){
+      var saldoAtualVenda = saldoUSD(row);
+      if(saldoAtualVenda != null && usd < saldoAtualVenda - 0.5){
+        var proceedVenda = confirm(
+          'Você está lançando um recebimento de ' + fmtUSD.format(usd) + ', mas o saldo desta fatura é ' + fmtUSD.format(saldoAtualVenda) + '.\n\n' +
+          'Sem marcar "recebimento parcial", isso vai dar BAIXA total na fatura mesmo faltando saldo — a diferença (' +
+          fmtUSD.format(saldoAtualVenda - usd) + ') é tratada como se você tivesse recebido tudo.\n\n' +
+          'Clique em Cancelar para voltar e marcar "Este é um recebimento parcial", ou em OK se realmente quer fechar a fatura assim mesmo.'
+        );
+        if(!proceedVenda) return;
       }
     }
+    addReceipt(row, usd, rate, dateStr, isPartial, obs || null);
     scheduleSave();
     pushToSheets('recebimento', {
       vendaAno: row.ano, vendaFatura: row.fatura, vendaNf: row.nf, vendaValorUSD: row.valorDolarFatura,
-      data: dateStr, usd: usd, cambio: rate, parcial: isPartial, obs: obs || null, tipo: tipo, accId: accId || null
+      data: dateStr, usd: usd, cambio: rate, parcial: isPartial, obs: obs || null
     });
+    if(document.getElementById('settleUseForAcc').checked){
+      var accId = document.getElementById('settleAccSelect').value;
+      var accContract = accId ? findAcc(accId) : null;
+      if(accContract){
+        var accUsd = parseNum(document.getElementById('settleAccUSD').value);
+        var accPartial = document.getElementById('settleAccPartial').checked;
+        performAccBaixa_(accContract, accUsd, rate, dateStr, row.id, null, accPartial, 'Quitação a partir do recebimento da fatura ' + (row.ano||'') + '/' + (row.fatura||''));
+      }
+    }
     clearSettleForm();
     document.getElementById('settleSelect').value = '';
     populateSettleSelect();
     renderSalesTable();
     renderReceiptsHistory();
     renderDashboard();
-    if(tipo === 'acc'){
-      populateAccSettleSelect();
-      renderAccTable();
-      renderAccKpis();
-      renderAccOpenPanel();
-      renderAccHistory();
-    }
   }
 
   // ---------- RECEIPTS HISTORY ----------
@@ -2485,7 +2418,7 @@
     var entries = receiptsFilteredFlat();
     var body = document.getElementById('receiptsBody');
     if(entries.length === 0){
-      body.innerHTML = '<tr><td colspan="12" style="padding:20px;color:var(--ink-faint);font-family:Inter,sans-serif;">Nenhum recebimento lançado ainda.</td></tr>';
+      body.innerHTML = '<tr><td colspan="10" style="padding:20px;color:var(--ink-faint);font-family:Inter,sans-serif;">Nenhum recebimento lançado ainda.</td></tr>';
       return;
     }
     body.innerHTML = entries.map(function(e){
@@ -2498,8 +2431,6 @@
         + '<td class="fatura-cell">'+ (r.ano||'') + ' / ' + (r.fatura||'') +'</td>'
         + '<td class="fatura-cell">'+ (r.banco||'—') +'</td>'
         + '<td>'+ sitBadge +'</td>'
-        + '<td>'+ recTipoCell(r.id, rec) +'</td>'
-        + '<td>'+ recAccCell(r.id, rec) +'</td>'
         + '<td>'+ inputRecCell(r.id, rec.id, 'data', rec.data, 'date') +'</td>'
         + '<td>'+ inputRecCell(r.id, rec.id, 'usd', rec.usd, 'number', '', 2) +'</td>'
         + '<td>'+ inputRecCell(r.id, rec.id, 'rate', rec.rate, 'number', '', 4) +'</td>'
@@ -2508,28 +2439,6 @@
         + '<td>'+ inputRecCell(r.id, rec.id, 'obs', rec.obs, 'text', 'txt') +'</td>'
         + '</tr>';
     }).join('');
-  }
-
-  function recTipoCell(rowId, rec){
-    var tipo = rec.tipo === 'acc' ? 'acc' : 'cambio';
-    return '<select data-row-id="'+rowId+'" data-rec-id="'+rec.id+'" data-rec-field="tipo">'
-      + '<option value="cambio"'+(tipo==='cambio'?' selected':'')+'>Câmbio normal</option>'
-      + '<option value="acc"'+(tipo==='acc'?' selected':'')+'>Quitação de ACC</option>'
-      + '</select>';
-  }
-
-  function recAccCell(rowId, rec){
-    if(rec.tipo !== 'acc'){
-      return '<span class="readonly">—</span>';
-    }
-    var current = rec.accId;
-    var options = accData.slice().sort(function(a,b){ return (b.dataContrato||'').localeCompare(a.dataContrato||''); }).map(function(c){
-      var label = 'ACC ' + (c.codAcc||'s/n') + ' · ' + fmtUSD.format(c.valorUSD||0) + (c.vencimento ? ' · vence ' + dLabel(c.vencimento) : '');
-      return '<option value="'+c.id+'"'+(c.id===current?' selected':'')+'>'+label+'</option>';
-    }).join('');
-    return '<select data-row-id="'+rowId+'" data-rec-id="'+rec.id+'" data-rec-field="accId">'
-      + '<option value="">Selecione o contrato</option>' + options
-      + '</select>';
   }
 
   function inputRecCell(rowId, recId, field, value, type, cls, decimals){
@@ -2560,42 +2469,6 @@
     scheduleSave();
   }
 
-  // Handles edits to the "Tipo de recebimento" and "Contrato de ACC" select
-  // cells in the receipts history — these need to create/move/remove the
-  // linked ACC baixa, not just overwrite a plain field like the other columns.
-  function handleReceiptsChange(e){
-    var t = e.target;
-    if(!t.matches('select[data-rec-id]')) return;
-    var row = findRow(t.getAttribute('data-row-id'));
-    if(!row) return;
-    var recId = t.getAttribute('data-rec-id');
-    var rec = (row.recebimentos||[]).filter(function(x){ return x.id === recId; })[0];
-    if(!rec) return;
-    var field = t.getAttribute('data-rec-field');
-    if(field === 'tipo'){
-      var newTipo = t.value;
-      if(newTipo === 'cambio'){
-        unlinkReceiptFromAcc(rec);
-        rec.tipo = 'cambio';
-        scheduleSave();
-        renderReceiptsHistory();
-        renderAccTable(); renderAccKpis(); renderAccOpenPanel(); renderAccHistory(); populateAccSettleSelect();
-      } else {
-        rec.tipo = 'acc';
-        scheduleSave();
-        renderReceiptsHistory();
-      }
-    } else if(field === 'accId'){
-      var accId = t.value;
-      if(!accId) return;
-      linkReceiptToAcc(row, rec, accId);
-      scheduleSave();
-      renderReceiptsHistory();
-      renderAccTable(); renderAccKpis(); renderAccOpenPanel(); renderAccHistory(); populateAccSettleSelect();
-    }
-    renderDashboard();
-  }
-
   function handleReceiptsBlur(e){
     if(!e.target.matches('input[data-rec-id]')) return;
     renderReceiptsHistory();
@@ -2612,17 +2485,13 @@
       var row = findRow(rowId);
       if(!row) return;
       var label = (row.ano||'') + ' / ' + (row.fatura||'');
-      var rec = (row.recebimentos||[]).filter(function(x){ return x.id === recId; })[0];
-      var warnAcc = rec && rec.tipo === 'acc' ? ' Isso também vai desfazer a baixa do contrato de ACC vinculado a este recebimento, deixando-o em aberto novamente.' : '';
-      if(confirm('Estornar este recebimento da fatura ' + label + '?' + warnAcc + ' O saldo correspondente volta a ficar em aberto.')){
-        if(rec) unlinkReceiptFromAcc(rec);
+      if(confirm('Estornar este recebimento da fatura ' + label + '? O saldo correspondente volta a ficar em aberto.')){
         row.recebimentos = (row.recebimentos||[]).filter(function(x){ return x.id !== recId; });
         scheduleSave();
         renderSalesTable();
         renderReceiptsHistory();
         renderDashboard();
         populateSettleSelect();
-        renderAccTable(); renderAccKpis(); renderAccOpenPanel(); renderAccHistory(); populateAccSettleSelect();
       }
     }
   }
@@ -2961,6 +2830,44 @@
     btn.disabled = !document.getElementById('accSettleDate').value;
   }
 
+  // Shared by both "Baixar ACC" (ACC tab) and the "usar para quitar um ACC"
+  // option inside "Baixar fatura" (Recebimentos tab). Returns true if the
+  // baixa was actually recorded, false if the person cancelled the
+  // shortfall warning (so the caller can decide what to do next).
+  function performAccBaixa_(c, usd, rate, dateStr, faturaId, faturaText, isPartial, obs){
+    if(!c || usd == null || rate == null || !dateStr) return false;
+    if(!isPartial){
+      var saldoAtual = accSaldoUSD(c);
+      if(saldoAtual != null && usd < saldoAtual - 0.5){
+        var proceedAcc = confirm(
+          'Você está baixando ' + fmtUSD.format(usd) + ' do ACC ' + (c.codAcc||'') + ', mas o saldo dele é ' + fmtUSD.format(saldoAtual) + '.\n\n' +
+          'Sem marcar a baixa como parcial, isso vai QUITAR o contrato inteiro mesmo faltando saldo — a diferença (' +
+          fmtUSD.format(saldoAtual - usd) + ') é tratada como se você tivesse recebido tudo.\n\n' +
+          'Clique em Cancelar para voltar e marcar como parcial, ou em OK se realmente quer encerrar o contrato assim mesmo.'
+        );
+        if(!proceedAcc) return false;
+      }
+    }
+    accAddBaixa(c, usd, rate, dateStr, faturaId, faturaText || null, isPartial, obs || null);
+    scheduleAccSave();
+    var linkedVenda = faturaId ? findRow(faturaId) : null;
+    pushToSheets('accBaixa', {
+      accCodAcc: c.codAcc, accDataContrato: c.dataContrato, accValorUSD: c.valorUSD,
+      vendaAno: linkedVenda ? linkedVenda.ano : null,
+      vendaFatura: linkedVenda ? linkedVenda.fatura : null,
+      vendaNf: linkedVenda ? linkedVenda.nf : null,
+      vendaValorUSD: linkedVenda ? linkedVenda.valorDolarFatura : null,
+      faturaTexto: faturaText || null,
+      data: dateStr, usd: usd, cambio: rate, parcial: isPartial
+    });
+    safe(renderAccTable, 'renderAccTable');
+    safe(renderAccKpis, 'renderAccKpis');
+    safe(renderAccOpenPanel, 'renderAccOpenPanel');
+    safe(renderAccHistory, 'renderAccHistory');
+    safe(populateAccSettleSelect, 'populateAccSettleSelect');
+    return true;
+  }
+
   function confirmAccSettle(){
     var id = document.getElementById('accSettleSelect').value;
     var c = findAcc(id);
@@ -2973,27 +2880,11 @@
     var isPartial = document.getElementById('accSettlePartial').checked;
     var obs = document.getElementById('accSettleObs').value.trim();
     if(usd == null || rate == null || !dateStr) return;
-    accAddBaixa(c, usd, rate, dateStr, faturaId, faturaText || null, isPartial, obs || null);
-    scheduleAccSave();
-    (function(){
-      var linkedVenda = faturaId ? findRow(faturaId) : null;
-      pushToSheets('accBaixa', {
-        accCodAcc: c.codAcc, accDataContrato: c.dataContrato, accValorUSD: c.valorUSD,
-        vendaAno: linkedVenda ? linkedVenda.ano : null,
-        vendaFatura: linkedVenda ? linkedVenda.fatura : null,
-        vendaNf: linkedVenda ? linkedVenda.nf : null,
-        vendaValorUSD: linkedVenda ? linkedVenda.valorDolarFatura : null,
-        faturaTexto: faturaText || null,
-        data: dateStr, usd: usd, cambio: rate, parcial: isPartial
-      });
-    })();
+    var ok = performAccBaixa_(c, usd, rate, dateStr, faturaId, faturaText, isPartial, obs);
+    if(!ok) return;
     clearAccSettleForm();
     document.getElementById('accSettleSelect').value = '';
     populateAccSettleSelect();
-    renderAccTable();
-    renderAccKpis();
-    renderAccOpenPanel();
-    renderAccHistory();
   }
 
   // ---------- ACC: history ----------
@@ -3098,9 +2989,8 @@
   function capitalEvents(){
     var events = [];
     allReceiptsFlat().forEach(function(e){
-      var isAccQuitacao = e.receipt.tipo === 'acc';
       events.push({
-        tipo: isAccQuitacao ? 'quitacaoAcc' : 'cambio',
+        tipo: 'cambio',
         data: e.receipt.data,
         ref: (e.row.ano||'') + ' / ' + (e.row.fatura||''),
         usd: e.receipt.usd,
@@ -3155,18 +3045,15 @@
       return true;
     });
 
-    var cambioBRL = 0, accBRL = 0, quitacaoBRL = 0;
+    var totalBRL = 0, cambioBRL = 0, accBRL = 0;
     filtered.forEach(function(e){
-      if(e.tipo === 'cambio') cambioBRL += (e.brl||0);
-      else if(e.tipo === 'acc') accBRL += (e.brl||0);
-      else quitacaoBRL += (e.brl||0);
+      totalBRL += (e.brl||0);
+      if(e.tipo === 'cambio') cambioBRL += (e.brl||0); else accBRL += (e.brl||0);
     });
-    var totalBRL = cambioBRL + accBRL; // quitação de ACC não é capital novo — é a mesma entrada de caixa do ACC, só usada para liquidá-lo
     document.getElementById('capitalKpiGrid').innerHTML = [
       {label:'Total de entradas', value: fmtBRL.format(totalBRL), note: filtered.length + ' evento(s) no período'},
       {label:'Via câmbio (vendas)', value: fmtBRL.format(cambioBRL), note: 'recebimentos de exportação'},
-      {label:'Via ACC', value: fmtBRL.format(accBRL), note: 'contratações de financiamento'},
-      {label:'Quitação de ACC via exportação', value: fmtBRL.format(quitacaoBRL), note: 'sem entrada de caixa — dinheiro usado para pagar o ACC'}
+      {label:'Via ACC', value: fmtBRL.format(accBRL), note: 'contratações de financiamento'}
     ].map(function(k){
       return '<div class="kpi-card"><div class="kpi-label">'+k.label+'</div><div class="kpi-value">'+k.value+'</div><div class="kpi-note">'+k.note+'</div></div>';
     }).join('');
@@ -3179,9 +3066,7 @@
     body.innerHTML = filtered.map(function(e){
       var badge = e.tipo === 'cambio'
         ? '<span class="badge ok">câmbio'+(e.situacao==='parcial' ? ' · parcial' : '')+'</span>'
-        : e.tipo === 'quitacaoAcc'
-          ? '<span class="badge new-import">quitação ACC'+(e.situacao==='parcial' ? ' · parcial' : '')+'</span>'
-          : '<span class="badge soon">ACC</span>';
+        : '<span class="badge soon">ACC</span>';
       var detalhe;
       if(e.detalheTipo === 'gp'){
         var cls = e.detalhe == null ? '' : (e.detalhe >= 0 ? 'pos' : 'neg');
@@ -4837,9 +4722,10 @@
     document.getElementById('salesYearFilter').addEventListener('change', renderSalesTable);
     document.getElementById('salesStatusFilter').addEventListener('change', renderSalesTable);
     document.getElementById('salesSortBy').addEventListener('change', renderSalesTable);
-    document.getElementById('salesDateFilterField').addEventListener('change', renderSalesTable);
     document.getElementById('salesDateFrom').addEventListener('change', renderSalesTable);
     document.getElementById('salesDateTo').addEventListener('change', renderSalesTable);
+    document.getElementById('salesVencFrom').addEventListener('change', renderSalesTable);
+    document.getElementById('salesVencTo').addEventListener('change', renderSalesTable);
     document.getElementById('btnAdd').addEventListener('click', openModal);
     document.getElementById('btnCancel').addEventListener('click', closeModal);
     document.getElementById('btnSave').addEventListener('click', saveNewInvoice);
@@ -4864,20 +4750,19 @@
     document.getElementById('btnApplyRate').addEventListener('click', applyManualRate);
 
     document.getElementById('settleSelect').addEventListener('change', onSettleSelectChange);
-    document.getElementById('settleTipo').addEventListener('change', onSettleTipoChange);
-    document.getElementById('settleAccSelect').addEventListener('change', updateSettlePreview);
     document.getElementById('settleUSD').addEventListener('input', updateSettlePreview);
     document.getElementById('settleRate').addEventListener('input', updateSettlePreview);
     document.getElementById('settleDate').addEventListener('input', updateSettlePreview);
     document.getElementById('settlePartial').addEventListener('change', updateSettlePreview);
     document.getElementById('btnConfirmSettle').addEventListener('click', confirmSettle);
+    document.getElementById('settleUseForAcc').addEventListener('change', onSettleUseForAccChange);
+    document.getElementById('settleAccSelect').addEventListener('change', onSettleAccSelectChange);
 
     document.getElementById('receiptsSearch').addEventListener('input', renderReceiptsHistory);
     document.getElementById('receiptsYearFilter').addEventListener('change', renderReceiptsHistory);
     document.getElementById('receiptsDateFrom').addEventListener('change', renderReceiptsHistory);
     document.getElementById('receiptsDateTo').addEventListener('change', renderReceiptsHistory);
     document.getElementById('receiptsBody').addEventListener('input', handleReceiptsInput);
-    document.getElementById('receiptsBody').addEventListener('change', handleReceiptsChange);
     document.getElementById('receiptsBody').addEventListener('blur', handleReceiptsBlur, true);
     document.getElementById('receiptsBody').addEventListener('click', handleReceiptsClick);
 
@@ -4918,10 +4803,10 @@
 
     var PRINT_RANGES = {
       dashboard: null,
-      sales: ['salesDateFrom','salesDateTo'],
-      receipts: ['receiptsDateFrom','receiptsDateTo'],
-      acc: ['accDateFrom','accDateTo'],
-      capital: ['capitalDateFrom','capitalDateTo']
+      sales: [{ from:'salesDateFrom', to:'salesDateTo', label:'Data da fatura' }, { from:'salesVencFrom', to:'salesVencTo', label:'Vencimento' }],
+      receipts: [{ from:'receiptsDateFrom', to:'receiptsDateTo', label:'Período' }],
+      acc: [{ from:'accDateFrom', to:'accDateTo', label:'Período' }],
+      capital: [{ from:'capitalDateFrom', to:'capitalDateTo', label:'Período' }]
     };
     document.getElementById('btnOpenSheet').addEventListener('click', openSheetLink);
     document.getElementById('btnSyncOnline').addEventListener('click', handleSyncOnline);
@@ -4937,35 +4822,17 @@
     document.querySelectorAll('[data-print]').forEach(function(btn){
       btn.addEventListener('click', function(){
         var view = btn.getAttribute('data-print');
-        var range = PRINT_RANGES[view];
+        var ranges = PRINT_RANGES[view];
         var metaEl = document.getElementById('printMeta' + view.charAt(0).toUpperCase() + view.slice(1));
         if(metaEl){
           var base = 'Gerado em ' + new Date().toLocaleDateString('pt-BR') + ' às ' + new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
-          if(range){
-            var from = document.getElementById(range[0]).value;
-            var to = document.getElementById(range[1]).value;
+          (ranges||[]).forEach(function(range){
+            var from = document.getElementById(range.from).value;
+            var to = document.getElementById(range.to).value;
             if(from || to){
-              var periodoLabel = 'Período';
-              if(view === 'sales'){
-                var dateFieldEl = document.getElementById('salesDateFilterField');
-                if(dateFieldEl && dateFieldEl.value === 'vencimento') periodoLabel = 'Período (vencimento)';
-                else periodoLabel = 'Período (data da fatura)';
-              }
-              base += ' · ' + periodoLabel + ': ' + (from ? dLabel(from) : 'início') + ' a ' + (to ? dLabel(to) : 'hoje');
+              base += ' · ' + range.label + ': ' + (from ? dLabel(from) : 'início') + ' a ' + (to ? dLabel(to) : 'hoje');
             }
-          }
-          if(view === 'sales'){
-            var filteredRows = salesFilteredData();
-            var totalSaldoFiltrado = 0, totalFaturaFiltrado = 0;
-            filteredRows.forEach(function(r){
-              var saldo = saldoUSD(r);
-              if(saldo != null) totalSaldoFiltrado += Math.max(0, saldo);
-              if(r.valorDolarFatura != null) totalFaturaFiltrado += r.valorDolarFatura;
-            });
-            base += ' · Total filtrado: ' + filteredRows.length + ' fatura(s) · valor faturado: ' + fmtUSD.format(totalFaturaFiltrado) +
-              ' · saldo em aberto: ' + fmtUSD.format(totalSaldoFiltrado) +
-              (currentRate != null ? ' (' + fmtBRL.format(totalSaldoFiltrado * currentRate) + ' na cotação de hoje)' : '');
-          }
+          });
           metaEl.textContent = base;
         }
         setPrintPageSize('landscape', 14);
