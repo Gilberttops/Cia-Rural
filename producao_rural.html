@@ -1387,15 +1387,17 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
       <button onclick="fecharEditarProduto()">&times;</button>
     </div>
     <div class="modal-body">
-      <div style="font-size:12px;color:var(--t3);margin-bottom:14px">Altere o nome e/ou a embalagem (peso do saco) do produto. A mudança já reflete na Ordem de Produção e fica salva para todos os colaboradores.</div>
+      <div style="font-size:12px;color:var(--t3);margin-bottom:14px">Altere o nome, a embalagem (peso do saco) e/ou o peso da batida do produto. A mudança já reflete na Ordem de Produção e fica salva para todos os colaboradores.</div>
       <div class="nf-row">
         <div class="f"><label>Código</label><input type="text" id="ep-cod" readonly style="background:var(--s1)"></div>
         <div class="f" style="flex:2"><label>Nome do produto</label><input type="text" id="ep-nome"></div>
       </div>
       <div class="nf-row">
+        <div class="f"><label>Batida (kg)</label><input type="number" id="ep-batida" min="1" step="1" oninput="epChecarBatidaAlterada()"></div>
         <div class="f"><label>Peso do saco (kg)</label><input type="number" id="ep-peso" min="0.1" step="0.1"></div>
         <div class="f" style="flex:2"><label>Embalagem</label><select id="ep-emb"></select></div>
       </div>
+      <div id="ep-batida-aviso" style="display:none;margin-top:2px;padding:8px 10px;background:var(--amb-lt);border:1px solid var(--amb-bd);color:var(--amber);border-radius:8px;font-size:11.5px">⚠️ Alterando a batida, as quantidades de todos os ingredientes serão ajustadas proporcionalmente para manter a mesma composição (%) da fórmula.</div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="fecharEditarProduto()">Cancelar</button>
@@ -3287,7 +3289,8 @@ function renderBancoRNA(filtro){
         +'<td class="r">'+fn(cR.sacos,cR.sacos%1===0?0:1)+'</td>'
         +'<td class="r">'+nIngR+'</td>'
         +'<td style="text-align:right;white-space:nowrap"><button class="action-btn btn-load" onclick="carregarFormulaEditadaRemoto(\''+x.cod+'\')">Carregar</button>'
-        +'<button class="action-btn" style="background:var(--amb-lt);color:var(--amber);border-color:var(--amb-bd)" onclick="abrirEditarProduto(\'rna\',\''+x.cod+'\')" title="Editar nome e peso da embalagem">✏️ Editar</button></td>'
+        +'<button class="action-btn" style="background:var(--amb-lt);color:var(--amber);border-color:var(--amb-bd)" onclick="abrirEditarProduto(\'rna\',\''+x.cod+'\')" title="Editar nome e peso da embalagem">✏️ Editar</button>'
+        +'<button class="action-btn" style="background:var(--blu-lt);color:var(--blue);border-color:var(--blu-bd)" onclick="irParaCotacaoEspecial(\''+x.cod+'\')" title="Abrir na Cotação Especial">🎯 Cotação</button></td>'
         +'</tr>';
     }
     var idx=bibliotecaRNA.indexOf(x);
@@ -3302,6 +3305,7 @@ function renderBancoRNA(filtro){
       acoes+='<button class="action-btn btn-load" style="background:var(--grn-lt);color:var(--green);border-color:var(--grn-bd)" title="Ultima edicao: '+(editadaInfo.editadoPor||'?')+' em '+(editadaInfo.dataHora||'?')+'" onclick="carregarFormulaEditadaRemoto(\''+x.cod+'\')">☁️ Carregar c/ edições</button>';
     }
     acoes+='<button class="action-btn" style="background:var(--amb-lt);color:var(--amber);border-color:var(--amb-bd)" onclick="abrirEditarProduto(\'rna\',\''+x.cod+'\')" title="Editar nome e peso da embalagem">✏️ Editar</button>';
+    acoes+='<button class="action-btn" style="background:var(--blu-lt);color:var(--blue);border-color:var(--blu-bd)" onclick="irParaCotacaoEspecial(\''+x.cod+'\')" title="Abrir na Cotação Especial">🎯 Cotação</button>';
     return '<tr>'
       +'<td class="mono">'+x.cod+'</td>'
       +'<td>'+x.nome+'</td>'
@@ -3352,7 +3356,8 @@ function renderBancoFormulas(filtro){
     var chaveEdit,origemEdit;
     if(isRemoto){
       acoes='<button class="action-btn btn-load" onclick="carregarFormulaEditadaRemoto(\''+x.cod+'\')">Carregar</button>'
-        +'<button class="action-btn" style="background:var(--amb-lt);color:var(--amber);border-color:var(--amb-bd)" onclick="abrirEditarProduto(\'banco\',\''+x.cod+'\')" title="Editar nome e peso da embalagem">✏️ Editar</button>';
+        +'<button class="action-btn" style="background:var(--amb-lt);color:var(--amber);border-color:var(--amb-bd)" onclick="abrirEditarProduto(\'banco\',\''+x.cod+'\')" title="Editar nome e peso da embalagem">✏️ Editar</button>'
+        +'<button class="action-btn" style="background:var(--blu-lt);color:var(--blue);border-color:var(--blu-bd)" onclick="irParaCotacaoEspecial(\''+x.cod+'\')" title="Abrir na Cotação Especial">🎯 Cotação</button>';
     } else if(isBuiltin){
       acoes='<button class="action-btn btn-load" onclick="carregarObjFormula('+JSON.stringify(x)+')">Carregar</button>'
         +'<button class="action-btn btn-export" onclick="exportarDaBiblioteca_f('+JSON.stringify(x)+')">Exportar</button>';
@@ -3383,6 +3388,7 @@ function renderBancoFormulas(filtro){
     }
     if(!isRemoto){
       acoes+='<button class="action-btn" style="background:var(--amb-lt);color:var(--amber);border-color:var(--amb-bd)" onclick="abrirEditarProduto(\'banco\',\''+x.cod+'\')" title="Editar nome e peso da embalagem">✏️ Editar</button>';
+      acoes+='<button class="action-btn" style="background:var(--blu-lt);color:var(--blue);border-color:var(--blu-bd)" onclick="irParaCotacaoEspecial(\''+x.cod+'\')" title="Abrir na Cotação Especial">🎯 Cotação</button>';
     }
     html+='<tr>'
       +'<td class="mono">'+x.cod+'</td>'
@@ -3817,7 +3823,7 @@ function salvarBancoFormulas(banco){localStorage.setItem('RURAL_FORMULAS',JSON.s
 function carregarBancoPrecos(){try{return JSON.parse(localStorage.getItem('RURAL_PRECOS')||'{}');}catch(e){return {};}}
 function salvarBancoPrecos(banco){localStorage.setItem('RURAL_PRECOS',JSON.stringify(banco));}
 
-let epBancoAtual=null, epCodAtual=null;
+let epBancoAtual=null, epCodAtual=null, epBatidaOriginal=null;
 function epBuscarFormula(banco,cod){
   if(banco==='rna'){
     var fRna=bibliotecaRNA.find(function(f){return String(f.cod)===String(cod);});
@@ -3837,11 +3843,13 @@ function epBuscarFormula(banco,cod){
 function abrirEditarProduto(banco,cod){
   var f=epBuscarFormula(banco,cod);
   if(!f){toast('Produto não encontrado.');return;}
-  epBancoAtual=banco;epCodAtual=cod;
+  epBancoAtual=banco;epCodAtual=cod;epBatidaOriginal=parseFloat(f.batida)||0;
   $('ep-titulo').textContent='Editar produto — '+(banco==='rna'?'RNA - Ivinhema':'RURAL - Eldorado');
   $('ep-cod').value=cod;
   $('ep-nome').value=f.nome||'';
+  $('ep-batida').value=f.batida||0;
   $('ep-peso').value=f.pesoSaco||0;
+  $('ep-batida-aviso').style.display='none';
   var embs=MPitens.filter(function(m){return m.t==='emb';}).sort(function(a,b){return a.d.localeCompare(b.d);});
   var embAtualCod=null;
   if(f.emb&&f.emb.desc){
@@ -3852,12 +3860,27 @@ function abrirEditarProduto(banco,cod){
     +embs.map(function(m){return '<option value="'+m.cod+'"'+(embAtualCod===m.cod?' selected':'')+'>'+m.cod+' — '+m.d+'</option>';}).join('');
   $('editar-produto-modal').style.display='flex';
 }
-function fecharEditarProduto(){$('editar-produto-modal').style.display='none';epBancoAtual=null;epCodAtual=null;}
+function epChecarBatidaAlterada(){
+  var novo=parseFloat($('ep-batida').value)||0;
+  $('ep-batida-aviso').style.display=(novo>0&&novo!==epBatidaOriginal)?'block':'none';
+}
+function fecharEditarProduto(){$('editar-produto-modal').style.display='none';epBancoAtual=null;epCodAtual=null;epBatidaOriginal=null;}
+function epAplicarNovaBatida(f,novaBatida){
+  var atual=parseFloat(f.batida)||0;
+  if(!novaBatida||novaBatida===atual)return;
+  var fator=novaBatida/atual;
+  (f.ings||[]).forEach(function(ing){
+    ing.qtd=Math.round((ing.qtd||0)*fator*1000)/1000; // arredonda em gramas pra evitar ruido de ponto flutuante
+  });
+  f.batida=novaBatida;
+}
 function salvarEdicaoProduto(){
   var novoNome=$('ep-nome').value.trim();
+  var novaBatida=parseFloat($('ep-batida').value)||0;
   var novoPeso=parseFloat($('ep-peso').value)||0;
   var embVal=$('ep-emb').value;
   if(!novoNome){alert('Informe o nome do produto.');return;}
+  if(novaBatida<=0){alert('Informe uma batida maior que zero.');return;}
   if(novoPeso<=0){alert('Informe um peso de saco maior que zero.');return;}
 
   if(epBancoAtual==='rna'){
@@ -3870,6 +3893,7 @@ function salvarEdicaoProduto(){
       f._origem='rna';
       bibliotecaRNA.push(f);
     }
+    epAplicarNovaBatida(f,novaBatida);
     f.nome=novoNome;f.pesoSaco=novoPeso;
     if(embVal){var item=MPitens.find(function(m){return m.cod===parseInt(embVal);});if(item)f.emb={custo:MPcusto[item.cod]||0,desc:item.d};}
     salvarEdicaoRemota(f);
@@ -3878,6 +3902,7 @@ function salvarEdicaoProduto(){
     var bancoLocal=carregarBancoFormulas();
     if(bancoLocal[epCodAtual]){
       var fl=bancoLocal[epCodAtual];
+      epAplicarNovaBatida(fl,novaBatida);
       fl.nome=novoNome;fl.pesoSaco=novoPeso;
       if(embVal){var itemL=MPitens.find(function(m){return m.cod===parseInt(embVal);});if(itemL)fl.emb={custo:MPcusto[itemL.cod]||0,desc:itemL.d};}
       salvarBancoFormulas(bancoLocal);
@@ -3892,6 +3917,7 @@ function salvarEdicaoProduto(){
         fb._origem='importado';
         biblioteca.push(fb);
       }
+      epAplicarNovaBatida(fb,novaBatida);
       fb.nome=novoNome;fb.pesoSaco=novoPeso;
       if(embVal){var itemB=MPitens.find(function(m){return m.cod===parseInt(embVal);});if(itemB)fb.emb={custo:MPcusto[itemB.cod]||0,desc:itemB.d};}
       salvarEdicaoRemota(fb);
@@ -4102,6 +4128,14 @@ function irPara(id){
   var tab=document.querySelector('.tab[onclick*="\''+id+'\'"]');
   if(tab) goTab(id,tab);
 }
+function irParaCotacaoEspecial(cod){
+  irPara('precos');
+  // Se a senha for negada, verificarAcesso ja bloqueia o goTab acima; so prossegue se a pagina realmente abriu
+  if(document.querySelector('.page.active') && document.querySelector('.page.active').id==='pg-precos'){
+    ptSwitchTab('especial');
+    ptEspecialSelecionarProduto(String(cod));
+  }
+}
 function goTab(id,el){
   if(!verificarAcesso(id))return;
   document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
@@ -4239,6 +4273,13 @@ function ptFormulaIndex(){
   // bibliotecaRNA é um array separado (fórmulas Viacampus/RNA) — mescla também
   if(typeof bibliotecaRNA!=='undefined'){
     bibliotecaRNA.forEach(f=>{ if(!idx[String(f.cod)]) idx[String(f.cod)]=f; });
+  }
+  // Sobrepoe com a ultima edicao salva na planilha (ings/nome/peso etc. mais recentes),
+  // assim a Cotacao Especial e a Tabela de Precos sempre usam a formula "com edicoes"
+  if(typeof formulasEditadasRemoto!=='undefined'){
+    Object.keys(formulasEditadasRemoto).forEach(function(cod){
+      idx[String(cod)]=formulaFromRemoto(formulasEditadasRemoto[cod]);
+    });
   }
   return idx;
 }
