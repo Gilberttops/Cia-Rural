@@ -320,6 +320,18 @@ table.pt-price-table td[contenteditable="true"]:focus{outline:2px solid var(--am
 #pt-add-page-btn:hover{background:#fff;color:var(--blue);border-color:var(--blue)}
 #pt-margins-view{display:none;flex:1;overflow-y:auto;padding:18px 26px 40px}
 #pt-margins-view.visible{display:block}
+#pt-export-view{display:none;flex:1;overflow-y:auto;padding:18px 26px 40px}
+#pt-export-view.visible{display:block}
+#pt-especial-view{display:none;flex:1;overflow-y:auto;padding:18px 26px 40px}
+#pt-especial-view.visible{display:block}
+.pt-esp2-row{display:grid;grid-template-columns:60px 2fr 100px 120px 120px 120px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px}
+.pt-esp2-row input{padding:5px 7px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;width:100%}
+.pt-esp2-row input.alterado{border-color:var(--amber);background:var(--amb-lt);font-weight:700}
+.pt-exp-row{display:grid;grid-template-columns:2fr 1fr 1fr 32px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)}
+.pt-exp-row input,.pt-exp-row select{padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;width:100%}
+.pt-exp-kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.pt-exp-kpi .lbl{font-size:11px;text-transform:uppercase;color:var(--t3);font-weight:700}
+.pt-exp-kpi .val{font-size:20px;font-weight:800;margin-top:4px}
 #pt-doc-scroll.pt-hidden,#pt-sidebar.pt-hidden{display:none}
 .pt-margins-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
 .pt-margins-toolbar input{flex:1;max-width:320px}
@@ -378,7 +390,7 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
   *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;color-adjust:exact !important;}
 }
 @media print{
-  .tabs,.hdr,#pt-sidebar,.pt-subtabs,#pt-add-page-btn,.pt-page-toolbar,.pt-add-item-row,.pt-doc-group-controls,#pt-margins-view{display:none !important}
+  .tabs,.hdr,#pt-sidebar,.pt-subtabs,#pt-add-page-btn,.pt-page-toolbar,.pt-add-item-row,.pt-doc-group-controls,#pt-margins-view,#pt-export-view,#pt-especial-view{display:none !important}
   body,.page,#pg-precos,.pt-shell,#pt-doc-scroll{background:#fff !important;overflow:visible !important;height:auto !important;padding:0 !important;margin:0 !important}
   .page{display:none !important}
   .page.active{display:block !important}
@@ -1239,6 +1251,8 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
     <div class="pt-subtabs">
       <button class="pt-subtab active" data-pt-tab="builder" onclick="ptSwitchTab('builder')">Construtor de Tabela</button>
       <button class="pt-subtab" data-pt-tab="margins" onclick="ptSwitchTab('margins')">Custos &amp; Margens</button>
+      <button class="pt-subtab" data-pt-tab="export" onclick="ptSwitchTab('export')">Precificação Exportação</button>
+      <button class="pt-subtab" data-pt-tab="especial" onclick="ptSwitchTab('especial')">Cotação Especial</button>
       <span style="flex:1"></span>
       <span id="pt-save-status" style="font-size:11px;color:var(--t3);margin-right:4px"></span>
       <button class="btn btn-ghost" onclick="ptClearDoc()">Limpar tudo</button>
@@ -1257,6 +1271,8 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
     </div>
 
     <div id="pt-margins-view"></div>
+    <div id="pt-export-view"></div>
+    <div id="pt-especial-view"></div>
   </div>
 </div>
 
@@ -1360,6 +1376,30 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
       <button class="btn btn-ghost" onclick="fecharPrecificarCotacao()">Fechar</button>
       <button class="btn btn-ghost" style="color:var(--red);border-color:var(--red-bd)" onclick="recusarCotacao()">🗑 Recusar/excluir</button>
       <button class="btn btn-primary" onclick="aprovarCotacao()">✅ Aprovar e criar produto</button>
+    </div>
+  </div>
+</div>
+
+<div id="editar-produto-modal" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span id="ep-titulo">Editar produto</span>
+      <button onclick="fecharEditarProduto()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--t3);margin-bottom:14px">Altere o nome e/ou a embalagem (peso do saco) do produto. A mudança já reflete na Ordem de Produção e fica salva para todos os colaboradores.</div>
+      <div class="nf-row">
+        <div class="f"><label>Código</label><input type="text" id="ep-cod" readonly style="background:var(--s1)"></div>
+        <div class="f" style="flex:2"><label>Nome do produto</label><input type="text" id="ep-nome"></div>
+      </div>
+      <div class="nf-row">
+        <div class="f"><label>Peso do saco (kg)</label><input type="number" id="ep-peso" min="0.1" step="0.1"></div>
+        <div class="f" style="flex:2"><label>Embalagem</label><select id="ep-emb"></select></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharEditarProduto()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarEdicaoProduto()">💾 Salvar</button>
     </div>
   </div>
 </div>
@@ -3246,7 +3286,8 @@ function renderBancoRNA(filtro){
         +'<td class="r">'+fn(x.pesoSaco||0,x.pesoSaco%1===0?0:2)+' kg</td>'
         +'<td class="r">'+fn(cR.sacos,cR.sacos%1===0?0:1)+'</td>'
         +'<td class="r">'+nIngR+'</td>'
-        +'<td style="text-align:right;white-space:nowrap"><button class="action-btn btn-load" onclick="carregarFormulaEditadaRemoto(\''+x.cod+'\')">Carregar</button></td>'
+        +'<td style="text-align:right;white-space:nowrap"><button class="action-btn btn-load" onclick="carregarFormulaEditadaRemoto(\''+x.cod+'\')">Carregar</button>'
+        +'<button class="action-btn" style="background:var(--amb-lt);color:var(--amber);border-color:var(--amb-bd)" onclick="abrirEditarProduto(\'rna\',\''+x.cod+'\')" title="Editar nome e peso da embalagem">✏️ Editar</button></td>'
         +'</tr>';
     }
     var idx=bibliotecaRNA.indexOf(x);
@@ -3260,6 +3301,7 @@ function renderBancoRNA(filtro){
       acoes=acoes.replace('>Carregar<','>Carregar padrão<');
       acoes+='<button class="action-btn btn-load" style="background:var(--grn-lt);color:var(--green);border-color:var(--grn-bd)" title="Ultima edicao: '+(editadaInfo.editadoPor||'?')+' em '+(editadaInfo.dataHora||'?')+'" onclick="carregarFormulaEditadaRemoto(\''+x.cod+'\')">☁️ Carregar c/ edições</button>';
     }
+    acoes+='<button class="action-btn" style="background:var(--amb-lt);color:var(--amber);border-color:var(--amb-bd)" onclick="abrirEditarProduto(\'rna\',\''+x.cod+'\')" title="Editar nome e peso da embalagem">✏️ Editar</button>';
     return '<tr>'
       +'<td class="mono">'+x.cod+'</td>'
       +'<td>'+x.nome+'</td>'
@@ -3309,7 +3351,8 @@ function renderBancoFormulas(filtro){
     var acoes;
     var chaveEdit,origemEdit;
     if(isRemoto){
-      acoes='<button class="action-btn btn-load" onclick="carregarFormulaEditadaRemoto(\''+x.cod+'\')">Carregar</button>';
+      acoes='<button class="action-btn btn-load" onclick="carregarFormulaEditadaRemoto(\''+x.cod+'\')">Carregar</button>'
+        +'<button class="action-btn" style="background:var(--amb-lt);color:var(--amber);border-color:var(--amb-bd)" onclick="abrirEditarProduto(\'banco\',\''+x.cod+'\')" title="Editar nome e peso da embalagem">✏️ Editar</button>';
     } else if(isBuiltin){
       acoes='<button class="action-btn btn-load" onclick="carregarObjFormula('+JSON.stringify(x)+')">Carregar</button>'
         +'<button class="action-btn btn-export" onclick="exportarDaBiblioteca_f('+JSON.stringify(x)+')">Exportar</button>';
@@ -3337,6 +3380,9 @@ function renderBancoFormulas(filtro){
     if(editadaInfo){
       acoes=acoes.replace('>Carregar<','>Carregar padrão<');
       acoes+='<button class="action-btn btn-load" style="background:var(--grn-lt);color:var(--green);border-color:var(--grn-bd)" title="Ultima edicao: '+(editadaInfo.editadoPor||'?')+' em '+(editadaInfo.dataHora||'?')+'" onclick="carregarFormulaEditadaRemoto(\''+x.cod+'\')">☁️ Carregar c/ edições</button>';
+    }
+    if(!isRemoto){
+      acoes+='<button class="action-btn" style="background:var(--amb-lt);color:var(--amber);border-color:var(--amb-bd)" onclick="abrirEditarProduto(\'banco\',\''+x.cod+'\')" title="Editar nome e peso da embalagem">✏️ Editar</button>';
     }
     html+='<tr>'
       +'<td class="mono">'+x.cod+'</td>'
@@ -3771,6 +3817,91 @@ function salvarBancoFormulas(banco){localStorage.setItem('RURAL_FORMULAS',JSON.s
 function carregarBancoPrecos(){try{return JSON.parse(localStorage.getItem('RURAL_PRECOS')||'{}');}catch(e){return {};}}
 function salvarBancoPrecos(banco){localStorage.setItem('RURAL_PRECOS',JSON.stringify(banco));}
 
+let epBancoAtual=null, epCodAtual=null;
+function epBuscarFormula(banco,cod){
+  if(banco==='rna'){
+    var fRna=bibliotecaRNA.find(function(f){return String(f.cod)===String(cod);});
+    if(fRna)return fRna;
+  } else {
+    var bancoLocal=carregarBancoFormulas();
+    if(bancoLocal[cod])return bancoLocal[cod];
+    var fb=biblioteca.find(function(f){return String(f.cod)===String(cod);});
+    if(fb)return fb;
+  }
+  // Nao achou local -> deve ser um item so remoto (criado por outro colaborador ou via Cotacao)
+  if(formulasEditadasRemoto[String(cod)]){
+    return formulaFromRemoto(formulasEditadasRemoto[String(cod)]);
+  }
+  return null;
+}
+function abrirEditarProduto(banco,cod){
+  var f=epBuscarFormula(banco,cod);
+  if(!f){toast('Produto não encontrado.');return;}
+  epBancoAtual=banco;epCodAtual=cod;
+  $('ep-titulo').textContent='Editar produto — '+(banco==='rna'?'RNA - Ivinhema':'RURAL - Eldorado');
+  $('ep-cod').value=cod;
+  $('ep-nome').value=f.nome||'';
+  $('ep-peso').value=f.pesoSaco||0;
+  var embs=MPitens.filter(function(m){return m.t==='emb';}).sort(function(a,b){return a.d.localeCompare(b.d);});
+  var embAtualCod=null;
+  if(f.emb&&f.emb.desc){
+    var match=embs.find(function(m){return m.d===f.emb.desc;});
+    if(match)embAtualCod=match.cod;
+  }
+  $('ep-emb').innerHTML='<option value="">— manter atual ('+(f.emb&&f.emb.desc?f.emb.desc:'sem embalagem')+') —</option>'
+    +embs.map(function(m){return '<option value="'+m.cod+'"'+(embAtualCod===m.cod?' selected':'')+'>'+m.cod+' — '+m.d+'</option>';}).join('');
+  $('editar-produto-modal').style.display='flex';
+}
+function fecharEditarProduto(){$('editar-produto-modal').style.display='none';epBancoAtual=null;epCodAtual=null;}
+function salvarEdicaoProduto(){
+  var novoNome=$('ep-nome').value.trim();
+  var novoPeso=parseFloat($('ep-peso').value)||0;
+  var embVal=$('ep-emb').value;
+  if(!novoNome){alert('Informe o nome do produto.');return;}
+  if(novoPeso<=0){alert('Informe um peso de saco maior que zero.');return;}
+
+  if(epBancoAtual==='rna'){
+    var f=bibliotecaRNA.find(function(x){return String(x.cod)===String(epCodAtual);});
+    if(!f){
+      // Item so existia remotamente (criado por outro colaborador/Cotacao) -> passa a integrar o array local tambem
+      f=epBuscarFormula('rna',epCodAtual);
+      if(!f){toast('Produto não encontrado.');return;}
+      delete f._remoto;delete f._editadoPor;delete f._dataHora;
+      f._origem='rna';
+      bibliotecaRNA.push(f);
+    }
+    f.nome=novoNome;f.pesoSaco=novoPeso;
+    if(embVal){var item=MPitens.find(function(m){return m.cod===parseInt(embVal);});if(item)f.emb={custo:MPcusto[item.cod]||0,desc:item.d};}
+    salvarEdicaoRemota(f);
+    renderBancoRNA($('rna-busca')?$('rna-busca').value:'');
+  } else {
+    var bancoLocal=carregarBancoFormulas();
+    if(bancoLocal[epCodAtual]){
+      var fl=bancoLocal[epCodAtual];
+      fl.nome=novoNome;fl.pesoSaco=novoPeso;
+      if(embVal){var itemL=MPitens.find(function(m){return m.cod===parseInt(embVal);});if(itemL)fl.emb={custo:MPcusto[itemL.cod]||0,desc:itemL.d};}
+      salvarBancoFormulas(bancoLocal);
+      salvarEdicaoRemota(fl);
+    } else {
+      var fb=biblioteca.find(function(x){return String(x.cod)===String(epCodAtual);});
+      if(!fb){
+        // Item so existia remotamente -> passa a integrar o array local tambem
+        fb=epBuscarFormula('banco',epCodAtual);
+        if(!fb){toast('Produto não encontrado.');return;}
+        delete fb._remoto;delete fb._editadoPor;delete fb._dataHora;
+        fb._origem='importado';
+        biblioteca.push(fb);
+      }
+      fb.nome=novoNome;fb.pesoSaco=novoPeso;
+      if(embVal){var itemB=MPitens.find(function(m){return m.cod===parseInt(embVal);});if(itemB)fb.emb={custo:MPcusto[itemB.cod]||0,desc:itemB.d};}
+      salvarEdicaoRemota(fb);
+    }
+    renderBancoFormulas($('banco-busca')?$('banco-busca').value:'');
+  }
+  atualizarSelectFormulas();
+  fecharEditarProduto();
+  toast('Produto "'+novoNome+'" atualizado e salvo para todos os colaboradores.');
+}
 function gravarFormula(){
   var cod=$('p-cod')?.value||'';if(!cod){toast('Informe o codigo antes de gravar.');return;}
   var banco=carregarBancoFormulas();
@@ -4025,7 +4156,8 @@ let ptDataLoaded = false;
 const PT_KEY_DOC='RURAL_TABELA_DOC_v1', PT_KEY_OV='RURAL_TABELA_CATALOG_OV_v1',
       PT_KEY_RATES='RURAL_TABELA_RATES_v1', PT_KEY_LINKS='RURAL_TABELA_LINKS_v1',
       PT_KEY_EXTRA='RURAL_TABELA_EXTRA_PRICES_v1', PT_KEY_EMBSIZE='RURAL_TABELA_EMBSIZE_v1',
-      PT_KEY_CDFTON='RURAL_TABELA_CDFTON_v1', PT_KEY_ACTIVE='RURAL_TABELA_ACTIVE_v1';
+      PT_KEY_CDFTON='RURAL_TABELA_CDFTON_v1', PT_KEY_ACTIVE='RURAL_TABELA_ACTIVE_v1',
+      PT_KEY_EXPORT='RURAL_TABELA_EXPORT_v1', PT_KEY_ESPECIAL='RURAL_TABELA_ESPECIAL_v1';
 
 function ptUid(){ return Math.random().toString(36).slice(2,10); }
 function ptFmtPrice(v){
@@ -4060,6 +4192,8 @@ function ptLoadAll(){
   try{ PT_EMB_SIZES=JSON.parse(localStorage.getItem(PT_KEY_EMBSIZE)||'{}'); }catch(e){}
   try{ const cv=localStorage.getItem(PT_KEY_CDFTON); if(cv!==null) PT_CDF_TON=parseFloat(cv); }catch(e){}
   try{ PT_ACTIVE=JSON.parse(localStorage.getItem(PT_KEY_ACTIVE)||'{}'); }catch(e){}
+  try{ const ex=JSON.parse(localStorage.getItem(PT_KEY_EXPORT)||'null'); if(ex) PT_EXPORT=ex; }catch(e){}
+  try{ const es=JSON.parse(localStorage.getItem(PT_KEY_ESPECIAL)||'null'); if(es) PT_ESPECIAL=es; }catch(e){}
   try{
     const raw=localStorage.getItem(PT_KEY_DOC);
     if(raw){ const parsed=JSON.parse(raw); ptDoc=parsed.doc||[]; ptActivePageId=parsed.activePageId||(ptDoc.length?ptDoc[0].id:null); return true; }
@@ -4546,6 +4680,559 @@ function ptClearDoc(){
   ptDoc=[]; ptActivePageId=null; ptRenderDoc(); ptSaveDoc();
 }
 
+/* ===== Precificação Exportação ===== */
+let PT_EXPORT={ produtoCod:null, custoBaseManual:0, cambio:5.00, margemDesejada:0, itens:[] };
+function ptExportSalvar(){
+  try{ localStorage.setItem(PT_KEY_EXPORT, JSON.stringify(PT_EXPORT));
+    const s=$('pt-exp-save-status'); if(s){ s.textContent='salvo ✓'; setTimeout(()=>{ if(s.textContent==='salvo ✓') s.textContent=''; },1200); }
+  }catch(e){}
+}
+function ptExportNovoItem(){
+  PT_EXPORT.itens.push({id:'exp_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), nome:'', tipo:'BRL_TON', valor:0});
+  ptExportSalvar();
+  ptRenderExport();
+}
+function ptExportRemoverItem(id){
+  PT_EXPORT.itens=PT_EXPORT.itens.filter(i=>i.id!==id);
+  ptExportSalvar();
+  ptRenderExport();
+}
+function ptExportAtualizarItem(id, campo, valor){
+  const it=PT_EXPORT.itens.find(i=>i.id===id);
+  if(!it)return;
+  it[campo]= campo==='valor' ? (parseFloat(valor)||0) : valor;
+  ptExportSalvar();
+  ptRenderExportCalculo(); // recalcula sem re-renderizar a lista inteira (evita perder foco do input)
+}
+function ptExportAtualizarProduto(cod){
+  PT_EXPORT.produtoCod=cod||null;
+  ptExportSalvar();
+  ptRenderExport();
+}
+function ptExportAtualizarBaseManual(valor){
+  PT_EXPORT.custoBaseManual=parseFloat(valor)||0;
+  ptExportSalvar();
+  ptRenderExportCalculo();
+}
+function ptExportAtualizarCambio(valor){
+  PT_EXPORT.cambio=parseFloat(valor)||0;
+  ptExportSalvar();
+  ptRenderExportCalculo();
+}
+function ptExportAtualizarMargem(valor){
+  PT_EXPORT.margemDesejada=parseFloat(valor)||0;
+  ptExportSalvar();
+  ptRenderExportCalculo();
+}
+function ptExportCustoBaseTon(){
+  if(PT_EXPORT.produtoCod){
+    const idx=ptFormulaIndex();
+    const f=idx[String(PT_EXPORT.produtoCod)];
+    if(f && typeof custoFormula==='function'){
+      const c=custoFormula(f);
+      return (c.custoKg||0)*1000;
+    }
+  }
+  return PT_EXPORT.custoBaseManual||0;
+}
+function ptExportCalcular(){
+  const baseTon=ptExportCustoBaseTon();
+  const cambio=PT_EXPORT.cambio||0;
+  const margem=PT_EXPORT.margemDesejada||0;
+  let custoFixoRton=baseTon;
+  let pctTotal=0;
+  PT_EXPORT.itens.forEach(it=>{
+    if(it.tipo==='BRL_TON') custoFixoRton+=(it.valor||0);
+    else if(it.tipo==='USD_TON') custoFixoRton+=(it.valor||0)*cambio;
+    else if(it.tipo==='PCT') pctTotal+=(it.valor||0);
+  });
+  const pctTotalComMargem=pctTotal+margem;
+  const divisor=1-(pctTotalComMargem/100);
+  const pvValido=divisor>0;
+  const totalRton=pvValido?(custoFixoRton/divisor):null;
+  const detalhado=PT_EXPORT.itens.map(it=>{
+    let contribRton=0;
+    if(it.tipo==='BRL_TON') contribRton=it.valor||0;
+    else if(it.tipo==='USD_TON') contribRton=(it.valor||0)*cambio;
+    else if(it.tipo==='PCT') contribRton=pvValido?(totalRton*(it.valor||0)/100):0;
+    return Object.assign({},it,{contribRton});
+  });
+  const contribMargemRton=pvValido?(totalRton*margem/100):0;
+  return {
+    baseTon, somaCustosFixos:custoFixoRton-baseTon, pctTotal, margem, contribMargemRton, pvValido,
+    totalRton: pvValido?totalRton:null,
+    totalRkg: pvValido?(totalRton/1000):null,
+    totalUsdTon: (pvValido && cambio>0)?(totalRton/cambio):null,
+    detalhado
+  };
+}
+function ptRenderExportCalculo(){
+  const r=ptExportCalcular();
+  if($('pt-exp-base-ton')) $('pt-exp-base-ton').textContent='R$ '+fn(r.baseTon,2)+'/ton';
+  if($('pt-exp-soma-custos')) $('pt-exp-soma-custos').textContent='R$ '+fn(r.somaCustosFixos,2)+'/ton';
+  if($('pt-exp-margem-ton')) $('pt-exp-margem-ton').textContent=r.pvValido?('R$ '+fn(r.contribMargemRton,2)+'/ton'):'—';
+  if($('pt-exp-aviso')) $('pt-exp-aviso').style.display=r.pvValido?'none':'block';
+  if($('pt-exp-total-ton')) $('pt-exp-total-ton').textContent=r.pvValido?('R$ '+fn(r.totalRton,2)):'—';
+  if($('pt-exp-total-kg')) $('pt-exp-total-kg').textContent=r.pvValido?('R$ '+fn(r.totalRkg,4)):'—';
+  if($('pt-exp-total-usd')) $('pt-exp-total-usd').textContent=(r.pvValido&&r.totalUsdTon>0)?('US$ '+fn(r.totalUsdTon,2)):'—';
+  r.detalhado.forEach(it=>{
+    const el=document.getElementById('pt-exp-contrib-'+it.id);
+    if(el) el.textContent=r.pvValido?('R$ '+fn(it.contribRton,2)+'/ton'):'—';
+  });
+}
+function ptExportOpcoesProdutos(){
+  const idx=ptFormulaIndex();
+  const lista=Object.values(idx).sort((a,b)=>String(a.nome).localeCompare(String(b.nome)));
+  let html='<option value="">— custo base manual —</option>';
+  lista.forEach(f=>{
+    const sel=String(f.cod)===String(PT_EXPORT.produtoCod)?' selected':'';
+    html+=`<option value="${f.cod}"${sel}>${f.cod} — ${f.nome}</option>`;
+  });
+  return html;
+}
+function ptExportNomeProduto(){
+  if(PT_EXPORT.produtoCod){
+    const idx=ptFormulaIndex();
+    const f=idx[String(PT_EXPORT.produtoCod)];
+    if(f) return PT_EXPORT.produtoCod+' — '+f.nome;
+  }
+  return 'Custo base manual (sem produto vinculado)';
+}
+function ptExportGerarPDF(){
+  const r=ptExportCalcular();
+  if(!r.pvValido){ alert('A soma dos percentuais + margem está em 100% ou mais. Ajuste antes de gerar o PDF.'); return; }
+  const dataHoje=new Date().toLocaleDateString('pt-BR');
+  const linhasCustos=PT_EXPORT.itens.map((it,idx)=>{
+    const d=r.detalhado[idx];
+    const tipoTxt=it.tipo==='BRL_TON'?'R$/ton':(it.tipo==='USD_TON'?'US$/ton':'% sobre PV');
+    const valorTxt=it.tipo==='USD_TON'?('US$ '+fn(it.valor,2)):(it.tipo==='PCT'?(fn(it.valor,2)+'%'):('R$ '+fn(it.valor,2)));
+    return `<tr><td>${it.nome||'(sem nome)'}</td><td>${tipoTxt}</td><td class="r">${valorTxt}</td><td class="r">R$ ${fn(d.contribRton,2)}/ton</td></tr>`;
+  }).join('');
+  const doc=`<html><head><meta charset="UTF-8"><title>Precificação Exportação</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,sans-serif;font-size:13px;color:#18180f;padding:24px}
+    @media print{@page{margin:14mm;size:A4 portrait}}
+    .hdr{display:flex;align-items:center;gap:16px;border-bottom:3px solid #1d4ed8;padding-bottom:14px;margin-bottom:20px}
+    .hdr img{height:50px}
+    .hdr-titulo{font-size:19px;font-weight:800;color:#1d4ed8}
+    .hdr-sub{font-size:11px;color:#6b7280;margin-top:2px}
+    .info{font-size:12px;color:#374151;margin-bottom:16px;line-height:1.7}
+    .sec-titulo{font-size:13px;font-weight:800;margin:18px 0 8px;color:#1e293b}
+    table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px}
+    th{background:#f4f3ef;text-align:left;padding:6px 8px;font-size:10.5px;text-transform:uppercase;color:#6b7280;border-bottom:1px solid #e2dfd7}
+    td{padding:6px 8px;border-bottom:1px solid #eeece5}
+    .r{text-align:right}
+    .kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:16px}
+    .kpi{border:1px solid #e2dfd7;border-radius:8px;padding:10px 14px}
+    .kpi .lbl{font-size:10px;text-transform:uppercase;color:#6b7280;font-weight:700}
+    .kpi .val{font-size:17px;font-weight:800;margin-top:3px}
+    .kpi.dest{background:#eff6ff;border-color:#bfdbfe}
+    .kpi.dest .val{color:#1d4ed8}
+    .footer{margin-top:26px;border-top:2px solid #1d4ed8;padding-top:10px;text-align:center;font-size:11px;font-weight:700;color:#1d4ed8}
+    .pbtn{position:fixed;top:16px;right:16px;padding:10px 18px;background:#1d4ed8;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer}
+    @media print{.pbtn{display:none}}
+  </style></head><body>
+  <button class="pbtn" onclick="window.print()">Imprimir / Salvar PDF</button>
+  <div class="hdr"><img src="${LOGO_RURAL}" alt="Rural"><div><div class="hdr-titulo">Precificação Exportação</div><div class="hdr-sub">Simulação de custo e preço de venda por tonelada</div></div></div>
+  <div class="info">
+    <strong>Produto:</strong> ${ptExportNomeProduto()}<br>
+    <strong>Câmbio utilizado:</strong> R$ ${fn(PT_EXPORT.cambio,2)} por US$ &nbsp;|&nbsp; <strong>Data:</strong> ${dataHoje}
+  </div>
+
+  <div class="sec-titulo">Custos e margem considerados</div>
+  <table>
+    <thead><tr><th>Descrição</th><th>Tipo</th><th class="r">Valor</th><th class="r">Contribuição (R$/ton)</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Custo base do produto</strong></td><td>—</td><td class="r">—</td><td class="r">R$ ${fn(r.baseTon,2)}/ton</td></tr>
+      ${linhasCustos}
+      <tr><td><strong>Margem de lucro pretendida</strong></td><td>% sobre PV</td><td class="r">${fn(r.margem,2)}%</td><td class="r">R$ ${fn(r.contribMargemRton,2)}/ton</td></tr>
+    </tbody>
+  </table>
+
+  <div class="sec-titulo">Resultado</div>
+  <div class="kpis">
+    <div class="kpi"><div class="lbl">Custo base</div><div class="val">R$ ${fn(r.baseTon,2)}/ton</div></div>
+    <div class="kpi"><div class="lbl">Soma dos custos fixos</div><div class="val">R$ ${fn(r.somaCustosFixos,2)}/ton</div></div>
+    <div class="kpi dest"><div class="lbl">Preço de venda por tonelada</div><div class="val">R$ ${fn(r.totalRton,2)}</div></div>
+    <div class="kpi dest"><div class="lbl">Preço de venda por tonelada (US$)</div><div class="val">${r.totalUsdTon?('US$ '+fn(r.totalUsdTon,2)):'—'}</div></div>
+    <div class="kpi dest"><div class="lbl">Preço de venda por kg</div><div class="val">R$ ${fn(r.totalRkg,4)}</div></div>
+    <div class="kpi"><div class="lbl">Margem de lucro embutida</div><div class="val">${fn(r.margem,2)}%</div></div>
+  </div>
+
+  <div class="footer">Rural Nutrição Animal — simulação de precificação de exportação</div>
+  </body></html>`;
+  const win=window.open('','_blank','width=900,height=1000');
+  win.document.write(doc);
+  win.document.close();
+}
+function ptRenderExport(){
+  const cont=$('pt-export-view');
+  if(!cont)return;
+  const usaFormula=!!PT_EXPORT.produtoCod;
+  cont.innerHTML=`
+    <div style="max-width:900px;margin:0 auto">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div>
+          <div style="font-size:16px;font-weight:700">Precificação Exportação</div>
+          <div style="font-size:12px;color:var(--t3);margin-top:2px">Monte o custo de exportação por tonelada, somando quantos custos quiser — em R$/ton, US$/ton ou % sobre o custo base.</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span id="pt-exp-save-status" style="font-size:11px;color:var(--t3)"></span>
+          <button class="btn btn-primary" onclick="ptExportGerarPDF()">📄 Gerar PDF</button>
+        </div>
+      </div>
+
+      <div class="card" style="padding:16px;margin-bottom:16px">
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:12px">
+          <div class="f"><label>Produto (custo base ao vivo, opcional)</label>
+            <select onchange="ptExportAtualizarProduto(this.value)">${ptExportOpcoesProdutos()}</select>
+          </div>
+          <div class="f"><label>Custo base manual (R$/ton)</label>
+            <input type="number" step="0.01" min="0" value="${PT_EXPORT.custoBaseManual||0}" ${usaFormula?'disabled':''} onchange="ptExportAtualizarBaseManual(this.value)">
+          </div>
+          <div class="f"><label>Câmbio (R$ por US$)</label>
+            <input type="number" step="0.01" min="0" value="${PT_EXPORT.cambio||0}" onchange="ptExportAtualizarCambio(this.value)">
+          </div>
+          <div class="f"><label>Margem de lucro pretendida (%)</label>
+            <input type="number" step="0.1" min="0" value="${PT_EXPORT.margemDesejada||0}" onchange="ptExportAtualizarMargem(this.value)">
+          </div>
+        </div>
+        ${usaFormula?'<div style="font-size:11px;color:var(--t3);margin-top:8px">Custo base puxado ao vivo da ficha técnica do produto selecionado.</div>':''}
+      </div>
+
+      <div class="card" style="padding:16px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <label style="font-weight:700;font-size:12px;text-transform:uppercase;color:var(--t3)">Custos adicionais</label>
+          <button class="btn btn-ghost" onclick="ptExportNovoItem()">+ Adicionar custo</button>
+        </div>
+        <div class="pt-exp-row" style="font-size:11px;text-transform:uppercase;color:var(--t3);font-weight:700;border-bottom:2px solid var(--border)">
+          <div>Descrição</div><div>Tipo</div><div>Valor</div><div></div>
+        </div>
+        <div id="pt-exp-itens-list">
+          ${PT_EXPORT.itens.length===0?'<div style="padding:16px 0;color:var(--t3);font-size:13px">Nenhum custo adicionado ainda.</div>':PT_EXPORT.itens.map(it=>`
+          <div class="pt-exp-row">
+            <input type="text" placeholder="Ex: Frete internacional, Seguro, ADV..." value="${(it.nome||'').replace(/"/g,'&quot;')}" onchange="ptExportAtualizarItem('${it.id}','nome',this.value)">
+            <select onchange="ptExportAtualizarItem('${it.id}','tipo',this.value)">
+              <option value="BRL_TON" ${it.tipo==='BRL_TON'?'selected':''}>R$ / tonelada</option>
+              <option value="USD_TON" ${it.tipo==='USD_TON'?'selected':''}>US$ / tonelada</option>
+              <option value="PCT" ${it.tipo==='PCT'?'selected':''}>% sobre preço de venda (imposto/comissão)</option>
+            </select>
+            <input type="number" step="0.01" value="${it.valor||0}" onchange="ptExportAtualizarItem('${it.id}','valor',this.value)">
+            <button type="button" class="nf-del-btn" onclick="ptExportRemoverItem('${it.id}')">×</button>
+          </div>
+          <div style="text-align:right;font-size:11px;color:var(--t3);padding:2px 0 6px">Contribui com <span id="pt-exp-contrib-${it.id}">—</span></div>
+          `).join('')}
+        </div>
+        <div id="pt-exp-aviso" style="display:none;margin-top:10px;padding:10px 12px;background:var(--amb-lt);border:1px solid var(--amb-bd);color:var(--amber);border-radius:8px;font-size:12px">⚠️ A soma dos percentuais (impostos/comissão) + margem de lucro está em 100% ou mais — não é possível calcular um preço de venda válido. Reduza os percentuais.</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:8px">Os custos em R$/ton e US$/ton somam-se ao custo base normalmente. Os percentuais (impostos, comissões) e a margem de lucro incidem sobre o <strong>preço de venda final</strong> — não sobre o custo — por isso o cálculo é "por dentro": PV = (custo base + custos fixos) ÷ (1 − soma dos % − margem).</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">
+        <div class="pt-exp-kpi"><div class="lbl">Custo base</div><div class="val" id="pt-exp-base-ton">—</div></div>
+        <div class="pt-exp-kpi"><div class="lbl">Soma dos custos fixos (R$/US$)</div><div class="val" id="pt-exp-soma-custos">—</div></div>
+        <div class="pt-exp-kpi"><div class="lbl">Margem de lucro (R$/ton)</div><div class="val" id="pt-exp-margem-ton">—</div></div>
+        <div class="pt-exp-kpi" style="background:var(--blu-lt);border-color:var(--blu-bd)"><div class="lbl">Preço de venda por tonelada</div><div class="val" id="pt-exp-total-ton" style="color:var(--blue)">—</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
+        <div class="pt-exp-kpi" style="background:var(--grn-lt);border-color:var(--grn-bd)"><div class="lbl">Preço de venda por kg</div><div class="val" id="pt-exp-total-kg" style="color:var(--green)">—</div></div>
+        <div class="pt-exp-kpi" style="background:var(--grn-lt);border-color:var(--grn-bd)"><div class="lbl">Preço de venda por tonelada (US$)</div><div class="val" id="pt-exp-total-usd" style="color:var(--green)">—</div></div>
+      </div>
+    </div>`;
+  ptRenderExportCalculo();
+}
+
+/* ===== Cotação Especial (edição de custo de MP dentro de um produto) ===== */
+let PT_ESPECIAL={ produtoCod:null, mpOverrides:{}, custoProducao:350, frete:60, impostos:7, comissao:7, pvTestadoSaco:null };
+function ptEspecialSalvar(){
+  try{ localStorage.setItem(PT_KEY_ESPECIAL, JSON.stringify(PT_ESPECIAL));
+    const s=$('pt-esp2-save-status'); if(s){ s.textContent='salvo ✓'; setTimeout(()=>{ if(s.textContent==='salvo ✓') s.textContent=''; },1200); }
+  }catch(e){}
+}
+function ptEspecialFormulaAtual(){
+  if(!PT_ESPECIAL.produtoCod)return null;
+  const idx=ptFormulaIndex();
+  return idx[String(PT_ESPECIAL.produtoCod)]||null;
+}
+function ptEspecialSelecionarProduto(cod){
+  PT_ESPECIAL.produtoCod=cod||null;
+  PT_ESPECIAL.mpOverrides={};
+  ptEspecialSalvar();
+  ptRenderEspecial();
+}
+function ptEspecialBuscarProduto(texto){
+  const cod=ptParseFormulaCode(texto);
+  const idx=ptFormulaIndex();
+  if(cod && idx[String(cod)] && String(cod)!==String(PT_ESPECIAL.produtoCod)){
+    ptEspecialSelecionarProduto(cod);
+  }
+}
+function ptEspecialAtualizarMP(cod,valor){
+  const v=parseFloat(valor);
+  if(isNaN(v)) delete PT_ESPECIAL.mpOverrides[cod];
+  else PT_ESPECIAL.mpOverrides[cod]=v;
+  ptEspecialSalvar();
+  ptRenderEspecialCalculo();
+}
+function ptEspecialResetarMP(cod){
+  delete PT_ESPECIAL.mpOverrides[cod];
+  ptEspecialSalvar();
+  ptRenderEspecial();
+}
+function ptEspecialAtualizarCampo(campo,valor){
+  PT_ESPECIAL[campo]=parseFloat(valor)||0;
+  ptEspecialSalvar();
+  ptRenderEspecialCalculo();
+}
+function ptEspecialAtualizarPVTeste(valor){
+  const v=parseFloat(valor);
+  PT_ESPECIAL.pvTestadoSaco=isNaN(v)?null:v;
+  ptEspecialSalvar();
+  ptRenderEspecialCalculo();
+}
+function ptEspecialCalcular(){
+  const f=ptEspecialFormulaAtual();
+  if(!f)return null;
+  const batida=parseFloat(f.batida)||0, pesoSaco=parseFloat(f.pesoSaco)||0;
+  const sacos=(batida&&pesoSaco)?batida/pesoSaco:0;
+  let mpBat=0;
+  const linhas=(f.ings||[]).filter(function(i){return i.qtd>0;}).map(function(ing){
+    const custoPadrao=MPcusto[ing.cod]!==undefined?MPcusto[ing.cod]:0;
+    const temOverride=PT_ESPECIAL.mpOverrides[ing.cod]!==undefined;
+    const custoUsado=temOverride?PT_ESPECIAL.mpOverrides[ing.cod]:custoPadrao;
+    mpBat+=(ing.qtd||0)*(custoUsado/1000);
+    const item=MPitens.find(function(m){return m.cod===ing.cod;});
+    return {cod:ing.cod,nome:item?item.d:('cod '+ing.cod),qtd:ing.qtd,custoPadrao:custoPadrao,custoUsado:custoUsado,temOverride:temOverride};
+  });
+  const embCusto=(f.emb&&f.emb.custo)?f.emb.custo:0;
+  const custoMPSaco=sacos>0?(mpBat/sacos)+embCusto:0;
+  const custoMPKg=pesoSaco>0?custoMPSaco/pesoSaco:0;
+  const custoMPTon=custoMPKg*1000;
+  const custoFixoTon=custoMPTon+(PT_ESPECIAL.custoProducao||0)+(PT_ESPECIAL.frete||0);
+  const pctTotal=(PT_ESPECIAL.impostos||0)+(PT_ESPECIAL.comissao||0);
+  const divisor=1-(pctTotal/100);
+  const pvValido=divisor>0;
+  const pvTon=pvValido?(custoFixoTon/divisor):null;
+  var teste=null;
+  if(PT_ESPECIAL.pvTestadoSaco){
+    var pvTesteTon=pesoSaco>0?(PT_ESPECIAL.pvTestadoSaco/pesoSaco*1000):0;
+    var impostosTeste=pvTesteTon*(PT_ESPECIAL.impostos||0)/100;
+    var comissaoTeste=pvTesteTon*(PT_ESPECIAL.comissao||0)/100;
+    var margemTesteRton=pvTesteTon-custoFixoTon-impostosTeste-comissaoTeste;
+    teste={
+      pvTesteTon:pvTesteTon,
+      pvTesteKg:pvTesteTon/1000,
+      pvTesteSaco:PT_ESPECIAL.pvTestadoSaco,
+      impostosTeste:impostosTeste,
+      comissaoTeste:comissaoTeste,
+      margemTesteRton:margemTesteRton,
+      margemTesteRsaco:margemTesteRton/1000*pesoSaco,
+      margemTestePct:pvTesteTon>0?(margemTesteRton/pvTesteTon*100):0
+    };
+  }
+  return {
+    f, batida, pesoSaco, sacos, linhas, custoMPTon, custoFixoTon, pctTotal, pvValido, teste,
+    pvTon: pvValido?pvTon:null,
+    pvKg: pvValido?(pvTon/1000):null,
+    pvSaco: pvValido?(pvTon/1000*pesoSaco):null,
+    contribImpostos: pvValido?(pvTon*(PT_ESPECIAL.impostos||0)/100):0,
+    contribComissao: pvValido?(pvTon*(PT_ESPECIAL.comissao||0)/100):0
+  };
+}
+function ptRenderEspecialCalculo(){
+  const r=ptEspecialCalcular();
+  if(!r)return;
+  if($('pt-esp2-custo-mp')) $('pt-esp2-custo-mp').textContent='R$ '+fn(r.custoMPTon,2)+'/ton';
+  if($('pt-esp2-custo-fixo')) $('pt-esp2-custo-fixo').textContent='R$ '+fn(r.custoFixoTon,2)+'/ton';
+  if($('pt-esp2-aviso')) $('pt-esp2-aviso').style.display=r.pvValido?'none':'block';
+  if($('pt-esp2-pv-ton')) $('pt-esp2-pv-ton').textContent=r.pvValido?('R$ '+fn(r.pvTon,2)):'—';
+  if($('pt-esp2-pv-kg')) $('pt-esp2-pv-kg').textContent=r.pvValido?('R$ '+fn(r.pvKg,4)):'—';
+  if($('pt-esp2-pv-saco')) $('pt-esp2-pv-saco').textContent=r.pvValido?('R$ '+fn(r.pvSaco,2)):'—';
+  r.linhas.forEach(function(l){
+    const el=$('pt-esp2-contrib-'+l.cod);
+    if(el) el.textContent='R$ '+fn((l.qtd*l.custoUsado/1000)*(1000/r.batida)*(r.sacos>0?1:1),2);
+  });
+  if($('pt-esp2-teste-resultado')){
+    if(r.teste){
+      $('pt-esp2-teste-resultado').style.display='grid';
+      $('pt-esp2-teste-margem-pct').textContent=fn(r.teste.margemTestePct,2)+'%';
+      $('pt-esp2-teste-margem-pct').style.color=r.teste.margemTestePct>=0?'var(--green)':'var(--red)';
+      $('pt-esp2-teste-margem-saco').textContent='R$ '+fn(r.teste.margemTesteRsaco,2)+'/saco';
+      $('pt-esp2-teste-margem-saco').style.color=r.teste.margemTesteRsaco>=0?'var(--green)':'var(--red)';
+      $('pt-esp2-teste-margem-ton').textContent='R$ '+fn(r.teste.margemTesteRton,2)+'/ton';
+      $('pt-esp2-teste-encargos').textContent='R$ '+fn(r.teste.impostosTeste+r.teste.comissaoTeste,2)+'/ton (impostos+comissão)';
+    } else {
+      $('pt-esp2-teste-resultado').style.display='none';
+    }
+  }
+}
+function ptEspecialOpcoesProdutos(){
+  const idx=ptFormulaIndex();
+  const lista=Object.values(idx).sort((a,b)=>String(a.nome).localeCompare(String(b.nome)));
+  let html='<option value="">— selecione um produto —</option>';
+  lista.forEach(f=>{
+    const sel=String(f.cod)===String(PT_ESPECIAL.produtoCod)?' selected':'';
+    html+=`<option value="${f.cod}"${sel}>${f.cod} — ${f.nome}</option>`;
+  });
+  return html;
+}
+function ptEspecialGerarPDF(){
+  const r=ptEspecialCalcular();
+  if(!r){alert('Selecione um produto antes de gerar o PDF.');return;}
+  if(!r.pvValido){alert('A soma de impostos + comissão está em 100% ou mais. Ajuste antes de gerar o PDF.');return;}
+  const dataHoje=new Date().toLocaleDateString('pt-BR');
+  const linhasMP=r.linhas.map(function(l){
+    const contrib=(l.qtd*l.custoUsado/1000)*(1000/r.batida);
+    return `<tr><td>${l.cod}</td><td>${l.nome}</td><td class="r">${fn(l.qtd,2)} kg</td><td class="r">R$ ${fn(l.custoPadrao,2)}/ton</td><td class="r ${l.temOverride?'alterado':''}">R$ ${fn(l.custoUsado,2)}/ton</td><td class="r">R$ ${fn(contrib,2)}/ton</td></tr>`;
+  }).join('');
+  const doc=`<html><head><meta charset="UTF-8"><title>Cotação Especial</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,sans-serif;font-size:12.5px;color:#18180f;padding:24px}
+    @media print{@page{margin:14mm;size:A4 portrait}}
+    .hdr{display:flex;align-items:center;gap:16px;border-bottom:3px solid #1d4ed8;padding-bottom:14px;margin-bottom:20px}
+    .hdr img{height:50px}
+    .hdr-titulo{font-size:19px;font-weight:800;color:#1d4ed8}
+    .hdr-sub{font-size:11px;color:#6b7280;margin-top:2px}
+    .info{font-size:12px;color:#374151;margin-bottom:16px;line-height:1.7}
+    .sec-titulo{font-size:13px;font-weight:800;margin:18px 0 8px;color:#1e293b}
+    table{width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:8px}
+    th{background:#f4f3ef;text-align:left;padding:5px 7px;font-size:10px;text-transform:uppercase;color:#6b7280;border-bottom:1px solid #e2dfd7}
+    td{padding:5px 7px;border-bottom:1px solid #eeece5}
+    .r{text-align:right}
+    .alterado{color:#92400e;font-weight:700;background:#fffbeb}
+    .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+    .kpi{border:1px solid #e2dfd7;border-radius:8px;padding:10px 14px}
+    .kpi .lbl{font-size:10px;text-transform:uppercase;color:#6b7280;font-weight:700}
+    .kpi .val{font-size:16px;font-weight:800;margin-top:3px}
+    .kpi.dest{background:#eff6ff;border-color:#bfdbfe}
+    .kpi.dest .val{color:#1d4ed8}
+    .footer{margin-top:26px;border-top:2px solid #1d4ed8;padding-top:10px;text-align:center;font-size:11px;font-weight:700;color:#1d4ed8}
+    .pbtn{position:fixed;top:16px;right:16px;padding:10px 18px;background:#1d4ed8;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer}
+    @media print{.pbtn{display:none}}
+  </style></head><body>
+  <button class="pbtn" onclick="window.print()">Imprimir / Salvar PDF</button>
+  <div class="hdr"><img src="${LOGO_RURAL}" alt="Rural"><div><div class="hdr-titulo">Cotação Especial</div><div class="hdr-sub">Simulação de negociação — preços de matéria-prima customizados</div></div></div>
+  <div class="info">
+    <strong>Produto:</strong> ${r.f.cod} — ${r.f.nome}<br>
+    <strong>Batida:</strong> ${fn(r.batida,0)} kg &nbsp;|&nbsp; <strong>Peso do saco:</strong> ${fn(r.pesoSaco,2)} kg &nbsp;|&nbsp; <strong>Data:</strong> ${dataHoje}
+  </div>
+
+  <div class="sec-titulo">Matérias-primas — custo padrão vs. negociado</div>
+  <table>
+    <thead><tr><th>Cód.</th><th>Ingrediente</th><th class="r">Qtd/batida</th><th class="r">Custo padrão</th><th class="r">Custo negociado</th><th class="r">Contribuição</th></tr></thead>
+    <tbody>${linhasMP}</tbody>
+  </table>
+
+  <div class="sec-titulo">Custos fixos e encargos</div>
+  <table>
+    <thead><tr><th>Item</th><th class="r">Valor</th><th class="r">Contribuição (R$/ton)</th></tr></thead>
+    <tbody>
+      <tr><td>Custo de MP (com preços negociados)</td><td class="r">—</td><td class="r">R$ ${fn(r.custoMPTon,2)}/ton</td></tr>
+      <tr><td>Custo de produção</td><td class="r">R$ ${fn(PT_ESPECIAL.custoProducao,2)}/ton</td><td class="r">R$ ${fn(PT_ESPECIAL.custoProducao,2)}/ton</td></tr>
+      <tr><td>Frete</td><td class="r">R$ ${fn(PT_ESPECIAL.frete,2)}/ton</td><td class="r">R$ ${fn(PT_ESPECIAL.frete,2)}/ton</td></tr>
+      <tr><td>Impostos sobre venda</td><td class="r">${fn(PT_ESPECIAL.impostos,2)}%</td><td class="r">R$ ${fn(r.contribImpostos,2)}/ton</td></tr>
+      <tr><td>Comissões sobre venda</td><td class="r">${fn(PT_ESPECIAL.comissao,2)}%</td><td class="r">R$ ${fn(r.contribComissao,2)}/ton</td></tr>
+    </tbody>
+  </table>
+
+  <div class="sec-titulo">Resultado</div>
+  <div class="kpis">
+    <div class="kpi"><div class="lbl">Custo total (MP+produção+frete)</div><div class="val">R$ ${fn(r.custoFixoTon,2)}/ton</div></div>
+    <div class="kpi dest"><div class="lbl">Preço de venda por tonelada</div><div class="val">R$ ${fn(r.pvTon,2)}</div></div>
+    <div class="kpi dest"><div class="lbl">Preço de venda por saco</div><div class="val">R$ ${fn(r.pvSaco,2)}</div></div>
+  </div>
+
+  <div class="footer">Rural Nutrição Animal — cotação especial de negociação</div>
+  </body></html>`;
+  const win=window.open('','_blank','width=950,height=1000');
+  win.document.write(doc);
+  win.document.close();
+}
+function ptRenderEspecial(){
+  const cont=$('pt-especial-view');
+  if(!cont)return;
+  ptEnsureFormulaDatalist();
+  const r=ptEspecialCalcular();
+  cont.innerHTML=`
+    <div style="max-width:960px;margin:0 auto">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div>
+          <div style="font-size:16px;font-weight:700">Cotação Especial</div>
+          <div style="font-size:12px;color:var(--t3);margin-top:2px">Carregue um produto, edite o custo negociado de cada matéria-prima e chegue ao preço de venda para grandes negociações.</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span id="pt-esp2-save-status" style="font-size:11px;color:var(--t3)"></span>
+          <button class="btn btn-primary" onclick="ptEspecialGerarPDF()">📄 Gerar PDF</button>
+        </div>
+      </div>
+
+      <div class="card" style="padding:16px;margin-bottom:16px">
+        <div class="f"><label>Produto (digite código ou nome para buscar)</label>
+          <input type="text" id="pt-esp2-busca-produto" list="pt-formula-datalist" placeholder="Ex: 125 ou Rural Engorda..." value="${PT_ESPECIAL.produtoCod?ptFormulaLabelFor(PT_ESPECIAL.produtoCod):''}" oninput="ptEspecialBuscarProduto(this.value)">
+        </div>
+      </div>
+
+      ${!r?'<div style="padding:30px;text-align:center;color:var(--t3)">Selecione um produto para começar.</div>':`
+
+      <div class="card" style="padding:16px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <label style="font-weight:700;font-size:12px;text-transform:uppercase;color:var(--t3)">Matérias-primas — ${r.f.nome}</label>
+        </div>
+        <div class="pt-esp2-row" style="font-size:11px;text-transform:uppercase;color:var(--t3);font-weight:700;border-bottom:2px solid var(--border)">
+          <div>Cód.</div><div>Ingrediente</div><div class="r">Qtd/batida</div><div class="r">Padrão (R$/ton)</div><div class="r">Negociado (R$/ton)</div><div></div>
+        </div>
+        ${r.linhas.map(l=>`
+        <div class="pt-esp2-row">
+          <div class="mono" style="color:var(--t3)">${l.cod}</div>
+          <div>${l.nome}</div>
+          <div class="r">${fn(l.qtd,2)} kg</div>
+          <div class="r">R$ ${fn(l.custoPadrao,2)}</div>
+          <input type="number" step="0.01" class="${l.temOverride?'alterado':''}" value="${fn(l.custoUsado,2)}" onchange="ptEspecialAtualizarMP(${l.cod},this.value)">
+          <div style="text-align:center">${l.temOverride?`<button type="button" class="nf-del-btn" onclick="ptEspecialResetarMP(${l.cod})" title="Restaurar preço padrão">↺</button>`:''}</div>
+        </div>`).join('')}
+      </div>
+
+      <div class="card" style="padding:16px;margin-bottom:16px">
+        <label style="font-weight:700;font-size:12px;text-transform:uppercase;color:var(--t3);display:block;margin-bottom:10px">Custos fixos e encargos padrão (editáveis)</label>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+          <div class="f"><label>Custo de produção (R$/ton)</label><input type="number" step="0.01" min="0" value="${PT_ESPECIAL.custoProducao}" onchange="ptEspecialAtualizarCampo('custoProducao',this.value)"></div>
+          <div class="f"><label>Frete (R$/ton)</label><input type="number" step="0.01" min="0" value="${PT_ESPECIAL.frete}" onchange="ptEspecialAtualizarCampo('frete',this.value)"></div>
+          <div class="f"><label>Impostos sobre venda (%)</label><input type="number" step="0.1" min="0" value="${PT_ESPECIAL.impostos}" onchange="ptEspecialAtualizarCampo('impostos',this.value)"></div>
+          <div class="f"><label>Comissões sobre venda (%)</label><input type="number" step="0.1" min="0" value="${PT_ESPECIAL.comissao}" onchange="ptEspecialAtualizarCampo('comissao',this.value)"></div>
+        </div>
+        <div id="pt-esp2-aviso" style="display:none;margin-top:10px;padding:10px 12px;background:var(--amb-lt);border:1px solid var(--amb-bd);color:var(--amber);border-radius:8px;font-size:12px">⚠️ A soma de impostos + comissão está em 100% ou mais — não é possível calcular um preço de venda válido.</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:8px">Impostos e comissões incidem sobre o <strong>preço de venda final</strong> (cálculo "por dentro"), igual à Precificação Exportação.</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:12px">
+        <div class="pt-exp-kpi"><div class="lbl">Custo de MP (negociado)</div><div class="val" id="pt-esp2-custo-mp">—</div></div>
+        <div class="pt-exp-kpi"><div class="lbl">Custo total (MP+produção+frete)</div><div class="val" id="pt-esp2-custo-fixo">—</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+        <div class="pt-exp-kpi" style="background:var(--blu-lt);border-color:var(--blu-bd)"><div class="lbl">Preço de venda por tonelada</div><div class="val" id="pt-esp2-pv-ton" style="color:var(--blue)">—</div></div>
+        <div class="pt-exp-kpi" style="background:var(--grn-lt);border-color:var(--grn-bd)"><div class="lbl">Preço de venda por kg</div><div class="val" id="pt-esp2-pv-kg" style="color:var(--green)">—</div></div>
+        <div class="pt-exp-kpi" style="background:var(--grn-lt);border-color:var(--grn-bd)"><div class="lbl">Preço de venda por saco</div><div class="val" id="pt-esp2-pv-saco" style="color:var(--green)">—</div></div>
+      </div>
+
+      <div class="card" style="padding:16px;margin-top:16px">
+        <label style="font-weight:700;font-size:12px;text-transform:uppercase;color:var(--t3);display:block;margin-bottom:10px">Testar um preço de venda e ver a margem</label>
+        <div style="display:grid;grid-template-columns:1fr 3fr;gap:12px;align-items:end">
+          <div class="f"><label>Preço de venda que você quer testar (R$/saco)</label><input type="number" step="0.01" min="0" value="${PT_ESPECIAL.pvTestadoSaco||''}" placeholder="Ex: 85,00" oninput="ptEspecialAtualizarPVTeste(this.value)"></div>
+          <div style="font-size:11px;color:var(--t3)">Informe o preço que você pretende cobrar (por saco) e veja quanto de margem sobra, já descontando o custo total e os encargos (impostos + comissão) definidos acima.</div>
+        </div>
+        <div id="pt-esp2-teste-resultado" style="display:none;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px">
+          <div class="pt-exp-kpi"><div class="lbl">Impostos + comissão nesse preço</div><div class="val" id="pt-esp2-teste-encargos" style="font-size:15px">—</div></div>
+          <div class="pt-exp-kpi"><div class="lbl">Margem em R$</div><div class="val" id="pt-esp2-teste-margem-saco">—</div></div>
+          <div class="pt-exp-kpi" style="background:var(--s1)"><div class="lbl">Margem em %</div><div class="val" id="pt-esp2-teste-margem-pct">—</div></div>
+        </div>
+        <div style="font-size:10px;color:var(--t3);margin-top:6px" id="pt-esp2-teste-margem-ton"></div>
+      </div>
+      `}
+    </div>`;
+  ptRenderEspecialCalculo();
+}
+
 function ptRenderMargins(){
   const el=$('pt-margins-view');
   if(!el) return;
@@ -4820,16 +5507,24 @@ function ptRenderMargins(){
 function ptSwitchTab(tab){
   ptCurrentSubTab=tab;
   document.querySelectorAll('.pt-subtab').forEach(b=>b.classList.toggle('active', b.dataset.ptTab===tab));
-  const sidebar=$('pt-sidebar'), docScroll=$('pt-doc-scroll'), marginsView=$('pt-margins-view');
+  const sidebar=$('pt-sidebar'), docScroll=$('pt-doc-scroll'), marginsView=$('pt-margins-view'), exportView=$('pt-export-view'), especialView=$('pt-especial-view');
+  sidebar.classList.add('pt-hidden');
+  docScroll.classList.add('pt-hidden');
+  marginsView.classList.remove('visible');
+  exportView.classList.remove('visible');
+  especialView.classList.remove('visible');
   if(tab==='builder'){
     sidebar.classList.remove('pt-hidden');
     docScroll.classList.remove('pt-hidden');
-    marginsView.classList.remove('visible');
-  } else {
-    sidebar.classList.add('pt-hidden');
-    docScroll.classList.add('pt-hidden');
+  } else if(tab==='margins'){
     marginsView.classList.add('visible');
     ptRenderMargins();
+  } else if(tab==='export'){
+    exportView.classList.add('visible');
+    ptRenderExport();
+  } else if(tab==='especial'){
+    especialView.classList.add('visible');
+    ptRenderEspecial();
   }
 }
 
