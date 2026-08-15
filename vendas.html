@@ -153,6 +153,16 @@ footer{margin-top:24px;font-size:.75rem;color:var(--ink-mute);border-top:1px sol
     <button id="btn-logout" style="display:none;margin-left:10px;font-size:.72rem;padding:5px 10px;border-radius:6px;border:1px solid var(--line);background:#fff;cursor:pointer;">Sair</button>
   </header>
 
+  <div class="sel-ficha" style="border-left-color:var(--ouro);">
+    <div class="t">Fazer pedido</div>
+    <div class="sel-linha">
+      <div class="sel-busca" id="atalho-pedido-wrap">
+        <input id="atalho-pedido-busca" type="text" placeholder="Buscar cliente pelo nome ou código…" autocomplete="off">
+        <div class="sel-pop" id="atalho-pedido-pop"></div>
+      </div>
+    </div>
+  </div>
+
   <div class="filtros">
     <div class="f-top">
       <span class="t">Filtros</span>
@@ -928,9 +938,26 @@ function fichaCliente(ci){
   if(ci==null){document.getElementById('view').innerHTML=sel.html+
     '<div class="card vazio">Escolha um cliente acima.</div>';sel.liga();return;}
   const nome=CLI[ci].nome, cod=CLI[ci].cod;
+
+  // Sugestão de pedido e histórico de pedidos aparecem SEMPRE em primeiro
+  // lugar, independente do filtro de anos selecionado -- é o que o vendedor
+  // mais precisa acessar rápido ao entrar num cliente.
+  document.getElementById('view').innerHTML=sel.html+`
+  <div class="card"><h3>${nome}</h3><p class="csub">Código do sistema <b>${cod}</b></p></div>
+  <div class="card"><h3>Sugestão de novo pedido</h3><div id="fc6"></div></div>
+  <div class="card"><h3>Últimos pedidos</h3>
+    <p class="csub">Pedidos mais recentes deste cliente (até 20), com produtos e prazo de pagamento.</p><div id="fc5"></div></div>
+  <div id="fc-analise"></div>`;
+  sel.liga();
+  renderGeradorPedido(document.getElementById('fc6'),cod,nome);
+  renderPedidosCliente(document.getElementById('fc5'),cod);
+
   const linhas=IDX.filter(i=>CO.c[i]===ci);
-  if(!linhas.length){document.getElementById('view').innerHTML=sel.html+
-    '<div class="card vazio">Sem lançamentos deste cliente no recorte atual.</div>';sel.liga();return;}
+  if(!linhas.length){
+    document.getElementById('fc-analise').innerHTML=
+      '<div class="card vazio">Sem lançamentos deste cliente no recorte de anos selecionado (a sugestão e o histórico acima não dependem desse filtro).</div>';
+    return;
+  }
   const tot=linhas.reduce((s,i)=>s+mv(i),0);
   const porA=new Array(NY).fill(0);linhas.forEach(i=>porA[CO.a[i]]+=mv(i));
   const anosAtivos=porA.map((v,i)=>v>0?ANOS[i]:null).filter(Boolean);
@@ -939,8 +966,7 @@ function fichaCliente(ci){
                      prodM.set(CO.p[i],(prodM.get(CO.p[i])||0)+mv(i));});
   const vends=[...vendM.entries()].sort((a,b)=>b[1]-a[1]);
   const prods=[...prodM.entries()].map(([k,v])=>({k,lab:PROD[k].nome,v})).sort((a,b)=>b.v-a.v);
-  document.getElementById('view').innerHTML=sel.html+`
-  <div class="card"><h3>${nome}</h3><p class="csub">Código do sistema <b>${cod}</b> · ficha completa dentro do recorte atual</p></div>
+  document.getElementById('fc-analise').innerHTML=`
   <div class="kpis">
     <div class="kpi"><div class="lab">${mm().nome} total</div><div class="val">${mm().fmt(tot)}</div><div class="sub">${linhas.length} lançamentos</div></div>
     <div class="kpi"><div class="lab">Anos ativos</div><div class="val">${anosAtivos.length}</div>
@@ -955,13 +981,7 @@ function fichaCliente(ci){
     <p class="csub">Todos os produtos do período, do maior para o menor.</p><div id="fc2"></div></div>
   ${vends.length>1?`<div class="card"><h3>Vendedores que atenderam</h3>
     <p class="csub">Quando um cliente passa de um vendedor para outro, aparece aqui.</p><div id="fc3"></div></div>`:''}
-  <div class="card"><h3>Detalhe por ano e produto</h3><div id="fc4"></div></div>
-  <div class="card"><h3>Sugestão de novo pedido</h3><div id="fc6"></div></div>
-  <div class="card"><h3>Últimos pedidos</h3>
-    <p class="csub">Pedidos mais recentes deste cliente (até 20), com produtos e prazo de pagamento.</p><div id="fc5"></div></div>`;
-  sel.liga();
-  renderGeradorPedido(document.getElementById('fc6'),cod,nome);
-  renderPedidosCliente(document.getElementById('fc5'),cod);
+  <div class="card"><h3>Detalhe por ano e produto</h3><div id="fc4"></div></div>`;
   lineChart(document.getElementById('fc1'),{labels:ANOS.map(String),
     series:[{nome:nome,cor:'#0F5298',vals:porA,corPonto:i=>F.anos.has(i)?'#0F5298':'#B9C0C9'}],h:240});
   barsH(document.getElementById('fc2'),{items:prods.slice(0,20).map(d=>({...d,extra:pct(d.v/tot*100)+' do cliente'})),
@@ -1086,6 +1106,31 @@ document.getElementById('btn-limpar').onclick=()=>{
   F.anos=new Set(ANOS.map((_,i)=>i));['vend','fil','cat','cli','prod'].forEach(k=>F[k].clear());
   chipsAnos();montaPicks();render();};
 let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(render,180);});
+
+/* ---------- atalho "Fazer pedido": busca cliente e vai direto pra ficha ---------- */
+(function ligaAtalhoPedido(){
+  const busca=document.getElementById('atalho-pedido-busca'), pop=document.getElementById('atalho-pedido-pop');
+  if(!busca) return;
+  busca.addEventListener('input',()=>{
+    const q=busca.value.trim().toLowerCase();
+    if(!q){pop.classList.remove('open');pop.innerHTML='';return;}
+    const matches=CLI.map((c,i)=>({i,c})).filter(({c})=>casa(c.nome,c.cod,q)).slice(0,10);
+    if(!matches.length){pop.classList.add('open');pop.innerHTML='<div class="sel-op muted">nenhum cliente encontrado</div>';return;}
+    pop.innerHTML=matches.map(({i,c})=>'<div class="sel-op" data-ci="'+i+'">'+c.nome+' <span class="v">'+codTag(c.cod)+'</span></div>').join('');
+    pop.classList.add('open');
+    pop.querySelectorAll('[data-ci]').forEach(opt=>{
+      opt.addEventListener('click',()=>{
+        ENT.cli=+opt.dataset.ci;TAB='fcli';marcaAba();render();
+        busca.value='';pop.classList.remove('open');pop.innerHTML='';
+        document.getElementById('view').scrollIntoView({behavior:'smooth'});
+      });
+    });
+  });
+  document.addEventListener('click',e=>{
+    if(!pop.contains(e.target)&&e.target!==busca) pop.classList.remove('open');
+  });
+})();
+
 chipsAnos();montaPicks();render();
 }
 </script>
