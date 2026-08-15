@@ -234,6 +234,7 @@ const METRICS=[
  {nome:'Quantidade',fmt:v=>nf(v,0)+' un',curto:v=>abbr(v)},
  {nome:'Peso',fmt:v=>nf(v/1000,1)+' t',curto:v=>abbr(v/1000)+' t'}];
 let M=0, TAB='geral';
+let PEDIDO_ATUAL=null; // rascunho do gerador de pedido (fc6, ficha do cliente)
 const ENT={vend:null,cli:null,prod:null};
 const F={anos:new Set(ANOS.map((_,i)=>i)),vend:new Set(),fil:new Set(),cat:new Set(),cli:new Set(),prod:new Set()};
 
@@ -241,6 +242,19 @@ const F={anos:new Set(ANOS.map((_,i)=>i)),vend:new Set(),fil:new Set(),cat:new S
 const CATS=[...new Set(PROD.map(p=>p.cat))].sort();
 const CATI=PROD.map(p=>CATS.indexOf(p.cat));
 const PESO=PROD.map(p=>p.peso||0);
+const PESO_POR_COD=new Map(PROD.map(p=>[p.cod,p.peso||0]));
+
+// arredonda uma quantidade sugerida (em unidades/sacos) pro multiplo mais
+// proximo que fecha "batidas" de ~1000kg -- ex.: saco de 30kg -> base de 33
+// sacos (990kg, ~1 batida); 2 batidas = 66 sacos, e assim por diante. Produto
+// sem peso cadastrado (frete, servico, etc.) fica sem arredondamento.
+function arredondaBatida_(qtdMedia,prodCod){
+  const peso=PESO_POR_COD.get(prodCod)||0;
+  if(!peso||!qtdMedia) return Math.round((qtdMedia||0)*100)/100;
+  const base=Math.max(1,Math.round(1000/peso));
+  const batidas=Math.max(1,Math.round(qtdMedia/base));
+  return base*batidas;
+}
 
 function nf(v,d){return (v||0).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});}
 function abbr(v){const a=Math.abs(v);
@@ -690,6 +704,222 @@ function renderPedidosCliente(el,cod){
   }).join('')+'</div>';
 }
 
+/* ---------- gerador de pedido (sugestao editavel, baseada nos ultimos 5 pedidos) ---------- */
+function sugestaoInicial_(cod){
+  const PD=window.PEDIDOS_DATA;
+  const todos=(PD&&PD.pedidos&&PD.pedidos[cod])||[];
+  const ultimos=todos.slice(0,5); // a lista ja vem ordenada do mais recente pro mais antigo
+  const porProd=new Map(); // chave -> {cod,nome,vezes,totalQtd,ultimoValor,ultimaData}
+  ultimos.forEach(p=>{(p.prod||[]).forEach(pr=>{
+    const k=pr.cod||pr.nome;
+    const vu=pr.vu!=null?pr.vu:(pr.qtd?pr.valor/pr.qtd:0);
+    let cur=porProd.get(k);
+    if(!cur){
+      // primeira vez que aparece == pedido mais recente em que o produto foi
+      // comprado (a lista ja vem do mais recente pro mais antigo) -- por
+      // isso o valor unitario sugerido e sempre o ultimo preco de venda, nunca a media.
+      cur={cod:pr.cod,nome:pr.nome,vezes:0,totalQtd:0,ultimoValor:vu,ultimaData:p.data};
+      porProd.set(k,cur);
+    }
+    cur.vezes+=1; cur.totalQtd+=(pr.qtd||0);
+    if(p.data>cur.ultimaData) cur.ultimaData=p.data;
+  });});
+  const itens=[...porProd.values()].sort((a,b)=>b.vezes-a.vezes||b.totalQtd-a.totalQtd)
+    .map(d=>({cod:d.cod,nome:d.nome,qtd:arredondaBatida_(d.totalQtd/d.vezes,d.cod),valor:d.ultimoValor}));
+  const prazo=(ultimos.length&&ultimos[0].prazo)||'';
+  const maisRecente=ultimos[0];
+  const vendCod=maisRecente&&maisRecente.vend;
+  const vendedorNome=(vendCod&&PD.vend&&PD.vend[vendCod])||vendCod||'';
+  // propriedades cadastradas do cliente (todas, nao so as ja usadas em pedidos) --
+  // seleciona por padrao a que foi usada no pedido mais recente, senao a primeira.
+  const propriedades=(PD.prop&&PD.prop[cod])||[];
+  const subUltimo=(maisRecente&&maisRecente.subag)||{};
+  let propSel=propriedades.find(p=>p.cod===subUltimo.cod) || propriedades[0] || subUltimo || {};
+  return {cliCod:cod,itens:itens,prazo:prazo,dataEntrega:'',numPedidosBase:ultimos.length,
+    vendedorNome:vendedorNome,propriedades:propriedades,propSelCod:propSel.cod||'',
+    subagNome:propSel.nome||'',subagCpf:propSel.cpf||'',subagIe:propSel.ie||'',subagEnd:propSel.end||''};
+}
+
+function ultimoValorProduto_(cod,prodCod){
+  const PD=window.PEDIDOS_DATA;
+  const todos=(PD&&PD.pedidos&&PD.pedidos[cod])||[];
+  for(const p of todos){for(const pr of (p.prod||[])){
+    if(pr.cod===prodCod) return pr.vu!=null?pr.vu:(pr.qtd?pr.valor/pr.qtd:0);
+  }}
+  return 0;
+}
+
+function renderGeradorPedido(el,cod,nomeCli){
+  if(!PEDIDO_ATUAL||PEDIDO_ATUAL.cliCod!==cod) PEDIDO_ATUAL=sugestaoInicial_(cod);
+  desenhaGeradorPedido_(el,cod,nomeCli);
+}
+
+function desenhaGeradorPedido_(el,cod,nomeCli){
+  const P=PEDIDO_ATUAL;
+  const total=P.itens.reduce((s,it)=>s+it.qtd*it.valor,0);
+  const linhasHtml=P.itens.length?P.itens.map((it,i)=>
+    '<tr><td class="l">'+codTag(it.cod)+it.nome+'</td>'
+    +'<td><input type="number" step="0.01" min="0" data-i="'+i+'" data-f="qtd" value="'+it.qtd+'" style="width:72px;padding:4px 6px;border:1px solid var(--line);border-radius:5px;text-align:right;font:inherit;"></td>'
+    +'<td><input type="number" step="0.01" min="0" data-i="'+i+'" data-f="valor" value="'+it.valor+'" style="width:84px;padding:4px 6px;border:1px solid var(--line);border-radius:5px;text-align:right;font:inherit;"></td>'
+    +'<td>R$ '+nf(it.qtd*it.valor,2)+'</td>'
+    +'<td><button data-rm="'+i+'" class="linkbtn" style="color:var(--danger);">remover</button></td></tr>'
+  ).join('') : '<tr><td colspan="5" class="muted">Nenhum item ainda — busque um produto abaixo para adicionar.</td></tr>';
+  el.innerHTML =
+    '<p class="csub">'+(P.numPedidosBase?'Baseado nos últimos '+P.numPedidosBase+' pedidos deste cliente. ':'')
+      +'Edite quantidade, valor e prazo, adicione produtos, e gere o texto ou a impressão.</p>'
+    +'<table><thead><tr><th class="l">Produto</th><th>Qtd.</th><th>Valor Unit.</th><th>Subtotal</th><th></th></tr></thead>'
+    +'<tbody>'+linhasHtml+'</tbody></table>'
+    +'<div style="position:relative;margin-top:10px;max-width:380px;">'
+      +'<input id="ped-add-busca" type="text" placeholder="Adicionar produto…" autocomplete="off" style="width:100%;padding:8px 11px;border:1.5px solid var(--line);border-radius:8px;font:inherit;font-size:.85rem;box-sizing:border-box;">'
+      +'<div id="ped-add-pop" style="display:none;position:absolute;z-index:40;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1.5px solid var(--verde);border-radius:8px;max-height:230px;overflow:auto;box-shadow:0 8px 22px rgba(0,0,0,.15);"></div>'
+    +'</div>'
+    +'<div class="f-row" style="margin-top:12px;">'
+      +'<span class="f-lab">Prazo</span>'
+      +'<input id="ped-prazo" type="text" value="'+(P.prazo||'')+'" placeholder="ex.: 30 dias" style="padding:8px 11px;border:1.5px solid var(--line);border-radius:8px;font:inherit;font-size:.85rem;min-width:200px;">'
+      +'<span class="f-lab">Entrega prevista</span>'
+      +'<input id="ped-entrega" type="date" value="'+(P.dataEntrega||'')+'" style="padding:8px 11px;border:1.5px solid var(--line);border-radius:8px;font:inherit;font-size:.85rem;">'
+    +'</div>'
+    +'<div class="f-row" style="margin-top:9px;">'
+      +'<span class="f-lab">Vendedor</span>'
+      +'<input id="ped-vendedor" type="text" value="'+(P.vendedorNome||'')+'" placeholder="nome do vendedor" style="padding:8px 11px;border:1.5px solid var(--line);border-radius:8px;font:inherit;font-size:.85rem;min-width:220px;">'
+    +'</div>'
+    +(P.propriedades&&P.propriedades.length>1?
+      '<div class="f-row" style="margin-top:9px;">'
+        +'<span class="f-lab">Propriedade</span>'
+        +'<select id="ped-propriedade" style="padding:8px 11px;border:1.5px solid var(--line);border-radius:8px;font:inherit;font-size:.85rem;min-width:260px;">'
+          +P.propriedades.map(pr=>'<option value="'+pr.cod+'"'+(pr.cod===P.propSelCod?' selected':'')+'>'+pr.nome+(pr.end?' — '+pr.end:'')+'</option>').join('')
+        +'</select>'
+      +'</div>' : '')
+    +'<div class="f-row" style="margin-top:9px;flex-wrap:wrap;">'
+      +'<span class="f-lab">Subagente</span>'
+      +'<input id="ped-subag-nome" type="text" value="'+(P.subagNome||'')+'" placeholder="nome / propriedade" style="padding:8px 11px;border:1.5px solid var(--line);border-radius:8px;font:inherit;font-size:.85rem;min-width:220px;">'
+      +'<input id="ped-subag-cpf" type="text" value="'+(P.subagCpf||'')+'" placeholder="CPF/CNPJ" style="padding:8px 11px;border:1.5px solid var(--line);border-radius:8px;font:inherit;font-size:.85rem;width:150px;">'
+      +'<input id="ped-subag-ie" type="text" value="'+(P.subagIe||'')+'" placeholder="Inscrição Estadual" style="padding:8px 11px;border:1.5px solid var(--line);border-radius:8px;font:inherit;font-size:.85rem;width:150px;">'
+    +'</div>'
+    +'<div class="f-row" style="margin-top:9px;">'
+      +'<span class="f-lab">Endereço</span>'
+      +'<input id="ped-subag-end" type="text" value="'+(P.subagEnd||'')+'" placeholder="endereço do subagente/propriedade" style="padding:8px 11px;border:1.5px solid var(--line);border-radius:8px;font:inherit;font-size:.85rem;flex:1;min-width:260px;">'
+    +'</div>'
+    +'<div style="margin-top:13px;font-weight:700;font-size:1.06rem;color:var(--azul-esc);">Total: R$ '+nf(total,2)+'</div>'
+    +'<div style="margin-top:11px;display:flex;gap:8px;flex-wrap:wrap;">'
+      +'<button id="ped-copiar" class="voltar">Copiar texto (WhatsApp)</button>'
+      +'<button id="ped-imprimir" class="voltar">Gerar impressão / PDF</button>'
+    +'</div>'
+    +'<div id="ped-msg" style="font-size:.8rem;color:var(--verde);margin-top:6px;"></div>';
+
+  el.querySelectorAll('input[data-i]').forEach(inp=>{
+    inp.addEventListener('change',()=>{
+      const i=+inp.dataset.i, f=inp.dataset.f;
+      P.itens[i][f]=parseFloat(inp.value)||0;
+      desenhaGeradorPedido_(el,cod,nomeCli);
+    });
+  });
+  el.querySelectorAll('button[data-rm]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      P.itens.splice(+btn.dataset.rm,1);
+      desenhaGeradorPedido_(el,cod,nomeCli);
+    });
+  });
+  el.querySelector('#ped-prazo').addEventListener('change',e=>{P.prazo=e.target.value;});
+  el.querySelector('#ped-entrega').addEventListener('change',e=>{P.dataEntrega=e.target.value;});
+  el.querySelector('#ped-vendedor').addEventListener('change',e=>{P.vendedorNome=e.target.value;});
+  el.querySelector('#ped-subag-nome').addEventListener('change',e=>{P.subagNome=e.target.value;});
+  el.querySelector('#ped-subag-cpf').addEventListener('change',e=>{P.subagCpf=e.target.value;});
+  el.querySelector('#ped-subag-ie').addEventListener('change',e=>{P.subagIe=e.target.value;});
+  el.querySelector('#ped-subag-end').addEventListener('change',e=>{P.subagEnd=e.target.value;});
+  const selProp=el.querySelector('#ped-propriedade');
+  if(selProp) selProp.addEventListener('change',e=>{
+    const pr=P.propriedades.find(p=>p.cod===e.target.value);
+    if(pr){P.propSelCod=pr.cod;P.subagNome=pr.nome||'';P.subagCpf=pr.cpf||'';P.subagIe=pr.ie||'';P.subagEnd=pr.end||'';}
+    desenhaGeradorPedido_(el,cod,nomeCli);
+  });
+
+  const busca=el.querySelector('#ped-add-busca'), pop=el.querySelector('#ped-add-pop');
+  busca.addEventListener('input',()=>{
+    const q=busca.value.trim().toLowerCase();
+    if(!q){pop.style.display='none';pop.innerHTML='';return;}
+    const jaTem=new Set(P.itens.map(it=>it.cod));
+    const matches=PROD.filter(p=>!jaTem.has(p.cod)&&(p.nome.toLowerCase().includes(q)||(p.cod||'').includes(q))).slice(0,8);
+    if(!matches.length){pop.style.display='block';pop.innerHTML='<div class="sel-op muted">nenhum produto encontrado</div>';return;}
+    pop.innerHTML=matches.map(p=>'<div class="sel-op" data-add="'+p.cod+'">'+p.nome+' <span class="v">'+p.cod+'</span></div>').join('');
+    pop.style.display='block';
+    pop.querySelectorAll('[data-add]').forEach(opt=>{
+      opt.addEventListener('click',()=>{
+        const p=PROD.find(pp=>pp.cod===opt.dataset.add);
+        if(p) P.itens.push({cod:p.cod,nome:p.nome,qtd:arredondaBatida_(1,p.cod),valor:ultimoValorProduto_(cod,p.cod)});
+        busca.value='';pop.style.display='none';pop.innerHTML='';
+        desenhaGeradorPedido_(el,cod,nomeCli);
+      });
+    });
+  });
+  document.addEventListener('click',function fechaPop(ev){
+    if(!pop.contains(ev.target)&&ev.target!==busca){pop.style.display='none';}
+  },{once:true});
+
+  el.querySelector('#ped-copiar').addEventListener('click',()=>{
+    const linhas=P.itens.map(it=>'• ['+(it.cod||'s/cód.')+'] '+it.nome+' — '+nf(it.qtd,2)+' un × R$ '+nf(it.valor,2)+' = R$ '+nf(it.qtd*it.valor,2)).join('\n');
+    const txt='*Pedido — Rural Nutrição Animal*\n'
+      +'Cliente: '+nomeCli+'\n'
+      +(P.vendedorNome?'Vendedor: '+P.vendedorNome+'\n':'')
+      +'Data: '+new Date().toLocaleDateString('pt-BR')+'\n'
+      +(P.subagNome?'Subagente: '+P.subagNome+(P.subagCpf?' — CPF/CNPJ '+P.subagCpf:'')+(P.subagIe?' — IE '+P.subagIe:'')+'\n':'')
+      +(P.subagEnd?'Endereço: '+P.subagEnd+'\n':'')
+      +'\n'+linhas+'\n\n'
+      +'*Total: R$ '+nf(total,2)+'*'
+      +(P.prazo?'\nPrazo: '+P.prazo:'')
+      +(P.dataEntrega?'\nEntrega prevista: '+new Date(P.dataEntrega+'T00:00:00').toLocaleDateString('pt-BR'):'');
+    navigator.clipboard.writeText(txt).then(()=>{
+      document.getElementById('ped-msg').textContent='Texto copiado — já pode colar no WhatsApp.';
+    }).catch(()=>{
+      document.getElementById('ped-msg').textContent='Não consegui copiar automaticamente — selecione e copie manualmente.';
+    });
+  });
+
+  el.querySelector('#ped-imprimir').addEventListener('click',()=>{
+    const linhasHtmlImp=P.itens.map(it=>'<tr><td>'+(it.cod||'—')+'</td><td>'+it.nome+'</td><td style="text-align:right">'+nf(it.qtd,2)+'</td>'
+      +'<td style="text-align:right">R$ '+nf(it.valor,2)+'</td><td style="text-align:right">R$ '+nf(it.qtd*it.valor,2)+'</td></tr>').join('');
+    const logoImg=document.querySelector('.brand img');
+    const logoSrc=logoImg?logoImg.src:'';
+    const html='<!doctype html><html><head><meta charset="utf-8"><title>Pedido — '+nomeCli+'</title>'
+      +'<style>'
+      +':root{--azul:#2463AA;--ouro:#FECA39;--azul-esc:#1B3A63;}'
+      +'body{font-family:Arial,sans-serif;padding:0;margin:0;color:#1E2430;}'
+      +'.folha{padding:26px 34px 34px;}'
+      +'.cab{display:flex;align-items:center;gap:16px;border-bottom:3px solid var(--azul);padding-bottom:14px;margin-bottom:18px;}'
+      +'.cab img{height:52px;width:auto;}'
+      +'.cab h1{font-size:1.28rem;margin:0;color:var(--azul-esc);}'
+      +'.cab .sub{font-size:.8rem;color:#5B6472;margin-top:2px;}'
+      +'.info div{margin-bottom:3px;font-size:.92rem;}'
+      +'.info b{color:var(--azul-esc);}'
+      +'table{width:100%;border-collapse:collapse;margin-top:18px;}'
+      +'th,td{padding:8px 9px;border-bottom:1px solid #E2E6EC;font-size:.92rem;}'
+      +'th{text-align:left;background:var(--azul);color:#fff;font-size:.78rem;text-transform:uppercase;letter-spacing:.03em;}'
+      +'.tot{margin-top:16px;font-size:1.15rem;font-weight:700;color:var(--azul-esc);text-align:right;}'
+      +'@media print{.folha{padding:10px 6px;}}'
+      +'</style></head><body><div class="folha">'
+      +'<div class="cab">'+(logoSrc?'<img src="'+logoSrc+'">':'')
+        +'<div><h1>Pedido — Rural Nutrição Animal</h1><div class="sub">Gerado em '+new Date().toLocaleString('pt-BR')+'</div></div>'
+      +'</div>'
+      +'<div class="info">'
+      +'<div>Cliente: <b>'+nomeCli+'</b></div>'
+      +(P.vendedorNome?'<div>Vendedor: <b>'+P.vendedorNome+'</b></div>':'')
+      +'<div>Data: <b>'+new Date().toLocaleDateString('pt-BR')+'</b></div>'
+      +(P.subagNome?'<div>Subagente: <b>'+P.subagNome+'</b>'+(P.subagCpf?' — CPF/CNPJ '+P.subagCpf:'')+(P.subagIe?' — IE '+P.subagIe:'')+'</div>':'')
+      +(P.subagEnd?'<div>Endereço: '+P.subagEnd+'</div>':'')
+      +(P.prazo?'<div>Prazo de pagamento: <b>'+P.prazo+'</b></div>':'')
+      +(P.dataEntrega?'<div>Entrega prevista: <b>'+new Date(P.dataEntrega+'T00:00:00').toLocaleDateString('pt-BR')+'</b></div>':'')
+      +'</div>'
+      +'<table><thead><tr><th>Código</th><th>Produto</th><th style="text-align:right">Qtd.</th><th style="text-align:right">Valor Unit.</th><th style="text-align:right">Subtotal</th></tr></thead>'
+      +'<tbody>'+linhasHtmlImp+'</tbody></table>'
+      +'<div class="tot">Total: R$ '+nf(total,2)+'</div>'
+      +'</div></body></html>';
+    const w=window.open('','_blank');
+    if(!w){document.getElementById('ped-msg').textContent='O navegador bloqueou a janela de impressão — permita pop-ups para este site.';return;}
+    w.document.write(html);w.document.close();
+    setTimeout(()=>w.print(),300);
+  });
+}
+
 /* ---------- fichas (drill-down) ---------- */
 function fichaCliente(ci){
   const lista=listaOrdenada(i=>CO.c[i],k=>CLI[k].nome,k=>CLI[k].cod);
@@ -726,9 +956,11 @@ function fichaCliente(ci){
   ${vends.length>1?`<div class="card"><h3>Vendedores que atenderam</h3>
     <p class="csub">Quando um cliente passa de um vendedor para outro, aparece aqui.</p><div id="fc3"></div></div>`:''}
   <div class="card"><h3>Detalhe por ano e produto</h3><div id="fc4"></div></div>
+  <div class="card"><h3>Sugestão de novo pedido</h3><div id="fc6"></div></div>
   <div class="card"><h3>Últimos pedidos</h3>
     <p class="csub">Pedidos mais recentes deste cliente (até 20), com produtos e prazo de pagamento.</p><div id="fc5"></div></div>`;
   sel.liga();
+  renderGeradorPedido(document.getElementById('fc6'),cod,nome);
   renderPedidosCliente(document.getElementById('fc5'),cod);
   lineChart(document.getElementById('fc1'),{labels:ANOS.map(String),
     series:[{nome:nome,cor:'#0F5298',vals:porA,corPonto:i=>F.anos.has(i)?'#0F5298':'#B9C0C9'}],h:240});
