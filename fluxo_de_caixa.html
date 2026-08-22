@@ -96,6 +96,8 @@
   .status-Pendente{background:#FCEFC7;color:#8A6A1F;}
   .status-Recebido{background:#DDF0E2;color:var(--green-mid);}
   .status-Antecipado{background:#DCE8F5;color:var(--real-blue);}
+  .status-Pago{background:#DDF0E2;color:var(--green-mid);}
+  .status-Parcial{background:#DCE8F5;color:var(--real-blue);}
   select.dup-status-select{border:1px solid var(--line);border-radius:6px;padding:3px 6px;font-family:inherit;font-size:0.78rem;}
 
   table.cf-table{width:100%;border-collapse:collapse;font-size:0.82rem;min-width:820px;}
@@ -348,11 +350,14 @@
 
   <div id="recebimentosView" style="display:none">
     <div class="card">
-      <h2>Lançar recebimento</h2>
+      <h2>Lançar recebimento de exportação</h2>
+      <p class="recebimentos-note" style="margin-top:-6px;margin-bottom:10px;">Informe o valor em dólar e a cotação do dia — o valor em reais é calculado automaticamente (Valor US$ × Cotação).</p>
       <div class="add-row">
         <input type="text" name="rec-day" placeholder="dd/mm">
         <select name="rec-unit"><option value="Rural">Matriz (Rural)</option><option value="RNA">Filial (RNA)</option></select>
-        <input type="number" name="rec-valor" placeholder="Valor recebido" step="0.01">
+        <input type="number" name="rec-usd" placeholder="Valor em US$" step="0.01">
+        <input type="number" name="rec-cotacao" placeholder="Cotação (R$/US$)" step="0.0001">
+        <span id="recPreviewBRL" class="pill" style="align-self:center;">= R$ 0,00</span>
         <input type="text" name="rec-obs" placeholder="Observação (opcional)" style="flex:1;min-width:160px;">
         <button class="btn-primary" id="addRecebBtn">+ Lançar</button>
       </div>
@@ -397,6 +402,62 @@
     </div>
 
     <div id="duplicatasWeeks"></div>
+  </div>
+
+  <div id="obrigacoesFullView" style="display:none">
+    <div class="card">
+      <h2>Todas as obrigações (contas a pagar)</h2>
+      <p class="recebimentos-note" style="margin-top:-6px;margin-bottom:10px;">Lista completa, sem agrupar por semana — inclui previstas, pagas e pendentes. Vista separada, não entra nos cálculos de necessidade de caixa.</p>
+      <div class="add-row" style="margin-bottom:10px;">
+        <input type="text" id="obrFullSearch" placeholder="Buscar por item/fornecedor..." style="flex:1;min-width:200px;">
+        <select id="obrFullUnit">
+          <option value="Comparar">Todas as unidades</option>
+          <option value="Rural">Matriz (Rural)</option>
+          <option value="RNA">Filial (RNA)</option>
+        </select>
+        <select id="obrFullStatus">
+          <option value="">Todos os status</option>
+          <option value="Pendente">Pendente</option>
+          <option value="Parcial">Parcial</option>
+          <option value="Pago">Pago</option>
+        </select>
+      </div>
+      <div id="obrigacoesFullKpi" class="rec-summary-row" style="margin-bottom:10px;"></div>
+      <div style="overflow-x:auto;">
+        <table class="rec-table" id="obrigacoesFullTable">
+          <thead><tr><th>Vencimento</th><th>Semana</th><th>Unidade</th><th>Categoria</th><th>Item</th><th style="text-align:right">Previsto</th><th style="text-align:right">Real</th><th>Status</th></tr></thead>
+          <tbody id="obrigacoesFullBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="duplicatasFullView" style="display:none">
+    <div class="card">
+      <h2>Todas as duplicatas a receber</h2>
+      <p class="recebimentos-note" style="margin-top:-6px;margin-bottom:10px;">Lista completa, sem agrupar por semana — inclui pendentes, recebidas e antecipadas. Vista separada, não entra nos cálculos de necessidade de caixa.</p>
+      <div class="add-row" style="margin-bottom:10px;">
+        <input type="text" id="dupFullSearch" placeholder="Buscar por cliente/sacado..." style="flex:1;min-width:200px;">
+        <select id="dupFullUnit">
+          <option value="Comparar">Todas as unidades</option>
+          <option value="Rural">Matriz (Rural)</option>
+          <option value="RNA">Filial (RNA)</option>
+        </select>
+        <select id="dupFullStatus">
+          <option value="">Todos os status</option>
+          <option value="Pendente">Pendente</option>
+          <option value="Recebido">Recebido</option>
+          <option value="Antecipado">Antecipado</option>
+        </select>
+      </div>
+      <div id="duplicatasFullKpi" class="rec-summary-row" style="margin-bottom:10px;"></div>
+      <div style="overflow-x:auto;">
+        <table class="rec-table" id="duplicatasFullTable">
+          <thead><tr><th>Vencimento</th><th>Unidade</th><th>Cliente / Sacado</th><th style="text-align:right">Valor</th><th>Status</th></tr></thead>
+          <tbody id="duplicatasFullBody"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <div id="custoFinanceiroView" style="display:none">
@@ -633,7 +694,7 @@ async function syncStateToSheet(){
     jobs.push(postToSheet('addAntecipacao', { id: a.id, day: a.day, unit: a.unit, banco: a.banco, bruto: a.bruto, juros: a.juros, iof: a.iof, tarifa: a.tarifa, liquido: a.liquido }));
   });
   (state.recebimentosReais||[]).forEach(r=>{
-    jobs.push(postToSheet('addRecebimentoReal', { id: r.id, day: r.day, week: r.week, unit: r.unit, cliente: r.cliente, valor: r.valor, status: r.status }));
+    jobs.push(postToSheet('addRecebimentoReal', { id: r.id, day: r.day, week: r.week, unit: r.unit, cliente: r.cliente, valor: r.valor, status: r.status, valor_usd: r.valor_usd, cotacao: r.cotacao, obs: r.obs }));
   });
   await Promise.all(jobs);
 }
@@ -1454,6 +1515,11 @@ function weekKeyFromDay(dayStr){
 function rowId(prefix){ return prefix + '_' + Math.random().toString(36).slice(2,9); }
 
 function renderRecebimentosView(){
+  const cotEl = document.querySelector('input[name=rec-cotacao]');
+  if(cotEl && !cotEl.value && state.ultimaCotacaoExportacao){
+    cotEl.value = state.ultimaCotacaoExportacao;
+    updateRecPreview();
+  }
   const container = document.getElementById('recebimentosWeeks');
   container.innerHTML = '';
 
@@ -1498,11 +1564,13 @@ function renderRecebimentosView(){
       </div>`;
     const table = document.createElement('table');
     table.className = 'rec-table';
-    table.innerHTML = `<thead><tr><th>Data</th><th>Unidade</th><th style="text-align:right">Valor</th><th>Observação</th><th></th></tr></thead>`;
+    table.innerHTML = `<thead><tr><th>Data</th><th>Unidade</th><th style="text-align:right">Valor US$</th><th style="text-align:right">Cotação</th><th style="text-align:right">Valor R$</th><th>Observação</th><th></th></tr></thead>`;
     const tbody = document.createElement('tbody');
     items.forEach(item=>{
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${item.day}</td><td>${UNIT_LABEL[item.unit]||item.unit}</td><td class="num">R$ ${fmt(item.valor)}</td><td>${item.obs||''}</td>`;
+      const usdCell = (item.valor_usd!=null && item.valor_usd!=='') ? ('US$ ' + fmt(item.valor_usd)) : '—';
+      const cotCell = (item.cotacao!=null && item.cotacao!=='') ? num(item.cotacao).toFixed(4) : '—';
+      tr.innerHTML = `<td>${item.day}</td><td>${UNIT_LABEL[item.unit]||item.unit}</td><td class="num">${usdCell}</td><td class="num">${cotCell}</td><td class="num">R$ ${fmt(item.valor)}</td><td>${item.obs||''}</td>`;
       const tdDel = document.createElement('td');
       const delBtn = document.createElement('button');
       delBtn.className = 'rec-del'; delBtn.textContent = '✕';
@@ -1674,6 +1742,109 @@ function renderDuplicatasView(){
     body.appendChild(table);
     group.appendChild(body);
     container.appendChild(group);
+  });
+}
+
+function obrigacaoStatus(r){
+  const previsto = num(r.previsto), real = num(r.real);
+  if(!real) return 'Pendente';
+  if(real >= previsto - 0.01) return 'Pago';
+  return 'Parcial';
+}
+
+function renderObrigacoesFullView(){
+  const search = (document.getElementById('obrFullSearch').value || '').toLowerCase();
+  const unitFilter = document.getElementById('obrFullUnit').value;
+  const statusFilter = document.getElementById('obrFullStatus').value;
+  document.getElementById('obrFullSearch').oninput = renderObrigacoesFullView;
+  document.getElementById('obrFullUnit').onchange = renderObrigacoesFullView;
+  document.getElementById('obrFullStatus').onchange = renderObrigacoesFullView;
+
+  let items = state.records.filter(r=>{
+    if(unitFilter!=='Comparar' && r.unit!==unitFilter) return false;
+    if(search && !(r.item||'').toLowerCase().includes(search)) return false;
+    if(statusFilter && obrigacaoStatus(r)!==statusFilter) return false;
+    return true;
+  });
+  items = items.slice().sort((a,b)=>{
+    const da = (a.day||'').split('/').reverse().join(''), db = (b.day||'').split('/').reverse().join('');
+    return da.localeCompare(db);
+  });
+
+  const totalPrevisto = items.reduce((s,i)=>s+num(i.previsto),0);
+  const totalReal = items.reduce((s,i)=>s+num(i.real),0);
+  const kpi = document.getElementById('obrigacoesFullKpi');
+  kpi.innerHTML = `
+    <span class="pill">${items.length} lançamento(s)</span>
+    <span class="pill">Previsto: <b>R$ ${fmt(totalPrevisto)}</b></span>
+    <span class="pill">Real (pago): <b>R$ ${fmt(totalReal)}</b></span>
+    <span class="pill">Saldo aberto: <b>R$ ${fmt(totalPrevisto-totalReal)}</b></span>`;
+
+  const tbody = document.getElementById('obrigacoesFullBody');
+  tbody.innerHTML = '';
+  if(items.length===0){
+    tbody.innerHTML = '<tr><td colspan="8" style="color:var(--ink-soft);">Nenhuma obrigação encontrada.</td></tr>';
+    return;
+  }
+  items.forEach(r=>{
+    const st = obrigacaoStatus(r);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${r.day||''}</td>
+      <td>${weekLabel(r.week)}</td>
+      <td>${UNIT_LABEL[r.unit]||r.unit}</td>
+      <td>${r.category||''}</td>
+      <td>${r.item||''}</td>
+      <td class="num">R$ ${fmt(r.previsto)}</td>
+      <td class="num">R$ ${r.real!=null && r.real!=='' ? fmt(r.real) : '-'}</td>
+      <td><span class="status-badge status-${st}">${st}</span></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderDuplicatasFullView(){
+  const search = (document.getElementById('dupFullSearch').value || '').toLowerCase();
+  const unitFilter = document.getElementById('dupFullUnit').value;
+  const statusFilter = document.getElementById('dupFullStatus').value;
+  document.getElementById('dupFullSearch').oninput = renderDuplicatasFullView;
+  document.getElementById('dupFullUnit').onchange = renderDuplicatasFullView;
+  document.getElementById('dupFullStatus').onchange = renderDuplicatasFullView;
+
+  let items = state.duplicatasReceber.filter(r=>{
+    if(unitFilter!=='Comparar' && r.unit!==unitFilter) return false;
+    if(search && !(r.cliente||'').toLowerCase().includes(search)) return false;
+    if(statusFilter && r.status!==statusFilter) return false;
+    return true;
+  });
+  items = items.slice().sort((a,b)=>{
+    const da = (a.day||'').split('/').reverse().join(''), db = (b.day||'').split('/').reverse().join('');
+    return da.localeCompare(db);
+  });
+
+  const byStatus = {Pendente:0, Recebido:0, Antecipado:0};
+  items.forEach(i=>{ byStatus[i.status] = (byStatus[i.status]||0) + num(i.valor); });
+  const kpi = document.getElementById('duplicatasFullKpi');
+  kpi.innerHTML = `
+    <span class="pill">${items.length} duplicata(s)</span>
+    <span class="pill">Pendente: <b>R$ ${fmt(byStatus.Pendente)}</b></span>
+    <span class="pill">Recebido: <b>R$ ${fmt(byStatus.Recebido)}</b></span>
+    <span class="pill">Antecipado: <b>R$ ${fmt(byStatus.Antecipado)}</b></span>`;
+
+  const tbody = document.getElementById('duplicatasFullBody');
+  tbody.innerHTML = '';
+  if(items.length===0){
+    tbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-soft);">Nenhuma duplicata encontrada.</td></tr>';
+    return;
+  }
+  items.forEach(r=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${r.day||''}</td>
+      <td>${UNIT_LABEL[r.unit]||r.unit}</td>
+      <td>${r.cliente||''}</td>
+      <td class="num">R$ ${fmt(r.valor)}</td>
+      <td><span class="status-badge status-${r.status}">${r.status}</span></td>`;
+    tbody.appendChild(tr);
   });
 }
 
@@ -2155,7 +2326,7 @@ function addHistSaldo(){
 function renderModeToggle(){
   const el = document.getElementById('modeToggle');
   el.innerHTML = '';
-  [['semanal','Visão por semana'],['mensal','Resumo mensal'],['recebimentos','Recebimentos'],['antecipacoes','Antecipações'],['duplicatas','Duplicatas a Receber'],['custofinanceiro','Custo Financeiro'],['conciliacao','Conciliação']].forEach(([val,label])=>{
+  [['semanal','Visão por semana'],['mensal','Resumo mensal'],['recebimentos','Exportações'],['antecipacoes','Antecipações'],['duplicatas','Duplicatas a Receber'],['custofinanceiro','Custo Financeiro'],['conciliacao','Conciliação'],['obrigacoes_full','Obrigações (todas)'],['duplicatas_full','Duplicatas (todas)']].forEach(([val,label])=>{
     const b = document.createElement('button');
     b.className = 'mtab' + (val===currentMode?' active':'');
     b.textContent = label;
@@ -2356,9 +2527,19 @@ function renderAll(){
   document.getElementById('duplicatasView').style.display = currentMode==='duplicatas' ? '' : 'none';
   document.getElementById('custoFinanceiroView').style.display = currentMode==='custofinanceiro' ? '' : 'none';
   document.getElementById('conciliacaoView').style.display = currentMode==='conciliacao' ? '' : 'none';
+  document.getElementById('obrigacoesFullView').style.display = currentMode==='obrigacoes_full' ? '' : 'none';
+  document.getElementById('duplicatasFullView').style.display = currentMode==='duplicatas_full' ? '' : 'none';
 
   if(currentMode==='conciliacao'){
     renderConciliacao();
+    return;
+  }
+  if(currentMode==='obrigacoes_full'){
+    renderObrigacoesFullView();
+    return;
+  }
+  if(currentMode==='duplicatas_full'){
+    renderDuplicatasFullView();
     return;
   }
   if(currentMode==='mensal'){
@@ -2428,20 +2609,39 @@ document.getElementById('addBtn').addEventListener('click', ()=>{
   renderAll();
 });
 
+function updateRecPreview(){
+  const usdEl = document.querySelector('input[name=rec-usd]');
+  const cotEl = document.querySelector('input[name=rec-cotacao]');
+  const preview = document.getElementById('recPreviewBRL');
+  if(!usdEl || !cotEl || !preview) return;
+  const usd = parseFloat(usdEl.value) || 0;
+  const cot = parseFloat(cotEl.value) || 0;
+  preview.textContent = '= R$ ' + fmt(usd * cot);
+}
+document.querySelector('input[name=rec-usd]').addEventListener('input', updateRecPreview);
+document.querySelector('input[name=rec-cotacao]').addEventListener('input', updateRecPreview);
+
 document.getElementById('addRecebBtn').addEventListener('click', ()=>{
   const day = document.querySelector('input[name=rec-day]');
   const unit = document.querySelector('select[name=rec-unit]');
-  const valor = document.querySelector('input[name=rec-valor]');
+  const usd = document.querySelector('input[name=rec-usd]');
+  const cotacao = document.querySelector('input[name=rec-cotacao]');
   const obs = document.querySelector('input[name=rec-obs]');
-  if(!day.value.trim() || !valor.value) return;
+  if(!day.value.trim() || !usd.value || !cotacao.value) return;
+  const valorUsd = parseFloat(usd.value) || 0;
+  const cot = parseFloat(cotacao.value) || 0;
   state.recebimentosReais.push({
     id: rowId('receb'),
     day: day.value.trim(),
     unit: unit.value,
-    valor: parseFloat(valor.value)||0,
+    valor_usd: valorUsd,
+    cotacao: cot,
+    valor: valorUsd * cot,
     obs: obs.value.trim()
   });
-  day.value=''; valor.value=''; obs.value='';
+  state.ultimaCotacaoExportacao = cot;
+  day.value=''; usd.value=''; obs.value='';
+  updateRecPreview();
   saveState();
   renderAll();
 });
