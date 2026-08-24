@@ -233,7 +233,7 @@
         <p>Previsto x Real, por categoria, unidade e dia</p>
       </div>
     </div>
-    <div class="save-badge"><span class="dot"></span> salvo automaticamente · dados compartilhados com quem tiver este link</div>
+    <div class="save-badge" id="saveBadge"><span class="dot"></span> salvo automaticamente · dados compartilhados com quem tiver este link</div>
   </header>
 
   <div class="card bank-card">
@@ -653,7 +653,11 @@ async function fetchSheetData(){
   if(!SCRIPT_URL) return null;
   try{
     const ctrl = new AbortController();
-    const timeout = setTimeout(()=>ctrl.abort(), 10000);
+    // 10s era pouco: com a aba ConciliacaoAgrotis (1100+ linhas) o doGet() do
+    // Apps Script passou a demorar mais que isso pra responder, e o fetch era
+    // abortado antes de terminar (AbortError), fazendo o dashboard cair pros
+    // dados locais embutidos (obs.: 24/08/2026, saldos aparecendo como 10/08).
+    const timeout = setTimeout(()=>ctrl.abort(), 30000);
     const res = await fetch(SCRIPT_URL, { method:'GET', signal: ctrl.signal });
     clearTimeout(timeout);
     const data = await res.json();
@@ -2942,6 +2946,14 @@ document.getElementById('saveFloatBtn').addEventListener('click', async ()=>{
 (async ()=>{
   await loadState();
   renderAll();
+  // Aviso visível quando a busca na planilha falha (timeout, Apps Script fora
+  // do ar, etc.) -- antes disso o dashboard caía pros dados locais embutidos
+  // (retrato antigo) sem nenhum sinal na tela, só no console (F12).
+  const badge = document.getElementById('saveBadge');
+  if(badge && window.__sheetModeOk === false){
+    badge.innerHTML = '<span class="dot" style="background:var(--danger);"></span> não foi possível carregar a planilha agora — mostrando o último retrato salvo neste arquivo (pode estar desatualizado). Recarregue a página em alguns segundos.';
+    badge.style.color = 'var(--danger)';
+  }
 })();
 </script>
 </body>
