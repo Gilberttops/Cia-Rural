@@ -961,9 +961,13 @@ async function loadState(){
       state.nextId = state.records.length + 1;
       enforceAllFixedCategories();
       ensureBankAccounts();
-      if(state.__recebimentosFromSheet) state.recebimentos = state.__recebimentosFromSheet;
-      if(state.__recebimentosReaisFromSheet) state.recebimentosReais = state.__recebimentosReaisFromSheet;
-      if(state.__antecipacoesFromSheet) state.antecipacoesReais = state.__antecipacoesFromSheet;
+      // Usa sheetData diretamente (não state.__xFromSheet): o "state = {...}" logo
+      // acima troca o objeto e zera essas propriedades, então lê-las depois disso
+      // nunca funcionava -- os dados de recebimentos/antecipações/recebimentosReais
+      // da planilha nunca chegavam a sobrescrever o padrão local. Corrigido em 24/08/2026.
+      if(sheetData.recebimentos) state.recebimentos = sheetData.recebimentos;
+      if(Array.isArray(sheetData.recebimentosReais)) state.recebimentosReais = sheetData.recebimentosReais;
+      if(Array.isArray(sheetData.antecipacoes)) state.antecipacoesReais = sheetData.antecipacoes;
       window.__sheetModeOk = true;
       return;
     }
@@ -2849,9 +2853,14 @@ document.getElementById('addRecebBtn').addEventListener('click', ()=>{
   if(!day.value.trim() || !usd.value || !cotacao.value) return;
   const valorUsd = parseFloat(usd.value) || 0;
   const cot = parseFloat(cotacao.value) || 0;
+  const diaTrim = day.value.trim();
   state.recebimentosReais.push({
     id: rowId('receb'),
-    day: day.value.trim(),
+    day: diaTrim,
+    // Sem isso, o lançamento nunca entrava na Necessidade de Caixa da semana
+    // (recebimentosExportacaoPendentesForWeek filtra por r.week, não por r.day).
+    week: weekKeyFromDay(efetivoDiaStr(diaTrim)) || weekKeyFromDay(diaTrim),
+    status: 'Pendente',
     unit: unit.value,
     valor_usd: valorUsd,
     cotacao: cot,
