@@ -674,12 +674,14 @@ async function postToSheet(action, payload){
   try{
     const ctrl = new AbortController();
     const timeout = setTimeout(()=>ctrl.abort(), 10000);
-    const res = await fetch(SCRIPT_URL, {
-      method:'POST',
-      headers:{'Content-Type':'text/plain;charset=utf-8'}, // evita preflight CORS no Apps Script
-      body: JSON.stringify({ action, payload }),
-      signal: ctrl.signal,
-    });
+    // Apps Script: respostas de doPost() não recebem o cabeçalho
+    // Access-Control-Allow-Origin (só as de doGet(), que passam por um redirect
+    // que já inclui o header) — por isso POST sempre dava "Failed to fetch" por
+    // CORS mesmo o servidor respondendo 200. Solução: mandar a gravação como
+    // GET, com action/payload na query string (25/08/2026).
+    const url = SCRIPT_URL + '?action=' + encodeURIComponent(action) +
+      '&payload=' + encodeURIComponent(JSON.stringify(payload));
+    const res = await fetch(url, { method:'GET', signal: ctrl.signal });
     clearTimeout(timeout);
     return await res.json();
   }catch(e){
@@ -1044,7 +1046,7 @@ let WEEK_RANGES = {
   "Semana 27": "28/12 a 03/01/27",
 };
 function weekLabel(w){ return WEEK_RANGES[w] || w.replace(' - Julho',''); }
-function dayToSortKey(d){ const [dd,mm] = d.split('/').map(Number); return mm*100+dd; }
+function dayToSortKey(d){ const parts = d.split('/').map(Number); const dd=parts[0], mm=parts[1], yyyy=parts[2]||0; return yyyy*10000+mm*100+dd; }
 
 function parseWeekRange(rangeStr){
   const [startRaw, endRaw] = rangeStr.split(' a ').map(s=>s.trim());
@@ -1907,8 +1909,16 @@ function renderDuplicatasFullView(){
 function inferDate(dayStr){
   if(!dayStr) return null;
   const parts = dayStr.split('/').map(Number);
-  const dd = parts[0], mm = parts[1];
+  const dd = parts[0], mm = parts[1], yyyy = parts[2];
   if(!dd || !mm) return null;
+  // Formato correto dd/mm/aaaa (com ano explícito): usa o ano direto, sem adivinhar.
+  if(yyyy){
+    return new Date(yyyy < 100 ? 2000+yyyy : yyyy, mm-1, dd);
+  }
+  // Formato legado dd/mm (sem ano, ainda presente em linhas antigas da aba
+  // Duplicatas): tenta adivinhar pela proximidade da data de hoje. Isso é
+  // impreciso pra vencimentos distantes (>~7 meses) e deve ser eliminado
+  // conforme as linhas antigas forem corrigidas na planilha com o ano.
   const now = new Date();
   let year = now.getFullYear();
   let d = new Date(year, mm-1, dd);
@@ -1919,6 +1929,7 @@ function inferDate(dayStr){
 }
 function ymd(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function ddmm(d){ return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'); }
+function ddmmyyyy(d){ return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear(); }
 
 // Feriados nacionais (fixos + móveis via domingo de Páscoa). Não inclui feriados estaduais/municipais.
 const FERIADOS_FIXOS = [[1,1],[4,21],[5,1],[9,7],[10,12],[11,2],[11,15],[11,20],[12,25]];
@@ -1971,7 +1982,7 @@ function effectiveDate(dayStr){
 // usuário, 24/08/2026 — vale pra Obrigações e Duplicatas em todas as visões).
 function efetivoDiaStr(dayStr){
   const d = effectiveDate(dayStr);
-  return d ? ddmm(d) : (dayStr || null);
+  return d ? ddmmyyyy(d) : (dayStr || null);
 }
 // Semana efetiva de uma obrigação: usa o dia efetivo pra achar a semana certa
 // (pode empurrar pra semana seguinte se o vencimento original for sáb/dom no
@@ -1995,8 +2006,11 @@ function renderDiarioPagarTable(tbodyId, pagarList, destacarPendentes, bucketLab
     const statusTxt = obrigacaoStatus(r);
     const tr = document.createElement('tr');
     if(destacarPendentes && !conciliado) tr.style.background = '#FADBD8';
-    const desc = (r.day && r.day!==bucketLabel)
-      ? `${r.item||''} <span style="color:var(--ink-soft);font-size:0.85em;">(venceu ${r.day})</span>`
+    const rawDate = inferDate(r.day);
+    const effDate = effectiveDate(r.day);
+    const rolled = rawDate && effDate && ymd(rawDate) !== ymd(effDate);
+    const desc = rolled
+      ? `${r.item||''} <span style="color:var(--ink-soft);font-size:0.85em;">(venceu ${ddmmyyyy(rawDate)})</span>`
       : (r.item||'');
     tr.innerHTML = `
       <td>${UNIT_LABEL[r.unit]||r.unit}</td>
@@ -2019,8 +2033,11 @@ function renderDiarioReceberTable(tbodyId, receberList, destacarPendentes, bucke
     const conciliado = r.status!=='Pendente';
     const tr = document.createElement('tr');
     if(destacarPendentes && !conciliado) tr.style.background = '#FADBD8';
-    const desc = (r.day && r.day!==bucketLabel)
-      ? `${r.cliente||''} <span style="color:var(--ink-soft);font-size:0.85em;">(venceu ${r.day})</span>`
+    const rawDateR = inferDate(r.day);
+    const effDateR = effectiveDate(r.day);
+    const rolledR = rawDateR && effDateR && ymd(rawDateR) !== ymd(effDateR);
+    const desc = rolledR
+      ? `${r.cliente||''} <span style="color:var(--ink-soft);font-size:0.85em;">(venceu ${ddmmyyyy(rawDateR)})</span>`
       : (r.cliente||'');
     tr.innerHTML = `
       <td>${UNIT_LABEL[r.unit]||r.unit}</td>
@@ -2035,7 +2052,7 @@ function renderDiarioView(){
   const now = new Date(); now.setHours(0,0,0,0);
   const ontemRef = diaUtilAnterior(now);
   const hojeKey = ymd(now), ontemKey = ymd(ontemRef);
-  const hojeLabel = ddmm(now), ontemLabel = ddmm(ontemRef);
+  const hojeLabel = ddmmyyyy(now), ontemLabel = ddmmyyyy(ontemRef);
   document.getElementById('diarioHojeLabel').textContent = hojeLabel;
   document.getElementById('diarioOntemLabel').textContent = ontemLabel;
 
