@@ -649,18 +649,38 @@ let state = { records: [], nextId: 1, bankAccounts: null };
 // embutidos acima (SEED, DEFAULT_BANKS, etc.) e salvar só no navegador.
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxdTMAgzumVlIHS9Gl3AGTENHxr5er8hhZsFkc7wkqmIWcyHm2AbF02nlN1XcogTabe/exec";
 
+// Apps Script Web Apps (o /exec) não têm como devolver o cabeçalho
+// Access-Control-Allow-Origin nas respostas — testado direto (navegando pra URL,
+// que não passa por CORS) e confirmado: o backend funciona perfeitamente e devolve
+// os dados certos, só que fetch()/XHR de outra origem (gilberttops.github.io) é
+// sempre bloqueado pelo navegador antes mesmo de conseguir ler a resposta, tanto
+// em GET quanto em POST (25/08/2026). A solução real pra isso é JSONP: carregar a
+// resposta via uma tag <script>, que não é sujeita a CORS (só fetch/XHR são).
+let __jsonpSeq = 0;
+function jsonpRequest(url, timeoutMs){
+  return new Promise((resolve, reject)=>{
+    const cbName = '__fluxoCaixaCb' + (__jsonpSeq++) + '_' + Date.now();
+    const script = document.createElement('script');
+    const timer = setTimeout(()=>{ cleanup(); reject(new Error('JSONP timeout')); }, timeoutMs || 30000);
+    function cleanup(){
+      clearTimeout(timer);
+      delete window[cbName];
+      script.remove();
+    }
+    window[cbName] = (data)=>{ cleanup(); resolve(data); };
+    script.onerror = ()=>{ cleanup(); reject(new Error('JSONP script load error')); };
+    const sep = url.includes('?') ? '&' : '?';
+    script.src = url + sep + 'callback=' + cbName;
+    document.body.appendChild(script);
+  });
+}
+
 async function fetchSheetData(){
   if(!SCRIPT_URL) return null;
   try{
-    const ctrl = new AbortController();
-    // 10s era pouco: com a aba ConciliacaoAgrotis (1100+ linhas) o doGet() do
-    // Apps Script passou a demorar mais que isso pra responder, e o fetch era
-    // abortado antes de terminar (AbortError), fazendo o dashboard cair pros
-    // dados locais embutidos (obs.: 24/08/2026, saldos aparecendo como 10/08).
-    const timeout = setTimeout(()=>ctrl.abort(), 30000);
-    const res = await fetch(SCRIPT_URL, { method:'GET', signal: ctrl.signal });
-    clearTimeout(timeout);
-    const data = await res.json();
+    // Aba ConciliacaoAgrotis tem 1100+ linhas: doGet() pode demorar, por isso
+    // o timeout generoso (30s) em vez do padrão.
+    const data = await jsonpRequest(SCRIPT_URL, 30000);
     if(!data || !data.ok) return null;
     return data;
   }catch(e){
@@ -672,18 +692,9 @@ async function fetchSheetData(){
 async function postToSheet(action, payload){
   if(!SCRIPT_URL) return null;
   try{
-    const ctrl = new AbortController();
-    const timeout = setTimeout(()=>ctrl.abort(), 10000);
-    // Apps Script: respostas de doPost() não recebem o cabeçalho
-    // Access-Control-Allow-Origin (só as de doGet(), que passam por um redirect
-    // que já inclui o header) — por isso POST sempre dava "Failed to fetch" por
-    // CORS mesmo o servidor respondendo 200. Solução: mandar a gravação como
-    // GET, com action/payload na query string (25/08/2026).
     const url = SCRIPT_URL + '?action=' + encodeURIComponent(action) +
       '&payload=' + encodeURIComponent(JSON.stringify(payload));
-    const res = await fetch(url, { method:'GET', signal: ctrl.signal });
-    clearTimeout(timeout);
-    return await res.json();
+    return await jsonpRequest(url, 15000);
   }catch(e){
     console.error('Falha ao gravar na planilha:', action, e);
     return null;
