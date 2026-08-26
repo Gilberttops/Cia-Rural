@@ -324,7 +324,7 @@ table.pt-price-table td[contenteditable="true"]:focus{outline:2px solid var(--am
 #pt-export-view.visible{display:block}
 #pt-especial-view{display:none;flex:1;overflow-y:auto;padding:18px 26px 40px}
 #pt-especial-view.visible{display:block}
-.pt-esp2-row{display:grid;grid-template-columns:60px 2fr 100px 120px 120px 120px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px}
+.pt-esp2-row{display:grid;grid-template-columns:56px 2fr 85px 105px 105px 115px 30px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px}
 .pt-esp2-row input{padding:5px 7px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;width:100%}
 .pt-esp2-row input.alterado{border-color:var(--amber);background:var(--amb-lt);font-weight:700}
 .pt-exp-row{display:grid;grid-template-columns:2fr 1fr 1fr 32px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)}
@@ -1397,6 +1397,10 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
         <div class="f"><label>Peso do saco (kg)</label><input type="number" id="ep-peso" min="0.1" step="0.1"></div>
         <div class="f" style="flex:2"><label>Embalagem</label><select id="ep-emb"></select></div>
       </div>
+      <div class="nf-row">
+        <div class="f"><label>Peso real da embalagem física (kg) <span style="text-transform:none;font-weight:400;color:var(--t3)">— opcional</span></label><input type="number" id="ep-peso-real" min="0" step="0.1" placeholder="deixe em branco pra usar o peso do saco acima"></div>
+      </div>
+      <div style="font-size:11px;color:var(--t3);margin-top:-6px">Use isso quando "Peso do saco" for 1kg só pra referência de custo/quantidade (ex: núcleos), mas o produto é vendido/embalado de verdade num saco maior (ex: 30kg). Assim a embalagem é custeada certinha, sem multiplicar o custo do saco por 1.000 unidades.</div>
       <div id="ep-batida-aviso" style="display:none;margin-top:2px;padding:8px 10px;background:var(--amb-lt);border:1px solid var(--amb-bd);color:var(--amber);border-radius:8px;font-size:11.5px">⚠️ Alterando a batida, as quantidades de todos os ingredientes serão ajustadas proporcionalmente para manter a mesma composição (%) da fórmula.</div>
     </div>
     <div class="modal-footer">
@@ -1583,7 +1587,7 @@ let biblioteca=[
     {cod:'1784',nome:'RURAL ELITE TOUROS 18% - SC 30 KG',cat:'Ração',batida:1000,pesoSaco:30,_origem:'importado',emb:{custo:2.5,desc:'Emb. Rural Ração Valvulada'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:1149,qtd:0.6,bal:0},{cod:1210,qtd:70,bal:0},{cod:1263,qtd:100,bal:0},{cod:133,qtd:76,bal:0},{cod:321,qtd:140,bal:0},{cod:436,qtd:4,bal:0},{cod:518,qtd:0.15,bal:0},{cod:543,qtd:453.05,bal:0},{cod:570,qtd:26,bal:0},{cod:602,qtd:130,bal:0},{cod:790,qtd:0.2,bal:0}]},
     {cod:'1758',nome:'RURAL RAÇÃO ESPECIAL AG - 25 KG',cat:'Ração',batida:300,pesoSaco:25,_origem:'importado',emb:{custo:2.5,desc:'Emb. Rural Ração Valvulada'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:1149,qtd:0.045,bal:0},{cod:1263,qtd:36,bal:0},{cod:133,qtd:5.505,bal:0},{cod:154,qtd:54,bal:0},{cod:435,qtd:0.63,bal:0},{cod:436,qtd:0.18,bal:0},{cod:543,qtd:203.55,bal:0},{cod:790,qtd:0.09,bal:0}]},
     {cod:'1761',nome:'RURAL RAÇÃO DI GENIO 18% - sc 30 kg',cat:'Ração',batida:1000,pesoSaco:30,_origem:'importado',emb:{custo:2.5,desc:'Emb. Rural Ração Valvulada'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:1149,qtd:1.88,bal:0},{cod:1263,qtd:50,bal:0},{cod:133,qtd:18,bal:0},{cod:154,qtd:42,bal:0},{cod:1721,qtd:0.2,bal:0},{cod:1802,qtd:0.065,bal:0},{cod:435,qtd:1,bal:0},{cod:436,qtd:5,bal:0},{cod:543,qtd:857,bal:0},{cod:570,qtd:24,bal:0},{cod:721,qtd:0.1,bal:0},{cod:790,qtd:0.6,bal:0},{cod:878,qtd:0.14,bal:0}]},
-    {cod:'1762',nome:'NUCLEO RURAL RAÇÃO DI GENIO 18% - sc 30 kg',cat:'Ração',batida:100,pesoSaco:1,_origem:'importado',emb:{custo:2.5,desc:'Emb. Rural Ração Valvulada'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:1149,qtd:1.88,bal:0},{cod:1263,qtd:7,bal:0},{cod:133,qtd:18,bal:0},{cod:154,qtd:42,bal:0},{cod:1721,qtd:0.2,bal:0},{cod:1802,qtd:0.065,bal:0},{cod:435,qtd:1,bal:0},{cod:436,qtd:5,bal:0},{cod:570,qtd:24,bal:0},{cod:721,qtd:0.1,bal:0},{cod:790,qtd:0.6,bal:0},{cod:878,qtd:0.14,bal:0}]},
+    {cod:'1762',nome:'NUCLEO RURAL RAÇÃO DI GENIO 18% - sc 30 kg',cat:'Ração',batida:100,pesoSaco:1,_origem:'importado',emb:{custo:2.5,desc:'Emb. Rural Ração Valvulada',pesoReal:30},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:1149,qtd:1.88,bal:0},{cod:1263,qtd:7,bal:0},{cod:133,qtd:18,bal:0},{cod:154,qtd:42,bal:0},{cod:1721,qtd:0.2,bal:0},{cod:1802,qtd:0.065,bal:0},{cod:435,qtd:1,bal:0},{cod:436,qtd:5,bal:0},{cod:570,qtd:24,bal:0},{cod:721,qtd:0.1,bal:0},{cod:790,qtd:0.6,bal:0},{cod:878,qtd:0.14,bal:0}]},
     {cod:'936',nome:'Ração Rural Terminação MN - sc 30 kg',cat:'Ração',batida:1000,pesoSaco:30,_origem:'importado',emb:{custo:2.5,desc:'Emb. Rural Ração Valvulada'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:1149,qtd:1.5,bal:0},{cod:1210,qtd:100,bal:0},{cod:1263,qtd:48,bal:0},{cod:133,qtd:50,bal:0},{cod:155,qtd:100,bal:0},{cod:436,qtd:27,bal:0},{cod:518,qtd:0.4,bal:0},{cod:543,qtd:450,bal:0},{cod:570,qtd:22.75,bal:0},{cod:602,qtd:200,bal:0},{cod:721,qtd:0.15,bal:0},{cod:790,qtd:0.2,bal:0}]},
     {cod:'997',nome:'RURAL ELITE TOUROS - sc 40 KG',cat:'Ração',batida:1000,pesoSaco:40,_origem:'importado',emb:{custo:2.5,desc:'Emb. Rural Ração Valvulada'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:1149,qtd:1.9,bal:0},{cod:1210,qtd:73,bal:0},{cod:1263,qtd:75,bal:0},{cod:133,qtd:55,bal:0},{cod:155,qtd:150,bal:0},{cod:436,qtd:2,bal:0},{cod:518,qtd:0.1,bal:0},{cod:543,qtd:616.8,bal:0},{cod:570,qtd:26,bal:0},{cod:790,qtd:0.2,bal:0}]},
     {cod:'1671',nome:'RURAL TIP JATOBÁ',cat:'Ração',batida:1000,pesoSaco:1000,_origem:'importado',emb:{custo:25,desc:'Embal. Big Bag Rural'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:1149,qtd:1.47,bal:0},{cod:1210,qtd:75,bal:0},{cod:1263,qtd:80,bal:0},{cod:133,qtd:36.2,bal:0},{cod:155,qtd:100,bal:0},{cod:321,qtd:100,bal:0},{cod:436,qtd:2,bal:0},{cod:449,qtd:175,bal:0},{cod:518,qtd:0.08,bal:0},{cod:543,qtd:417.01,bal:0},{cod:570,qtd:13,bal:0},{cod:762,qtd:0.04,bal:0},{cod:790,qtd:0.2,bal:0}]},
@@ -1670,11 +1674,11 @@ let bibliotecaRNA=[
   {cod:'1295',nome:'VIACAMPUS ENERGÉTICO ALTERNATIVO AS - sc 30 kg',cat:'Viacampus',batida:1020,pesoSaco:30,_origem:'rna',emb:{custo:2,desc:'Embalag. Rural Farelado'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:280,bal:0},{cod:435,qtd:78,bal:0},{cod:436,qtd:225,bal:0},{cod:449,qtd:40,bal:0},{cod:543,qtd:225.5,bal:0},{cod:570,qtd:27,bal:0},{cod:617,qtd:60,bal:0},{cod:721,qtd:0.2,bal:0},{cod:790,qtd:12,bal:0},{cod:878,qtd:0.5,bal:0},{cod:1149,qtd:11.8,bal:0},{cod:1210,qtd:60,bal:0}]},
   {cod:'1637',nome:'RURAL PROTEICO PRIME 23 - SC 30 KG',cat:'Viacampus',batida:1020,pesoSaco:30,_origem:'rna',emb:{custo:2,desc:'Embalag. Rural Farelado'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:77.6,bal:0},{cod:321,qtd:184,bal:0},{cod:435,qtd:32,bal:0},{cod:436,qtd:150,bal:0},{cod:543,qtd:380,bal:0},{cod:570,qtd:60,bal:0},{cod:602,qtd:100,bal:0},{cod:790,qtd:4.2,bal:0},{cod:1149,qtd:10,bal:0},{cod:1263,qtd:21,bal:0},{cod:1345,qtd:0.2,bal:0},{cod:1491,qtd:1,bal:0}]},
   {cod:'1638',nome:'RURAL PROTEICO MAX 22 - sc 30 KG',cat:'Viacampus',batida:1020,pesoSaco:30,_origem:'rna',emb:{custo:2,desc:'Embalag. Rural Farelado'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:75,bal:0},{cod:155,qtd:115,bal:0},{cod:321,qtd:240,bal:0},{cod:435,qtd:7,bal:0},{cod:436,qtd:25,bal:0},{cod:543,qtd:400,bal:0},{cod:570,qtd:49.5,bal:0},{cod:790,qtd:2.5,bal:0},{cod:1149,qtd:10.3,bal:0},{cod:1210,qtd:60,bal:0},{cod:1263,qtd:35,bal:0},{cod:1345,qtd:0.2,bal:0},{cod:1491,qtd:0.5,bal:0}]},
-  {cod:'1000',nome:'NUCLEO VIACAMPUS CONCENTRADO FLEX FB - 30 KG',cat:'Viacampus',batida:1020,pesoSaco:1,_origem:'rna',emb:{custo:2,desc:'Emb. Proteico / Energetico Viacampus'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:200,bal:0},{cod:321,qtd:170,bal:0},{cod:435,qtd:10,bal:0},{cod:436,qtd:24,bal:0},{cod:570,qtd:160,bal:0},{cod:634,qtd:408,bal:0},{cod:721,qtd:0.3,bal:0},{cod:790,qtd:2,bal:0},{cod:878,qtd:0.5,bal:0},{cod:1149,qtd:20.2,bal:0},{cod:1263,qtd:25,bal:0}]},
+  {cod:'1000',nome:'NUCLEO VIACAMPUS CONCENTRADO FLEX FB - 30 KG',cat:'Viacampus',batida:1020,pesoSaco:1,_origem:'rna',emb:{custo:2,desc:'Emb. Proteico / Energetico Viacampus',pesoReal:30},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:200,bal:0},{cod:321,qtd:170,bal:0},{cod:435,qtd:10,bal:0},{cod:436,qtd:24,bal:0},{cod:570,qtd:160,bal:0},{cod:634,qtd:408,bal:0},{cod:721,qtd:0.3,bal:0},{cod:790,qtd:2,bal:0},{cod:878,qtd:0.5,bal:0},{cod:1149,qtd:20.2,bal:0},{cod:1263,qtd:25,bal:0}]},
   {cod:'1013',nome:'VIACAMPUS NUCLEO CREEP',cat:'Viacampus',batida:1000,pesoSaco:1,_origem:'rna',emb:{custo:2,desc:'Emb. Proteico Rural Padrão'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:461,bal:0},{cod:435,qtd:169,bal:0},{cod:1809,qtd:91,bal:0},{cod:436,qtd:134,bal:0},{cod:727,qtd:31.5,bal:0},{cod:790,qtd:34.5,bal:0},{cod:1149,qtd:54,bal:0},{cod:1345,qtd:23.5,bal:0},{cod:1421,qtd:1.5,bal:0}]},
   {cod:'1021',nome:'NUCLEO VIACAMPUS CONCENTRADO FLEX',cat:'Viacampus',batida:1000,pesoSaco:1,_origem:'rna',emb:{custo:2,desc:'Emb. Proteico / Energetico Viacampus'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:200,bal:0},{cod:154,qtd:82,bal:0},{cod:435,qtd:15,bal:0},{cod:436,qtd:22,bal:0},{cod:570,qtd:150,bal:0},{cod:634,qtd:200,bal:0},{cod:721,qtd:0.2,bal:0},{cod:790,qtd:2,bal:0},{cod:878,qtd:0.5,bal:0},{cod:1149,qtd:14.3,bal:0},{cod:1210,qtd:314,bal:0}]},
-  {cod:'1022',nome:'NUCLEO VIACAMPUS CONCENTRADO FLEX PROTEICO',cat:'Viacampus',batida:1000,pesoSaco:1,_origem:'rna',emb:{custo:2,desc:'Emb. Rural Ração Padrão'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:188.5,bal:0},{cod:154,qtd:67,bal:0},{cod:435,qtd:15,bal:0},{cod:436,qtd:120,bal:0},{cod:570,qtd:147,bal:0},{cod:634,qtd:183,bal:0},{cod:721,qtd:0.1,bal:0},{cod:790,qtd:8,bal:0},{cod:878,qtd:2,bal:0},{cod:1149,qtd:19.4,bal:0},{cod:1210,qtd:250,bal:0}]},
-  {cod:'1214',nome:'NUCLEO PROTEICO CONFINA PASTO - sc 35 KG',cat:'Viacampus',batida:1000,pesoSaco:1,_origem:'rna',emb:{custo:2,desc:'Embalag. Rural Farelado'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:434,bal:0},{cod:136,qtd:12,bal:0},{cod:155,qtd:345,bal:0},{cod:435,qtd:24,bal:0},{cod:436,qtd:30,bal:0},{cod:518,qtd:2,bal:0},{cod:570,qtd:138,bal:0},{cod:721,qtd:0.5,bal:0},{cod:762,qtd:1,bal:0},{cod:790,qtd:4,bal:0},{cod:1149,qtd:9.5,bal:0}]},
+  {cod:'1022',nome:'NUCLEO VIACAMPUS CONCENTRADO FLEX PROTEICO',cat:'Viacampus',batida:1000,pesoSaco:1,_origem:'rna',emb:{custo:2,desc:'Emb. Rural Ração Padrão',pesoReal:30},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:188.5,bal:0},{cod:154,qtd:67,bal:0},{cod:435,qtd:15,bal:0},{cod:436,qtd:120,bal:0},{cod:570,qtd:147,bal:0},{cod:634,qtd:183,bal:0},{cod:721,qtd:0.1,bal:0},{cod:790,qtd:8,bal:0},{cod:878,qtd:2,bal:0},{cod:1149,qtd:19.4,bal:0},{cod:1210,qtd:250,bal:0}]},
+  {cod:'1214',nome:'NUCLEO PROTEICO CONFINA PASTO - sc 35 KG',cat:'Viacampus',batida:1000,pesoSaco:1,_origem:'rna',emb:{custo:2,desc:'Embalag. Rural Farelado',pesoReal:35},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:434,bal:0},{cod:136,qtd:12,bal:0},{cod:155,qtd:345,bal:0},{cod:435,qtd:24,bal:0},{cod:436,qtd:30,bal:0},{cod:518,qtd:2,bal:0},{cod:570,qtd:138,bal:0},{cod:721,qtd:0.5,bal:0},{cod:762,qtd:1,bal:0},{cod:790,qtd:4,bal:0},{cod:1149,qtd:9.5,bal:0}]},
   {cod:'1593',nome:'VIACAMPUS NUCLEO CREEP PROTEICO',cat:'Viacampus',batida:1000,pesoSaco:1,_origem:'rna',emb:{custo:2,desc:'Emb. Proteico Rural Padrão'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:175.4,bal:0},{cod:155,qtd:500,bal:0},{cod:435,qtd:78,bal:0},{cod:1809,qtd:42,bal:0},{cod:436,qtd:67,bal:0},{cod:727,qtd:10,bal:0},{cod:790,qtd:21.4,bal:0},{cod:1149,qtd:26.2,bal:0},{cod:1263,qtd:69,bal:0},{cod:1345,qtd:10,bal:0},{cod:1421,qtd:1,bal:0}]},
   {cod:'180',nome:'RURAL EQUINO PRIME - sc 40 kg',cat:'Viacampus',batida:1000,pesoSaco:40,_origem:'rna',emb:{custo:2,desc:'Emb. Rural Ração Padrão'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:50,bal:0},{cod:154,qtd:175,bal:0},{cod:435,qtd:5,bal:0},{cod:436,qtd:4,bal:0},{cod:449,qtd:250,bal:0},{cod:543,qtd:502.5,bal:0},{cod:721,qtd:1,bal:0},{cod:790,qtd:1,bal:0},{cod:1149,qtd:1.5,bal:0},{cod:1263,qtd:10,bal:0}]},
   {cod:'539',nome:'VIACAMPUS RAÇÃO 22 LACTAÇAÕ - sc 40 KG',cat:'Viacampus',batida:1000,pesoSaco:40,_origem:'rna',emb:{custo:2,desc:''},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:51.5,bal:0},{cod:154,qtd:150,bal:0},{cod:155,qtd:120,bal:0},{cod:436,qtd:5,bal:0},{cod:543,qtd:425,bal:0},{cod:570,qtd:25.5,bal:0},{cod:617,qtd:100,bal:0},{cod:721,qtd:0.1,bal:0},{cod:727,qtd:0.25,bal:0},{cod:790,qtd:0.5,bal:0},{cod:1149,qtd:2.15,bal:0},{cod:1210,qtd:120,bal:0}]},
@@ -3211,8 +3215,13 @@ function custoFormula(f){
     mpBat+=(ing.qtd||0)*(c/1000);
   });
   var embCusto=(f.emb&&f.emb.custo)?f.emb.custo:0;
-  var custoSaco=sacos>0?(mpBat/sacos)+embCusto:0;
-  var custoKg=f.pesoSaco>0?custoSaco/f.pesoSaco:0;
+  // pesoReal = peso fisico real da embalagem (ex: saco de 30kg), usado SO pra ratear o custo da embalagem.
+  // Se nao estiver definido, cai no comportamento antigo (usa o proprio pesoSaco).
+  // Isso permite manter pesoSaco=1kg (pra tabela de MP por unidade da OP) sem inflar o custo de embalagem.
+  var pesoEmbReal=(f.emb&&f.emb.pesoReal)?parseFloat(f.emb.pesoReal):f.pesoSaco;
+  var custoEmbPorKg=pesoEmbReal>0?(embCusto/pesoEmbReal):0;
+  var custoKg=(f.batida>0)?(mpBat/f.batida)+custoEmbPorKg:0;
+  var custoSaco=custoKg*(f.pesoSaco||0);
   return {sacos:sacos,custoSaco:custoSaco,custoKg:custoKg};
 }
 let bancoFiltroGrupo='todas';
@@ -3849,6 +3858,7 @@ function abrirEditarProduto(banco,cod){
   $('ep-nome').value=f.nome||'';
   $('ep-batida').value=f.batida||0;
   $('ep-peso').value=f.pesoSaco||0;
+  $('ep-peso-real').value=(f.emb&&f.emb.pesoReal)?f.emb.pesoReal:'';
   $('ep-batida-aviso').style.display='none';
   var embs=MPitens.filter(function(m){return m.t==='emb';}).sort(function(a,b){return a.d.localeCompare(b.d);});
   var embAtualCod=null;
@@ -3878,6 +3888,8 @@ function salvarEdicaoProduto(){
   var novoNome=$('ep-nome').value.trim();
   var novaBatida=parseFloat($('ep-batida').value)||0;
   var novoPeso=parseFloat($('ep-peso').value)||0;
+  var pesoRealVal=$('ep-peso-real').value.trim();
+  var novoPesoReal=pesoRealVal?parseFloat(pesoRealVal):null;
   var embVal=$('ep-emb').value;
   if(!novoNome){alert('Informe o nome do produto.');return;}
   if(novaBatida<=0){alert('Informe uma batida maior que zero.');return;}
@@ -3896,6 +3908,8 @@ function salvarEdicaoProduto(){
     epAplicarNovaBatida(f,novaBatida);
     f.nome=novoNome;f.pesoSaco=novoPeso;
     if(embVal){var item=MPitens.find(function(m){return m.cod===parseInt(embVal);});if(item)f.emb={custo:MPcusto[item.cod]||0,desc:item.d};}
+    if(!f.emb)f.emb={custo:0,desc:''};
+    if(novoPesoReal)f.emb.pesoReal=novoPesoReal; else delete f.emb.pesoReal;
     salvarEdicaoRemota(f);
     renderBancoRNA($('rna-busca')?$('rna-busca').value:'');
   } else {
@@ -3905,6 +3919,8 @@ function salvarEdicaoProduto(){
       epAplicarNovaBatida(fl,novaBatida);
       fl.nome=novoNome;fl.pesoSaco=novoPeso;
       if(embVal){var itemL=MPitens.find(function(m){return m.cod===parseInt(embVal);});if(itemL)fl.emb={custo:MPcusto[itemL.cod]||0,desc:itemL.d};}
+      if(!fl.emb)fl.emb={custo:0,desc:''};
+      if(novoPesoReal)fl.emb.pesoReal=novoPesoReal; else delete fl.emb.pesoReal;
       salvarBancoFormulas(bancoLocal);
       salvarEdicaoRemota(fl);
     } else {
@@ -3920,6 +3936,8 @@ function salvarEdicaoProduto(){
       epAplicarNovaBatida(fb,novaBatida);
       fb.nome=novoNome;fb.pesoSaco=novoPeso;
       if(embVal){var itemB=MPitens.find(function(m){return m.cod===parseInt(embVal);});if(itemB)fb.emb={custo:MPcusto[itemB.cod]||0,desc:itemB.d};}
+      if(!fb.emb)fb.emb={custo:0,desc:''};
+      if(novoPesoReal)fb.emb.pesoReal=novoPesoReal; else delete fb.emb.pesoReal;
       salvarEdicaoRemota(fb);
     }
     renderBancoFormulas($('banco-busca')?$('banco-busca').value:'');
@@ -4299,6 +4317,7 @@ function ptDetectEmbSize(f){
   return isNaN(val)? null : val;
 }
 function ptGetEmbSize(f){
+  if(f.emb&&f.emb.pesoReal){var pr=parseFloat(f.emb.pesoReal);if(pr>0)return {size:pr, auto:false};}
   const override=PT_EMB_SIZES[f.cod];
   if(override!==undefined && override!==null && override!=='') return {size:parseFloat(override), auto:false};
   const detected=ptDetectEmbSize(f);
@@ -4307,30 +4326,26 @@ function ptGetEmbSize(f){
 }
 function ptComputeLiveCost(f){
   if(typeof custoFormula!=='function') return {cmv:null, unidade:'saco'};
-  const c=custoFormula(f); // {sacos, custoSaco, custoKg} — custoSaco = custo de MP por unidade da ficha (kg quando pesoSaco=1) + embCusto cru
   const embCusto=(f.emb && f.emb.custo) ? f.emb.custo : 0;
   if(f.pesoSaco===1){
-    // A ficha usa "pesoSaco=1kg" só como referência de custo por kg — a embalagem real
-    // (o saco/bag físico) é bem maior. Precisamos saber o tamanho real pra saber quantas
-    // embalagens cabem numa tonelada, em vez de multiplicar o custo de embalagem por 1000.
-    const mpCustoPorKg = c.custoSaco - embCusto; // custoSaco já inclui embCusto cru; removemos pra tratar embalagem à parte
-    const mpCustoPorTon = mpCustoPorKg*1000;
+    // A ficha usa "pesoSaco=1kg" só como referência de custo por kg (útil pra tabela de MP por
+    // unidade da OP) — a embalagem real (o saco/bag físico) é bem maior. ptGetEmbSize resolve o
+    // tamanho real (campo compartilhado emb.pesoReal > override local > detectado do nome).
     const embInfo=ptGetEmbSize(f);
-    let embCustoPorTon, embPorTon;
-    if(embInfo.size && embInfo.size>0){
-      embPorTon = 1000/embInfo.size;
-      embCustoPorTon = embCusto*embPorTon;
-    } else {
-      // tamanho real desconhecido — não dá pra escalar corretamente; soma a embalagem "crua" (1x) e sinaliza
-      embPorTon = null;
-      embCustoPorTon = embCusto;
+    var fCalc=f;
+    if(embInfo.size>0 && (!f.emb||f.emb.pesoReal!==embInfo.size)){
+      fCalc=Object.assign({},f,{emb:Object.assign({},f.emb,{pesoReal:embInfo.size})});
     }
+    const c=custoFormula(fCalc); // custoFormula ja rateia a embalagem pelo peso real quando emb.pesoReal esta definido
+    const embPorTon = embInfo.size>0 ? (1000/embInfo.size) : null;
+    const embCustoPorTon = embPorTon!==null ? embCusto*embPorTon : embCusto;
     return {
-      cmv: mpCustoPorTon + embCustoPorTon,
+      cmv: c.custoKg*1000,
       unidade:'ton',
       embInfo: {tamanho: embInfo.size, auto: embInfo.auto, custoUnitario: embCusto, embalagensPorTon: embPorTon, custoEmbPorTon: embCustoPorTon}
     };
   }
+  const c=custoFormula(f);
   return {cmv:c.custoSaco, unidade:'saco'};
 }
 function ptEmbInfoHtml(embInfo, cod){
@@ -4984,7 +4999,7 @@ function ptRenderExport(){
 }
 
 /* ===== Cotação Especial (edição de custo de MP dentro de um produto) ===== */
-let PT_ESPECIAL={ produtoCod:null, mpOverrides:{}, custoProducao:350, frete:60, impostos:7, comissao:7, pvTestadoSaco:null };
+let PT_ESPECIAL={ produtoCod:null, mpOverrides:{}, custoProducao:350, frete:60, impostos:7, comissao:7, pvTestadoTon:null };
 function ptEspecialSalvar(){
   try{ localStorage.setItem(PT_KEY_ESPECIAL, JSON.stringify(PT_ESPECIAL));
     const s=$('pt-esp2-save-status'); if(s){ s.textContent='salvo ✓'; setTimeout(()=>{ if(s.textContent==='salvo ✓') s.textContent=''; },1200); }
@@ -5025,9 +5040,17 @@ function ptEspecialAtualizarCampo(campo,valor){
   ptEspecialSalvar();
   ptRenderEspecialCalculo();
 }
-function ptEspecialAtualizarPVTeste(valor){
+function ptEspecialAtualizarPVTesteTon(valor){
   const v=parseFloat(valor);
-  PT_ESPECIAL.pvTestadoSaco=isNaN(v)?null:v;
+  PT_ESPECIAL.pvTestadoTon=isNaN(v)?null:v;
+  ptEspecialSalvar();
+  ptRenderEspecialCalculo();
+}
+function ptEspecialAtualizarPVTesteSaco(valor){
+  const v=parseFloat(valor);
+  const f=ptEspecialFormulaAtual();
+  const pesoSaco=f?(parseFloat(f.pesoSaco)||0):0;
+  PT_ESPECIAL.pvTestadoTon=(isNaN(v)||pesoSaco<=0)?null:(v/pesoSaco*1000);
   ptEspecialSalvar();
   ptRenderEspecialCalculo();
 }
@@ -5046,8 +5069,10 @@ function ptEspecialCalcular(){
     return {cod:ing.cod,nome:item?item.d:('cod '+ing.cod),qtd:ing.qtd,custoPadrao:custoPadrao,custoUsado:custoUsado,temOverride:temOverride};
   });
   const embCusto=(f.emb&&f.emb.custo)?f.emb.custo:0;
-  const custoMPSaco=sacos>0?(mpBat/sacos)+embCusto:0;
-  const custoMPKg=pesoSaco>0?custoMPSaco/pesoSaco:0;
+  const pesoEmbReal=(f.emb&&f.emb.pesoReal)?parseFloat(f.emb.pesoReal):pesoSaco;
+  const custoEmbPorKg=pesoEmbReal>0?(embCusto/pesoEmbReal):0;
+  const custoMPKg=batida>0?(mpBat/batida)+custoEmbPorKg:0;
+  const custoMPSaco=custoMPKg*pesoSaco;
   const custoMPTon=custoMPKg*1000;
   const custoFixoTon=custoMPTon+(PT_ESPECIAL.custoProducao||0)+(PT_ESPECIAL.frete||0);
   const pctTotal=(PT_ESPECIAL.impostos||0)+(PT_ESPECIAL.comissao||0);
@@ -5055,19 +5080,19 @@ function ptEspecialCalcular(){
   const pvValido=divisor>0;
   const pvTon=pvValido?(custoFixoTon/divisor):null;
   var teste=null;
-  if(PT_ESPECIAL.pvTestadoSaco){
-    var pvTesteTon=pesoSaco>0?(PT_ESPECIAL.pvTestadoSaco/pesoSaco*1000):0;
+  if(PT_ESPECIAL.pvTestadoTon){
+    var pvTesteTon=PT_ESPECIAL.pvTestadoTon;
     var impostosTeste=pvTesteTon*(PT_ESPECIAL.impostos||0)/100;
     var comissaoTeste=pvTesteTon*(PT_ESPECIAL.comissao||0)/100;
     var margemTesteRton=pvTesteTon-custoFixoTon-impostosTeste-comissaoTeste;
     teste={
       pvTesteTon:pvTesteTon,
       pvTesteKg:pvTesteTon/1000,
-      pvTesteSaco:PT_ESPECIAL.pvTestadoSaco,
+      pvTesteSaco:pesoSaco>0?(pvTesteTon/1000*pesoSaco):null,
       impostosTeste:impostosTeste,
       comissaoTeste:comissaoTeste,
       margemTesteRton:margemTesteRton,
-      margemTesteRsaco:margemTesteRton/1000*pesoSaco,
+      margemTesteRsaco:pesoSaco>0?(margemTesteRton/1000*pesoSaco):null,
       margemTestePct:pvTesteTon>0?(margemTesteRton/pvTesteTon*100):0
     };
   }
@@ -5091,16 +5116,17 @@ function ptRenderEspecialCalculo(){
   if($('pt-esp2-pv-saco')) $('pt-esp2-pv-saco').textContent=r.pvValido?('R$ '+fn(r.pvSaco,2)):'—';
   r.linhas.forEach(function(l){
     const el=$('pt-esp2-contrib-'+l.cod);
-    if(el) el.textContent='R$ '+fn((l.qtd*l.custoUsado/1000)*(1000/r.batida)*(r.sacos>0?1:1),2);
+    if(el) el.textContent='R$ '+fn((l.qtd/r.batida)*l.custoUsado,2);
   });
   if($('pt-esp2-teste-resultado')){
     if(r.teste){
       $('pt-esp2-teste-resultado').style.display='grid';
       $('pt-esp2-teste-margem-pct').textContent=fn(r.teste.margemTestePct,2)+'%';
       $('pt-esp2-teste-margem-pct').style.color=r.teste.margemTestePct>=0?'var(--green)':'var(--red)';
-      $('pt-esp2-teste-margem-saco').textContent='R$ '+fn(r.teste.margemTesteRsaco,2)+'/saco';
-      $('pt-esp2-teste-margem-saco').style.color=r.teste.margemTesteRsaco>=0?'var(--green)':'var(--red)';
-      $('pt-esp2-teste-margem-ton').textContent='R$ '+fn(r.teste.margemTesteRton,2)+'/ton';
+      var margemLabel='R$ '+fn(r.teste.margemTesteRton,2)+'/ton'+(r.teste.margemTesteRsaco!==null&&r.pesoSaco!==1?' (R$ '+fn(r.teste.margemTesteRsaco,2)+'/saco)':'');
+      $('pt-esp2-teste-margem-saco').textContent=margemLabel;
+      $('pt-esp2-teste-margem-saco').style.color=r.teste.margemTesteRton>=0?'var(--green)':'var(--red)';
+      $('pt-esp2-teste-margem-ton').textContent='';
       $('pt-esp2-teste-encargos').textContent='R$ '+fn(r.teste.impostosTeste+r.teste.comissaoTeste,2)+'/ton (impostos+comissão)';
     } else {
       $('pt-esp2-teste-resultado').style.display='none';
@@ -5221,7 +5247,7 @@ function ptRenderEspecial(){
           <label style="font-weight:700;font-size:12px;text-transform:uppercase;color:var(--t3)">Matérias-primas — ${r.f.nome}</label>
         </div>
         <div class="pt-esp2-row" style="font-size:11px;text-transform:uppercase;color:var(--t3);font-weight:700;border-bottom:2px solid var(--border)">
-          <div>Cód.</div><div>Ingrediente</div><div class="r">Qtd/batida</div><div class="r">Padrão (R$/ton)</div><div class="r">Negociado (R$/ton)</div><div></div>
+          <div>Cód.</div><div>Ingrediente</div><div class="r">Qtd/batida</div><div class="r">Padrão (R$/ton)</div><div class="r">Negociado (R$/ton)</div><div class="r">Contrib. no custo (R$/ton)</div><div></div>
         </div>
         ${r.linhas.map(l=>`
         <div class="pt-esp2-row">
@@ -5229,7 +5255,8 @@ function ptRenderEspecial(){
           <div>${l.nome}</div>
           <div class="r">${fn(l.qtd,2)} kg</div>
           <div class="r">R$ ${fn(l.custoPadrao,2)}</div>
-          <input type="number" step="0.01" class="${l.temOverride?'alterado':''}" value="${fn(l.custoUsado,2)}" onchange="ptEspecialAtualizarMP(${l.cod},this.value)">
+          <input type="number" step="0.01" class="${l.temOverride?'alterado':''}" value="${(l.custoUsado||0).toFixed(2)}" onchange="ptEspecialAtualizarMP(${l.cod},this.value)">
+          <div class="r" id="pt-esp2-contrib-${l.cod}" style="font-weight:700">R$ ${fn((l.qtd/r.batida)*l.custoUsado,2)}</div>
           <div style="text-align:center">${l.temOverride?`<button type="button" class="nf-del-btn" onclick="ptEspecialResetarMP(${l.cod})" title="Restaurar preço padrão">↺</button>`:''}</div>
         </div>`).join('')}
       </div>
@@ -5251,16 +5278,18 @@ function ptRenderEspecial(){
         <div class="pt-exp-kpi"><div class="lbl">Custo total (MP+produção+frete)</div><div class="val" id="pt-esp2-custo-fixo">—</div></div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
-        <div class="pt-exp-kpi" style="background:var(--blu-lt);border-color:var(--blu-bd)"><div class="lbl">Preço de venda por tonelada</div><div class="val" id="pt-esp2-pv-ton" style="color:var(--blue)">—</div></div>
+        <div class="pt-exp-kpi" style="background:var(--blu-lt);border-color:var(--blu-bd)"><div class="lbl">Preço de venda por tonelada</div><div class="val" id="pt-esp2-pv-ton" style="color:var(--blue);font-size:19px">—</div></div>
         <div class="pt-exp-kpi" style="background:var(--grn-lt);border-color:var(--grn-bd)"><div class="lbl">Preço de venda por kg</div><div class="val" id="pt-esp2-pv-kg" style="color:var(--green)">—</div></div>
-        <div class="pt-exp-kpi" style="background:var(--grn-lt);border-color:var(--grn-bd)"><div class="lbl">Preço de venda por saco</div><div class="val" id="pt-esp2-pv-saco" style="color:var(--green)">—</div></div>
+        ${r.pesoSaco===1?'':`<div class="pt-exp-kpi" style="background:var(--grn-lt);border-color:var(--grn-bd)"><div class="lbl">Preço de venda por saco (${fn(r.pesoSaco,r.pesoSaco%1===0?0:2)}kg)</div><div class="val" id="pt-esp2-pv-saco" style="color:var(--green)">—</div></div>`}
       </div>
+      ${r.pesoSaco===1?'<div style="font-size:10.5px;color:var(--t3);margin-top:6px">Peso do saco cadastrado como 1kg (referência de custo/quantidade para a Ordem de Produção) — por isso o preço "por saco" não é mostrado aqui, já que é igual ao "por kg". Use tonelada ou kg para negociar.</div>':''}
 
       <div class="card" style="padding:16px;margin-top:16px">
         <label style="font-weight:700;font-size:12px;text-transform:uppercase;color:var(--t3);display:block;margin-bottom:10px">Testar um preço de venda e ver a margem</label>
-        <div style="display:grid;grid-template-columns:1fr 3fr;gap:12px;align-items:end">
-          <div class="f"><label>Preço de venda que você quer testar (R$/saco)</label><input type="number" step="0.01" min="0" value="${PT_ESPECIAL.pvTestadoSaco||''}" placeholder="Ex: 85,00" oninput="ptEspecialAtualizarPVTeste(this.value)"></div>
-          <div style="font-size:11px;color:var(--t3)">Informe o preço que você pretende cobrar (por saco) e veja quanto de margem sobra, já descontando o custo total e os encargos (impostos + comissão) definidos acima.</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 2fr;gap:12px;align-items:end">
+          <div class="f"><label>Preço de venda a testar (R$/tonelada)</label><input type="number" step="0.01" min="0" value="${PT_ESPECIAL.pvTestadoTon?PT_ESPECIAL.pvTestadoTon.toFixed(2):''}" placeholder="Ex: 4700,00" oninput="ptEspecialAtualizarPVTesteTon(this.value)"></div>
+          <div class="f"><label>...ou por saco (${fn(r.pesoSaco,r.pesoSaco%1===0?0:2)} kg)</label><input type="number" step="0.01" min="0" value="${(PT_ESPECIAL.pvTestadoTon&&r.pesoSaco>0)?(PT_ESPECIAL.pvTestadoTon/1000*r.pesoSaco).toFixed(2):''}" placeholder="Ex: 85,00" oninput="ptEspecialAtualizarPVTesteSaco(this.value)"></div>
+          <div style="font-size:11px;color:var(--t3)">Informe o preço em qualquer um dos dois campos (o outro se ajusta sozinho) e veja quanto de margem sobra, já descontando o custo total e os encargos (impostos + comissão) definidos acima.</div>
         </div>
         <div id="pt-esp2-teste-resultado" style="display:none;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px">
           <div class="pt-exp-kpi"><div class="lbl">Impostos + comissão nesse preço</div><div class="val" id="pt-esp2-teste-encargos" style="font-size:15px">—</div></div>
