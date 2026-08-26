@@ -223,6 +223,9 @@
 </style>
 </head>
 <body>
+<div id="sheetOfflineBanner" style="display:none;position:sticky;top:0;z-index:9999;background:#b3271f;color:#fff;padding:10px 16px;font-size:0.9rem;font-weight:600;text-align:center;">
+  Não foi possível conectar à planilha agora — nada do que for lançado aqui (saldos, obrigações, etc.) está sendo salvo. Recarregue a página em alguns minutos e tente de novo.
+</div>
 <div class="wrap">
 
   <header>
@@ -661,7 +664,7 @@ function jsonpRequest(url, timeoutMs){
   return new Promise((resolve, reject)=>{
     const cbName = '__fluxoCaixaCb' + (__jsonpSeq++) + '_' + Date.now();
     const script = document.createElement('script');
-    const timer = setTimeout(()=>{ cleanup(); reject(new Error('JSONP timeout')); }, timeoutMs || 30000);
+    const timer = setTimeout(()=>{ cleanup(); reject(new Error('JSONP timeout')); }, timeoutMs || 60000);
     function cleanup(){
       clearTimeout(timer);
       delete window[cbName];
@@ -679,8 +682,10 @@ async function fetchSheetData(){
   if(!SCRIPT_URL) return null;
   try{
     // Aba ConciliacaoAgrotis tem 1100+ linhas: doGet() pode demorar, por isso
-    // o timeout generoso (30s) em vez do padrão.
-    const data = await jsonpRequest(SCRIPT_URL, 30000);
+    // o timeout generoso (60s, aumentado de 30s em 26/08/2026 -- o doGet estava
+    // estourando os 30s conforme a planilha cresceu, e isso bloqueava
+    // silenciosamente toda gravação -- ver applySheetData/__sheetModeOk).
+    const data = await jsonpRequest(SCRIPT_URL, 60000);
     if(!data || !data.ok) return null;
     return data;
   }catch(e){
@@ -694,7 +699,7 @@ async function postToSheet(action, payload){
   try{
     const url = SCRIPT_URL + '?action=' + encodeURIComponent(action) +
       '&payload=' + encodeURIComponent(JSON.stringify(payload));
-    return await jsonpRequest(url, 15000);
+    return await jsonpRequest(url, 30000);
   }catch(e){
     console.error('Falha ao gravar na planilha:', action, e);
     return null;
@@ -990,6 +995,7 @@ async function loadState(){
     }
     window.__sheetModeOk = false;
     console.warn('Modo planilha configurado mas a busca falhou; abrindo com os dados locais, sem gravar nada até a planilha voltar.');
+    showSheetOfflineBanner();
     state.records = SEED.map((r,i)=>({id:i+1, ...r}));
     state.nextId = state.records.length + 1;
     enforceAllFixedCategories();
@@ -1015,12 +1021,17 @@ async function loadState(){
   ensureBankAccounts();
   await saveState();
 }
+function showSheetOfflineBanner(){
+  const el = document.getElementById('sheetOfflineBanner');
+  if(el) el.style.display = 'block';
+}
 async function saveState(){
   if(SCRIPT_URL){
     if(window.__sheetModeOk){
       await syncStateToSheet();
     } else {
       console.warn('Gravação pulada: a planilha não foi carregada com sucesso nesta sessão (evitando sobrescrever com dados de reserva).');
+      showSheetOfflineBanner();
     }
     return;
   }
@@ -2550,7 +2561,7 @@ function removerHistSaldo(id){
   renderHistoricoSaldos();
   renderBankAccounts();
 }
-function addHistSaldo(){
+async function addHistSaldo(){
   const day = document.getElementById('histSaldoDay').value.trim();
   const unit = document.getElementById('histSaldoUnit').value;
   const banco = document.getElementById('histSaldoBanco').value;
@@ -2568,9 +2579,25 @@ function addHistSaldo(){
   document.getElementById('histSaldoValor').value = '';
   syncBankAccountsFromHistorico();
   touchBankUpdated();
-  saveState();
   renderHistoricoSaldos();
   renderBankAccounts();
+
+  // Grava direto na planilha (ação isolada, só mexe na aba SaldosDiarios) em vez
+  // de passar pelo saveState() genérico -- este dependia de window.__sheetModeOk,
+  // que só fica true se o carregamento inicial da página (leitura de ~10 abas,
+  // incluindo ConciliacaoAgrotis com 1100+ linhas) tiver terminado a tempo. Isso
+  // fazia o lançamento de saldo (rápido e independente) ficar bloqueado sempre
+  // que aquele carregamento inicial, sem relação nenhuma com saldo, demorasse
+  // ou falhasse. Corrigido em 26/08/2026.
+  if(SCRIPT_URL){
+    const res = await postToSheet('addSaldoDiario', { date: day, unit, banco, saldo: valor });
+    if(!res || res.ok === false){
+      alert('Atenção: não consegui gravar esse saldo na planilha agora (falha de conexão ou timeout). '
+        + 'Ele ficou salvo só nesta tela -- tente lançar de novo em alguns minutos.');
+    }
+  } else {
+    saveState();
+  }
 }
 
 function renderModeToggle(){
