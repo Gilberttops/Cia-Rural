@@ -46,6 +46,8 @@ header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:spac
 .ctrl select,.ctrl input{font:inherit;font-weight:600;font-size:13px;color:var(--ink);border:1px solid var(--line);background:var(--card);border-radius:8px;padding:7px 10px}
 .ctrl input[type=search]{width:180px}
 .reset{margin-left:auto;border:0;background:transparent;color:var(--pasture);font:inherit;font-weight:700;font-size:13px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.empty-banner{background:var(--gold-soft);border:1px solid #e7d29a;border-radius:12px;padding:12px 16px;font-size:13px;font-weight:600;color:#6a5314;margin-bottom:20px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.empty-banner button{border:1px solid #6a5314;background:transparent;color:#6a5314;font:inherit;font-weight:700;font-size:12.5px;padding:5px 12px;border-radius:8px;cursor:pointer}
 
 .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:26px}
 .kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;position:relative}
@@ -216,9 +218,10 @@ tr.overdue:hover td{background:#f6e2da}
       </div>
       <label class="ctrl">Ano <select id="anoDe"></select></label>
       <label class="ctrl">até <select id="anoAte"></select></label>
-      <label class="ctrl">Produto <input id="busca" type="search" placeholder="filtrar produto…" autocomplete="off"></label>
+      <label class="ctrl">Produto <input id="busca" type="search" placeholder="filtrar produto…" autocomplete="off" autocapitalize="off" spellcheck="false" name="filtro-produto-dashboard"></label>
       <button class="reset" id="reset">limpar filtros</button>
     </div>
+    <div id="emptyFilterMsg" class="empty-banner" style="display:none"></div>
     <div class="kpis" id="kpis"></div>
     <div class="grid">
       <div class="panel"><h3>Faturamento por ano</h3><div class="cap">Total vendido em dólares, empilhado por empresa</div><div class="chartbox"><canvas id="cAno"></canvas></div></div>
@@ -516,7 +519,23 @@ const selDe=document.getElementById('anoDe'),selAte=document.getElementById('ano
 
 const filtered=()=>SALES.filter(s=>(st.emp==='Todas'||s.empresa===st.emp)&&s.ano>=st.de&&s.ano<=st.ate&&(!st.q||s.produto.toLowerCase().includes(st.q)));
 let charts={};
-function render(){const r=filtered();kpis(r);cAno(r);cEmp(r);cProd(r);cFlow();table(r)}
+function render(){
+  const r=filtered();
+  const totalGeral=SALES.length;
+  const banner=document.getElementById('emptyFilterMsg');
+  if(r.length===0&&totalGeral>0){
+    let motivo='Nenhuma venda encontrada para os filtros atuais.';
+    if(st.q)motivo=`Nenhum produto encontrado para "<b>${st.q}</b>" — 0 de ${totalGeral} vendas. Confira se digitou no campo certo.`;
+    else if(st.emp!=='Todas')motivo=`Nenhuma venda de <b>${st.emp}</b> no período ${st.de}–${st.ate}.`;
+    else motivo=`Nenhuma venda no período ${st.de}–${st.ate}.`;
+    banner.innerHTML=`<span>⚠ ${motivo}</span><button id="emptyClear">limpar filtros</button>`;
+    banner.style.display='';
+    document.getElementById('emptyClear').onclick=()=>document.getElementById('reset').click();
+  } else {
+    banner.style.display='none';
+  }
+  kpis(r);cAno(r);cEmp(r);cProd(r);cFlow();table(r);
+}
 function kpis(rows){
   const tot=rows.reduce((a,s)=>a+(s.total_usd||0),0),ny=st.ate-st.de+1;
   const paid=PAYS.filter(p=>p.ano>=st.de&&p.ano<=st.ate).reduce((a,p)=>a+(p.valor_usd||0),0);
