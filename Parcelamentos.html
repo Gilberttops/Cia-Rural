@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parcelamentos Fiscais Rural</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1"></script>
+<style>
+:root {
+  --bg: #f4f2ee;
+  --surface: #ffffff;
+  --surface-2: #ece9e2;
+  --border: #ddd8cd;
+  --text: #23281f;
+  --text-muted: #6b6a5f;
+  --accent: #2f6b3a;
+  --accent-dim: #dcebe0;
+  --accent-2: #4a6b8a;
+  --ok: #2f6b3a;
+  --ok-bg: #e3f0e5;
+  --warn: #a5670f;
+  --warn-bg: #f8ecd7;
+  --danger: #a5342a;
+  --danger-bg: #f7e4e1;
+  --shadow: 0 1px 2px rgba(35,40,31,.06), 0 4px 14px rgba(35,40,31,.05);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #171911;
+    --surface: #202318;
+    --surface-2: #262a1c;
+    --border: #383c2c;
+    --text: #ece9df;
+    --text-muted: #a3a293;
+    --accent: #6fae7d;
+    --accent-dim: #263626;
+    --accent-2: #7fa3c2;
+    --ok: #7bc48a;
+    --ok-bg: #21301f;
+    --warn: #dba452;
+    --warn-bg: #3a2f18;
+    --danger: #e2897d;
+    --danger-bg: #3a201c;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.25);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #171911;
+  --surface: #202318;
+  --surface-2: #262a1c;
+  --border: #383c2c;
+  --text: #ece9df;
+  --text-muted: #a3a293;
+  --accent: #6fae7d;
+  --accent-dim: #263626;
+  --accent-2: #7fa3c2;
+  --ok: #7bc48a;
+  --ok-bg: #21301f;
+  --warn: #dba452;
+  --warn-bg: #3a2f18;
+  --danger: #e2897d;
+  --danger-bg: #3a201c;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.25);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: "IBM Plex Sans", -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  font-size: 14px;
+}
+.wrap { max-width: 1320px; margin: 0 auto; padding: 28px 24px 60px; }
+
+header.top {
+  display:flex; align-items:center; gap:18px; flex-wrap:wrap;
+  padding-bottom: 20px; margin-bottom: 22px;
+  border-bottom: 1px solid var(--border);
+}
+header.top img { height:44px; width:auto; border-radius:6px; background:#fff; padding:5px 9px; box-shadow: var(--shadow); }
+header.top .titles h1 {
+  font-family: "Fraunces", serif; font-weight: 600; font-size: 26px; letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+header.top .titles p { font-size:13px; color:var(--text-muted); margin-top:3px; }
+header.top .meta { margin-left:auto; text-align:right; font-size:12px; color:var(--text-muted); }
+header.top .meta b { color: var(--text); }
+.filter-group { display:flex; flex-direction:column; gap:4px; }
+.filter-group label { font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); font-weight:600; }
+.filter-group select {
+  font-family: "IBM Plex Sans", sans-serif; font-size:13px; padding:7px 10px; border-radius:7px;
+  border:1px solid var(--border); background:var(--surface); color:var(--text); min-width:220px;
+}
+
+.kpi-row { display:grid; grid-template-columns: repeat(4, 1fr); gap:14px; margin-bottom:22px; }
+@media (max-width: 880px) { .kpi-row { grid-template-columns: repeat(2,1fr); } }
+.kpi {
+  background: var(--surface); border:1px solid var(--border); border-radius:10px;
+  padding:16px 18px; box-shadow: var(--shadow);
+  border-top: 3px solid var(--accent);
+}
+.kpi.is-warn { border-top-color: var(--warn); }
+.kpi-label { font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); font-weight:600; margin-bottom:8px; }
+.kpi-value { font-family:"IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; font-size:23px; font-weight:600; letter-spacing:-0.01em; }
+.kpi-sub { font-size:11.5px; color:var(--text-muted); margin-top:6px; }
+
+.grid-2 { display:grid; grid-template-columns: 1.5fr 1fr; gap:14px; margin-bottom:22px; }
+@media (max-width: 880px) { .grid-2 { grid-template-columns:1fr; } }
+.panel { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:18px 20px; box-shadow: var(--shadow); }
+.panel h2 { font-family:"Fraunces", serif; font-weight:600; font-size:16px; margin-bottom:14px; text-wrap:balance; }
+.panel canvas { max-height:280px; }
+
+.section-title { font-family:"Fraunces", serif; font-weight:600; font-size:18px; margin: 30px 0 12px; text-wrap:balance; }
+
+.table-panel { background:var(--surface); border:1px solid var(--border); border-radius:10px; box-shadow: var(--shadow); overflow:hidden; margin-bottom:20px; }
+.table-scroll { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; min-width: 960px; font-size:12.5px; }
+thead th {
+  text-align:left; padding:11px 14px; background:var(--surface-2); color:var(--text-muted);
+  font-weight:600; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em;
+  white-space:nowrap; cursor:pointer; user-select:none; border-bottom:1px solid var(--border);
+}
+thead th:hover { color:var(--text); }
+thead th.num, tbody td.num { text-align:right; font-variant-numeric: tabular-nums; }
+tbody td { padding:10px 14px; border-bottom:1px solid var(--border); white-space:nowrap; font-family:"IBM Plex Mono", monospace; font-size:12px; }
+tbody td.txt { font-family:"IBM Plex Sans", sans-serif; font-size:12.5px; }
+tbody tr:hover { background: var(--accent-dim); }
+tbody tr:last-child td { border-bottom:none; }
+
+.progress { display:inline-flex; align-items:center; gap:8px; }
+.progress-bar { width:64px; height:6px; background:var(--surface-2); border-radius:3px; overflow:hidden; }
+.progress-fill { height:100%; background: var(--accent); }
+
+.pill { display:inline-block; padding:2px 9px; border-radius:20px; font-size:10.5px; font-weight:600; font-family:"IBM Plex Sans", sans-serif; letter-spacing:.02em; }
+.pill.ok { background:var(--ok-bg); color:var(--ok); }
+.pill.warn { background:var(--warn-bg); color:var(--warn); }
+.pill.na { background:var(--surface-2); color:var(--text-muted); }
+
+.foot { font-size:11.5px; color:var(--text-muted); line-height:1.7; padding: 4px 4px 10px; max-width: 900px; }
+</style>
+
+
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAMwAwAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAFfAf4DASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD3+iiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiobi7t7RN9zcRQp/ekcKP1oDYmormb74geGrFmV9SSV1/hhUt+vT9a567+MGmR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" alt="Rural Nutrição Animal">
+    <div class="titles">
+      <h1>Controle de Parcelamentos Fiscais</h1>
+      <p>Rural Nutrição Animal LTDA (04.485.656/0001-00) &amp; R N A Nutrição Animal LTDA (43.649.521/0001-87)</p>
+    </div>
+    <div class="filter-group">
+      <label for="filtroEmpresa">Empresa</label>
+      <select id="filtroEmpresa" onchange="applyFiltro()">
+        <option value="todas">Todas as empresas</option>
+      </select>
+    </div>
+    <div class="meta">
+      Base: extratos RFB / e-CAC<br>
+      Situação fiscal em <b>26/08/2026</b>
+    </div>
+  </header>
+
+  <section class="kpi-row">
+    <div class="kpi">
+      <div class="kpi-label">Saldo devedor total</div>
+      <div class="kpi-value" id="kpi-saldo"></div>
+      <div class="kpi-sub">Soma de todos os parcelamentos ativos</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Parcela mensal atual</div>
+      <div class="kpi-value" id="kpi-parcela"></div>
+      <div class="kpi-sub">Soma das próximas parcelas a vencer</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Parcelamentos ativos</div>
+      <div class="kpi-value" id="kpi-qtd"></div>
+      <div class="kpi-sub" id="kpi-qtd-sub"></div>
+    </div>
+    <div class="kpi is-warn">
+      <div class="kpi-label">Débitos ainda não parcelados</div>
+      <div class="kpi-value" id="kpi-pend"></div>
+      <div class="kpi-sub">IRPJ/CSLL 2º trim/2026 &middot; vencendo ago&ndash;set/2026</div>
+    </div>
+  </section>
+
+  <section class="grid-2">
+    <div class="panel">
+      <h2>Saldo devedor por parcelamento</h2>
+      <canvas id="chartSaldo"></canvas>
+    </div>
+    <div class="panel">
+      <h2>Andamento das parcelas</h2>
+      <canvas id="chartProgresso"></canvas>
+    </div>
+  </section>
+
+  <div class="section-title">Parcelamentos ativos</div>
+  <div class="table-panel">
+    <div class="table-scroll">
+      <table id="tblParcelamentos">
+        <thead>
+          <tr>
+            <th data-k="empresa" class="txt">Empresa</th>
+            <th data-k="id">Parcelamento</th>
+            <th data-k="tipo" class="txt">Tipo</th>
+            <th data-k="tributos" class="txt">Tributos</th>
+            <th data-k="divida_consolidada" class="num">Dívida Consolidada</th>
+            <th data-k="saldo_devedor" class="num">Saldo Devedor</th>
+            <th data-k="progresso">Parcelas</th>
+            <th data-k="valor_parcela" class="num">Valor Parcela</th>
+            <th data-k="proximo_venc">Próx. Vencimento</th>
+            <th data-k="ultima_parcela">Última Parcela</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyParcelamentos"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section-title">Análise de taxa efetiva &mdash; parcelamento vs. financiamento de mercado</div>
+  <div class="grid-2">
+    <div class="panel">
+      <h2>Taxa efetiva anual por parcelamento (Selic pura, sem spread)</h2>
+      <canvas id="chartTaxas"></canvas>
+    </div>
+    <div class="panel">
+      <h2>Leitura do analista</h2>
+      <p style="font-size:12.5px; line-height:1.7; color:var(--text-muted)">
+        O custo real de cada parcelamento &mdash; calculado pela correção observada entre o valor original da parcela
+        e o valor efetivamente pago &mdash; fica entre <b style="color:var(--text)">6,6% e 13,6% ao ano</b>, pura
+        Selic, sem spread bancário. É bem mais barato do que <b style="color:var(--text)">antecipação de
+        duplicatas (24&ndash;60% a.a.)</b> ou <b style="color:var(--text)">capital de giro bancário comum
+        (20&ndash;35% a.a.)</b>.
+        <br><br>
+        Manter os parcelamentos em curso tende a ser financeiramente mais barato do que captar recursos nessas
+        modalidades só para quitar o saldo à vista. A multa de mora (20% fixo, já embutida no valor consolidado)
+        é custo afundado do atraso original &mdash; o ponto de atenção é evitar novos atrasos, não antecipar
+        parcelamentos já em curso. Não substitui avaliação formal de tesouraria.
+      </p>
+    </div>
+  </div>
+
+  <div class="table-panel">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th class="txt">Modalidade de financiamento</th><th class="num">Taxa mín. a.a.</th><th class="num">Taxa máx. a.a.</th><th class="txt">Observação</th></tr>
+        </thead>
+        <tbody id="tbodyBench"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section-title">Débitos com exigibilidade suspensa ainda não parcelados <span style="font-size:12px;font-weight:400;color:var(--text-muted)">(Rural Nutrição Animal LTDA)</span></div>
+  <div class="table-panel">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th class="txt">Receita</th><th class="txt">Período</th><th>Vencimento</th><th class="num">Valor</th><th class="txt">Situação</th></tr>
+        </thead>
+        <tbody id="tbodyPend"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <p class="foot">
+    <b>Notas:</b> o parcelamento do processo 10140-405706/2021-56 (COFINS) foi extraído do extrato do e-CAC (portal
+    antigo), que não informa "dívida consolidada" no mesmo padrão dos demais extratos RFB. Há ainda pendência de
+    Processo Fiscal (SIEF) nº 10642.201.873/2026-83, situação "DEVEDOR", sem valor discriminado no relatório, e uma
+    Certidão Positiva com Efeitos de Negativa válida até 22/11/2026.
+  </p>
+</div>
+
+<script>
+const DATA = {"parcelamentos": [{"id": "0211.00012.0038476989.22-73", "tipo": "Parcelamento Simplificado (0211)", "tributos": "IRPJ/CSLL/PIS/COFINS", "data_consolidacao": "24/08/2022", "divida_consolidada": 379459.6, "saldo_devedor": 113276.75, "total_parcelas": 60, "pagas": 48, "restantes": 12, "valor_parcela": 6324.32, "proximo_venc": "31/08/2026", "ultima_parcela": "30/07/2027", "fonte": "Extrato RFB", "taxa": {"meses": 47, "mult": 1.4804, "taxa_mensal": 0.838, "taxa_anual": 10.54, "periodo": "ago/2022 – jul/2026"}, "empresa": "Rural Nutrição Animal LTDA", "cnpj": "04.485.656/0001-00"}, {"id": "0211.00012.0038976973.22-88", "tipo": "Parcelamento Simplificado (0211)", "tributos": "IRPJ/CSLL", "data_consolidacao": "24/08/2022", "divida_consolidada": 165073.07, "saldo_devedor": 49278.17, "total_parcelas": 60, "pagas": 48, "restantes": 12, "valor_parcela": 2751.21, "proximo_venc": "31/08/2026", "ultima_parcela": "30/07/2027", "fonte": "Extrato RFB", "taxa": {"meses": 47, "mult": 1.4804, "taxa_mensal": 0.838, "taxa_anual": 10.54, "periodo": "ago/2022 – jul/2026"}, "empresa": "Rural Nutrição Animal LTDA", "cnpj": "04.485.656/0001-00"}, {"id": "0211.00012.0041438914.24-35", "tipo": "Parcelamento Simplificado (0211)", "tributos": "IRPJ/CSLL", "data_consolidacao": "07/03/2024", "divida_consolidada": 203143.59, "saldo_devedor": 136570.97, "total_parcelas": 60, "pagas": 29, "restantes": 31, "valor_parcela": 3385.72, "proximo_venc": "31/08/2026", "ultima_parcela": "28/02/2029", "fonte": "Extrato RFB", "taxa": {"meses": 28, "mult": 1.289, "taxa_mensal": 0.911, "taxa_anual": 11.49, "periodo": "mar/2024 – jul/2026"}, "empresa": "Rural Nutrição Animal LTDA", "cnpj": "04.485.656/0001-00"}, {"id": "0211.00012.0041438938.24-92", "tipo": "Parcelamento Simplificado (0211)", "tributos": "Diversos (PIS/Cofins/outros)", "data_consolidacao": "07/03/2024", "divida_consolidada": 145965.35, "saldo_devedor": 98130.77, "total_parcelas": 60, "pagas": 29, "restantes": 31, "valor_parcela": 2432.75, "proximo_venc": "31/08/2026", "ultima_parcela": "28/02/2029", "fonte": "Extrato RFB", "taxa": {"meses": 28, "mult": 1.289, "taxa_mensal": 0.911, "taxa_anual": 11.49, "periodo": "mar/2024 – jul/2026"}, "empresa": "Rural Nutrição Animal LTDA", "cnpj": "04.485.656/0001-00"}, {"id": "0211.00012.0075208493.23-88", "tipo": "Parcelamento Simplificado (0211)", "tributos": "IRPJ/CSLL", "data_consolidacao": "24/08/2023", "divida_consolidada": 151893.33, "saldo_devedor": 82934.02, "total_parcelas": 60, "pagas": 36, "restantes": 24, "valor_parcela": 2531.55, "proximo_venc": "31/08/2026", "ultima_parcela": "31/07/2028", "fonte": "Extrato RFB", "taxa": {"meses": 35, "mult": 1.3528, "taxa_mensal": 0.867, "taxa_anual": 10.92, "periodo": "ago/2023 – jul/2026"}, "empresa": "Rural Nutrição Animal LTDA", "cnpj": "04.485.656/0001-00"}, {"id": "0211.00012.0075909091.23-01", "tipo": "Parcelamento Simplificado (0211)", "tributos": "IRPJ/CSLL", "data_consolidacao": "24/08/2023", "divida_consolidada": 55934.89, "saldo_devedor": 30540.85, "total_parcelas": 60, "pagas": 36, "restantes": 24, "valor_parcela": 932.24, "proximo_venc": "31/08/2026", "ultima_parcela": "31/07/2028", "fonte": "Extrato RFB", "taxa": {"meses": 35, "mult": 1.3528, "taxa_mensal": 0.867, "taxa_anual": 10.92, "periodo": "ago/2023 – jul/2026"}, "empresa": "Rural Nutrição Animal LTDA", "cnpj": "04.485.656/0001-00"}, {"id": "0211.00012.0098888530.24-02", "tipo": "Parcelamento Simplificado (0211)", "tributos": "Diversos", "data_consolidacao": "18/09/2024", "divida_consolidada": 142921.73, "saldo_devedor": 110160.27, "total_parcelas": 60, "pagas": 23, "restantes": 37, "valor_parcela": 2382.02, "proximo_venc": "31/08/2026", "ultima_parcela": "31/08/2029", "fonte": "Extrato RFB", "taxa": {"meses": 22, "mult": 1.2377, "taxa_mensal": 0.974, "taxa_anual": 12.34, "periodo": "set/2024 – jul/2026"}, "empresa": "Rural Nutrição Animal LTDA", "cnpj": "04.485.656/0001-00"}, {"id": "0211.00012.0122923875.25-92", "tipo": "Parcelamento Simplificado (0211)", "tributos": "Diversos", "data_consolidacao": "21/11/2025", "divida_consolidada": 62064.55, "saldo_devedor": 47828.88, "total_parcelas": 30, "pagas": 9, "restantes": 21, "valor_parcela": 2068.81, "proximo_venc": "31/08/2026", "ultima_parcela": "28/04/2028", "fonte": "Extrato RFB", "taxa": {"meses": 8, "mult": 1.0887, "taxa_mensal": 1.068, "taxa_anual": 13.6, "periodo": "nov/2025 – jul/2026"}, "empresa": "Rural Nutrição Animal LTDA", "cnpj": "04.485.656/0001-00"}, {"id": "10140-405706/2021-56", "tipo": "Parcelamento Processo (COFINS)", "tributos": "COFINS", "data_consolidacao": "30/11/2021 (aprox.)", "divida_consolidada": null, "saldo_devedor": 4600.65, "total_parcelas": 60, "pagas": 57, "restantes": 3, "valor_parcela": 1533.55, "proximo_venc": "31/08/2026", "ultima_parcela": "30/10/2026", "fonte": "Extrato Processo e-CAC", "taxa": null, "empresa": "Rural Nutrição Animal LTDA", "cnpj": "04.485.656/0001-00"}, {"id": "0091.00013.0000190204.18-93", "tipo": "Pert IIIb (0091)", "tributos": "Diversos (consolidação 2017)", "data_consolidacao": "24/08/2017", "divida_consolidada": 415754.91, "saldo_devedor": 168125.32, "total_parcelas": 145, "pagas": 111, "restantes": 34, "valor_parcela": 2796.93, "proximo_venc": "31/08/2026", "ultima_parcela": "31/08/2029", "fonte": "Extrato RFB (27/08/2026 14:56)", "taxa": {"meses": 107, "mult": 1.7703, "taxa_mensal": 0.535, "taxa_anual": 6.61, "periodo": "ago/2017 – jul/2026"}, "empresa": "Rural Nutrição Animal LTDA", "cnpj": "04.485.656/0001-00"}, {"id": "0211.00012.0037341833.26-20", "tipo": "Parcelamento Simplificado (0211)", "tributos": "Diversos", "data_consolidacao": "12/02/2026", "divida_consolidada": 42093.3, "saldo_devedor": 40426.01, "total_parcelas": 60, "pagas": 6, "restantes": 54, "valor_parcela": 701.55, "proximo_venc": "31/08/2026", "ultima_parcela": "31/01/2031", "fonte": "Extrato RFB (27/08/2026)", "empresa": "R N A Nutrição Animal LTDA", "cnpj": "43.649.521/0001-87", "taxa": {"meses": 5, "mult": 1.0549, "taxa_mensal": 1.075, "taxa_anual": 13.68, "periodo": "02/2026 – 07/2026"}}, {"id": "0211.00012.0102182564.24-73", "tipo": "Parcelamento Simplificado (0211)", "tributos": "Diversos", "data_consolidacao": "02/10/2024", "divida_consolidada": 47600.72, "saldo_devedor": 37400.66, "total_parcelas": 60, "pagas": 22, "restantes": 38, "valor_parcela": 793.34, "proximo_venc": "31/08/2026", "ultima_parcela": "28/09/2029", "fonte": "Extrato RFB (27/08/2026)", "empresa": "R N A Nutrição Animal LTDA", "cnpj": "43.649.521/0001-87", "taxa": {"meses": 21, "mult": 1.2284, "taxa_mensal": 0.984, "taxa_anual": 12.47, "periodo": "10/2024 – 07/2026"}}], "pendencias": [{"receita": "IRPJ (2089-01)", "periodo": "2º Trim/2026", "vencimento": "31/08/2026", "valor": 65836.56, "situacao": "A analisar / A vencer"}, {"receita": "IRPJ (2089-01)", "periodo": "2º Trim/2026", "vencimento": "30/09/2026", "valor": 65836.56, "situacao": "A analisar / A vencer"}, {"receita": "CSLL (2372-01)", "periodo": "2º Trim/2026", "vencimento": "31/08/2026", "valor": 36631.74, "situacao": "A analisar / A vencer"}, {"receita": "CSLL (2372-01)", "periodo": "2º Trim/2026", "vencimento": "30/09/2026", "valor": 36631.74, "situacao": "A analisar / A vencer"}], "total_saldo": 919273.3200000002, "total_pendencias": 204936.59999999998, "total_parcela_mensal": 28633.99, "benchmarks_financiamento": [{"nome": "Parcelamento fiscal (Selic pura, sem spread)", "min_aa": 6.6, "max_aa": 13.6, "obs": "Faixa observada nos parcelamentos ativos da Rural"}, {"nome": "Linhas subsidiadas (BNDES / Pronampe)", "min_aa": 8, "max_aa": 12, "obs": "Acesso restrito, prazo de contratação"}, {"nome": "Capital de giro bancário comum", "min_aa": 20, "max_aa": 35, "obs": "1,5% a 2,5% a.m."}, {"nome": "Antecipação de duplicatas / recebíveis", "min_aa": 24, "max_aa": 60, "obs": "1,8% a 4,0% a.m."}], "analise_nota": "Custo efetivo dos parcelamentos calculado a partir da correção real observada entre o valor original de cada parcela e o valor efetivamente pago (Selic acumulada, sem spread bancário). Parcelamento COFINS (10140-405706/2021-56) não possui detalhamento de pagamentos no extrato do e-CAC, por isso ficou fora do comparativo de taxas.", "subtotal_por_empresa": {"Rural Nutrição Animal LTDA": {"saldo": 841446.6500000001, "parcela": 27139.100000000002, "qtd": 10}, "R N A Nutrição Animal LTDA": {"saldo": 77826.67000000001, "parcela": 1494.8899999999999, "qtd": 2}}};
+
+function fmtBRL(v) {
+  if (v === null || v === undefined) return "—";
+  return v.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+}
+function fmtInt(v) { return (v === null || v === undefined) ? "—" : v.toLocaleString('pt-BR'); }
+
+function cssVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+const ACCENT = () => cssVar('--accent');
+const MUTED = () => cssVar('--text-muted');
+const BORDER = () => cssVar('--border');
+
+Chart.defaults.font.family = "IBM Plex Sans, sans-serif";
+Chart.defaults.color = MUTED();
+
+const PALETTE = ['#2f6b3a','#4a6b8a','#a5670f','#7a8f6d','#6b5b95','#b06a4f','#4c8577','#8a7a4a','#5f7a9c','#9c5f6e'];
+
+// Populate empresa filter
+const empresas = [...new Set(DATA.parcelamentos.map(p => p.empresa))].sort();
+const selEmpresa = document.getElementById('filtroEmpresa');
+empresas.forEach(e => {
+  const opt = document.createElement('option');
+  opt.value = e;
+  opt.textContent = e;
+  selEmpresa.appendChild(opt);
+});
+
+let chartSaldo, chartProgresso, chartTaxas;
+
+function daysUntil(dstr) {
+  if (!dstr || dstr.indexOf('/') < 0) return null;
+  const [d,m,y] = dstr.split('/').map(Number);
+  const target = new Date(y, m-1, d);
+  const today = new Date(2026, 7, 27);
+  return Math.round((target - today) / 86400000);
+}
+
+function renderParcelamentos(data) {
+  const tbody = document.getElementById('tbodyParcelamentos');
+  tbody.innerHTML = data.map(p => {
+    const pct = p.total_parcelas ? Math.round((p.pagas/p.total_parcelas)*100) : null;
+    const progresso = p.total_parcelas
+      ? `<span class="progress"><span class="progress-bar"><span class="progress-fill" style="width:${pct}%"></span></span>${p.pagas}/${p.total_parcelas}</span>`
+      : `<span class="pill na">sem detalhe</span>`;
+    const du = daysUntil(p.proximo_venc);
+    let badge = '';
+    if (du !== null) {
+      badge = du <= 5 ? `<span class="pill warn">${du}d</span>` : `<span class="pill ok">${du}d</span>`;
+    }
+    return `<tr>
+      <td class="txt">${p.empresa}</td>
+      <td class="txt"><b>${p.id}</b></td>
+      <td class="txt">${p.tipo}</td>
+      <td class="txt">${p.tributos}</td>
+      <td class="num">${fmtBRL(p.divida_consolidada)}</td>
+      <td class="num"><b>${fmtBRL(p.saldo_devedor)}</b></td>
+      <td>${progresso}</td>
+      <td class="num">${fmtBRL(p.valor_parcela)}</td>
+      <td>${p.proximo_venc} ${badge}</td>
+      <td>${p.ultima_parcela}</td>
+    </tr>`;
+  }).join('');
+}
+
+let sortKey = null, sortDir = 'desc';
+document.querySelectorAll('#tblParcelamentos thead th').forEach(th => {
+  th.addEventListener('click', () => {
+    const k = th.dataset.k;
+    if (sortKey === k) sortDir = sortDir === 'asc' ? 'desc' : 'asc'; else { sortKey = k; sortDir = 'desc'; }
+    const sorted = [...currentData()].sort((a,b) => {
+      let av, bv;
+      if (k === 'progresso') { av = a.total_parcelas ? a.pagas/a.total_parcelas : -1; bv = b.total_parcelas ? b.pagas/b.total_parcelas : -1; }
+      else { av = a[k]; bv = b[k]; }
+      if (av === null || av === undefined) av = -Infinity;
+      if (bv === null || bv === undefined) bv = -Infinity;
+      if (typeof av === 'string') { av = av.toLowerCase(); bv = (bv||'').toLowerCase(); }
+      const cmp = av < bv ? -1 : av > bv ? 1 : 0;
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+    renderParcelamentos(sorted);
+  });
+});
+
+function currentData() {
+  const emp = selEmpresa.value;
+  return emp === 'todas' ? DATA.parcelamentos : DATA.parcelamentos.filter(p => p.empresa === emp);
+}
+
+function applyFiltro() {
+  const data = currentData();
+  const totalSaldo = data.reduce((a,p)=>a+p.saldo_devedor,0);
+  const totalParcela = data.reduce((a,p)=>a+(p.valor_parcela||0),0);
+
+  document.getElementById('kpi-saldo').textContent = fmtBRL(totalSaldo);
+  document.getElementById('kpi-parcela').textContent = fmtBRL(totalParcela);
+  document.getElementById('kpi-qtd').textContent = data.length;
+  document.getElementById('kpi-qtd-sub').textContent = data.filter(p=>p.total_parcelas).length + " com detalhamento completo de parcelas";
+  document.getElementById('kpi-pend').textContent = fmtBRL(DATA.total_pendencias);
+
+  const labels = data.map(p => p.id.length > 18 ? '…' + p.id.slice(-12) : p.id);
+  chartSaldo.data.labels = labels;
+  chartSaldo.data.datasets[0].data = data.map(p => p.saldo_devedor);
+  chartSaldo.data.datasets[0].backgroundColor = PALETTE.map(c=>c+'CC');
+  chartSaldo.update();
+
+  const totalPagas = data.reduce((a,p)=>a+(p.pagas||0),0);
+  const totalRestantes = data.reduce((a,p)=>a+(p.restantes||0),0);
+  chartProgresso.data.datasets[0].data = [totalPagas, totalRestantes];
+  chartProgresso.update();
+
+  const comTaxa = data.filter(p => p.taxa);
+  chartTaxas.data.labels = comTaxa.map(p => p.id.length > 18 ? '…' + p.id.slice(-12) : p.id);
+  chartTaxas.data.datasets[0].data = comTaxa.map(p => p.taxa.taxa_anual);
+  chartTaxas.data.datasets[0].backgroundColor = comTaxa.map(p => p.taxa.taxa_anual > 12 ? '#a5670fCC' : '#2f6b3aCC');
+  chartTaxas._comTaxa = comTaxa;
+  chartTaxas.update();
+
+  renderParcelamentos(data);
+}
+
+const saldoCtx = document.getElementById('chartSaldo').getContext('2d');
+chartSaldo = new Chart(saldoCtx, {
+  type: 'bar',
+  data: { labels: [], datasets: [{ label: 'Saldo devedor (R$)', data: [], borderRadius: 4 }] },
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    plugins: { legend: {display:false}, tooltip: { callbacks: { label: (c)=>fmtBRL(c.parsed.y) } } },
+    scales: {
+      x: { grid: { display:false }, ticks: { font: {size:10}, maxRotation: 55, minRotation: 35 } },
+      y: { beginAtZero:true, grid: { color: BORDER() }, ticks: { callback: (v)=>fmtBRL(v) } }
+    }
+  }
+});
+
+const progCtx = document.getElementById('chartProgresso').getContext('2d');
+chartProgresso = new Chart(progCtx, {
+  type: 'doughnut',
+  data: {
+    labels: ['Parcelas pagas','Parcelas restantes'],
+    datasets: [{ data: [0,0], backgroundColor: ['#2f6b3aCC','#a5670fCC'], borderColor: cssVar('--surface'), borderWidth:2 }]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false, cutout:'64%',
+    plugins: {
+      legend: { position:'bottom', labels: {usePointStyle:true, padding:14} },
+      tooltip: { callbacks: { label: (c)=> {
+        const total = c.dataset.data.reduce((a,b)=>a+b,0);
+        const pct = total ? ((c.parsed/total)*100).toFixed(1) : '0.0';
+        return `${c.label}: ${fmtInt(c.parsed)} (${pct}%)`;
+      } } }
+    }
+  }
+});
+
+const taxaCtx = document.getElementById('chartTaxas').getContext('2d');
+chartTaxas = new Chart(taxaCtx, {
+  type: 'bar',
+  data: { labels: [], datasets: [{ label: 'Taxa efetiva a.a.', data: [], borderRadius: 4 }] },
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    plugins: {
+      legend: { display:false },
+      tooltip: { callbacks: {
+        label: (c) => `${c.parsed.y.toFixed(2)}% a.a. (${chartTaxas._comTaxa[c.dataIndex].taxa.periodo})`
+      } }
+    },
+    scales: {
+      x: { grid: { display:false }, ticks: { font: {size:10}, maxRotation: 55, minRotation: 35 } },
+      y: { beginAtZero:true, grid: { color: BORDER() }, ticks: { callback: (v) => v + '%' },
+            title: { display:true, text:'% ao ano' } }
+    }
+  }
+});
+
+applyFiltro();
+
+document.getElementById('tbodyBench').innerHTML = DATA.benchmarks_financiamento.map(b => `
+  <tr>
+    <td class="txt">${b.nome}</td>
+    <td class="num">${b.min_aa.toFixed(1)}%</td>
+    <td class="num">${b.max_aa.toFixed(1)}%</td>
+    <td class="txt">${b.obs}</td>
+  </tr>
+`).join('');
+
+document.getElementById('tbodyPend').innerHTML = DATA.pendencias.map(p => `
+  <tr>
+    <td class="txt">${p.receita}</td>
+    <td class="txt">${p.periodo}</td>
+    <td>${p.vencimento}</td>
+    <td class="num">${fmtBRL(p.valor)}</td>
+    <td class="txt"><span class="pill warn">${p.situacao}</span></td>
+  </tr>
+`).join('');
+</script>
+
+</body>
+</html>
