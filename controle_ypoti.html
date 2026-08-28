@@ -216,7 +216,7 @@ tr.overdue:hover td{background:#f6e2da}
 <div class="wrap">
   <header class="top">
     <div class="brand">
-      <h1>Vendas &amp; Baixas</h1>
+      <h1>Ypoti &amp; Chacobras</h1>
       <div class="sub" id="periodo"></div>
     </div>
     <div class="legend"><span><i class="dot y"></i>Ypoti</span><span><i class="dot c"></i>Chacobras</span>
@@ -1394,8 +1394,43 @@ document.getElementById('lvFatura').onclick=()=>{
   win.document.close();
 };
 
+/* ---------- ISOLAMENTO GITHUB PAGES ---------- */
+// Cria prefixo único para localStorage usando o caminho do arquivo
+// Evita conflito de dados entre diferentes projetos no GitHub Pages
+const STORAGE_PREFIX = 'ypoti_chacobras_' + (location.pathname.split('/').filter(Boolean).slice(-2).join('_') || 'local_') + '_';
+
+// Wrapper para loadCfg com prefix isolado
+const _originalLoadCfg = loadCfg;
+loadCfg = function(){
+  try{
+    const stored = localStorage.getItem(STORAGE_PREFIX + 'cfg');
+    return stored ? JSON.parse(stored) : {};
+  }catch(e){
+    console.warn('Erro ao carregar config:', e);
+    return {};
+  }
+};
+
+// Wrapper para saveCfg com prefix isolado
+const _originalSaveCfg = saveCfg;
+saveCfg = function(){
+  const cfg={
+    mode:document.getElementById('tabNav')?.querySelector('button.on')?.textContent.split(' ')[0].toLowerCase() || 'painel',
+    api:document.getElementById('urlApi')?.value || '',
+    cargas:document.getElementById('urlCargas')?.value || '',
+    baixas:document.getElementById('urlBaixas')?.value || '',
+    chac:document.getElementById('urlChac')?.value || '',
+    sheet:document.getElementById('urlSheet')?.value || '',
+    auto:document.getElementById('autoRefresh')?.checked || false
+  };
+  localStorage.setItem(STORAGE_PREFIX + 'cfg', JSON.stringify(cfg));
+  localStorage.setItem(STORAGE_PREFIX + 'timestamp', new Date().toISOString());
+  if(_originalSaveCfg) _originalSaveCfg();
+};
+
 /* ---------- init ---------- */
 (function init(){
+  console.log('🔐 Isolamento GitHub Pages ativado. Prefixo storage:', STORAGE_PREFIX);
   const c=loadCfg();
   if(c.mode)setMode(c.mode);
   if(c.api)document.getElementById('urlApi').value=c.api;
@@ -1404,6 +1439,8 @@ document.getElementById('lvFatura').onclick=()=>{
   if(c.chac)document.getElementById('urlChac').value=c.chac;
   if(c.sheet)document.getElementById('urlSheet').value=c.sheet;
   if(c.auto)document.getElementById('autoRefresh').checked=true;
+  // CORREÇÃO: Limpar filtros de pesquisa para evitar valores residuais do localStorage antigo
+  document.querySelectorAll('input[type=search]').forEach(el => el.value = '');
   updateSheetLink();
   loadEmbedded();
   renderCfgStatus();
