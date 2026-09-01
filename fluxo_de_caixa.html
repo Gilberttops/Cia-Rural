@@ -480,6 +480,10 @@
       <h2>Hoje — <span id="diarioHojeLabel"></span></h2>
       <p class="recebimentos-note" style="margin-top:-6px;margin-bottom:10px;">O que vence hoje, a pagar e a receber, nas duas unidades. Vencimentos em sábado, domingo ou feriado nacional aparecem aqui no próximo dia útil (o item mostra entre parênteses a data original).</p>
       <div id="diarioKpiHoje" class="rec-summary-row" style="margin-bottom:14px;"></div>
+      <div class="card chart-card" style="max-width:360px;margin:0 auto 18px auto;">
+        <h3 style="text-align:center;margin:0 0 8px 0;font-size:0.9rem;">Categorias do dia (a pagar)</h3>
+        <canvas id="diarioHojePieChart" style="max-height:220px"></canvas>
+      </div>
       <div class="diario-split">
         <div class="diario-block diario-block-pagar">
           <h3>A Pagar</h3>
@@ -506,6 +510,10 @@
       <h2>Ontem — <span id="diarioOntemLabel"></span> · conciliar</h2>
       <p class="recebimentos-note" style="margin-top:-6px;margin-bottom:10px;">Lançamentos do último dia útil anterior a hoje (pula fim de semana e feriado — por isso numa segunda-feira aparece sexta-feira aqui). Em vermelho, o que ainda não tem valor "Real" preenchido na planilha — confira o pagamento/recebimento e atualize lá (ou aguarde a próxima conciliação com os dados do Agrotis).</p>
       <div id="diarioKpiOntem" class="rec-summary-row" style="margin-bottom:14px;"></div>
+      <div class="card chart-card" style="max-width:360px;margin:0 auto 18px auto;">
+        <h3 style="text-align:center;margin:0 0 8px 0;font-size:0.9rem;">Categorias do dia (a pagar)</h3>
+        <canvas id="diarioOntemPieChart" style="max-height:220px"></canvas>
+      </div>
       <div class="diario-split">
         <div class="diario-block diario-block-pagar">
           <h3>A Pagar</h3>
@@ -620,8 +628,18 @@
 <div id="saveToast" class="save-toast"></div>
 
 <script>
-const CATEGORIES = ["Fornecedores","Fretes","Impostos","Financiamentos","Folha de Pagamento","Comissoes","Outros"];
+const CATEGORIES = ["Fornecedores","Fretes","Impostos","Financiamentos","Folha de Pagamento","Comissoes","Outros","Consórcios","Pró-labore","Seguros","Despesas Fixas","Despesas Administrativas","Assinaturas","Combustível","Outras Saídas"];
 const CAT_LABELS = {Comissoes:"Comissões"};
+// Categorias "grandes" que ganham linha/cor propria nos graficos (evolucao e pizza do dia).
+// Qualquer categoria fora dessa lista (as novas, menores em volume) entra agregada em "Outras categorias"
+// so nos GRAFICOS - nas tabelas e filtros, as 15 categorias continuam aparecendo cada uma com seu nome.
+const CHART_MAIN_CATEGORIES = ["Fornecedores","Fretes","Impostos","Financiamentos","Folha de Pagamento","Comissoes","Outros"];
+const CHART_OUTRAS_LABEL = "Outras categorias";
+const CHART_COLORS = ['#2B914F','#FECA39','#2463AA','#B4462E','#5B6472','#7AAE8A','#8C6A3F','#9B7EDE'];
+const CATEGORY_COLOR = {};
+CHART_MAIN_CATEGORIES.forEach((c,i)=>{ CATEGORY_COLOR[c] = CHART_COLORS[i]; });
+CATEGORY_COLOR[CHART_OUTRAS_LABEL] = CHART_COLORS[CHART_COLORS.length-1];
+function chartCategoryOf(cat){ return CHART_MAIN_CATEGORIES.includes(cat) ? cat : CHART_OUTRAS_LABEL; }
 let WEEKS = ["Semana 2 - Julho","Semana 3 - Julho","Semana 4 - Julho","Semana 5 - Julho","Semana 6","Semana 7","Semana 8","Semana 9","Semana 10","Semana 11","Semana 12","Semana 13","Semana 14","Semana 15","Semana 16","Semana 17","Semana 18","Semana 19","Semana 20","Semana 21","Semana 22","Semana 23","Semana 24","Semana 25","Semana 26","Semana 27"];
 const UNIT_LABEL = { Rural: "Matriz (Rural)", RNA: "Filial (RNA)", Total: "Total (Matriz + Filial)" };
 
@@ -1229,14 +1247,14 @@ function renderCatTable(){
 
 function renderChart(){
   const ctx = document.getElementById('evolChart');
-  const colors = ['#2B914F','#FECA39','#2463AA','#B4462E','#5B6472','#7AAE8A','#8C6A3F'];
-  const datasets = CATEGORIES.map((c,i)=>({
+  const chartCats = [...CHART_MAIN_CATEGORIES, CHART_OUTRAS_LABEL];
+  const datasets = chartCats.map(c=>({
     label: CAT_LABELS[c]||c,
     data: WEEKS.map(w=>{
       const recs = filteredRecords(w, currentUnit);
-      return recs.filter(r=>r.category===c && (r.currency||'BRL')==='BRL').reduce((s,r)=>s+num(r.previsto),0);
+      return recs.filter(r=>chartCategoryOf(r.category)===c && (r.currency||'BRL')==='BRL').reduce((s,r)=>s+num(r.previsto),0);
     }),
-    backgroundColor: colors[i%colors.length],
+    backgroundColor: CATEGORY_COLOR[c],
   }));
   const cfg = {
     type: 'bar',
@@ -2070,6 +2088,37 @@ function renderDiarioReceberTable(tbodyId, receberList, destacarPendentes, bucke
   });
 }
 
+let diarioHojePie = null, diarioOntemPie = null;
+function renderDiarioPie(canvasId, prevChartRef, setChartRef, records){
+  const ctx = document.getElementById(canvasId);
+  const byCat = {};
+  records.filter(r=>(r.currency||'BRL')==='BRL').forEach(r=>{
+    const c = chartCategoryOf(r.category);
+    byCat[c] = (byCat[c]||0) + num(r.previsto);
+  });
+  const labels = Object.keys(byCat).filter(c=>byCat[c]>0);
+  const data = labels.map(c=>byCat[c]);
+  const colors = labels.map(c=>CATEGORY_COLOR[c] || CHART_COLORS[CHART_COLORS.length-1]);
+  const cfg = {
+    type: 'pie',
+    data: { labels: labels.map(c=>CAT_LABELS[c]||c), datasets: [{ data, backgroundColor: colors }] },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ position:'bottom', labels:{ boxWidth:10, font:{size:10} } },
+        tooltip:{ callbacks:{ label: (ctxT)=>`${ctxT.label}: R$ ${fmt(ctxT.parsed)}` } }
+      }
+    }
+  };
+  if(labels.length === 0){
+    if(prevChartRef){ prevChartRef.destroy(); setChartRef(null); }
+    ctx.getContext('2d').clearRect(0,0,ctx.width,ctx.height);
+    return null;
+  }
+  if(prevChartRef){ prevChartRef.data = cfg.data; prevChartRef.update(); return prevChartRef; }
+  return new Chart(ctx, cfg);
+}
+
 function renderDiarioView(){
   const now = new Date(); now.setHours(0,0,0,0);
   const ontemRef = diaUtilAnterior(now);
@@ -2106,6 +2155,9 @@ function renderDiarioView(){
     <span class="pill" style="background:#FADBD8;">A conciliar: <b>${pendentesOntem}</b></span>`;
   renderDiarioPagarTable('diarioOntemPagarBody', pagarOntem, true, ontemLabel);
   renderDiarioReceberTable('diarioOntemReceberBody', receberOntem, true, ontemLabel);
+
+  diarioHojePie = renderDiarioPie('diarioHojePieChart', diarioHojePie, (c)=>{diarioHojePie=c;}, pagarHoje);
+  diarioOntemPie = renderDiarioPie('diarioOntemPieChart', diarioOntemPie, (c)=>{diarioOntemPie=c;}, pagarOntem);
 }
 
 document.getElementById('diarioPdfBtn').addEventListener('click', async ()=>{
