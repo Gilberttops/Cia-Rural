@@ -184,6 +184,16 @@ footer{margin-top:24px;font-size:.75rem;color:var(--ink-mute);border-top:1px sol
         <span style="padding-top:3px">
           <button class="linkbtn" id="a-todos">todos</button>
           <button class="linkbtn" id="a-5">últimos 5</button>
+          <button class="linkbtn" id="a-atual">ano atual</button>
+        </span>
+      </div>
+      <div class="f-row">
+        <span class="f-lab">Meses</span>
+        <div class="chips" id="chips-meses"></div>
+        <span style="padding-top:3px">
+          <button class="linkbtn" id="m-todos">todos</button>
+          <button class="linkbtn" id="m-s1">1&#186; sem.</button>
+          <button class="linkbtn" id="m-s2">2&#186; sem.</button>
         </span>
       </div>
       <div class="f-row">
@@ -246,7 +256,7 @@ const METRICS=[
 let M=0, TAB='geral';
 let PEDIDO_ATUAL=null; // rascunho do gerador de pedido (fc6, ficha do cliente)
 const ENT={vend:null,cli:null,prod:null};
-const F={anos:new Set(ANOS.map((_,i)=>i)),vend:new Set(),fil:new Set(),cat:new Set(),cli:new Set(),prod:new Set()};
+const F={anos:new Set(ANOS.map((_,i)=>i)),meses:new Set([0,1,2,3,4,5,6,7,8,9,10,11]),vend:new Set(),fil:new Set(),cat:new Set(),cli:new Set(),prod:new Set()};
 
 /* categoria por índice de produto */
 const CATS=[...new Set(PROD.map(p=>p.cat))].sort();
@@ -284,7 +294,16 @@ function casa(txt,cod,q){const t=(q||'').toLowerCase().trim(); if(!t) return tru
   if(/^[0-9]+$/.test(t)) return c.replace(/^0+/,'').startsWith(t.replace(/^0+/,''));
   return false;}
 /* valor da linha i na métrica atual */
-function mv(i){return M===0?CO.val[i]:M===1?CO.qtd[i]:CO.qtd[i]*PESO[CO.p[i]];}
+function mv(i){
+  if(F.meses.size>0&&F.meses.size<12){
+    const val=[...F.meses].reduce((s,j)=>s+(MES[j][i]||0),0);
+    if(M===0) return val;
+    const frac=CO.val[i]>0?val/CO.val[i]:0;
+    if(M===1) return CO.qtd[i]*frac;
+    return CO.qtd[i]*PESO[CO.p[i]]*frac;
+  }
+  return M===0?CO.val[i]:M===1?CO.qtd[i]:CO.qtd[i]*PESO[CO.p[i]];
+}
 
 /* ---------- motor de filtro ---------- */
 let IDX=[];               // índices das linhas que passam nos filtros
@@ -1102,9 +1121,21 @@ function ligaAbas(id){document.getElementById(id).onclick=e=>{
 ligaAbas('tabs');ligaAbas('tabs2');
 document.getElementById('a-todos').onclick=()=>{F.anos=new Set(ANOS.map((_,i)=>i));chipsAnos();render();};
 document.getElementById('a-5').onclick=()=>{F.anos=new Set(ANOS.map((_,i)=>i).slice(-5));chipsAnos();render();};
+document.getElementById('a-atual').onclick=()=>{const idx=ANOS.indexOf(new Date().getFullYear());if(idx>=0){F.anos=new Set([idx]);chipsAnos();render();}};
+function chipsMeses(){
+  const nms=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const c=document.getElementById('chips-meses');
+  c.innerHTML=nms.map((n,j)=>`<button class="chip ${F.meses.has(j)?'on':''}" data-j="${j}">${n}</button>`).join('');
+  c.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{
+    const j=+b.dataset.j; F.meses.has(j)?F.meses.delete(j):F.meses.add(j); chipsMeses(); render();});
+}
+document.getElementById('m-todos').onclick=()=>{F.meses=new Set([0,1,2,3,4,5,6,7,8,9,10,11]);chipsMeses();render();};
+document.getElementById('m-s1').onclick=()=>{F.meses=new Set([0,1,2,3,4,5]);chipsMeses();render();};
+document.getElementById('m-s2').onclick=()=>{F.meses=new Set([6,7,8,9,10,11]);chipsMeses();render();};
+chipsMeses();
 document.getElementById('btn-limpar').onclick=()=>{
-  F.anos=new Set(ANOS.map((_,i)=>i));['vend','fil','cat','cli','prod'].forEach(k=>F[k].clear());
-  chipsAnos();montaPicks();render();};
+  F.anos=new Set(ANOS.map((_,i)=>i));F.meses=new Set([0,1,2,3,4,5,6,7,8,9,10,11]);['vend','fil','cat','cli','prod'].forEach(k=>F[k].clear());
+  chipsAnos();chipsMeses();montaPicks();render();};
 let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(render,180);});
 
 /* ---------- atalho "Fazer pedido": busca cliente e vai direto pra ficha ---------- */
