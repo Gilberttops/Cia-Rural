@@ -48,7 +48,7 @@
   .vtab{padding:6px 14px;border-radius:999px;border:1.5px solid var(--real-blue);background:transparent;cursor:pointer;font-size:0.82rem;font-weight:600;color:var(--real-blue);}
   .vtab.active{background:var(--real-blue);border-color:var(--real-blue);color:#fff;}
 
-  .mode-toggle{display:flex;gap:6px;margin-bottom:18px;}
+  .mode-toggle{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;}
   .mtab{padding:8px 18px;border-radius:8px;border:1.5px solid var(--green-deep);background:transparent;cursor:pointer;font-size:0.85rem;font-weight:700;color:var(--green-deep);}
   .mtab.active{background:var(--green-deep);color:#fff;}
 
@@ -269,7 +269,10 @@
     </div>
   </div>
 
-  <div class="card recebimentos-card">
+  <div class="card recebimentos-card" style="display:none">
+    <!-- Desativado em favor do calculo automatico via Duplicatas a receber
+         (bancarizadas, nao descontadas) -- ver recebimentoFor() no script.
+         Mantido oculto (nao removido) pra nao quebrar renderRecebimentos(). -->
     <div class="bank-head">
       <h2>Previsão de Recebimentos (por semana)</h2>
     </div>
@@ -444,6 +447,69 @@
     </div>
   </div>
 
+  <div id="rotativoView" style="display:none">
+    <div class="card">
+      <h2>Fluxo de Caixa Rotativo — 13 semanas</h2>
+      <p class="recebimentos-note" style="margin-top:-6px;margin-bottom:10px;">Matriz + Filial consolidadas. Começa na semana atual. Saldo inicial da 1ª semana = saldo bancário de hoje; das demais, é o saldo final projetado da semana anterior. Recebimentos previstos = duplicatas bancarizadas não descontadas + recebimento de exportação da semana (mesma base da Necessidade de Caixa).</p>
+      <div style="overflow-x:auto;">
+        <table class="rec-table" id="rotativoTable"></table>
+      </div>
+      <div class="card chart-card" style="margin-top:16px;">
+        <h3 style="text-align:center;margin:0 0 8px 0;font-size:0.9rem;">Evolução do saldo projetado</h3>
+        <canvas id="rotativoChart" style="max-height:260px"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div id="concentracaoView" style="display:none">
+    <div class="card">
+      <h2>Top 10 clientes — Duplicatas a receber</h2>
+      <p class="recebimentos-note" style="margin-top:-6px;margin-bottom:10px;">Somatório do valor pendente por cliente, nas duas unidades. Ajuda a ver concentração de risco de recebimento.</p>
+      <div style="overflow-x:auto;">
+        <table class="rec-table" id="topClientesTable">
+          <thead><tr><th>#</th><th>Cliente</th><th style="text-align:right">Valor pendente</th><th style="text-align:right">% do total pendente</th></tr></thead>
+          <tbody id="topClientesBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Painel de bancos — desconto de duplicatas</h2>
+      <p class="recebimentos-note" style="margin-top:-6px;margin-bottom:10px;">Limite atualizado manualmente (semanal). Descontado = soma das duplicatas bancarizadas marcadas como descontadas hoje.</p>
+      <div style="overflow-x:auto;">
+        <table class="rec-table" id="bancosLimiteTable">
+          <thead><tr><th>Banco</th><th style="text-align:right">Descontado hoje</th><th style="text-align:right">Limite</th><th style="text-align:right">% usado</th><th style="text-align:right">Disponível</th></tr></thead>
+          <tbody id="bancosLimiteBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Descontos realizados por banco</h2>
+      <p class="recebimentos-note" style="margin-top:-6px;margin-bottom:10px;">Histórico de antecipações já lançadas (aba Antecipações), agrupado por banco.</p>
+      <div style="overflow-x:auto;">
+        <table class="rec-table" id="descontosRealizadosTable">
+          <thead><tr><th>Banco</th><th style="text-align:right">Qtd. antecipações</th><th style="text-align:right">Bruto</th><th style="text-align:right">Custo (juros+IOF+tarifa)</th><th style="text-align:right">Líquido</th></tr></thead>
+          <tbody id="descontosRealizadosBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="auditoriaView" style="display:none">
+    <div class="card">
+      <h2>Auditoria de dados</h2>
+      <p class="recebimentos-note" style="margin-top:-6px;margin-bottom:10px;">Checagens automáticas em cima do que está lançado agora (Obrigações e Duplicatas a receber) — não altera nada, só aponta o que vale conferir. Vista separada, não entra nos cálculos de necessidade de caixa.</p>
+      <div id="auditoriaKpi" class="rec-summary-row" style="margin-bottom:10px;"></div>
+      <div style="overflow-x:auto;">
+        <table class="rec-table" id="auditoriaTable">
+          <thead><tr><th>Aba</th><th>Problema</th><th>Detalhe</th></tr></thead>
+          <tbody id="auditoriaBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <div id="duplicatasFullView" style="display:none">
     <div class="card">
       <h2>Todas as duplicatas a receber</h2>
@@ -465,7 +531,7 @@
       <div id="duplicatasFullKpi" class="rec-summary-row" style="margin-bottom:10px;"></div>
       <div style="overflow-x:auto;">
         <table class="rec-table" id="duplicatasFullTable">
-          <thead><tr><th>Vencimento</th><th>Unidade</th><th>Cliente / Sacado</th><th style="text-align:right">Valor</th><th>Status</th></tr></thead>
+          <thead><tr><th>Vencimento</th><th>Unidade</th><th>Cliente / Sacado</th><th style="text-align:right">Valor</th><th>Status</th><th>Origem</th><th>Banco</th><th>Descontada</th></tr></thead>
           <tbody id="duplicatasFullBody"></tbody>
         </table>
       </div>
@@ -715,13 +781,69 @@ async function fetchSheetData(){
 async function postToSheet(action, payload){
   if(!SCRIPT_URL) return null;
   try{
+    // Todo lançamento vai marcado com quem está usando o dashboard nesta sessão
+    // do navegador (ver ensureUsuarioIdentificado()) -- não é senha, só pra saber
+    // quem mexeu no quê. O Apps Script decide em quais abas grava essa coluna.
+    const fullPayload = Object.assign({}, payload, { usuario: CURRENT_USER || '' });
     const url = SCRIPT_URL + '?action=' + encodeURIComponent(action) +
-      '&payload=' + encodeURIComponent(JSON.stringify(payload));
+      '&payload=' + encodeURIComponent(JSON.stringify(fullPayload));
     return await jsonpRequest(url, 30000);
   }catch(e){
     console.error('Falha ao gravar na planilha:', action, e);
     return null;
   }
+}
+
+// ---------- Identificação de quem está usando o dashboard (sem senha) ----------
+// Pedido do João em 02/09/2026: só a Rosangela (financeiro) além do Gilberto
+// mexe direto no dashboard hoje (lançamento de saldo bancário diário) -- isso
+// deixa registrado quem fez cada lançamento sem precisar de login de verdade.
+let CURRENT_USER = localStorage.getItem('fluxoCaixaUsuario') || '';
+function ensureUsuarioIdentificado(){
+  return new Promise(resolve=>{
+    if(CURRENT_USER){ renderUsuarioBadge(); resolve(); return; }
+    const overlay = document.createElement('div');
+    overlay.id = 'usuarioOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(20,30,25,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;';
+    overlay.innerHTML = `
+      <div style="background:#fff;border-radius:10px;padding:24px 28px;max-width:340px;width:90%;box-shadow:0 8px 30px rgba(0,0,0,0.3);font-family:Inter,sans-serif;">
+        <h3 style="margin:0 0 8px 0;">Quem está acessando?</h3>
+        <p style="margin:0 0 14px 0;font-size:0.85rem;color:#666;">Sem senha, é só o nome mesmo — pra saber quem lançou cada coisa (ex: saldo bancário do dia).</p>
+        <input id="usuarioInput" type="text" placeholder="Seu nome" style="width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:6px;font-size:1rem;box-sizing:border-box;">
+        <button id="usuarioBtn" class="btn-primary" style="margin-top:12px;width:100%;">Entrar</button>
+      </div>`;
+    document.body.appendChild(overlay);
+    const inp = overlay.querySelector('#usuarioInput');
+    const btn = overlay.querySelector('#usuarioBtn');
+    setTimeout(()=>inp.focus(), 50);
+    function confirmar(){
+      const v = inp.value.trim();
+      if(!v){ inp.focus(); return; }
+      CURRENT_USER = v;
+      localStorage.setItem('fluxoCaixaUsuario', v);
+      document.body.removeChild(overlay);
+      renderUsuarioBadge();
+      resolve();
+    }
+    btn.onclick = confirmar;
+    inp.addEventListener('keydown', e=>{ if(e.key==='Enter') confirmar(); });
+  });
+}
+function renderUsuarioBadge(){
+  let el = document.getElementById('usuarioBadge');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'usuarioBadge';
+    el.style.cssText = 'position:fixed;top:8px;right:10px;z-index:500;background:rgba(0,0,0,0.55);color:#fff;font-size:0.72rem;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:Inter,sans-serif;';
+    el.title = 'Clique pra trocar o nome';
+    el.onclick = ()=>{
+      localStorage.removeItem('fluxoCaixaUsuario');
+      CURRENT_USER = '';
+      location.reload();
+    };
+    document.body.appendChild(el);
+  }
+  el.textContent = '👤 ' + CURRENT_USER;
 }
 
 function applySheetData(data){
@@ -748,6 +870,7 @@ function applySheetData(data){
   state.__recebimentosFromSheet = data.recebimentos || null;
   state.__recebimentosReaisFromSheet = data.recebimentosReais || null;
   state.__antecipacoesFromSheet = data.antecipacoes || null;
+  state.__limitesBancosFromSheet = Array.isArray(data.limitesBancos) ? data.limitesBancos : null;
   // Se o Apps Script já estiver enviando a aba "ConciliacaoAgrotis" (ver Code.gs),
   // usa ela em vez do retrato fixo gravado neste arquivo — assim a conciliação
   // Agrotis passa a vir sempre da planilha, sem depender de eu reeditar o HTML.
@@ -1008,6 +1131,7 @@ async function loadState(){
       if(sheetData.recebimentos) state.recebimentos = sheetData.recebimentos;
       if(Array.isArray(sheetData.recebimentosReais)) state.recebimentosReais = sheetData.recebimentosReais;
       if(Array.isArray(sheetData.antecipacoes)) state.antecipacoesReais = sheetData.antecipacoes;
+      if(Array.isArray(sheetData.limitesBancos)) state.limitesBancos = sheetData.limitesBancos;
       window.__sheetModeOk = true;
       return;
     }
@@ -1196,7 +1320,7 @@ function renderKPIs(){
   const necessidade = totalP - totalAbatimento;
   const necCard = document.createElement('div');
   necCard.className = 'kpi necessidade-kpi' + (necessidade<=0 ? ' surplus' : '');
-  necCard.innerHTML = `<div class="label">Necessidade de Caixa (semana)</div><div class="value">${necessidade>=0?'':'+'}R$ ${fmt(Math.abs(necessidade))}${necessidade<=0?' (sobra)':''}</div><div style="font-size:0.7rem;color:var(--ink-soft);margin-top:2px;font-family:'Inter';line-height:1.5">Recebimento previsto: R$ ${fmt(receb)}${dupReceb>0?` · Duplicatas pendentes: R$ ${fmt(dupReceb)}`:''}${recebExport>0?` · Recebimento de Exportação: R$ ${fmt(recebExport)}`:''}${saldoBanco>0?` · Saldo em conta: R$ ${fmt(saldoBanco)}`:''}</div>`;
+  necCard.innerHTML = `<div class="label">Necessidade de Caixa (semana)</div><div class="value">${necessidade>=0?'':'+'}R$ ${fmt(Math.abs(necessidade))}${necessidade<=0?' (sobra)':''}</div><div style="font-size:0.7rem;color:var(--ink-soft);margin-top:2px;font-family:'Inter';line-height:1.5">${dupReceb>0?`Duplicatas a receber (bancarizadas, não descontadas): R$ ${fmt(dupReceb)}`:'Nenhuma duplicata bancarizada pendente nessa semana'}${recebExport>0?` · Recebimento de Exportação: R$ ${fmt(recebExport)}`:''}${saldoBanco>0?` · Saldo em conta: R$ ${fmt(saldoBanco)}`:''}</div>`;
   el.appendChild(necCard);
 
   if(necessidade > 0){
@@ -1548,20 +1672,34 @@ function calcAntecipacao(necessidadeLiquida, unit){
   return { bruto, juros, iof, tarifa, custoTotal, liquido, custoPct: rate.custo_pct };
 }
 
+// Desativado em 02/09/2026: a Necessidade de Caixa não usa mais o valor
+// manual "Previsão de Recebimentos" -- foi substituído pelo somatório
+// automático das Duplicatas a receber bancarizadas e não descontadas (ver
+// duplicataContaComoRecebimento()). Função mantida (retornando 0) só pra não
+// quebrar as chamadas existentes; o card de input correspondente também
+// ficou oculto no HTML (recebimentos-card).
 function recebimentoFor(unit){
-  if(unit==='Rural' || unit==='RNA') return num(state.recebimentos[unit]);
-  return num(state.recebimentos.Rural) + num(state.recebimentos.RNA);
+  return 0;
+}
+
+// Só conta pra Necessidade de Caixa a duplicata que: está Pendente, está
+// bancarizada (origem = "Boleto Banco" -- carteira simples fica de fora,
+// por pedido do João em 02/09/2026: cobrança direta com o cliente é menos
+// certa/programável que boleto registrado em banco) e NÃO foi descontada
+// (se já foi descontada, o dinheiro entrou via antecipação, não nessa data).
+function duplicataContaComoRecebimento(d){
+  return d.status === 'Pendente' && d.origem === 'Boleto Banco' && d.descontada !== 'S';
 }
 
 function duplicatasPendentesForWeek(week, unit){
   return state.duplicatasReceber
-    .filter(d => d.status === 'Pendente' && weekKeyFromDay(efetivoDiaStr(d.day)) === week && (unit==='Comparar'||unit==='Total'||d.unit===unit))
+    .filter(d => duplicataContaComoRecebimento(d) && weekKeyFromDay(efetivoDiaStr(d.day)) === week && (unit==='Comparar'||unit==='Total'||d.unit===unit))
     .reduce((s,d)=>s+num(d.valor),0);
 }
 
 function duplicatasPendentesForMonth(month, unit){
   return state.duplicatasReceber
-    .filter(d => d.status === 'Pendente' && d.day && efetivoDiaStr(d.day).split('/')[1]===month && (unit==='Comparar'||unit==='Total'||d.unit===unit))
+    .filter(d => duplicataContaComoRecebimento(d) && d.day && efetivoDiaStr(d.day).split('/')[1]===month && (unit==='Comparar'||unit==='Total'||d.unit===unit))
     .reduce((s,d)=>s+num(d.valor),0);
 }
 
@@ -1929,19 +2067,23 @@ function renderDuplicatasFullView(){
   const tbody = document.getElementById('duplicatasFullBody');
   tbody.innerHTML = '';
   if(items.length===0){
-    tbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-soft);">Nenhuma duplicata encontrada.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="color:var(--ink-soft);">Nenhuma duplicata encontrada.</td></tr>';
     return;
   }
   items.forEach(r=>{
     const efDay = efetivoDiaStr(r.day);
     const diaTxt = efDay + (efDay!==r.day ? ` (venceu ${r.day||''})` : '');
     const tr = document.createElement('tr');
+    const descontadaTxt = r.descontada==='S' ? 'Sim' : (r.descontada==='N' ? 'Não' : '');
     tr.innerHTML = `
       <td>${diaTxt}</td>
       <td>${UNIT_LABEL[r.unit]||r.unit}</td>
       <td>${r.cliente||''}</td>
       <td class="num">R$ ${fmt(r.valor)}</td>
-      <td><span class="status-badge status-${r.status}">${r.status}</span></td>`;
+      <td><span class="status-badge status-${r.status}">${r.status}</span></td>
+      <td>${r.origem||''}</td>
+      <td>${r.banco||''}</td>
+      <td>${descontadaTxt}</td>`;
     tbody.appendChild(tr);
   });
 }
@@ -2655,12 +2797,303 @@ async function addHistSaldo(){
 function renderModeToggle(){
   const el = document.getElementById('modeToggle');
   el.innerHTML = '';
-  [['semanal','Visão por semana'],['diario','Diário'],['mensal','Resumo mensal'],['recebimentos','Exportações'],['antecipacoes','Antecipações'],['duplicatas','Duplicatas a Receber'],['custofinanceiro','Custo Financeiro'],['conciliacao','Conciliação'],['obrigacoes_full','Obrigações (todas)'],['duplicatas_full','Duplicatas (todas)']].forEach(([val,label])=>{
+  [['semanal','Visão por semana'],['diario','Diário'],['mensal','Resumo mensal'],['rotativo','Rotativo (13 sem.)'],['recebimentos','Exportações'],['antecipacoes','Antecipações'],['duplicatas','Duplicatas a Receber'],['custofinanceiro','Custo Financeiro'],['conciliacao','Conciliação'],['obrigacoes_full','Obrigações (todas)'],['duplicatas_full','Duplicatas (todas)'],['concentracao','Concentração / Bancos'],['auditoria','Auditoria']].forEach(([val,label])=>{
     const b = document.createElement('button');
     b.className = 'mtab' + (val===currentMode?' active':'');
-    b.textContent = label;
+    if(val==='auditoria'){
+      const n = computeAuditIssues().length;
+      b.textContent = label + (n>0 ? ` (${n})` : '');
+      if(n>0) b.style.color = 'var(--danger)';
+    } else {
+      b.textContent = label;
+    }
     b.onclick = ()=>{ currentMode = val; renderAll(); };
     el.appendChild(b);
+  });
+}
+
+// ---------- Auditoria de dados ----------
+// Checagens client-side em cima do state atual (Obrigacoes + Duplicatas a
+// receber). Nao altera nenhum dado -- so lista o que merece revisao manual.
+// Limiar de "data suspeita": lancamentos com vencimento fora de uma janela
+// de +/- 15 meses a partir de hoje sao quase sempre erro de ano digitado
+// (o dataset real do dashboard cobre julho/2026 em diante).
+function computeAuditIssues(){
+  const issues = [];
+  const hoje = new Date();
+  const DIA_MS = 86400000;
+  function dataSuspeita(dayStr){
+    const d = inferDate(dayStr);
+    if(!d) return true;
+    const diffDias = Math.abs((d - hoje) / DIA_MS);
+    return diffDias > 456; // ~15 meses
+  }
+
+  // --- Obrigacoes (state.records) ---
+  const recSeen = new Map();
+  (state.records||[]).forEach(r=>{
+    const ref = `${r.item||'(sem item)'} · ${UNIT_LABEL[r.unit]||r.unit} · ${r.day||'(sem data)'} · R$ ${fmt(r.previsto)}`;
+    if(!r.item || !r.item.trim()){
+      issues.push({aba:'Obrigações', problema:'Item sem nome', detalhe: ref});
+    }
+    if(!CATEGORIES.includes(r.category)){
+      issues.push({aba:'Obrigações', problema:'Categoria fora da lista oficial', detalhe: `${ref} — categoria: "${r.category||''}"`});
+    }
+    if(r.previsto===null || r.previsto===undefined || isNaN(r.previsto) || r.previsto<=0){
+      issues.push({aba:'Obrigações', problema:'Valor previsto zerado ou inválido', detalhe: ref});
+    }
+    if(!r.day || !inferDate(r.day)){
+      issues.push({aba:'Obrigações', problema:'Data ausente ou não reconhecida', detalhe: ref});
+    } else if(dataSuspeita(r.day)){
+      issues.push({aba:'Obrigações', problema:'Data fora do intervalo esperado (possível ano errado)', detalhe: ref});
+    }
+    const key = `${r.item}|${r.unit}|${r.day}|${r.previsto}`;
+    recSeen.set(key, (recSeen.get(key)||0)+1);
+  });
+  recSeen.forEach((count,key)=>{
+    if(count>1){
+      const [item,unit,day,previsto] = key.split('|');
+      issues.push({aba:'Obrigações', problema:`Possível duplicata (${count}x)`, detalhe:`${item} · ${UNIT_LABEL[unit]||unit} · ${day} · R$ ${fmt(parseFloat(previsto))}`});
+    }
+  });
+
+  // --- Duplicatas a receber (state.duplicatasReceber) ---
+  const dupSeen = new Map();
+  const STATUS_OK = ['Pendente','Recebido','Antecipado'];
+  (state.duplicatasReceber||[]).forEach(d=>{
+    const ref = `${d.cliente||'(sem cliente)'} · ${UNIT_LABEL[d.unit]||d.unit} · ${d.day||'(sem data)'} · R$ ${fmt(d.valor)}`;
+    if(!d.cliente || !d.cliente.trim()){
+      issues.push({aba:'Duplicatas', problema:'Cliente sem nome', detalhe: ref});
+    }
+    if(d.valor===null || d.valor===undefined || isNaN(d.valor) || d.valor<=0){
+      issues.push({aba:'Duplicatas', problema:'Valor zerado ou inválido', detalhe: ref});
+    }
+    if(!d.day || !inferDate(d.day)){
+      issues.push({aba:'Duplicatas', problema:'Data ausente ou não reconhecida', detalhe: ref});
+    } else if(dataSuspeita(d.day)){
+      issues.push({aba:'Duplicatas', problema:'Data fora do intervalo esperado (possível ano errado)', detalhe: ref});
+    }
+    if(!STATUS_OK.includes(d.status)){
+      issues.push({aba:'Duplicatas', problema:'Status fora do padrão (Pendente/Recebido/Antecipado)', detalhe: `${ref} — status: "${d.status||''}"`});
+    }
+    const key = `${d.cliente}|${d.unit}|${d.day}|${d.valor}`;
+    dupSeen.set(key, (dupSeen.get(key)||0)+1);
+  });
+  dupSeen.forEach((count,key)=>{
+    if(count>1){
+      const [cliente,unit,day,valor] = key.split('|');
+      issues.push({aba:'Duplicatas', problema:`Possível duplicata (${count}x)`, detalhe:`${cliente} · ${UNIT_LABEL[unit]||unit} · ${day} · R$ ${fmt(parseFloat(valor))}`});
+    }
+  });
+
+  return issues;
+}
+
+// ---------- Fluxo de Caixa Rotativo (13 semanas, Rural+RNA consolidado) ----------
+let rotativoChart = null;
+function renderRotativoView(){
+  const startWeek = getCurrentWeekFromToday();
+  const startIdx = WEEKS.indexOf(startWeek);
+  const weeks = (startIdx===-1 ? WEEKS.slice(0,13) : WEEKS.slice(startIdx, startIdx+13));
+
+  let saldo = bankBalanceFor('Comparar');
+  const linhas = weeks.map((w,i)=>{
+    const obrig = sumField(filteredRecords(w,'Comparar'),'previsto','BRL');
+    const receb = duplicatasPendentesForWeek(w,'Comparar') + recebimentosExportacaoPendentesForWeek(w,'Comparar');
+    const saldoInicial = saldo;
+    const saldoFinal = saldoInicial + receb - obrig;
+    saldo = saldoFinal;
+    return { week:w, obrig, receb, saldoInicial, saldoFinal };
+  });
+
+  const table = document.getElementById('rotativoTable');
+  const thead = '<thead><tr><th>Semana</th>' + linhas.map(l=>`<th style="text-align:right">${weekLabel(l.week)}</th>`).join('') + '</tr></thead>';
+  function row(label, key, opts={}){
+    return `<tr><td>${label}</td>` + linhas.map(l=>{
+      const v = l[key];
+      const cor = opts.destacaNegativo && v<0 ? 'color:var(--danger);font-weight:600' : '';
+      return `<td class="num" style="${cor}">${opts.sinal && v>=0 ? '' : ''}R$ ${fmt(v)}</td>`;
+    }).join('') + '</tr>';
+  }
+  table.innerHTML = thead + '<tbody>'
+    + row('Saldo inicial', 'saldoInicial')
+    + row('+ Recebimentos previstos', 'receb')
+    + row('− Obrigações previstas', 'obrig')
+    + row('= Saldo final projetado', 'saldoFinal', {destacaNegativo:true})
+    + '</tbody>';
+
+  const ctx = document.getElementById('rotativoChart');
+  const labels = linhas.map(l=>weekLabel(l.week));
+  const data = linhas.map(l=>l.saldoFinal);
+  if(rotativoChart) rotativoChart.destroy();
+  rotativoChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: [{
+      label: 'Saldo final projetado',
+      data,
+      borderColor: '#2B914F',
+      backgroundColor: 'rgba(43,145,79,0.12)',
+      fill: true, tension: 0.25,
+      pointBackgroundColor: data.map(v=>v<0?'var(--danger)':'#2B914F'),
+      pointRadius: 4,
+    }]},
+    options: {
+      responsive: true,
+      plugins: { legend: { display:false } },
+      scales: { y: { ticks: { callback: v=>'R$ '+Number(v).toLocaleString('pt-BR') } } },
+    },
+  });
+}
+
+// ---------- Concentração de risco (Top clientes + Bancos) ----------
+function renderTopClientes(){
+  const tbody = document.getElementById('topClientesBody');
+  tbody.innerHTML = '';
+  const porCliente = {};
+  (state.duplicatasReceber||[]).forEach(d=>{
+    if(d.status !== 'Pendente') return;
+    const nome = (d.cliente||'(sem nome)').trim();
+    porCliente[nome] = (porCliente[nome]||0) + num(d.valor);
+  });
+  const totalPendente = Object.values(porCliente).reduce((s,v)=>s+v,0);
+  const top10 = Object.entries(porCliente).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  if(top10.length===0){
+    tbody.innerHTML = '<tr><td colspan="4" style="color:var(--ink-soft);">Nenhuma duplicata pendente.</td></tr>';
+    return;
+  }
+  top10.forEach(([nome,valor],i)=>{
+    const pct = totalPendente>0 ? (valor/totalPendente*100) : 0;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${i+1}</td><td>${nome}</td><td class="num">R$ ${fmt(valor)}</td><td class="num">${pct.toFixed(1)}%</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function bancosComOrigem(){
+  const set = new Set();
+  (state.duplicatasReceber||[]).forEach(d=>{ if(d.origem==='Boleto Banco' && d.banco) set.add(d.banco); });
+  (state.limitesBancos||[]).forEach(b=>{ if(b.banco) set.add(b.banco); });
+  return Array.from(set).sort();
+}
+
+function renderBancosLimite(){
+  const tbody = document.getElementById('bancosLimiteBody');
+  tbody.innerHTML = '';
+  const bancos = bancosComOrigem();
+  if(bancos.length===0){
+    tbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-soft);">Nenhum banco identificado ainda em Duplicatas.</td></tr>';
+    return;
+  }
+  const limitesMap = {};
+  (state.limitesBancos||[]).forEach(b=>{ limitesMap[b.banco] = num(b.limite); });
+
+  bancos.forEach(banco=>{
+    const descontadoHoje = (state.duplicatasReceber||[])
+      .filter(d=>d.banco===banco && d.origem==='Boleto Banco' && d.descontada==='S')
+      .reduce((s,d)=>s+num(d.valor),0);
+    const limite = limitesMap[banco] || 0;
+    const pct = limite>0 ? (descontadoHoje/limite*100) : null;
+    const disponivel = limite>0 ? Math.max(0, limite-descontadoHoje) : null;
+
+    const tr = document.createElement('tr');
+    const tdBanco = document.createElement('td');
+    tdBanco.textContent = banco;
+    const tdDesc = document.createElement('td');
+    tdDesc.className = 'num';
+    tdDesc.textContent = 'R$ ' + fmt(descontadoHoje);
+    const tdLimite = document.createElement('td');
+    tdLimite.className = 'num';
+    const inpLimite = document.createElement('input');
+    inpLimite.type = 'number';
+    inpLimite.step = '0.01';
+    inpLimite.style.width = '130px';
+    inpLimite.style.textAlign = 'right';
+    inpLimite.value = limite;
+    inpLimite.onchange = e=>{
+      const novoLimite = parseFloat(e.target.value)||0;
+      let entry = (state.limitesBancos||[]).find(b=>b.banco===banco);
+      if(!entry){
+        entry = { banco, limite: novoLimite };
+        state.limitesBancos = state.limitesBancos || [];
+        state.limitesBancos.push(entry);
+      } else {
+        entry.limite = novoLimite;
+      }
+      if(SCRIPT_URL){
+        postToSheet('setLimiteBanco', { banco, limite: novoLimite });
+      } else {
+        saveState();
+      }
+      renderBancosLimite();
+    };
+    tdLimite.appendChild(inpLimite);
+    const tdPct = document.createElement('td');
+    tdPct.className = 'num';
+    tdPct.textContent = pct===null ? '—' : pct.toFixed(1)+'%';
+    if(pct!==null && pct>=90) tdPct.style.color = 'var(--danger)';
+    const tdDisp = document.createElement('td');
+    tdDisp.className = 'num';
+    tdDisp.textContent = disponivel===null ? '—' : ('R$ ' + fmt(disponivel));
+
+    tr.append(tdBanco, tdDesc, tdLimite, tdPct, tdDisp);
+    tbody.appendChild(tr);
+  });
+}
+
+function renderDescontosRealizados(){
+  const tbody = document.getElementById('descontosRealizadosBody');
+  tbody.innerHTML = '';
+  const porBanco = {};
+  (state.antecipacoesReais||[]).forEach(a=>{
+    const banco = a.banco || '(sem banco)';
+    if(!porBanco[banco]) porBanco[banco] = { qtd:0, bruto:0, juros:0, iof:0, tarifa:0, liquido:0 };
+    const p = porBanco[banco];
+    p.qtd += 1;
+    p.bruto += num(a.bruto);
+    p.juros += num(a.juros);
+    p.iof += num(a.iof);
+    p.tarifa += num(a.tarifa);
+    p.liquido += num(a.liquido);
+  });
+  const entries = Object.entries(porBanco).sort((a,b)=>b[1].bruto-a[1].bruto);
+  if(entries.length===0){
+    tbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-soft);">Nenhuma antecipação lançada ainda.</td></tr>';
+    return;
+  }
+  entries.forEach(([banco,p])=>{
+    const custo = p.juros + p.iof + p.tarifa;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${banco}</td><td class="num">${p.qtd}</td><td class="num">R$ ${fmt(p.bruto)}</td><td class="num">R$ ${fmt(custo)}</td><td class="num">R$ ${fmt(p.liquido)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderConcentracaoView(){
+  renderTopClientes();
+  renderBancosLimite();
+  renderDescontosRealizados();
+}
+
+function renderAuditoriaView(){
+  const issues = computeAuditIssues();
+  const kpi = document.getElementById('auditoriaKpi');
+  const porAba = {};
+  issues.forEach(i=>{ porAba[i.aba] = (porAba[i.aba]||0)+1; });
+  kpi.innerHTML = `
+    <span class="pill">${issues.length} ponto(s) pra revisar</span>
+    ${Object.entries(porAba).map(([aba,n])=>`<span class="pill">${aba}: <b>${n}</b></span>`).join('')}
+    ${issues.length===0 ? '<span class="pill" style="color:var(--green-mid,#1e8449)">Nenhum problema encontrado</span>' : ''}`;
+
+  const tbody = document.getElementById('auditoriaBody');
+  tbody.innerHTML = '';
+  if(issues.length===0){
+    tbody.innerHTML = '<tr><td colspan="3" style="color:var(--ink-soft);">Nenhum problema encontrado nos dados atuais.</td></tr>';
+    return;
+  }
+  issues.forEach(i=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${i.aba}</td><td>${i.problema}</td><td>${i.detalhe}</td>`;
+    tbody.appendChild(tr);
   });
 }
 
@@ -2859,7 +3292,22 @@ function renderAll(){
   document.getElementById('obrigacoesFullView').style.display = currentMode==='obrigacoes_full' ? '' : 'none';
   document.getElementById('duplicatasFullView').style.display = currentMode==='duplicatas_full' ? '' : 'none';
   document.getElementById('diarioView').style.display = currentMode==='diario' ? '' : 'none';
+  document.getElementById('auditoriaView').style.display = currentMode==='auditoria' ? '' : 'none';
+  document.getElementById('concentracaoView').style.display = currentMode==='concentracao' ? '' : 'none';
+  document.getElementById('rotativoView').style.display = currentMode==='rotativo' ? '' : 'none';
 
+  if(currentMode==='auditoria'){
+    renderAuditoriaView();
+    return;
+  }
+  if(currentMode==='concentracao'){
+    renderConcentracaoView();
+    return;
+  }
+  if(currentMode==='rotativo'){
+    renderRotativoView();
+    return;
+  }
   if(currentMode==='diario'){
     renderDiarioView();
     return;
@@ -3051,6 +3499,7 @@ document.getElementById('saveFloatBtn').addEventListener('click', async ()=>{
 });
 
 (async ()=>{
+  await ensureUsuarioIdentificado();
   await loadState();
   renderAll();
   // Aviso visível quando a busca na planilha falha (timeout, Apps Script fora
