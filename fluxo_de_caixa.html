@@ -503,7 +503,7 @@
       <div id="auditoriaKpi" class="rec-summary-row" style="margin-bottom:10px;"></div>
       <div style="overflow-x:auto;">
         <table class="rec-table" id="auditoriaTable">
-          <thead><tr><th>Aba</th><th>Problema</th><th>Detalhe</th></tr></thead>
+          <thead><tr><th>Aba</th><th>Problema</th><th>Detalhe</th><th>Ação</th></tr></thead>
           <tbody id="auditoriaBody"></tbody>
         </table>
       </div>
@@ -539,12 +539,17 @@
   </div>
 
   <div id="diarioView" style="display:none">
-    <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+    <div id="diarioToolbar" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <label for="diarioDataInput" style="font-size:0.85rem;color:var(--ink-soft);">Ver dia:</label>
+        <input type="date" id="diarioDataInput" style="padding:5px 8px;border:1px solid var(--line);border-radius:6px;font-family:inherit;">
+        <button type="button" id="diarioHojeBtn" style="padding:5px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);cursor:pointer;font-family:inherit;font-size:0.85rem;">Hoje</button>
+      </div>
       <button class="btn-primary" id="diarioPdfBtn">Gerar PDF</button>
     </div>
     <div class="card" id="diarioHojeCard">
-      <h2>Hoje — <span id="diarioHojeLabel"></span></h2>
-      <p class="recebimentos-note" style="margin-top:-6px;margin-bottom:10px;">O que vence hoje, a pagar e a receber, nas duas unidades. Vencimentos em sábado, domingo ou feriado nacional aparecem aqui no próximo dia útil (o item mostra entre parênteses a data original).</p>
+      <h2><span id="diarioHojeTitulo">Hoje</span> — <span id="diarioHojeLabel"></span></h2>
+      <p class="recebimentos-note" style="margin-top:-6px;margin-bottom:10px;">O que vence no dia selecionado, a pagar e a receber, nas duas unidades. Vencimentos em sábado, domingo ou feriado nacional aparecem aqui no próximo dia útil (o item mostra entre parênteses a data original).</p>
       <div id="diarioKpiHoje" class="rec-summary-row" style="margin-bottom:14px;"></div>
       <div class="card chart-card" style="max-width:360px;margin:0 auto 18px auto;">
         <h3 style="text-align:center;margin:0 0 8px 0;font-size:0.9rem;">Categorias do dia (a pagar)</h3>
@@ -573,8 +578,8 @@
     </div>
 
     <div class="card" id="diarioOntemCard">
-      <h2>Ontem — <span id="diarioOntemLabel"></span> · conciliar</h2>
-      <p class="recebimentos-note" style="margin-top:-6px;margin-bottom:10px;">Lançamentos do último dia útil anterior a hoje (pula fim de semana e feriado — por isso numa segunda-feira aparece sexta-feira aqui). Em vermelho, o que ainda não tem valor "Real" preenchido na planilha — confira o pagamento/recebimento e atualize lá (ou aguarde a próxima conciliação com os dados do Agrotis).</p>
+      <h2><span id="diarioOntemTitulo">Dia útil anterior</span> — <span id="diarioOntemLabel"></span> · conciliar</h2>
+      <p class="recebimentos-note" style="margin-top:-6px;margin-bottom:10px;">Lançamentos do último dia útil anterior ao dia selecionado (pula fim de semana e feriado). Em vermelho, o que ainda não tem valor "Real" preenchido na planilha — confira o pagamento/recebimento e atualize lá (ou aguarde a próxima conciliação com os dados do Agrotis).</p>
       <div id="diarioKpiOntem" class="rec-summary-row" style="margin-bottom:14px;"></div>
       <div class="card chart-card" style="max-width:360px;margin:0 auto 18px auto;">
         <h3 style="text-align:center;margin:0 0 8px 0;font-size:0.9rem;">Categorias do dia (a pagar)</h3>
@@ -1132,6 +1137,7 @@ async function loadState(){
       if(Array.isArray(sheetData.recebimentosReais)) state.recebimentosReais = sheetData.recebimentosReais;
       if(Array.isArray(sheetData.antecipacoes)) state.antecipacoesReais = sheetData.antecipacoes;
       if(Array.isArray(sheetData.limitesBancos)) state.limitesBancos = sheetData.limitesBancos;
+      if(Array.isArray(sheetData.auditoriaConferidos)) state.auditoriaConferidos = sheetData.auditoriaConferidos;
       window.__sheetModeOk = true;
       return;
     }
@@ -1682,13 +1688,15 @@ function recebimentoFor(unit){
   return 0;
 }
 
-// Só conta pra Necessidade de Caixa a duplicata que: está Pendente, está
-// bancarizada (origem = "Boleto Banco" -- carteira simples fica de fora,
-// por pedido do João em 02/09/2026: cobrança direta com o cliente é menos
-// certa/programável que boleto registrado em banco) e NÃO foi descontada
-// (se já foi descontada, o dinheiro entrou via antecipação, não nessa data).
+// Só conta pra Necessidade de Caixa a duplicata que: ainda tem saldo em
+// aberto (Pendente ou Parcial -- nesse caso "valor" já é o saldo, não o
+// total do título), está bancarizada (origem = "Boleto Banco" -- carteira
+// simples fica de fora, por pedido do João em 02/09/2026: cobrança direta
+// com o cliente é menos certa/programável que boleto registrado em banco)
+// e NÃO foi descontada (se já foi descontada, o dinheiro entrou via
+// antecipação, não nessa data).
 function duplicataContaComoRecebimento(d){
-  return d.status === 'Pendente' && d.origem === 'Boleto Banco' && d.descontada !== 'S';
+  return (d.status === 'Pendente' || d.status === 'Parcial') && d.origem === 'Boleto Banco' && d.descontada !== 'S';
 }
 
 function duplicatasPendentesForWeek(week, unit){
@@ -1922,7 +1930,7 @@ function renderDuplicatasView(){
       return da.localeCompare(db);
     });
     const totalGeral = items.reduce((s,i)=>s+num(i.valor),0);
-    const byStatus = {Pendente:0, Recebido:0, Antecipado:0};
+    const byStatus = {Pendente:0, Recebido:0, Antecipado:0, Parcial:0};
     items.forEach(i=>{ byStatus[i.status] = (byStatus[i.status]||0) + num(i.valor); });
 
     const group = document.createElement('div');
@@ -1935,6 +1943,7 @@ function renderDuplicatasView(){
         <span class="pill">Pendente: <b>R$ ${fmt(byStatus.Pendente)}</b></span>
         <span class="pill">Recebido: <b>R$ ${fmt(byStatus.Recebido)}</b></span>
         <span class="pill">Antecipado: <b>R$ ${fmt(byStatus.Antecipado)}</b></span>
+        <span class="pill">Parcial: <b>R$ ${fmt(byStatus.Parcial)}</b></span>
       </div>`;
     const table = document.createElement('table');
     table.className = 'rec-table';
@@ -1951,7 +1960,7 @@ function renderDuplicatasView(){
       const tdStatus = document.createElement('td');
       const sel = document.createElement('select');
       sel.className = 'dup-status-select';
-      ['Pendente','Recebido','Antecipado'].forEach(s=>{
+      ['Pendente','Recebido','Antecipado','Parcial'].forEach(s=>{
         const o = document.createElement('option'); o.value=s; o.textContent=s; if(s===item.status) o.selected=true;
         sel.appendChild(o);
       });
@@ -2262,10 +2271,20 @@ function renderDiarioPie(canvasId, prevChartRef, setChartRef, records){
 }
 
 function renderDiarioView(){
-  const now = new Date(); now.setHours(0,0,0,0);
-  const ontemRef = diaUtilAnterior(now);
-  const hojeKey = ymd(now), ontemKey = ymd(ontemRef);
-  const hojeLabel = ddmmyyyy(now), ontemLabel = ddmmyyyy(ontemRef);
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const dataInput = document.getElementById('diarioDataInput');
+  let selecionada = hoje;
+  if (dataInput && dataInput.value) {
+    const parsed = new Date(dataInput.value + 'T00:00:00');
+    if (!isNaN(parsed)) selecionada = parsed;
+  } else if (dataInput) {
+    dataInput.value = ymd(hoje);
+  }
+  const ehHoje = ymd(selecionada) === ymd(hoje);
+  document.getElementById('diarioHojeTitulo').textContent = ehHoje ? 'Hoje' : 'Dia selecionado';
+  const ontemRef = diaUtilAnterior(selecionada);
+  const hojeKey = ymd(selecionada), ontemKey = ymd(ontemRef);
+  const hojeLabel = ddmmyyyy(selecionada), ontemLabel = ddmmyyyy(ontemRef);
   document.getElementById('diarioHojeLabel').textContent = hojeLabel;
   document.getElementById('diarioOntemLabel').textContent = ontemLabel;
 
@@ -2275,9 +2294,9 @@ function renderDiarioView(){
   }
 
   const pagarHoje = state.records.filter(r=>matchEffectiveDay(r, hojeKey));
-  const receberHoje = state.duplicatasReceber.filter(r=>matchEffectiveDay(r, hojeKey));
+  const receberHoje = state.duplicatasReceber.filter(r=>matchEffectiveDay(r, hojeKey) && duplicataContaComoRecebimento(r));
   const pagarOntem = state.records.filter(r=>matchEffectiveDay(r, ontemKey));
-  const receberOntem = state.duplicatasReceber.filter(r=>matchEffectiveDay(r, ontemKey));
+  const receberOntem = state.duplicatasReceber.filter(r=>matchEffectiveDay(r, ontemKey) && duplicataContaComoRecebimento(r));
 
   const totalPagarHoje = pagarHoje.reduce((s,r)=>s+num(r.previsto),0);
   const totalReceberHoje = receberHoje.reduce((s,r)=>s+num(r.valor),0);
@@ -2302,9 +2321,15 @@ function renderDiarioView(){
   diarioOntemPie = renderDiarioPie('diarioOntemPieChart', diarioOntemPie, (c)=>{diarioOntemPie=c;}, pagarOntem);
 }
 
+document.getElementById('diarioDataInput').addEventListener('change', renderDiarioView);
+document.getElementById('diarioHojeBtn').addEventListener('click', ()=>{
+  document.getElementById('diarioDataInput').value = ymd(new Date());
+  renderDiarioView();
+});
+
 document.getElementById('diarioPdfBtn').addEventListener('click', async ()=>{
   const el = document.getElementById('diarioView');
-  const btnWrap = el.querySelector('div[style*="flex-end"]');
+  const btnWrap = document.getElementById('diarioToolbar');
   if(btnWrap) btnWrap.style.display = 'none';
   const hojeLabel = document.getElementById('diarioHojeLabel').textContent;
 
@@ -2801,7 +2826,7 @@ function renderModeToggle(){
     const b = document.createElement('button');
     b.className = 'mtab' + (val===currentMode?' active':'');
     if(val==='auditoria'){
-      const n = computeAuditIssues().length;
+      const n = pendingAuditIssues().length;
       b.textContent = label + (n>0 ? ` (${n})` : '');
       if(n>0) b.style.color = 'var(--danger)';
     } else {
@@ -2859,7 +2884,7 @@ function computeAuditIssues(){
 
   // --- Duplicatas a receber (state.duplicatasReceber) ---
   const dupSeen = new Map();
-  const STATUS_OK = ['Pendente','Recebido','Antecipado'];
+  const STATUS_OK = ['Pendente','Recebido','Antecipado','Parcial'];
   (state.duplicatasReceber||[]).forEach(d=>{
     const ref = `${d.cliente||'(sem cliente)'} · ${UNIT_LABEL[d.unit]||d.unit} · ${d.day||'(sem data)'} · R$ ${fmt(d.valor)}`;
     if(!d.cliente || !d.cliente.trim()){
@@ -2887,6 +2912,17 @@ function computeAuditIssues(){
   });
 
   return issues;
+}
+
+// Chave estável por problema (aba+problema+detalhe) -- usada pra lembrar quais
+// pontos já foram conferidos manualmente. Como "detalhe" já carrega
+// item/cliente/unidade/data/valor, ela muda sozinha se o lançamento em
+// questão for corrigido, e o ponto volta a aparecer como pendente.
+function auditIssueKey(i){ return `${i.aba}|${i.problema}|${i.detalhe}`; }
+function auditoriaConfirmadasSet(){ return new Set((state.auditoriaConferidos||[]).map(c=>c.chave)); }
+function pendingAuditIssues(){
+  const confirmadas = auditoriaConfirmadasSet();
+  return computeAuditIssues().filter(i=>!confirmadas.has(auditIssueKey(i)));
 }
 
 // ---------- Fluxo de Caixa Rotativo (13 semanas, Rural+RNA consolidado) ----------
@@ -3074,26 +3110,79 @@ function renderConcentracaoView(){
   renderDescontosRealizados();
 }
 
+let auditoriaMostrarConferidos = false;
 function renderAuditoriaView(){
-  const issues = computeAuditIssues();
+  const confirmadas = auditoriaConfirmadasSet();
+  const todos = computeAuditIssues().map(i=>({ ...i, chave: auditIssueKey(i) }));
+  const pendentes = todos.filter(i=>!confirmadas.has(i.chave));
+  const issues = auditoriaMostrarConferidos ? todos : pendentes;
+
   const kpi = document.getElementById('auditoriaKpi');
   const porAba = {};
-  issues.forEach(i=>{ porAba[i.aba] = (porAba[i.aba]||0)+1; });
+  pendentes.forEach(i=>{ porAba[i.aba] = (porAba[i.aba]||0)+1; });
   kpi.innerHTML = `
-    <span class="pill">${issues.length} ponto(s) pra revisar</span>
+    <span class="pill">${pendentes.length} ponto(s) pra revisar</span>
     ${Object.entries(porAba).map(([aba,n])=>`<span class="pill">${aba}: <b>${n}</b></span>`).join('')}
-    ${issues.length===0 ? '<span class="pill" style="color:var(--green-mid,#1e8449)">Nenhum problema encontrado</span>' : ''}`;
+    ${pendentes.length===0 ? '<span class="pill" style="color:var(--green-mid,#1e8449)">Nenhum problema pendente</span>' : ''}
+    <label style="font-size:0.8rem;color:var(--ink-soft);display:inline-flex;align-items:center;gap:5px;cursor:pointer;">
+      <input type="checkbox" id="auditoriaMostrarConferidosChk" ${auditoriaMostrarConferidos ? 'checked' : ''}> Mostrar também os já conferidos
+    </label>`;
+  document.getElementById('auditoriaMostrarConferidosChk').addEventListener('change', e=>{
+    auditoriaMostrarConferidos = e.target.checked;
+    renderAuditoriaView();
+  });
 
   const tbody = document.getElementById('auditoriaBody');
   tbody.innerHTML = '';
   if(issues.length===0){
-    tbody.innerHTML = '<tr><td colspan="3" style="color:var(--ink-soft);">Nenhum problema encontrado nos dados atuais.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" style="color:var(--ink-soft);">Nenhum problema encontrado nos dados atuais.</td></tr>';
     return;
   }
   issues.forEach(i=>{
+    const conferido = confirmadas.has(i.chave);
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${i.aba}</td><td>${i.problema}</td><td>${i.detalhe}</td>`;
+    if(conferido) tr.style.opacity = '0.55';
+    const acaoHtml = conferido
+      ? `<button type="button" class="auditoria-desconfirmar" data-chave="${encodeURIComponent(i.chave)}" style="padding:4px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);cursor:pointer;font-size:0.78rem;">Reabrir</button>`
+      : `<button type="button" class="auditoria-confirmar" data-chave="${encodeURIComponent(i.chave)}" data-aba="${encodeURIComponent(i.aba)}" data-problema="${encodeURIComponent(i.problema)}" data-detalhe="${encodeURIComponent(i.detalhe)}" style="padding:4px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);cursor:pointer;font-size:0.78rem;">✓ Conferido</button>`;
+    tr.innerHTML = `<td>${i.aba}</td><td>${i.problema}</td><td>${i.detalhe}</td><td>${acaoHtml}</td>`;
     tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll('.auditoria-confirmar').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const chave = decodeURIComponent(btn.dataset.chave);
+      const aba = decodeURIComponent(btn.dataset.aba);
+      const problema = decodeURIComponent(btn.dataset.problema);
+      const detalhe = decodeURIComponent(btn.dataset.detalhe);
+      btn.disabled = true;
+      btn.textContent = 'Salvando...';
+      state.auditoriaConferidos = state.auditoriaConferidos || [];
+      state.auditoriaConferidos.push({ chave, aba, problema, detalhe, usuario: CURRENT_USER || '' });
+      const ok = await postToSheet('confirmarAuditoria', { chave, aba, problema, detalhe });
+      if(!ok){
+        state.auditoriaConferidos = state.auditoriaConferidos.filter(c=>c.chave!==chave);
+        alert('Não consegui salvar isso como conferido agora (falha de conexão ou timeout). Tente de novo em instantes.');
+      }
+      renderAuditoriaView();
+      renderModeToggle();
+    });
+  });
+  tbody.querySelectorAll('.auditoria-desconfirmar').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const chave = decodeURIComponent(btn.dataset.chave);
+      btn.disabled = true;
+      btn.textContent = '...';
+      const anterior = (state.auditoriaConferidos||[]).find(c=>c.chave===chave);
+      state.auditoriaConferidos = (state.auditoriaConferidos||[]).filter(c=>c.chave!==chave);
+      const ok = await postToSheet('desconfirmarAuditoria', { chave });
+      if(!ok && anterior){
+        state.auditoriaConferidos.push(anterior);
+        alert('Não consegui reabrir isso agora (falha de conexão ou timeout). Tente de novo em instantes.');
+      }
+      renderAuditoriaView();
+      renderModeToggle();
+    });
   });
 }
 
