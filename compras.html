@@ -1132,7 +1132,7 @@ function nowLabel() {
 
 let jsonpCounter2 = 0;
 function fetchAppsScript(filial, timeoutMs) {
-  timeoutMs = timeoutMs || 15000;
+  timeoutMs = timeoutMs || 60000;
   return new Promise((resolve, reject) => {
     const cbName = '__aps_cb_' + (jsonpCounter2++) + '_' + Math.random().toString(36).slice(2);
     const script = document.createElement('script');
