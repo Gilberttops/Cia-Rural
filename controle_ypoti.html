@@ -1430,14 +1430,17 @@ saveCfg = function(){
 
 /* ---------- init ---------- */
 (function init(){
+  // URLs padrão embutidas — usadas quando o localStorage ainda não tem configuração salva
+  const DEFAULT_API  = 'https://script.google.com/macros/s/AKfycbwsOesXUznD708VFWECuul_FLntl_WN08HXqzm9-KwFJVrUZs_hqKlxkG9WhMFGjAGAIA/exec';
+  const DEFAULT_SHEET= 'https://docs.google.com/spreadsheets/d/1t40MGWjfA8d6oXZoVWG4MmssYxXYPeIUDgq_njY5bOo/edit';
   console.log('🔐 Isolamento GitHub Pages ativado. Prefixo storage:', STORAGE_PREFIX);
   const c=loadCfg();
   if(c.mode)setMode(c.mode);
-  if(c.api)document.getElementById('urlApi').value=c.api;
+  document.getElementById('urlApi').value   = c.api   || DEFAULT_API;
   if(c.cargas)document.getElementById('urlCargas').value=c.cargas;
   if(c.baixas)document.getElementById('urlBaixas').value=c.baixas;
   if(c.chac)document.getElementById('urlChac').value=c.chac;
-  if(c.sheet)document.getElementById('urlSheet').value=c.sheet;
+  document.getElementById('urlSheet').value = c.sheet || DEFAULT_SHEET;
   if(c.auto)document.getElementById('autoRefresh').checked=true;
   // CORREÇÃO: Limpar filtros de pesquisa para evitar valores residuais do localStorage antigo
   document.querySelectorAll('input[type=search]').forEach(el => el.value = '');
