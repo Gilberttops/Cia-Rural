@@ -2298,12 +2298,16 @@ function renderDiarioView(){
   const pagarOntem = state.records.filter(r=>matchEffectiveDay(r, ontemKey));
   const receberOntem = state.duplicatasReceber.filter(r=>matchEffectiveDay(r, ontemKey) && duplicataContaComoRecebimento(r));
 
-  const totalPagarHoje = pagarHoje.reduce((s,r)=>s+num(r.previsto),0);
+  const totalPrevHoje = pagarHoje.reduce((s,r)=>s+num(r.previsto),0);
+  const totalPagoHoje = pagarHoje.reduce((s,r)=>s+num(r.real),0);
+  const totalPagarHoje = Math.max(0, totalPrevHoje - totalPagoHoje);
   const totalReceberHoje = receberHoje.reduce((s,r)=>s+num(r.valor),0);
   document.getElementById('diarioKpiHoje').innerHTML = `
-    <span class="pill">A pagar hoje: <b>R$ ${fmt(totalPagarHoje)}</b> (${pagarHoje.length})</span>
-    <span class="pill">A receber hoje: <b>R$ ${fmt(totalReceberHoje)}</b> (${receberHoje.length})</span>
-    <span class="pill">Saldo do dia: <b>R$ ${fmt(totalReceberHoje-totalPagarHoje)}</b></span>`;
+    <span class="pill">Previsto hoje: <b>R$ ${fmt(totalPrevHoje)}</b> (${pagarHoje.length})</span>
+    <span class="pill" style="background:#DDF0E2;">Já pago: <b>R$ ${fmt(totalPagoHoje)}</b></span>
+    <span class="pill" style="background:#FADBD8;">A pagar (saldo): <b>R$ ${fmt(totalPagarHoje)}</b></span>
+    <span class="pill">A receber: <b>R$ ${fmt(totalReceberHoje)}</b> (${receberHoje.length})</span>
+    <span class="pill">Saldo líquido: <b>R$ ${fmt(totalReceberHoje-totalPagarHoje)}</b></span>`;
   renderDiarioPagarTable('diarioHojePagarBody', pagarHoje, false, hojeLabel);
   renderDiarioReceberTable('diarioHojeReceberBody', receberHoje, false, hojeLabel);
 
