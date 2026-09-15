@@ -2302,7 +2302,25 @@ function renderDiarioView(){
   const totalPagoHoje = pagarHoje.reduce((s,r)=>s+num(r.real),0);
   const totalPagarHoje = Math.max(0, totalPrevHoje - totalPagoHoje);
   const totalReceberHoje = receberHoje.reduce((s,r)=>s+num(r.valor),0);
+  // Saldos bancários do dia anterior (ontem)
+  const saldosOntem = (state.historicoSaldos||[]).filter(h=>h.date===ontemLabel);
+  const temSaldoOntem = saldosOntem.length > 0;
+  const saldoRuralOntem = saldosOntem.filter(h=>h.unit==='Rural').reduce((s,h)=>s+h.saldo,0);
+  const saldoRNAOntem = saldosOntem.filter(h=>h.unit==='RNA').reduce((s,h)=>s+h.saldo,0);
+  const saldoTotalOntem = saldoRuralOntem + saldoRNAOntem;
+  const saldoBancarioPill = temSaldoOntem
+    ? `<span class="pill" style="background:#EBF5FB;border:1px solid #AED6F1;">
+        Saldo bancário ${ontemLabel}: 
+        <b>Rural R$ ${fmt(saldoRuralOntem)}</b> · 
+        <b>RNA R$ ${fmt(saldoRNAOntem)}</b> · 
+        <b>Total R$ ${fmt(saldoTotalOntem)}</b>
+      </span>`
+    : `<span class="pill" style="background:#F2F3F4;color:var(--ink-soft);border:1px solid #D5D8DC;">
+        Saldo bancário ${ontemLabel}: <b>R$ 0,00</b> — aguardando saldos bancários
+      </span>`;
+
   document.getElementById('diarioKpiHoje').innerHTML = `
+    ${saldoBancarioPill}
     <span class="pill">Previsto hoje: <b>R$ ${fmt(totalPrevHoje)}</b> (${pagarHoje.length})</span>
     <span class="pill" style="background:#DDF0E2;">Já pago: <b>R$ ${fmt(totalPagoHoje)}</b></span>
     <span class="pill" style="background:#FADBD8;">A pagar (saldo): <b>R$ ${fmt(totalPagarHoje)}</b></span>
