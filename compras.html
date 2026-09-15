@@ -574,7 +574,8 @@
           </div>
           <div class="form-group">
             <label>Empresa / Fornecedor *</label>
-            <input type="text" id="cfEmpresa" required placeholder="Ex: CARBOTEX">
+            <input list="cotacaoEmpresaList" type="text" id="cfEmpresa" required placeholder="Digite ou selecione o fornecedor…">
+            <datalist id="cotacaoEmpresaList"></datalist>
           </div>
           <div class="form-group">
             <label>Vendedor / Contato</label>
@@ -675,6 +676,26 @@ function rebuildProductList() {
   PRODUCT_LIST = Object.keys(DATA).map(code => ({ code, name: DATA[code].cadastro.produto })).sort((a,b) => a.name.localeCompare(b.name, 'pt-BR'));
 }
 rebuildProductList();
+
+// Lista de fornecedores já conhecidos (extraída do histórico de compras das
+// duas filiais), usada como sugestão no campo "Empresa / Fornecedor" da
+// cotação — pra reduzir erro de digitação/caractere ao lançar uma cotação
+// nova. Não é obrigatório escolher da lista (fornecedor novo pode ser digitado
+// livremente), é só uma sugestão.
+let FORNECEDOR_LIST = [];
+function rebuildFornecedorList() {
+  const nomes = new Set();
+  [DATASETS.F2, DATASETS.F5].forEach(dataset => {
+    if (!dataset) return;
+    Object.values(dataset).forEach(item => {
+      (item.fornecedores || []).forEach(f => {
+        if (f.fornecedor) nomes.add(f.fornecedor.trim());
+      });
+    });
+  });
+  FORNECEDOR_LIST = [...nomes].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+}
+rebuildFornecedorList();
 
 document.getElementById('filialSelect').addEventListener('change', (e) => {
   currentFilial = e.target.value;
@@ -1206,6 +1227,7 @@ async function refreshLiveData(isManual) {
     }
     DATA = DATASETS[currentFilial];
     rebuildProductList();
+    rebuildFornecedorList();
     const atualizadoEm = payloadF2.atualizadoEm || payloadF5.atualizadoEm;
     const comCompra = Object.values(DATA).filter(p => p.cadastro.n_compras > 0).length;
     document.getElementById('dataStatusLine').textContent =
@@ -1769,6 +1791,14 @@ function renderCotacoes() {
   // Populate product datalist
   const dl = document.getElementById('cotacaoProdutoList');
   dl.innerHTML = PRODUCT_LIST.map(p => `<option value="${p.name}">`).join('');
+
+  // Populate fornecedor (empresa) datalist — combina o histórico de compras
+  // com empresas já usadas em cotações anteriores (mesmo as que ainda não
+  // compraram nada, só cotaram).
+  const dlEmpresa = document.getElementById('cotacaoEmpresaList');
+  const empresasCotacoes = COTACOES.map(c => c.empresa).filter(Boolean);
+  const empresasTodas = [...new Set([...FORNECEDOR_LIST, ...empresasCotacoes])].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  dlEmpresa.innerHTML = empresasTodas.map(nome => `<option value="${nome}">`).join('');
 
   const filterProd = document.getElementById('cotacoesFilterProduto').value.toLowerCase();
   const filterStatus = document.getElementById('cotacoesFilterStatus').value;
