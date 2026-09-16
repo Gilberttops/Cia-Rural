@@ -403,6 +403,35 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
 </style>
 </head>
 <body>
+<div id="nome-usuario-modal" class="modal-overlay" style="display:flex;z-index:5000">
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-header">
+      <span>Identifique-se para continuar</span>
+    </div>
+    <div class="modal-body">
+      <div class="f">
+        <label>Selecione seu nome</label>
+        <select id="nome-usuario-select" onchange="onNomeUsuarioSelectChange()">
+          <option value="">— selecione —</option>
+          <option value="Gilberto">Gilberto</option>
+          <option value="Ronei">Ronei</option>
+          <option value="Joao Victor">João Victor</option>
+          <option value="Giseli">Giseli</option>
+          <option value="Alan">Alan</option>
+          <option value="__outro__">Outro...</option>
+        </select>
+      </div>
+      <div class="f" id="nome-usuario-outro-wrap" style="display:none">
+        <label>Digite seu nome</label>
+        <input type="text" id="nome-usuario-outro" placeholder="Seu nome">
+      </div>
+      <div class="hint" style="margin-top:6px">Seu nome fica registrado junto de cada edição salva, para que todos saibam quem alterou o quê.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="confirmarNomeUsuario()">Confirmar e entrar</button>
+    </div>
+  </div>
+</div>
 <div id="toast" class="toast"></div>
 
 <div id="toast" class="toast"></div>
@@ -415,7 +444,11 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
       <p>Ficha técnica · Banco de MPs · Formação de preço</p>
     </div>
   </div>
-  <span class="hdr-tag">base MP: 16/03/2026</span>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span id="ultima-atualizacao" style="font-size:11px;color:var(--t3)"></span>
+    <button class="btn btn-ghost" style="padding:5px 11px;font-size:11px" onclick="atualizarDadosRemotos(true)" title="Buscar a versão mais recente de fórmulas, matérias-primas, cotações e composição nutricional na planilha">🔄 Atualizar dados</button>
+    <span class="hdr-tag">base MP: 16/03/2026</span>
+  </div>
 </div>
 
 <div class="tabs">
@@ -521,7 +554,7 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
     <div class="kpi"><div class="kpi-lbl">Sem custo</div><div class="kpi-val" id="mp-zero" style="color:var(--red)">0</div></div>
     <div class="kpi blue"><div class="kpi-lbl">Em uso na ficha</div><div class="kpi-val" id="mp-fichas">—</div></div>
   </div>
-  <div id="mp-changed-alert" style="display:none" class="alert alert-warn">⚠️ Alterações não salvas. Em produção seriam persistidas no banco de dados.</div>
+  <div id="mp-changed-alert" style="display:none" class="alert alert-ok">✅ Alterações desta sessão já foram salvas na planilha compartilhada — visíveis para todos os colaboradores.</div>
   <div class="card" style="padding:0">
     <div class="tbl-wrap">
       <table>
@@ -532,6 +565,7 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
           <th class="r" style="width:100px">R$/kg ou R$/un</th>
           <th class="r" style="width:110px">Anterior (R$/ton)</th>
           <th style="width:80px;text-align:center">Variação</th>
+          <th style="width:140px">Última alteração</th>
           <th style="width:80px;text-align:center">Ficha</th>
           <th style="width:40px;text-align:center">Nutri.</th>
           <th style="width:30px"></th>
@@ -551,7 +585,8 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
         <div class="card-hdr">
           <span class="card-title">1. Identificação do produto</span>
           <div style="display:flex;gap:7px">
-            <button class="gravar-btn" onclick="gravarFormula()" title="Salvar fórmula no banco local (localStorage)">💾 Gravar no banco</button>
+            <button class="gravar-btn" onclick="gravarFormula()" title="Salvar esta fórmula na planilha, para todos os colaboradores">💾 Salvar fórmula</button>
+            <button class="action-btn" style="background:var(--s1);color:var(--t2);border-color:var(--border)" onclick="abrirHistoricoFormula($('p-cod').value,fichaBancoAtual)" title="Ver todas as versões já salvas para este código">🕘 Versões</button>
             <button class="action-btn btn-export" onclick="exportarFormula()" title="Exportar fórmula como arquivo CSV">⬇ Exportar .csv</button>
             <button class="action-btn" style="background:var(--grn-lt);color:var(--green);border-color:var(--grn-bd)" onclick="abrirApresentacaoProduto()" title="Gerar ficha de apresentação com níveis de garantia">📄 Apresentação do produto</button>
           </div>
@@ -1512,6 +1547,22 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="fecharNovaFormula()">Cancelar</button>
+<div id="historico-formula-modal" class="modal-overlay" style="display:none">
+  <div class="modal-box" style="max-width:640px">
+    <div class="modal-header">
+      <span id="hf-titulo">Histórico de versões</span>
+      <button onclick="fecharHistoricoFormula()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--t3);margin-bottom:10px">Escolha qual versão desta fórmula carregar na Ficha de Custo. A versão padrão é a receita original; as demais são edições salvas por colaboradores, da mais recente para a mais antiga.</div>
+      <div id="hf-lista"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharHistoricoFormula()">Fechar</button>
+    </div>
+  </div>
+</div>
+
       <button class="btn btn-primary" id="nf-save-btn" onclick="salvarNovaFormula()">💾 Salvar fórmula</button>
     </div>
   </div>
@@ -1863,6 +1914,7 @@ function renderMP(filtro=''){
       +'<td class="r" style="color:'+(c>0?'var(--text)':'var(--red)')+'">'+unitCol+'</td>'
       +'<td class="r" style="color:var(--t3);font-size:12px">'+(a?fn(ant):'—')+'</td>'
       +'<td style="text-align:center">'+bdg+'</td>'
+      +'<td style="font-size:11px;color:var(--t3)">'+ultimaAlteracaoMPTexto(m.cod)+'</td>'
       +'<td style="text-align:center;font-size:12px">'+(usada?'<span style="color:var(--blue);font-weight:600">em uso</span>':'—')+'</td>'
       +'<td style="text-align:center"><button type="button" class="action-btn" style="background:'+(nNutri>0?'var(--grn-lt)':'var(--s1)')+';color:'+(nNutri>0?'var(--green)':'var(--t3)')+';border-color:'+(nNutri>0?'var(--grn-bd)':'var(--border)')+'" title="Composição nutricional" onclick="abrirComposicaoMP('+m.cod+')">🧪'+(nNutri>0?' '+nNutri:'')+'</button></td>'
       +'<td><button class="del" onclick="delMP('+m.cod+')">x</button></td>'
@@ -1914,17 +1966,27 @@ function balancaDoMPIvinhema(cod){
 function addMP(){
   const cod=parseInt(prompt('Codigo:'));
   if(!cod||MPcusto[cod]!==undefined){alert('Invalido.');return;}
-  const desc=prompt('Descricao:');if(!desc)return;
-  const tipoSugerido=classificarTipoMP(desc);
-  const tipoIn=(prompt('Tipo: digite "mp" para matéria-prima ou "emb" para embalagem',tipoSugerido)||tipoSugerido).toLowerCase();
-  const t=tipoIn==='emb'?'emb':'mp';
-  const custo=parseFloat(prompt(t==='emb'?'Custo R$/unidade:':'Custo R$/ton:'))||0;
-  MPcusto[cod]=custo;MPanterior[cod]=custo;MPalterado[cod]=false;
-  MPitens.push({cod,d:desc,t});MPitens.sort((a,b)=>a.cod-b.cod);
-  renderMP();
-  popularSelectsEmbalagem();
-  popularSelectsAdicionarMP();
-  salvarMPRemoto(cod,desc,custo,t);
+  toast('Verificando na planilha se este código já existe...');
+  fetch(APPS_SCRIPT_URL+'?tipo=materiasprimas').then(function(r){return r.json();}).then(function(data){
+    if(data&&data[String(cod)]){
+      alert('Este código já existe na planilha (cadastrado por outro colaborador enquanto você estava com a tela aberta). Escolha outro código.');
+      return;
+    }
+    const desc=prompt('Descricao:');if(!desc)return;
+    const tipoSugerido=classificarTipoMP(desc);
+    const tipoIn=(prompt('Tipo: digite "mp" para matéria-prima ou "emb" para embalagem',tipoSugerido)||tipoSugerido).toLowerCase();
+    const t=tipoIn==='emb'?'emb':'mp';
+    const custo=parseFloat(prompt(t==='emb'?'Custo R$/unidade:':'Custo R$/ton:'))||0;
+    MPcusto[cod]=custo;MPanterior[cod]=custo;MPalterado[cod]=false;
+    MPitens.push({cod,d:desc,t});MPitens.sort((a,b)=>a.cod-b.cod);
+    renderMP();
+    popularSelectsEmbalagem();
+    popularSelectsAdicionarMP();
+    salvarMPRemoto(cod,desc,custo,t);
+  }).catch(function(err){
+    console.error('Erro ao verificar codigo na planilha:',err);
+    alert('Não foi possível confirmar com a planilha agora (sem internet?). Cadastro cancelado por segurança — tente novamente em alguns segundos.');
+  });
 }
 function delMP(cod){if(codEmFicha(cod)){alert('Item em uso.');return;}if(!confirm('Remover '+cod+'?'))return;delete MPcusto[cod];delete MPanterior[cod];delete MPalterado[cod];MPitens=MPitens.filter(m=>m.cod!==cod);renderMP();}
 
@@ -2224,6 +2286,11 @@ function imprimirApresentacaoProduto(){
 
 /* ===== Sincronizacao do Banco de Materias-primas com a planilha ===== */
 let mpRemoto={};
+function ultimaAlteracaoMPTexto(cod){
+  var r=mpRemoto[String(cod)];
+  if(!r||!r.dataHora)return '—';
+  return r.dataHora+(r.editadoPor?' · '+r.editadoPor:'');
+}
 function salvarMPRemoto(cod,desc,custo,tipo){
   var payload={
     tipo:'mp',
@@ -2234,12 +2301,14 @@ function salvarMPRemoto(cod,desc,custo,tipo){
     editadoPor:getNomeColaborador(),
     dataHora:new Date().toLocaleString('pt-BR')
   };
+  /* Atualiza a data de "ultima alteracao" na hora, sem esperar a resposta do servidor. */
+  mpRemoto[payload.cod]=payload;
+  if($('mp-tbody'))renderMP($('mp-busca')?$('mp-busca').value:'');
   fetch(APPS_SCRIPT_URL,{
     method:'POST',
     headers:{'Content-Type':'text/plain;charset=utf-8'},
     body:JSON.stringify(payload)
   }).then(function(){
-    mpRemoto[payload.cod]=payload;
     syncStatus='ok';atualizarIndicadorSync();
   }).catch(function(err){
     console.error('Erro ao salvar MP na planilha:',err);
@@ -2549,7 +2618,8 @@ function atualizarBarraEdicoesOP(){
   if(discBtn2)discBtn2.style.display=n>0?'inline-block':'none';
   var cnt2=$('opi-edits-count');if(cnt2)cnt2.textContent=n;
 }
-function salvarEdicoesOP(){
+function salvarEdicoesOP(banco){
+  banco=banco||'banco';
   var n=totalPendencias();
   if(n===0)return;
   var novaLista=[];
@@ -2579,7 +2649,7 @@ function salvarEdicoesOP(){
     emb:{custo:gv('emb-custo')||0,desc:($('emb-sel')&&$('emb-sel').selectedIndex>=0)?$('emb-sel').options[$('emb-sel').selectedIndex].text:''},
     ings:novaLista
   };
-  salvarEdicaoRemota(formulaAtual);
+  salvarEdicaoRemota(formulaAtual,banco);
   toast(n+' alteracao(oes) aplicada(s) na formula carregada.');
 }
 function descartarEdicoesOP(){
@@ -2588,7 +2658,7 @@ function descartarEdicoesOP(){
   renderOP();
   renderOPIvinhema();
 }
-function salvarEdicoesOPIvi(){salvarEdicoesOP();}
+function salvarEdicoesOPIvi(){salvarEdicoesOP('rna');}
 function descartarEdicoesOPIvi(){descartarEdicoesOP();}
 function opMpSelectHtml(codAtual,onchangeExpr){
   var mps=MPitens.filter(function(m){return m.t==='mp';}).sort(function(a,b){return a.d.localeCompare(b.d);});
@@ -3172,7 +3242,7 @@ function exportarFormula(){var obj=formulaParaMeta();var csv=formulaParaCSV(obj)
 function importarArquivo(input){var file=input.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(e){try{var obj=csvParaFormula(e.target.result);adicionarNaBiblioteca(obj,'importado');input.value='';}catch(err){alert('Arquivo invalido: '+err.message);}};reader.readAsText(file,'utf-8');}
 function onDrop(event){event.preventDefault();$('drop-zone').classList.remove('drag-over');var file=event.dataTransfer.files[0];if(!file||!file.name.endsWith('.csv')){toast('Arraste um arquivo .csv valido');return;}var reader=new FileReader();reader.onload=function(e){try{var obj=csvParaFormula(e.target.result);adicionarNaBiblioteca(obj,'importado');}catch(err){alert('Arquivo invalido: '+err.message);}};reader.readAsText(file,'utf-8');}
 function adicionarNaBiblioteca(obj,origem){if(!obj.ings||!Array.isArray(obj.ings)){alert('Arquivo sem ingredientes validos.');return;}var jaExiste=biblioteca.find(function(f){return f.cod===obj.cod&&f.nome===obj.nome;});if(jaExiste){if(!confirm('Formula "'+obj.cod+' - '+obj.nome+'" ja existe. Substituir?'))return;biblioteca=biblioteca.filter(function(f){return!(f.cod===obj.cod&&f.nome===obj.nome);});}obj._origem=origem;obj._adicionado=new Date().toLocaleString('pt-BR');biblioteca.push(obj);renderBiblioteca();renderBancoFormulas($('banco-busca')?$('banco-busca').value:'');atualizarSelectFormulas();toast('Formula "'+obj.nome+'" adicionada!');}
-function carregarDaBiblioteca(idx){var f=biblioteca[idx];if(!f)return;carregarObjFormula(f);toast('Formula "'+f.nome+'" carregada.');}
+function carregarDaBiblioteca(idx){var f=biblioteca[idx];if(!f)return;fichaBancoAtual='banco';carregarObjFormula(f);toast('Formula "'+f.nome+'" carregada.');}
 function removerDaBiblioteca(idx){var f=biblioteca[idx];if(!f)return;if(!confirm('Remover "'+f.nome+'" da biblioteca?'))return;biblioteca.splice(idx,1);renderBiblioteca();renderBancoFormulas($('banco-busca')?$('banco-busca').value:'');atualizarSelectFormulas();toast('Formula removida.');}
 function exportarDaBiblioteca(idx){var obj=biblioteca[idx];if(!obj)return;var csv=formulaParaCSV(obj);var nomeBase='formula_'+(obj.cod||'x')+'_'+(obj.nome||'formula').replace(/[^a-zA-Z0-9]/g,'_').slice(0,30);var blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download=nomeBase+'.csv';a.click();URL.revokeObjectURL(url);toast('Exportado: '+nomeBase+'.csv');}
 
@@ -3256,7 +3326,7 @@ function alterarGrupoFormula(origem,chave,novoCat){
 }
 function formulaFromRemoto(f){
   return {
-    cod:f.cod,nome:f.nome,cat:f.cat,batida:parseFloat(f.batida)||0,pesoSaco:parseFloat(f.pesoSaco)||0,
+    cod:codBaseDaChave(f.cod),nome:f.nome,cat:f.cat,batida:parseFloat(f.batida)||0,pesoSaco:parseFloat(f.pesoSaco)||0,
     emb:{custo:parseFloat(f.embCusto)||0,desc:f.embDesc||''},
     cif:{mo:0,enc:0,ee:0,out:0},
     ings:JSON.parse(f.ingsJSON||'[]'),
@@ -3267,10 +3337,12 @@ function formulasRemotasDoBanco(banco,arrayLocal){
   var codsLocais={};
   arrayLocal.forEach(function(f){codsLocais[String(f.cod)]=true;});
   var extras=[];
-  Object.keys(formulasEditadasRemoto).forEach(function(cod){
-    var f=formulasEditadasRemoto[cod];
-    if(codsLocais[String(cod)])return;
-    if(bancoDoCat(f.cat)!==banco)return;
+  var sufixo=banco==='rna'?'-5':'-2';
+  Object.keys(formulasEditadasRemoto).forEach(function(chave){
+    if(chave.slice(-2)!==sufixo)return;
+    var f=formulasEditadasRemoto[chave];
+    var codBase=codBaseDaChave(chave);
+    if(codsLocais[codBase])return;
     extras.push(formulaFromRemoto(f));
   });
   return extras;
@@ -3310,24 +3382,26 @@ function renderBancoRNA(filtro){
         +'<td class="r">'+fn(x.pesoSaco||0,x.pesoSaco%1===0?0:2)+' kg</td>'
         +'<td class="r">'+fn(cR.sacos,cR.sacos%1===0?0:1)+'</td>'
         +'<td class="r">'+nIngR+'</td>'
-        +'<td style="text-align:right;white-space:nowrap"><button class="action-btn btn-load" onclick="carregarFormulaEditadaRemoto(\''+x.cod+'\')">Carregar</button>'
+        +'<td style="text-align:right;white-space:nowrap"><button class="action-btn btn-load" onclick="carregarFormulaEditadaRemoto(\''+x.cod+'\',\'rna\')">Carregar</button>'
         +'<button class="action-btn" style="background:var(--amb-lt);color:var(--amber);border-color:var(--amb-bd)" onclick="abrirEditarProduto(\'rna\',\''+x.cod+'\')" title="Editar nome e peso da embalagem">✏️ Editar</button>'
-        +'<button class="action-btn" style="background:var(--blu-lt);color:var(--blue);border-color:var(--blu-bd)" onclick="irParaCotacaoEspecial(\''+x.cod+'\')" title="Abrir na Cotação Especial">🎯 Cotação</button></td>'
+        +'<button class="action-btn" style="background:var(--blu-lt);color:var(--blue);border-color:var(--blu-bd)" onclick="irParaCotacaoEspecial(\''+x.cod+'\')" title="Abrir na Cotação Especial">🎯 Cotação</button>'
+        +'<button class="action-btn" style="background:var(--s1);color:var(--t2);border-color:var(--border)" onclick="abrirHistoricoFormula(\''+x.cod+'\',\'rna\')" title="Ver todas as versões já salvas">🕘 Versões</button></td>'
         +'</tr>';
     }
     var idx=bibliotecaRNA.indexOf(x);
     var nIng=x.ings?x.ings.filter(function(i){return i.qtd>0;}).length:0;
     var c=custoFormula(x);
-    var acoes='<button class="action-btn btn-load" onclick="carregarObjFormula(bibliotecaRNA['+idx+'])">Carregar</button>'
+    var acoes='<button class="action-btn btn-load" onclick="fichaBancoAtual=\'rna\';carregarObjFormula(bibliotecaRNA['+idx+'])">Carregar</button>'
       +'<button class="action-btn btn-export" onclick="exportarDaBiblioteca_f(bibliotecaRNA['+idx+'])">Exportar</button>'
       +'<button class="action-btn btn-del-lib" onclick="removerDaRNA('+idx+')">Remover</button>';
-    var editadaInfo=formulasEditadasRemoto[String(x.cod)];
+    var editadaInfo=formulasEditadasRemoto[chaveFormulaRemota(x.cod,'rna')];
     if(editadaInfo){
       acoes=acoes.replace('>Carregar<','>Carregar padrão<');
-      acoes+='<button class="action-btn btn-load" style="background:var(--grn-lt);color:var(--green);border-color:var(--grn-bd)" title="Ultima edicao: '+(editadaInfo.editadoPor||'?')+' em '+(editadaInfo.dataHora||'?')+'" onclick="carregarFormulaEditadaRemoto(\''+x.cod+'\')">☁️ Carregar c/ edições</button>';
+      acoes+='<button class="action-btn btn-load" style="background:var(--grn-lt);color:var(--green);border-color:var(--grn-bd)" title="Ultima edicao: '+(editadaInfo.editadoPor||'?')+' em '+(editadaInfo.dataHora||'?')+'" onclick="carregarFormulaEditadaRemoto(\''+x.cod+'\',\'rna\')">☁️ Carregar c/ edições</button>';
     }
     acoes+='<button class="action-btn" style="background:var(--amb-lt);color:var(--amber);border-color:var(--amb-bd)" onclick="abrirEditarProduto(\'rna\',\''+x.cod+'\')" title="Editar nome e peso da embalagem">✏️ Editar</button>';
     acoes+='<button class="action-btn" style="background:var(--blu-lt);color:var(--blue);border-color:var(--blu-bd)" onclick="irParaCotacaoEspecial(\''+x.cod+'\')" title="Abrir na Cotação Especial">🎯 Cotação</button>';
+    acoes+='<button class="action-btn" style="background:var(--s1);color:var(--t2);border-color:var(--border)" onclick="abrirHistoricoFormula(\''+x.cod+'\',\'rna\')" title="Ver todas as versões já salvas">🕘 Versões</button>';
     return '<tr>'
       +'<td class="mono">'+x.cod+'</td>'
       +'<td>'+x.nome+'</td>'
@@ -3377,11 +3451,11 @@ function renderBancoFormulas(filtro){
     var acoes;
     var chaveEdit,origemEdit;
     if(isRemoto){
-      acoes='<button class="action-btn btn-load" onclick="carregarFormulaEditadaRemoto(\''+x.cod+'\')">Carregar</button>'
+      acoes='<button class="action-btn btn-load" onclick="carregarFormulaEditadaRemoto(\''+x.cod+'\',\'banco\')">Carregar</button>'
         +'<button class="action-btn" style="background:var(--amb-lt);color:var(--amber);border-color:var(--amb-bd)" onclick="abrirEditarProduto(\'banco\',\''+x.cod+'\')" title="Editar nome e peso da embalagem">✏️ Editar</button>'
         +'<button class="action-btn" style="background:var(--blu-lt);color:var(--blue);border-color:var(--blu-bd)" onclick="irParaCotacaoEspecial(\''+x.cod+'\')" title="Abrir na Cotação Especial">🎯 Cotação</button>';
     } else if(isBuiltin){
-      acoes='<button class="action-btn btn-load" onclick="carregarObjFormula('+JSON.stringify(x)+')">Carregar</button>'
+      acoes='<button class="action-btn btn-load" onclick="fichaBancoAtual=\'banco\';carregarObjFormula('+JSON.stringify(x)+')">Carregar</button>'
         +'<button class="action-btn btn-export" onclick="exportarDaBiblioteca_f('+JSON.stringify(x)+')">Exportar</button>';
     } else if(isLocal){
       acoes='<button class="action-btn btn-load" onclick="carregarLocal(\''+x.cod+'\')">Carregar</button>'
@@ -3403,15 +3477,16 @@ function renderBancoFormulas(filtro){
         +GRUPOS_PRODUTO.map(function(g){return '<option value="'+g+'"'+(x.cat===g?' selected':'')+'>'+g+'</option>';}).join('')
         +'</select>';
     }
-    var editadaInfo=isRemoto?null:formulasEditadasRemoto[String(x.cod)];
+    var editadaInfo=isRemoto?null:formulasEditadasRemoto[chaveFormulaRemota(x.cod,'banco')];
     if(editadaInfo){
       acoes=acoes.replace('>Carregar<','>Carregar padrão<');
-      acoes+='<button class="action-btn btn-load" style="background:var(--grn-lt);color:var(--green);border-color:var(--grn-bd)" title="Ultima edicao: '+(editadaInfo.editadoPor||'?')+' em '+(editadaInfo.dataHora||'?')+'" onclick="carregarFormulaEditadaRemoto(\''+x.cod+'\')">☁️ Carregar c/ edições</button>';
+      acoes+='<button class="action-btn btn-load" style="background:var(--grn-lt);color:var(--green);border-color:var(--grn-bd)" title="Ultima edicao: '+(editadaInfo.editadoPor||'?')+' em '+(editadaInfo.dataHora||'?')+'" onclick="carregarFormulaEditadaRemoto(\''+x.cod+'\',\'banco\')">☁️ Carregar c/ edições</button>';
     }
     if(!isRemoto){
       acoes+='<button class="action-btn" style="background:var(--amb-lt);color:var(--amber);border-color:var(--amb-bd)" onclick="abrirEditarProduto(\'banco\',\''+x.cod+'\')" title="Editar nome e peso da embalagem">✏️ Editar</button>';
       acoes+='<button class="action-btn" style="background:var(--blu-lt);color:var(--blue);border-color:var(--blu-bd)" onclick="irParaCotacaoEspecial(\''+x.cod+'\')" title="Abrir na Cotação Especial">🎯 Cotação</button>';
     }
+    acoes+='<button class="action-btn" style="background:var(--s1);color:var(--t2);border-color:var(--border)" onclick="abrirHistoricoFormula(\''+x.cod+'\',\'banco\')" title="Ver todas as versões já salvas">🕘 Versões</button>';
     html+='<tr>'
       +'<td class="mono">'+x.cod+'</td>'
       +'<td>'+x.nome+'</td>'
@@ -3490,6 +3565,7 @@ function toast(msg,dur){var el=$('toast');if(!el)return;el.textContent=msg;el.cl
 /* ===== Integracao com Google Sheets (edicoes persistentes entre colaboradores) ===== */
 const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbzE_Dgj63tjh9ECZHymw6pG-08LFoXEbBuRR0FdX7i5pGTj23aHURBXjsT1nZ0XJ07N/exec';
 let formulasEditadasRemoto={};
+let formulasHistorico={};
 let syncStatus='carregando';
 function atualizarIndicadorSync(){
   var el=$('sync-status');
@@ -3517,14 +3593,142 @@ function carregarFormulasEditadasRemoto(){
       syncStatus='erro';atualizarIndicadorSync();
     });
 }
+function carregarHistoricoFormulasRemoto(){
+  fetch(APPS_SCRIPT_URL+'?tipo=formulas_historico')
+    .then(function(r){return r.json();})
+    .then(function(data){ formulasHistorico=data||{}; })
+    .catch(function(err){console.error('Erro ao carregar historico de formulas:',err);});
+}
+/* ===== Historico de versoes de formulas (padrao + cada edicao salva, com autor e data) ===== */
+function parseDataHoraBr_(s){
+  if(!s)return 0;
+  var m=String(s).match(/(\d{2})\/(\d{2})\/(\d{4}),?\s*(\d{2}):(\d{2}):(\d{2})/);
+  if(!m)return 0;
+  return new Date(+m[3],+m[2]-1,+m[1],+m[4],+m[5],+m[6]).getTime();
+}
+let hfContexto=null;
+function abrirHistoricoFormula(cod,banco){
+  banco=banco||fichaBancoAtual||'banco';
+  if(!cod){toast('Carregue ou selecione uma fórmula primeiro.');return;}
+  var padrao=banco==='rna'
+    ? bibliotecaRNA.find(function(f){return String(f.cod)===String(cod);})
+    : biblioteca.find(function(f){return String(f.cod)===String(cod);});
+  var edicoes=(formulasHistorico[chaveFormulaRemota(cod,banco)]||[]).slice().sort(function(a,b){return parseDataHoraBr_(b.dataHora)-parseDataHoraBr_(a.dataHora);});
+  var versoes=[];
+  edicoes.forEach(function(e,i){versoes.push({tipo:'edicao',dado:e,maisRecente:i===0});});
+  if(padrao)versoes.push({tipo:'padrao',dado:padrao});
+  hfContexto={cod:cod,banco:banco,versoes:versoes};
+  $('hf-titulo').textContent='Histórico de versões — '+cod+' ('+(banco==='rna'?'RNA - Ivinhema':'RURAL - Eldorado')+')';
+  if(versoes.length===0){
+    $('hf-lista').innerHTML='<div style="color:var(--t3);font-size:13px">Nenhuma versão encontrada para este código ainda.</div>';
+  } else {
+    $('hf-lista').innerHTML=versoes.map(function(v,idx){
+      if(v.tipo==='padrao'){
+        return '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">'
+          +'<div><strong>Versão padrão</strong><div style="font-size:11px;color:var(--t3)">Receita original cadastrada no sistema</div></div>'
+          +'<button class="btn btn-ghost" onclick="carregarVersaoHistorico('+idx+')">Carregar</button>'
+          +'</div>';
+      }
+      var d=v.dado;
+      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">'
+        +'<div><strong>'+(d.editadoPor||'Não informado')+'</strong>'+(v.maisRecente?' <span style="font-size:10px;padding:1px 6px;background:var(--grn-lt);color:var(--green);border-radius:10px;border:1px solid var(--grn-bd);font-weight:700">versão atual</span>':'')
+        +'<div style="font-size:11px;color:var(--t3)">'+(d.dataHora||'?')+'</div></div>'
+        +'<button class="btn btn-ghost" onclick="carregarVersaoHistorico('+idx+')">Carregar</button>'
+        +'</div>';
+    }).join('');
+  }
+  $('historico-formula-modal').style.display='flex';
+}
+function fecharHistoricoFormula(){$('historico-formula-modal').style.display='none';hfContexto=null;}
+function carregarVersaoHistorico(idx){
+  if(!hfContexto)return;
+  var v=hfContexto.versoes[idx];
+  if(!v)return;
+  fichaBancoAtual=hfContexto.banco;
+  if(v.tipo==='padrao'){
+    carregarObjFormula(v.dado);
+    toast('Versão padrão carregada.');
+  } else {
+    carregarObjFormula(formulaFromRemoto(v.dado));
+    toast('Versão de '+(v.dado.editadoPor||'?')+' ('+(v.dado.dataHora||'?')+') carregada.');
+  }
+  fecharHistoricoFormula();
+}
+/* ===== Identificacao obrigatoria do usuario (login por nome, sem senha) ===== */
+const NOMES_COLABORADORES=['Gilberto','Ronei','Joao Victor','Giseli','Alan'];
 function getNomeColaborador(){
   var nome=localStorage.getItem('nomeColaborador');
-  if(!nome){
-    nome=prompt('Seu nome (fica registrado junto com a edicao, para todos verem quem alterou):')||'Nao informado';
-    localStorage.setItem('nomeColaborador',nome);
-  }
-  return nome;
+  return nome||'Nao informado';
 }
+function abrirModalNomeUsuario(){
+  var ultimo=localStorage.getItem('nomeColaborador')||'';
+  if(NOMES_COLABORADORES.indexOf(ultimo)>=0){
+    $('nome-usuario-select').value=ultimo;
+    $('nome-usuario-outro-wrap').style.display='none';
+  } else if(ultimo){
+    $('nome-usuario-select').value='__outro__';
+    $('nome-usuario-outro').value=ultimo;
+    $('nome-usuario-outro-wrap').style.display='block';
+  } else {
+    $('nome-usuario-select').value='';
+    $('nome-usuario-outro').value='';
+    $('nome-usuario-outro-wrap').style.display='none';
+  }
+  $('nome-usuario-modal').style.display='flex';
+}
+function onNomeUsuarioSelectChange(){
+  var v=$('nome-usuario-select').value;
+  $('nome-usuario-outro-wrap').style.display=(v==='__outro__')?'block':'none';
+}
+function confirmarNomeUsuario(){
+  var v=$('nome-usuario-select').value;
+  if(!v){alert('Selecione um nome da lista para continuar.');return;}
+  var nome=v;
+  if(v==='__outro__'){
+    nome=($('nome-usuario-outro').value||'').trim();
+    if(!nome){alert('Digite seu nome para continuar.');return;}
+  }
+  localStorage.setItem('nomeColaborador',nome);
+  $('nome-usuario-modal').style.display='none';
+  iniciarAppAposLogin();
+}
+function iniciarAppAposLogin(){
+  atualizarDadosRemotos(false);
+}
+/* ===== Atualizacao automatica dos dados remotos (evita trabalhar com planilha desatualizada) ===== */
+let ultimaAtualizacaoRemota=null;
+function haEdicaoOPPendente(){
+  return Object.keys(opEdits).length>0||Object.keys(opTrocas).length>0||opRemovidos.size>0||opNovos.length>0;
+}
+function atualizarIndicadorUltimaAtualizacao(){
+  var el=$('ultima-atualizacao');
+  if(!el)return;
+  if(!ultimaAtualizacaoRemota){el.textContent='';return;}
+  var d=new Date(ultimaAtualizacaoRemota);
+  var hh=String(d.getHours()).padStart(2,'0'),mm=String(d.getMinutes()).padStart(2,'0');
+  el.textContent='Dados de '+hh+':'+mm;
+}
+function atualizarDadosRemotos(manual){
+  if(!manual&&haEdicaoOPPendente()){
+    toast('Há uma versão mais nova dos dados na planilha, mas você tem alterações não salvas na Ordem de Produção. Salve ou descarte antes de atualizar.');
+    return;
+  }
+  carregarFormulasEditadasRemoto();
+  carregarHistoricoFormulasRemoto();
+  carregarCotacoesRemoto();
+  carregarMPRemoto();
+  carregarNutriRemoto();
+  ultimaAtualizacaoRemota=Date.now();
+  atualizarIndicadorUltimaAtualizacao();
+  if(manual)toast('Dados atualizados a partir da planilha.');
+}
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='visible'){
+    if(!ultimaAtualizacaoRemota||(Date.now()-ultimaAtualizacaoRemota)>120000){
+      atualizarDadosRemotos(false);
+    }
+  }
+});
 function salvarEdicaoRemota(f){
   var payload={
     cod:String(f.cod),
@@ -3554,10 +3758,11 @@ function salvarEdicaoRemota(f){
     toast('Nao foi possivel salvar na planilha (sem internet?). A edicao ficou so neste navegador.');
   });
 }
-function salvarEdicaoRemota(f){
+function salvarEdicaoRemota(f,banco){
+  banco=banco||bancoDoCat(f.cat);
   var payload={
     tipo:'formula',
-    cod:String(f.cod),
+    cod:chaveFormulaRemota(f.cod,banco),
     nome:f.nome,
     cat:f.cat,
     batida:f.batida,
@@ -3794,8 +3999,11 @@ function aprovarCotacao(){
   var nomeReal=$('pc-nome-real').value.trim();
   if(!codReal||!nomeReal){alert('Preencha o código e o nome real do produto para aprovar.');return;}
   var arr=c.banco==='rna'?bibliotecaRNA:biblioteca;
-  if(arr.some(function(f){return String(f.cod)===codReal;})){
-    if(!confirm('Já existe uma fórmula com o código "'+codReal+'" neste banco. Deseja continuar mesmo assim?'))return;
+  var jaExisteLocal=arr.some(function(f){return String(f.cod)===codReal;});
+  var jaExisteRemoto=!!formulasEditadasRemoto[chaveFormulaRemota(codReal,c.banco)];
+  if(jaExisteLocal||jaExisteRemoto){
+    var avisoOrigem=(jaExisteRemoto&&!jaExisteLocal)?' (criada por outro colaborador na planilha)':'';
+    if(!confirm('Já existe uma fórmula com o código "'+codReal+'"'+avisoOrigem+' neste banco. Deseja continuar mesmo assim?'))return;
   }
   var novaFormula={
     cod:codReal,nome:nomeReal,cat:c.cat,batida:parseFloat(c.batida),pesoSaco:parseFloat(c.pesoSaco),
@@ -3805,7 +4013,7 @@ function aprovarCotacao(){
     ings:JSON.parse(c.ingsJSON||'[]')
   };
   arr.push(novaFormula);
-  salvarEdicaoRemota(novaFormula);
+  salvarEdicaoRemota(novaFormula,c.banco);
   c.status='aprovada -> cod '+codReal;
   cotacoesRemoto[c.id]=c;
   marcarStatusCotacaoRemoto(c,c.status);
@@ -3827,11 +4035,13 @@ function recusarCotacao(){
   toast('Cotação excluída.');
 }
 
-function carregarFormulaEditadaRemoto(cod){
-  var f=formulasEditadasRemoto[String(cod)];
+function carregarFormulaEditadaRemoto(cod,banco){
+  banco=banco||'banco';
+  var f=formulasEditadasRemoto[chaveFormulaRemota(cod,banco)];
   if(!f){toast('Nenhuma edicao encontrada para este codigo.');return;}
+  fichaBancoAtual=banco;
   var obj={
-    cod:f.cod,nome:f.nome,cat:f.cat,batida:parseFloat(f.batida),pesoSaco:parseFloat(f.pesoSaco),
+    cod:codBaseDaChave(f.cod),nome:f.nome,cat:f.cat,batida:parseFloat(f.batida),pesoSaco:parseFloat(f.pesoSaco),
     emb:{custo:parseFloat(f.embCusto)||0,desc:f.embDesc||''},
     cif:{mo:0,enc:0,ee:0,out:0},
     ings:JSON.parse(f.ingsJSON||'[]')
@@ -3857,8 +4067,8 @@ function epBuscarFormula(banco,cod){
     if(fb)return fb;
   }
   // Nao achou local -> deve ser um item so remoto (criado por outro colaborador ou via Cotacao)
-  if(formulasEditadasRemoto[String(cod)]){
-    return formulaFromRemoto(formulasEditadasRemoto[String(cod)]);
+  if(formulasEditadasRemoto[chaveFormulaRemota(cod,banco)]){
+    return formulaFromRemoto(formulasEditadasRemoto[chaveFormulaRemota(cod,banco)]);
   }
   return null;
 }
@@ -3923,7 +4133,7 @@ function salvarEdicaoProduto(){
     if(embVal){var item=MPitens.find(function(m){return m.cod===parseInt(embVal);});if(item)f.emb={custo:MPcusto[item.cod]||0,desc:item.d};}
     if(!f.emb)f.emb={custo:0,desc:''};
     if(novoPesoReal)f.emb.pesoReal=novoPesoReal; else delete f.emb.pesoReal;
-    salvarEdicaoRemota(f);
+    salvarEdicaoRemota(f,'rna');
     renderBancoRNA($('rna-busca')?$('rna-busca').value:'');
   } else {
     var bancoLocal=carregarBancoFormulas();
@@ -3935,7 +4145,7 @@ function salvarEdicaoProduto(){
       if(!fl.emb)fl.emb={custo:0,desc:''};
       if(novoPesoReal)fl.emb.pesoReal=novoPesoReal; else delete fl.emb.pesoReal;
       salvarBancoFormulas(bancoLocal);
-      salvarEdicaoRemota(fl);
+      salvarEdicaoRemota(fl,'banco');
     } else {
       var fb=biblioteca.find(function(x){return String(x.cod)===String(epCodAtual);});
       if(!fb){
@@ -3951,7 +4161,7 @@ function salvarEdicaoProduto(){
       if(embVal){var itemB=MPitens.find(function(m){return m.cod===parseInt(embVal);});if(itemB)fb.emb={custo:MPcusto[itemB.cod]||0,desc:itemB.d};}
       if(!fb.emb)fb.emb={custo:0,desc:''};
       if(novoPesoReal)fb.emb.pesoReal=novoPesoReal; else delete fb.emb.pesoReal;
-      salvarEdicaoRemota(fb);
+      salvarEdicaoRemota(fb,'banco');
     }
     renderBancoFormulas($('banco-busca')?$('banco-busca').value:'');
   }
@@ -3961,9 +4171,17 @@ function salvarEdicaoProduto(){
 }
 function gravarFormula(){
   var cod=$('p-cod')?.value||'';if(!cod){toast('Informe o codigo antes de gravar.');return;}
-  var banco=carregarBancoFormulas();
-  banco[cod]={cod:cod,nome:$('p-nome')?.value||'',cat:$('p-cat')?.value||'',batida:gv('batida')||1000,pesoSaco:gv('peso-saco')||25,balanca:parseInt($('p-balanca')?.value)||0,emb:{custo:gv('emb-custo'),desc:$('emb-sel')?.options[$('emb-sel')?.selectedIndex]?.text||''},cif:{mo:gv('cif-mo'),enc:gv('cif-enc'),ee:gv('cif-ee'),out:gv('cif-out')},ings:ings.map(function(i){return{cod:i.cod,qtd:i.qtd,bal:i.bal||0};}),_salvo:new Date().toISOString()};
-  salvarBancoFormulas(banco);atualizarSelectFormulas();renderBiblioteca();renderBancoFormulas($('banco-busca')?$('banco-busca').value:'');toast('Formula "'+cod+'" gravada no banco local!');
+  var formulaObj={
+    cod:cod,
+    nome:$('p-nome')?.value||'',
+    cat:$('p-cat')?.value||'',
+    batida:gv('batida')||1000,
+    pesoSaco:gv('peso-saco')||25,
+    emb:{custo:gv('emb-custo'),desc:$('emb-sel')?.options[$('emb-sel')?.selectedIndex]?.text||''},
+    ings:ings.map(function(i){return{cod:i.cod,qtd:i.qtd,bal:i.bal||0};})
+  };
+  salvarEdicaoRemota(formulaObj,fichaBancoAtual);
+  toast('Formula "'+cod+'" salva na planilha ('+(fichaBancoAtual==='rna'?'RNA - Ivinhema':'RURAL - Eldorado')+') para todos os colaboradores.');
 }
 function gravarPrecificacao(){
   var cod=$('p-cod')?.value||'';if(!cod){toast('Carregue um produto antes de gravar.');return;}
@@ -4011,6 +4229,7 @@ function carregarFormula(idxVal){
   var idx=parseInt(idxVal);
   var f=formulaSelectList[idx];
   if(!f){toast('Formula nao encontrada.');return;}
+  fichaBancoAtual='banco';
   carregarObjFormula(f);
   carregarPrecificacao(f.cod);
   $('formula-sel').value='';
@@ -4020,7 +4239,7 @@ function exportarLocalFormula(cod){var banco=carregarBancoFormulas();var f=banco
 function removerLocal(cod){if(!confirm('Remover "'+cod+'" do banco local?'))return;var banco=carregarBancoFormulas();delete banco[cod];salvarBancoFormulas(banco);atualizarSelectFormulas();renderBiblioteca();renderBancoFormulas($('banco-busca')?$('banco-busca').value:'');toast('Formula removida do banco local.');}
 function limparPvManual(){var el=$('pv-manual');if(el){el.value='';calcPV('margem');}var badge=$('pv-modo-badge');if(badge)badge.textContent='pela margem';}
 
-function carregarLocal(cod){var banco=carregarBancoFormulas();var f=banco[cod];if(!f){toast('Formula nao encontrada no banco.');return;}carregarObjFormula(f);carregarPrecificacao(f.cod);toast('Formula "'+f.nome+'" carregada do banco local.');}
+function carregarLocal(cod){var banco=carregarBancoFormulas();var f=banco[cod];if(!f){toast('Formula nao encontrada no banco.');return;}fichaBancoAtual='banco';carregarObjFormula(f);carregarPrecificacao(f.cod);toast('Formula "'+f.nome+'" carregada do banco local.');}
 function exportarLocal(cod){exportarLocalFormula(cod);}
 function removerLocalBtn(cod){removerLocal(cod);}
 
@@ -4079,6 +4298,14 @@ function gruposParaBanco(banco){
 function bancoDoCat(cat){
   return ['Viacampus','Rural Vale','Linha Rural','Alvorada'].indexOf(cat)>=0 ? 'rna' : 'banco';
 }
+/* ===== Chave de armazenamento por unidade (evita que uma edicao em Eldorado sobrescreva a de Ivinhema, e vice-versa) ===== */
+let fichaBancoAtual='banco';
+function chaveFormulaRemota(cod,banco){
+  return String(cod)+(banco==='rna'?'-5':'-2');
+}
+function codBaseDaChave(chaveOuCod){
+  return String(chaveOuCod).replace(/-[25]$/,'');
+}
 function abrirNovaFormula(banco){
   nfBancoAlvo=banco;
   nfIngRows=[{cod:null,qtd:0}];
@@ -4135,8 +4362,11 @@ function salvarNovaFormula(){
   var ingsValidos=nfIngRows.filter(function(r){return r.cod&&r.qtd>0;});
   if(ingsValidos.length===0){alert('Adicione ao menos 1 ingrediente com quantidade maior que zero.');return;}
   var arr=nfBancoAlvo==='rna'?bibliotecaRNA:biblioteca;
-  if(arr.some(function(f){return String(f.cod)===cod;})){
-    if(!confirm('Já existe uma fórmula com o código "'+cod+'" neste banco. Deseja salvar mesmo assim?'))return;
+  var jaExisteLocalNf=arr.some(function(f){return String(f.cod)===cod;});
+  var jaExisteRemotoNf=!!formulasEditadasRemoto[chaveFormulaRemota(cod,nfBancoAlvo)];
+  if(jaExisteLocalNf||jaExisteRemotoNf){
+    var avisoOrigemNf=(jaExisteRemotoNf&&!jaExisteLocalNf)?' (criada por outro colaborador na planilha)':'';
+    if(!confirm('Já existe uma fórmula com o código "'+cod+'"'+avisoOrigemNf+' neste banco. Deseja salvar mesmo assim?'))return;
   }
   var embItem=embVal?MPitens.find(function(m){return m.cod===parseInt(embVal);}):null;
   var novaFormula={
@@ -4151,7 +4381,7 @@ function salvarNovaFormula(){
   if(nfBancoAlvo==='rna'){renderBancoRNA($('rna-busca')?$('rna-busca').value:'');}
   else{renderBancoFormulas($('banco-busca')?$('banco-busca').value:'');}
   atualizarSelectFormulas();
-  salvarEdicaoRemota(novaFormula);
+  salvarEdicaoRemota(novaFormula,nfBancoAlvo);
   toast((nfModoCotacao?'Cotação aprovada — produto ':'Fórmula ')+'"'+nome+'" criado e disponível para todos os colaboradores!');
 }
 
@@ -4248,6 +4478,61 @@ function ptNormName(s){
 }
 
 /* ---------- persistência (localStorage — arquivo roda direto no navegador) ---------- */
+/* ===== Sincronizacao remota da Tabela de Precos (planilha compartilhada, com atraso pra nao floodar o Apps Script) ===== */
+let ptSalvarRemotoTimer=null;
+function ptColetarEstadoRemoto(){
+  var ov={};
+  Object.keys(PT_CATALOG_STATE).forEach(function(brand){
+    PT_CATALOG_STATE[brand].groups.forEach(function(g,gi){
+      g.items.forEach(function(it,ii){
+        var orig=PT_CATALOG[brand].groups[gi].items[ii];
+        if(orig&&orig.price!==it.price)ov[it.id]=it.price;
+      });
+    });
+  });
+  return {
+    doc:ptDoc,activePageId:ptActivePageId,overrides:ov,rates:PT_GROUP_RATES,links:PT_LINKS,
+    extraPrices:PT_EXTRA_PRICES,embSizes:PT_EMB_SIZES,cdfTon:PT_CDF_TON,active:PT_ACTIVE,
+    cdfOverrides:PT_CDF_OVERRIDES,exportPricing:PT_EXPORT,especial:PT_ESPECIAL
+  };
+}
+function ptSalvarRemoto(){
+  if(ptSalvarRemotoTimer)clearTimeout(ptSalvarRemotoTimer);
+  ptSalvarRemotoTimer=setTimeout(function(){
+    var payload={
+      tipo:'tabelaprecos',
+      id:'global',
+      dadosJSON:JSON.stringify(ptColetarEstadoRemoto()),
+      editadoPor:getNomeColaborador(),
+      dataHora:new Date().toLocaleString('pt-BR')
+    };
+    fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)})
+      .catch(function(err){console.error('Erro ao salvar tabela de precos na planilha:',err);});
+  },3000);
+}
+function ptCarregarRemoto(){
+  return fetch(APPS_SCRIPT_URL+'?tipo=tabelaprecos')
+    .then(function(r){return r.json();})
+    .then(function(data){
+      var reg=data&&data['global'];
+      if(!reg||!reg.dadosJSON)return false;
+      var estado;
+      try{estado=JSON.parse(reg.dadosJSON);}catch(e){return false;}
+      if(estado.doc){ptDoc=estado.doc;ptActivePageId=estado.activePageId||(ptDoc.length?ptDoc[0].id:null);}
+      if(estado.overrides)Object.keys(estado.overrides).forEach(function(id){if(PT_CATALOG_INDEX[id])PT_CATALOG_INDEX[id].price=estado.overrides[id];});
+      if(estado.rates)PT_GROUP_RATES=Object.assign({},PT_GROUP_RATES,estado.rates);
+      if(estado.links)PT_LINKS=Object.assign({},PT_LINKS,estado.links);
+      if(estado.extraPrices)PT_EXTRA_PRICES=estado.extraPrices;
+      if(estado.embSizes)PT_EMB_SIZES=estado.embSizes;
+      if(estado.cdfTon!==undefined)PT_CDF_TON=estado.cdfTon;
+      if(estado.active)PT_ACTIVE=estado.active;
+      if(estado.cdfOverrides)PT_CDF_OVERRIDES=estado.cdfOverrides;
+      if(estado.exportPricing)PT_EXPORT=estado.exportPricing;
+      if(estado.especial)PT_ESPECIAL=estado.especial;
+      return true;
+    })
+    .catch(function(err){console.error('Erro ao carregar tabela de precos da planilha:',err);return false;});
+}
 function ptLoadAll(){
   try{ const ov=JSON.parse(localStorage.getItem(PT_KEY_OV)||'{}');
     Object.keys(ov).forEach(id=>{ if(PT_CATALOG_INDEX[id]) PT_CATALOG_INDEX[id].price=ov[id]; });
@@ -4271,6 +4556,7 @@ function ptSaveDoc(){
   try{ localStorage.setItem(PT_KEY_DOC, JSON.stringify({doc:ptDoc, activePageId:ptActivePageId}));
     const s=$('pt-save-status'); if(s){ s.textContent='salvo ✓'; setTimeout(()=>{ if(s.textContent==='salvo ✓') s.textContent=''; },1200); }
   }catch(e){}
+  ptSalvarRemoto();
 }
 function ptSaveOverrides(){
   const ov={};
@@ -4283,14 +4569,15 @@ function ptSaveOverrides(){
     });
   });
   try{ localStorage.setItem(PT_KEY_OV, JSON.stringify(ov)); }catch(e){}
+  ptSalvarRemoto();
 }
-function ptSaveRates(){ try{ localStorage.setItem(PT_KEY_RATES, JSON.stringify(PT_GROUP_RATES)); }catch(e){} }
-function ptSaveLinks(){ try{ localStorage.setItem(PT_KEY_LINKS, JSON.stringify(PT_LINKS)); }catch(e){} }
-function ptSaveExtraPrices(){ try{ localStorage.setItem(PT_KEY_EXTRA, JSON.stringify(PT_EXTRA_PRICES)); }catch(e){} }
-function ptSaveEmbSizes(){ try{ localStorage.setItem(PT_KEY_EMBSIZE, JSON.stringify(PT_EMB_SIZES)); }catch(e){} }
-function ptSaveCdfTon(){ try{ localStorage.setItem(PT_KEY_CDFTON, String(PT_CDF_TON)); }catch(e){} }
-function ptSaveActive(){ try{ localStorage.setItem(PT_KEY_ACTIVE, JSON.stringify(PT_ACTIVE)); }catch(e){} }
-function ptSaveCdfOverrides(){ try{ localStorage.setItem(PT_KEY_CDFOV, JSON.stringify(PT_CDF_OVERRIDES)); }catch(e){} }
+function ptSaveRates(){ try{ localStorage.setItem(PT_KEY_RATES, JSON.stringify(PT_GROUP_RATES)); }catch(e){} ptSalvarRemoto(); }
+function ptSaveLinks(){ try{ localStorage.setItem(PT_KEY_LINKS, JSON.stringify(PT_LINKS)); }catch(e){} ptSalvarRemoto(); }
+function ptSaveExtraPrices(){ try{ localStorage.setItem(PT_KEY_EXTRA, JSON.stringify(PT_EXTRA_PRICES)); }catch(e){} ptSalvarRemoto(); }
+function ptSaveEmbSizes(){ try{ localStorage.setItem(PT_KEY_EMBSIZE, JSON.stringify(PT_EMB_SIZES)); }catch(e){} ptSalvarRemoto(); }
+function ptSaveCdfTon(){ try{ localStorage.setItem(PT_KEY_CDFTON, String(PT_CDF_TON)); }catch(e){} ptSalvarRemoto(); }
+function ptSaveActive(){ try{ localStorage.setItem(PT_KEY_ACTIVE, JSON.stringify(PT_ACTIVE)); }catch(e){} ptSalvarRemoto(); }
+function ptSaveCdfOverrides(){ try{ localStorage.setItem(PT_KEY_CDFOV, JSON.stringify(PT_CDF_OVERRIDES)); }catch(e){} ptSalvarRemoto(); }
 function ptIsActive(itemId){ return PT_ACTIVE[itemId]!==false; }
 function ptToggleActive(itemId){
   PT_ACTIVE[itemId] = !ptIsActive(itemId);
@@ -4761,6 +5048,7 @@ function ptExportSalvar(){
   try{ localStorage.setItem(PT_KEY_EXPORT, JSON.stringify(PT_EXPORT));
     const s=$('pt-exp-save-status'); if(s){ s.textContent='salvo ✓'; setTimeout(()=>{ if(s.textContent==='salvo ✓') s.textContent=''; },1200); }
   }catch(e){}
+  ptSalvarRemoto();
 }
 function ptExportNovoItem(){
   PT_EXPORT.itens.push({id:'exp_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), nome:'', tipo:'BRL_TON', valor:0});
@@ -5023,6 +5311,7 @@ function ptEspecialSalvar(){
   try{ localStorage.setItem(PT_KEY_ESPECIAL, JSON.stringify(PT_ESPECIAL));
     const s=$('pt-esp2-save-status'); if(s){ s.textContent='salvo ✓'; setTimeout(()=>{ if(s.textContent==='salvo ✓') s.textContent=''; },1200); }
   }catch(e){}
+  ptSalvarRemoto();
 }
 function ptEspecialFormulaAtual(){
   if(!PT_ESPECIAL.produtoCod)return null;
@@ -5631,7 +5920,14 @@ function ptSwitchTab(tab){
 }
 
 function ptOnTabOpen(){
-  if(!ptDataLoaded){ ptLoadAll(); ptDataLoaded=true; }
+  if(!ptDataLoaded){
+    ptLoadAll(); ptDataLoaded=true;
+    ptCarregarRemoto().then(function(ok){
+      if(!ok)return;
+      ptRenderCatalog(); ptRenderDoc();
+      if(ptCurrentSubTab==='margins')ptRenderMargins();
+    });
+  }
   if(!ptBooted){
     ptRenderCatalog();
     if(!ptDoc.length){ ptDoc=ptDefaultTemplate(); ptActivePageId=ptDoc[ptDoc.length-1].id; }
@@ -5713,7 +6009,13 @@ function ptpRenderCompany(brand){
 function ptpOnTabOpen(){
   // Garante que o catálogo (preços) já esteja carregado, mesmo que o usuário
   // nunca tenha aberto a aba protegida de Custos & Margens nesta sessão.
-  if(!ptDataLoaded){ ptLoadAll(); ptDataLoaded=true; }
+  if(!ptDataLoaded){
+    ptLoadAll(); ptDataLoaded=true;
+    ptCarregarRemoto().then(function(ok){
+      if(!ok)return;
+      ptpRenderBrandBar(); ptpRenderCompany(ptpActiveBrand);
+    });
+  }
   if(!ptpBooted){
     ptpRenderBrandBar();
     ptpRenderCompany(ptpActiveBrand);
@@ -5736,10 +6038,7 @@ init();
 atualizarSelectFormulas();
 renderOP();
 renderOPIvinhema();
-carregarFormulasEditadasRemoto();
-carregarCotacoesRemoto();
-carregarMPRemoto();
-carregarNutriRemoto();
+abrirModalNomeUsuario();
 
 </script>
 </body>
