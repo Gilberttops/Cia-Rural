@@ -887,30 +887,65 @@ function applySheetData(data){
 // Sincroniza de volta pra planilha as coisas que Gilberto/colaboradora editam
 // direto no dashboard (saldos, recebimento previsto, duplicatas, antecipações,
 // recebimentos reais). É chamado pelo botão "Gravar".
-async function syncStateToSheet(){
-  if(!SCRIPT_URL) return;
-  const jobs = [];
+function semRepetidas_(lista, keyFn){
+  const vistos = new Set();
+  return lista.filter(x=>{
+    const k = keyFn(x);
+    if(vistos.has(k)) return false;
+    vistos.add(k);
+    return true;
+  });
+}
+
+// Uma "assinatura" por item gravável: chave -> {action, payload, sig}. O Gravar só
+// envia o que mudou desde o carregamento (ou desde a última gravação). Antes ele
+// reenviava tudo a cada alteração, uma requisição por item (23/09/2026).
+function syncSignatures_(){
+  const out = {};
+  const put = (key, action, payload)=>{ out[key] = { action, payload, sig: JSON.stringify(payload) }; };
   ['Rural','RNA'].forEach(unit=>{
     (state.bankAccounts?.[unit]||[]).forEach(b=>{
-      jobs.push(postToSheet('setSaldo', { unit, banco: b.banco, saldo: b.saldo }));
+      put(`saldo|${unit}|${b.banco}`, 'setSaldo', { unit, banco: b.banco, saldo: b.saldo });
     });
     if(state.recebimentos && state.recebimentos[unit] !== undefined){
-      jobs.push(postToSheet('setRecebimentoPrevisto', { unit, valor: state.recebimentos[unit] }));
+      put(`recprev|${unit}`, 'setRecebimentoPrevisto', { unit, valor: state.recebimentos[unit] });
     }
   });
   (state.duplicatasReceber||[]).forEach(d=>{
-    jobs.push(postToSheet('upsertDuplicata', { id: d.id, day: d.day, unit: d.unit, cliente: d.cliente, valor: d.valor, status: d.status }));
+    put(`dup|${d.id}`, 'upsertDuplicata', { id: d.id, day: d.day, unit: d.unit, cliente: d.cliente, valor: d.valor, status: d.status });
   });
   (state.historicoSaldos||[]).forEach(h=>{
-    jobs.push(postToSheet('addSaldoDiario', { date: h.date, unit: h.unit, banco: h.banco, saldo: h.saldo }));
+    put(`hist|${h.date}|${h.unit}|${h.banco}`, 'addSaldoDiario', { date: h.date, unit: h.unit, banco: h.banco, saldo: h.saldo });
   });
   (state.antecipacoesReais||[]).forEach(a=>{
-    jobs.push(postToSheet('addAntecipacao', { id: a.id, day: a.day, unit: a.unit, banco: a.banco, bruto: a.bruto, juros: a.juros, iof: a.iof, tarifa: a.tarifa, liquido: a.liquido }));
+    put(`antec|${a.id}`, 'addAntecipacao', { id: a.id, day: a.day, unit: a.unit, banco: a.banco, bruto: a.bruto, juros: a.juros, iof: a.iof, tarifa: a.tarifa, liquido: a.liquido });
   });
   (state.recebimentosReais||[]).forEach(r=>{
-    jobs.push(postToSheet('addRecebimentoReal', { id: r.id, day: r.day, week: r.week, unit: r.unit, cliente: r.cliente, valor: r.valor, status: r.status, valor_usd: r.valor_usd, cotacao: r.cotacao, obs: r.obs }));
+    put(`recreal|${r.id}`, 'addRecebimentoReal', { id: r.id, day: r.day, week: r.week, unit: r.unit, cliente: r.cliente, valor: r.valor, status: r.status, valor_usd: r.valor_usd, cotacao: r.cotacao, obs: r.obs });
   });
-  await Promise.all(jobs);
+  return out;
+}
+
+async function syncStateToSheet(){
+  if(!SCRIPT_URL) return;
+  const base = window.__syncBaseline || {};
+  const atual = syncSignatures_();
+  const mudou = Object.keys(atual).filter(k => !base[k] || base[k].sig !== atual[k].sig);
+  const results = await Promise.all(mudou.map(async k=>{
+    const res = await postToSheet(atual[k].action, atual[k].payload);
+    return { k, ok: !!(res && res.ok !== false), res };
+  }));
+  // Duplicata que a planilha reconheceu pelo conteúdo: adota o id de lá.
+  results.forEach(({k, ok, res})=>{
+    if(ok && k.startsWith('dup|') && res.result && res.result.id){
+      const d = (state.duplicatasReceber||[]).find(x=>`dup|${x.id}`===k);
+      if(d && d.id !== res.result.id) d.id = res.result.id;
+    }
+  });
+  const novoBase = syncSignatures_();
+  // O que falhou continua marcado como pendente pra próxima gravação.
+  results.filter(r=>!r.ok).forEach(({k})=>{ delete novoBase[k]; if(base[k]) novoBase[k] = base[k]; });
+  window.__syncBaseline = novoBase;
 }
 
 let currentWeek = WEEKS[0]; // valor provisório; recalculado logo abaixo com base na data de hoje, assim que WEEK_RANGES existir
@@ -1063,7 +1098,9 @@ function mergeNewDuplicatas(){
   SEED_DUPLICATAS.forEach(d=>{
     const sig = [d.day,d.unit,d.cliente,d.valor].join('|');
     if(!existing.has(sig)){
-      state.duplicatasReceber.push({ ...d, id: rowId('dup') });
+      // Mantém o id que veio da planilha: gerar um id novo aqui fazia o "Gravar"
+      // não reconhecer a linha e acrescentar uma cópia a cada gravação (23/09/2026).
+      state.duplicatasReceber.push({ ...d, id: d.id || rowId('dup') });
       existing.add(sig);
       added++;
     }
@@ -1134,11 +1171,14 @@ async function loadState(){
       // nunca funcionava -- os dados de recebimentos/antecipações/recebimentosReais
       // da planilha nunca chegavam a sobrescrever o padrão local. Corrigido em 24/08/2026.
       if(sheetData.recebimentos) state.recebimentos = sheetData.recebimentos;
-      if(Array.isArray(sheetData.recebimentosReais)) state.recebimentosReais = sheetData.recebimentosReais;
-      if(Array.isArray(sheetData.antecipacoes)) state.antecipacoesReais = sheetData.antecipacoes;
+      // Ignora linhas repetidas que o "Gravar" antigo acumulou na planilha, pra
+      // não somar o mesmo recebimento/antecipação várias vezes (23/09/2026).
+      if(Array.isArray(sheetData.recebimentosReais)) state.recebimentosReais = semRepetidas_(sheetData.recebimentosReais, r=>[r.day,r.unit,r.cliente,r.valor].join('|'));
+      if(Array.isArray(sheetData.antecipacoes)) state.antecipacoesReais = semRepetidas_(sheetData.antecipacoes, a=>[a.day,a.unit,a.banco,a.bruto].join('|'));
       if(Array.isArray(sheetData.limitesBancos)) state.limitesBancos = sheetData.limitesBancos;
       if(Array.isArray(sheetData.auditoriaConferidos)) state.auditoriaConferidos = sheetData.auditoriaConferidos;
       window.__sheetModeOk = true;
+      window.__syncBaseline = syncSignatures_();
       return;
     }
     window.__sheetModeOk = false;
