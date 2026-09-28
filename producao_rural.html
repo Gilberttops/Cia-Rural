@@ -1547,6 +1547,11 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="fecharNovaFormula()">Cancelar</button>
+      <button class="btn btn-primary" id="nf-save-btn" onclick="salvarNovaFormula()">💾 Salvar fórmula</button>
+    </div>
+  </div>
+</div>
+
 <div id="historico-formula-modal" class="modal-overlay" style="display:none">
   <div class="modal-box" style="max-width:640px">
     <div class="modal-header">
@@ -1559,11 +1564,6 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="fecharHistoricoFormula()">Fechar</button>
-    </div>
-  </div>
-</div>
-
-      <button class="btn btn-primary" id="nf-save-btn" onclick="salvarNovaFormula()">💾 Salvar fórmula</button>
     </div>
   </div>
 </div>
