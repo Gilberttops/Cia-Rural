@@ -188,10 +188,13 @@ table input:focus{border-color:var(--blue)}
 .ps-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--t3)}
 .ps-val{font-size:14px;font-weight:700;color:var(--text)}
 .ps-val.blue{color:var(--blue)}
+/* Impressao direta (Ctrl+P): esconde so cabecalho, abas e botoes. Antes escondia todo .card que nao fosse #card-ing
+   (id que nao existe) e a pagina saia em branco em qualquer aba. A ficha formatada sai pelo botao Imprimir ficha. */
 @media print{
-  .hdr,.tabs,.ficha-layout>div:last-child,.card:not(#card-ing),.btn,.btn-add,.del-col{display:none!important}
+  .hdr,.tabs,.btn,.btn-add,.del-col,.del{display:none!important}
   .page{padding:0}
   .ficha-layout{grid-template-columns:1fr}
+  .card{break-inside:avoid;box-shadow:none}
 }
 /* ─ ABA PRODUÇÃO ─ */
 .prod-header{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin-bottom:14px}
@@ -386,6 +389,18 @@ table.ptp-table th.ptp-pr,table.ptp-table td.ptp-pr{text-align:center}
 table.ptp-table td{padding:6px 10px;border:1px solid #e2e2e2}
 table.ptp-table td.ptp-code{color:#666;text-align:center;width:70px}
 table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center;width:120px}
+/* ─ Separacao por unidade: com uma unidade escolhida, somem abas/cartoes da outra ─ */
+body[data-unidade="banco"] [data-unid="rna"],body[data-unidade="rna"] [data-unid="banco"]{display:none !important}
+.unid-escolha{display:flex;gap:8px;flex-wrap:wrap}
+.unid-escolha label{flex:1;min-width:110px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;border:1px solid var(--border);border-radius:var(--r);padding:8px 10px;cursor:pointer;font-weight:700;font-size:13px}
+.unid-escolha label small{font-weight:500;color:var(--t3);font-size:10px}
+.unid-escolha input{margin:0 0 2px}
+.unid-escolha label:has(input:checked){border-color:var(--blue);background:var(--blu-lt)}
+.unid-tag.u-banco{background:#dbeafe;color:#1e40af;border-color:#93c5fd}
+.unid-tag.u-rna{background:#d1fae5;color:#065f46;border-color:#6ee7b7}
+.unid-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;vertical-align:middle}
+.unid-badge.u-banco{background:#dbeafe;color:#1e40af}
+.unid-badge.u-rna{background:#d1fae5;color:#065f46}
 @media print{
   .tabs,.hdr,.ptp-toolbar{display:none !important}
   body,.page,#pg-precospub,.ptp-shell,#ptp-content{background:#fff !important;overflow:visible !important;height:auto !important;padding:0 !important;margin:0 !important}
@@ -399,8 +414,10 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
   body,.page,#pg-precos,.pt-shell,#pt-doc-scroll{background:#fff !important;overflow:visible !important;height:auto !important;padding:0 !important;margin:0 !important}
   .page{display:none !important}
   .page.active{display:block !important}
-  .pt-page{box-shadow:none;border:none;margin:0;page-break-after:always;width:210mm;min-height:297mm}
-  @page{size:A4;margin:0}
+  .pt-page{box-shadow:none;border:none;margin:0;page-break-after:always;width:210mm;min-height:297mm;page:ptdoc}
+  /* margem 0 so para as folhas A4 da Tabela de Precos (tem margem propria); antes valia para toda impressao e cortava a Tabela publica */
+  @page ptdoc{size:A4;margin:0}
+  @page{size:A4;margin:10mm}
   *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;color-adjust:exact !important;}
 }
 
@@ -430,15 +447,21 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
         <label>Digite seu nome</label>
         <input type="text" id="nome-usuario-outro" placeholder="Seu nome">
       </div>
-      <div class="hint" style="margin-top:6px">Seu nome fica registrado junto de cada edição salva, para que todos saibam quem alterou o quê.</div>
+      <div class="f" style="margin-top:10px">
+        <label>Unidade em que vai trabalhar</label>
+        <div class="unid-escolha">
+          <label><input type="radio" name="unidade-login" value="banco"> 🏭 Eldorado <small>RURAL</small></label>
+          <label><input type="radio" name="unidade-login" value="rna"> 🏭 Ivinhema <small>RNA</small></label>
+          <label><input type="radio" name="unidade-login" value="todas"> Todas <small>as duas juntas</small></label>
+        </div>
+      </div>
+      <div class="hint" style="margin-top:6px">Seu nome fica registrado junto de cada edição salva. A unidade define quais fórmulas, OPs e cotações aparecem e onde as alterações são gravadas; dá para trocar depois clicando em 🏭 no topo.</div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-primary" onclick="confirmarNomeUsuario()">Confirmar e entrar</button>
     </div>
   </div>
 </div>
-<div id="toast" class="toast"></div>
-
 <div id="toast" class="toast"></div>
 
 <div class="hdr">
@@ -453,6 +476,8 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
     <span id="ultima-atualizacao" style="font-size:11px;color:var(--t3)"></span>
     <button class="btn btn-ghost" style="padding:5px 11px;font-size:11px" onclick="atualizarDadosRemotos(true)" title="Buscar a versão mais recente de fórmulas, matérias-primas, cotações e composição nutricional na planilha">🔄 Atualizar dados</button>
     <span class="hdr-tag" id="base-mp-tag" title="Data da última alteração de custo de matéria-prima na planilha">custos MP: carregando...</span>
+    <span class="hdr-tag unid-tag" id="unidade-tag" style="cursor:pointer" title="Unidade em uso. Clique para trocar" onclick="abrirModalNomeUsuario()">🏭 —</span>
+    <span class="hdr-tag" id="usuario-tag" style="cursor:pointer" title="Clique para trocar de usuário" onclick="abrirModalNomeUsuario()">👤 —</span>
   </div>
 </div>
 
@@ -461,10 +486,10 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
   <div class="tab" onclick="goTab('mp',this)">🔒 Banco de Matérias-primas</div>
   <div class="tab" onclick="goTab('ficha',this)">🔒 Ficha de Custo</div>
   <div class="tab" onclick="goTab('preco',this)">🔒 Formação do Preço de Venda</div>
-  <div class="tab" onclick="goTab('prod',this)">🏭 OP - Rural - Eldorado</div>
-  <div class="tab" onclick="goTab('prodivi',this)">🏭 OP - RNA - Ivinhema</div>
-  <div class="tab" onclick="goTab('banco',this)">🗂️ RURAL - Eldorado</div>
-  <div class="tab" onclick="goTab('rna',this)">🏷️ RNA - Ivinhema</div>
+  <div class="tab" data-unid="banco" onclick="goTab('prod',this)">🏭 OP - Rural - Eldorado</div>
+  <div class="tab" data-unid="rna" onclick="goTab('prodivi',this)">🏭 OP - RNA - Ivinhema</div>
+  <div class="tab" data-unid="banco" onclick="goTab('banco',this)">🗂️ RURAL - Eldorado</div>
+  <div class="tab" data-unid="rna" onclick="goTab('rna',this)">🏷️ RNA - Ivinhema</div>
   <div class="tab" onclick="goTab('cotacoes',this)">📋 Cotações</div>
   <div class="tab" onclick="goTab('nutricao',this)">🧪 Composição Nutricional</div>
   <div class="tab" onclick="goTab('precos',this)">🔒 Custos &amp; Precificação</div>
@@ -495,22 +520,22 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
         <div class="home-card-title">Formação do Preço de Venda</div>
         <div class="home-card-desc">Margem, impostos, despesas e preço final.</div>
       </div>
-      <div class="home-card" onclick="irPara('prod')">
+      <div class="home-card" data-unid="banco" onclick="irPara('prod')">
         <div class="home-card-icon" style="background:var(--blu-lt);border-color:var(--blu-bd)">🏭</div>
         <div class="home-card-title">OP - Rural - Eldorado</div>
         <div class="home-card-desc">Ordem de produção, balanças 1/2/3.</div>
       </div>
-      <div class="home-card" onclick="irPara('prodivi')">
+      <div class="home-card" data-unid="rna" onclick="irPara('prodivi')">
         <div class="home-card-icon" style="background:var(--blu-lt);border-color:var(--blu-bd)">🏭</div>
         <div class="home-card-title">OP - RNA - Ivinhema</div>
         <div class="home-card-desc">Ordem de produção, balanças 1/2.</div>
       </div>
-      <div class="home-card" onclick="irPara('banco')">
+      <div class="home-card" data-unid="banco" onclick="irPara('banco')">
         <div class="home-card-icon" style="background:var(--grn-lt);border-color:var(--grn-bd)">🗂️</div>
         <div class="home-card-title">RURAL - Eldorado</div>
         <div class="home-card-desc">Banco de fórmulas e produtos acabados.</div>
       </div>
-      <div class="home-card" onclick="irPara('rna')">
+      <div class="home-card" data-unid="rna" onclick="irPara('rna')">
         <div class="home-card-icon" style="background:var(--grn-lt);border-color:var(--grn-bd)">🏷️</div>
         <div class="home-card-title">RNA - Ivinhema</div>
         <div class="home-card-desc">Banco de fórmulas de terceiros/parceiros.</div>
@@ -551,6 +576,7 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
     <button class="btn btn-ghost mp-seg active" data-tipo="todas" onclick="filtrarMPtipo('todas')">Todas</button>
     <button class="btn btn-ghost mp-seg" data-tipo="mp" onclick="filtrarMPtipo('mp')">Matérias-primas</button>
     <button class="btn btn-ghost mp-seg" data-tipo="emb" onclick="filtrarMPtipo('emb')">Embalagens</button>
+    <button class="btn btn-ghost mp-seg" data-tipo="inativas" onclick="filtrarMPtipo('inativas')" title="Itens marcados como inativos (não aparecem para adicionar em fórmulas)">Inativas</button>
   </div>
   <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px">
     <div class="kpi"><div class="kpi-lbl">Matérias-primas</div><div class="kpi-val" id="mp-count-mp">0</div></div>
@@ -588,7 +614,7 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
     <div>
       <div class="card">
         <div class="card-hdr">
-          <span class="card-title">1. Identificação do produto</span>
+          <span class="card-title">1. Identificação do produto <span id="ficha-unid-badge" class="unid-badge"></span></span>
           <div style="display:flex;gap:7px">
             <button class="gravar-btn" onclick="gravarFormula()" title="Salvar esta fórmula na planilha, para todos os colaboradores">💾 Salvar fórmula</button>
             <button class="action-btn" style="background:var(--s1);color:var(--t2);border-color:var(--border)" onclick="abrirHistoricoFormula($('p-cod').value,fichaBancoAtual)" title="Ver todas as versões já salvas para este código">🕘 Versões</button>
@@ -875,7 +901,7 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
             </div>
             <div class="f">
               <label>Lucro mínimo (% s/PV)</label>
-              <input type="number" id="pv-lucro-min" value="8" step="0.1" min="0" oninput="calcPV('margem')">
+              <input type="number" id="pv-lucro-min" value="8" step="0.1" min="0" oninput="calcPV()">
               <span class="hint">Markup do preço mínimo.</span>
             </div>
             <div class="f">
@@ -921,7 +947,7 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
 
       <!-- MC -->
       <div class="result-row success" style="margin-bottom:10px">
-        <span class="rl">Margem de contribuição (objetivo)</span>
+        <span class="rl">Lucro líquido objetivo (% sobre o PV)</span>
         <span class="rv" id="r-mc-sug">0,00%</span>
       </div>
 
@@ -1414,7 +1440,7 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="fecharPrecificarCotacao()">Fechar</button>
-      <button class="btn btn-ghost" style="color:var(--red);border-color:var(--red-bd)" onclick="recusarCotacao()">🗑 Recusar/excluir</button>
+      <button class="btn btn-ghost" style="color:var(--red);border-color:var(--red-bd)" onclick="recusarCotacao()">✖ Recusar</button>
       <button class="btn btn-primary" onclick="aprovarCotacao()">✅ Aprovar e criar produto</button>
     </div>
   </div>
@@ -1510,6 +1536,10 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
           <input type="checkbox" id="nf-modo-cotacao" onchange="toggleModoCotacao()" style="width:16px;height:16px">
           🧮 Isto é uma cotação (ainda não é um produto — só quero simular o custo/preço)
         </label>
+      </div>
+      <div class="nf-row" style="background:var(--blu-lt);padding:10px 12px;border-radius:8px;border:1px solid var(--blu-bd);align-items:flex-end">
+        <div class="f" style="flex:3"><label>📋 Copiar de uma fórmula existente (opcional)</label><input id="nf-copiar-busca" list="nf-copiar-lista" type="text" placeholder="Digite o código ou o nome e escolha na lista..." onkeydown="if(event.key==='Enter'){event.preventDefault();nfCopiarFormula();}"><datalist id="nf-copiar-lista"></datalist></div>
+        <div class="f" style="flex:0 0 auto"><button type="button" class="btn btn-ghost" onclick="nfCopiarFormula()">Copiar ingredientes</button></div>
       </div>
       <div class="nf-row">
         <div class="f"><label>Código <span id="nf-cod-opcional" style="text-transform:none;font-weight:400;display:none">(opcional na cotação)</span></label><input id="nf-cod" type="text" placeholder="Ex: 1900"></div>
@@ -1736,17 +1766,16 @@ let bibliotecaRNA=[
   {cod:'1022',nome:'NUCLEO VIACAMPUS CONCENTRADO FLEX PROTEICO',cat:'Viacampus',batida:1000,pesoSaco:1,_origem:'rna',emb:{custo:2,desc:'Emb. Rural Ração Padrão',pesoReal:30},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:188.5,bal:0},{cod:154,qtd:67,bal:0},{cod:435,qtd:15,bal:0},{cod:436,qtd:120,bal:0},{cod:570,qtd:147,bal:0},{cod:634,qtd:183,bal:0},{cod:721,qtd:0.1,bal:0},{cod:790,qtd:8,bal:0},{cod:878,qtd:2,bal:0},{cod:1149,qtd:19.4,bal:0},{cod:1210,qtd:250,bal:0}]},
   {cod:'1214',nome:'NUCLEO PROTEICO CONFINA PASTO - sc 35 KG',cat:'Viacampus',batida:1000,pesoSaco:1,_origem:'rna',emb:{custo:2,desc:'Embalag. Rural Farelado',pesoReal:35},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:434,bal:0},{cod:136,qtd:12,bal:0},{cod:155,qtd:345,bal:0},{cod:435,qtd:24,bal:0},{cod:436,qtd:30,bal:0},{cod:518,qtd:2,bal:0},{cod:570,qtd:138,bal:0},{cod:721,qtd:0.5,bal:0},{cod:762,qtd:1,bal:0},{cod:790,qtd:4,bal:0},{cod:1149,qtd:9.5,bal:0}]},
   {cod:'1593',nome:'VIACAMPUS NUCLEO CREEP PROTEICO',cat:'Viacampus',batida:1000,pesoSaco:1,_origem:'rna',emb:{custo:2,desc:'Emb. Proteico Rural Padrão'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:175.4,bal:0},{cod:155,qtd:500,bal:0},{cod:435,qtd:78,bal:0},{cod:1809,qtd:42,bal:0},{cod:436,qtd:67,bal:0},{cod:727,qtd:10,bal:0},{cod:790,qtd:21.4,bal:0},{cod:1149,qtd:26.2,bal:0},{cod:1263,qtd:69,bal:0},{cod:1345,qtd:10,bal:0},{cod:1421,qtd:1,bal:0}]},
-  {cod:'180',nome:'RURAL EQUINO PRIME - sc 40 kg',cat:'Viacampus',batida:1000,pesoSaco:40,_origem:'rna',emb:{custo:2,desc:'Emb. Rural Ração Padrão'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:50,bal:0},{cod:154,qtd:175,bal:0},{cod:435,qtd:5,bal:0},{cod:436,qtd:4,bal:0},{cod:449,qtd:250,bal:0},{cod:543,qtd:502.5,bal:0},{cod:721,qtd:1,bal:0},{cod:790,qtd:1,bal:0},{cod:1149,qtd:1.5,bal:0},{cod:1263,qtd:10,bal:0}]},
+  {cod:'180.1',nome:'RURAL EQUINO PRIME VIACAMPUS - sc 40 kg',cat:'Viacampus',batida:1000,pesoSaco:40,_origem:'rna',emb:{custo:2,desc:'Emb. Rural Ração Padrão'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:50,bal:0},{cod:154,qtd:175,bal:0},{cod:435,qtd:5,bal:0},{cod:436,qtd:4,bal:0},{cod:449,qtd:250,bal:0},{cod:543,qtd:502.5,bal:0},{cod:721,qtd:1,bal:0},{cod:790,qtd:1,bal:0},{cod:1149,qtd:1.5,bal:0},{cod:1263,qtd:10,bal:0}]},
   {cod:'539',nome:'VIACAMPUS RAÇÃO 22 LACTAÇAÕ - sc 40 KG',cat:'Viacampus',batida:1000,pesoSaco:40,_origem:'rna',emb:{custo:2,desc:''},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:51.5,bal:0},{cod:154,qtd:150,bal:0},{cod:155,qtd:120,bal:0},{cod:436,qtd:5,bal:0},{cod:543,qtd:425,bal:0},{cod:570,qtd:25.5,bal:0},{cod:617,qtd:100,bal:0},{cod:721,qtd:0.1,bal:0},{cod:727,qtd:0.25,bal:0},{cod:790,qtd:0.5,bal:0},{cod:1149,qtd:2.15,bal:0},{cod:1210,qtd:120,bal:0}]},
   {cod:'799',nome:'RURAL CONFINA AS - SC 40 KG',cat:'Viacampus',batida:1000,pesoSaco:40,_origem:'rna',emb:{custo:2,desc:'Emb. Rural Ração Padrão'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:60,bal:0},{cod:321,qtd:270,bal:0},{cod:435,qtd:1,bal:0},{cod:436,qtd:3,bal:0},{cod:543,qtd:405,bal:0},{cod:570,qtd:19,bal:0},{cod:602,qtd:80,bal:0},{cod:634,qtd:80,bal:0},{cod:721,qtd:0.2,bal:0},{cod:727,qtd:0.2,bal:0},{cod:790,qtd:0.4,bal:0},{cod:1149,qtd:1.2,bal:0},{cod:1210,qtd:80,bal:0}]},
-  {cod:'1287',nome:'RURAL ACABAMENTO AS - sc 40 KG',cat:'Viacampus',batida:1000,pesoSaco:40,_origem:'rna',emb:{custo:2,desc:'Emb. Rural Ração Padrão'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:60,bal:0},{cod:155,qtd:40,bal:0},{cod:321,qtd:260,bal:0},{cod:436,qtd:4,bal:0},{cod:449,qtd:200,bal:0},{cod:543,qtd:415.5,bal:0},{cod:570,qtd:18.5,bal:0},{cod:721,qtd:0.2,bal:0},{cod:727,qtd:0.2,bal:0},{cod:790,qtd:0.2,bal:0},{cod:1149,qtd:1.4,bal:0}]},
   {cod:'1371',nome:'RURAL CONFINA AS - SC 30 KG',cat:'Viacampus',batida:1000,pesoSaco:30,_origem:'rna',emb:{custo:2,desc:'Embalag. Rural Farelado'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:60,bal:0},{cod:155,qtd:100,bal:0},{cod:321,qtd:300,bal:0},{cod:435,qtd:1,bal:0},{cod:436,qtd:3,bal:0},{cod:543,qtd:435,bal:0},{cod:570,qtd:19,bal:0},{cod:721,qtd:0.2,bal:0},{cod:727,qtd:0.2,bal:0},{cod:790,qtd:0.4,bal:0},{cod:1149,qtd:1.2,bal:0},{cod:1210,qtd:80,bal:0}]},
   {cod:'1405',nome:'RURAL TERMINAÇÃO AS - sc 40 KG',cat:'Viacampus',batida:1000,pesoSaco:40,_origem:'rna',emb:{custo:2,desc:'Emb. Rural Ração Padrão'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:70,bal:0},{cod:155,qtd:120,bal:0},{cod:321,qtd:60,bal:0},{cod:436,qtd:5,bal:0},{cod:449,qtd:145,bal:0},{cod:543,qtd:461,bal:0},{cod:570,qtd:26,bal:0},{cod:617,qtd:110,bal:0},{cod:721,qtd:0.15,bal:0},{cod:727,qtd:0.25,bal:0},{cod:790,qtd:0.15,bal:0},{cod:1149,qtd:2.45,bal:0}]},
   {cod:'1509',nome:'RURAL VIA ENGORDA 16 - sc 30 KG',cat:'Viacampus',batida:1000,pesoSaco:30,_origem:'rna',emb:{custo:2,desc:'Embalag. Rural Farelado'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:55,bal:0},{cod:155,qtd:70,bal:0},{cod:321,qtd:260,bal:0},{cod:435,qtd:1,bal:0},{cod:436,qtd:7,bal:0},{cod:543,qtd:490,bal:0},{cod:570,qtd:26,bal:0},{cod:634,qtd:73,bal:0},{cod:721,qtd:0.2,bal:0},{cod:790,qtd:0.4,bal:0},{cod:878,qtd:0.1,bal:0},{cod:1149,qtd:1.3,bal:0},{cod:1263,qtd:16,bal:0}]},
   {cod:'1630',nome:'RURAL RAÇÃO ELITE 16% - sc 30 KG',cat:'Viacampus',batida:1000,pesoSaco:30,_origem:'rna',emb:{custo:2,desc:'Embalag. Rural Farelado'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:57,bal:0},{cod:155,qtd:50,bal:0},{cod:321,qtd:290,bal:0},{cod:436,qtd:5,bal:0},{cod:543,qtd:425,bal:0},{cod:570,qtd:26,bal:0},{cod:602,qtd:50,bal:0},{cod:721,qtd:0.2,bal:0},{cod:790,qtd:0.2,bal:0},{cod:1149,qtd:1.5,bal:0},{cod:1210,qtd:80,bal:0},{cod:1263,qtd:15,bal:0},{cod:1491,qtd:0.1,bal:0}]},
   {cod:'1636',nome:'RURAL RAÇÃO ELITE 16% - sc 40 KG',cat:'Viacampus',batida:1020,pesoSaco:40,_origem:'rna',emb:{custo:2,desc:'Emb. Rural Ração Padrão'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:35,bal:0},{cod:321,qtd:220,bal:0},{cod:436,qtd:5,bal:0},{cod:543,qtd:350,bal:0},{cod:570,qtd:7,bal:0},{cod:602,qtd:100,bal:0},{cod:721,qtd:0.2,bal:0},{cod:790,qtd:0.2,bal:0},{cod:1149,qtd:1.5,bal:0},{cod:1210,qtd:80,bal:0},{cod:1263,qtd:221,bal:0},{cod:1491,qtd:0.1,bal:0}]},
   {cod:'1636.1',nome:'RURAL RAÇÃO ELITE 16% VIA - sc 40 KG',cat:'Viacampus',batida:1000,pesoSaco:40,_origem:'rna',emb:{custo:2,desc:'Emb. Rural Ração Padrão'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:57,bal:0},{cod:154,qtd:50,bal:0},{cod:321,qtd:290,bal:0},{cod:436,qtd:5,bal:0},{cod:543,qtd:425,bal:0},{cod:570,qtd:26,bal:0},{cod:602,qtd:50,bal:0},{cod:721,qtd:0.2,bal:0},{cod:790,qtd:0.2,bal:0},{cod:1149,qtd:1.4,bal:0},{cod:1210,qtd:80,bal:0},{cod:1263,qtd:15,bal:0},{cod:1345,qtd:0.1,bal:0},{cod:1491,qtd:0.1,bal:0}]},
-  {cod:'1566',nome:'RAÇÃO RURAL VALE ENGORDA 16% S - sc 40 KG',cat:'Viacampus',batida:1000,pesoSaco:40,_origem:'rna',emb:{custo:2,desc:'Emb. Rural Ração Padrão'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:55,bal:0},{cod:155,qtd:115,bal:0},{cod:321,qtd:165,bal:0},{cod:435,qtd:1,bal:0},{cod:436,qtd:5,bal:0},{cod:543,qtd:630,bal:0},{cod:570,qtd:27,bal:0},{cod:721,qtd:0.2,bal:0},{cod:727,qtd:0.2,bal:0},{cod:790,qtd:0.4,bal:0},{cod:1149,qtd:1.2,bal:0}]},
+  {cod:'1566.1',nome:'RAÇÃO RURAL VALE ENGORDA 16% S VIACAMPUS - sc 40 KG',cat:'Viacampus',batida:1000,pesoSaco:40,_origem:'rna',emb:{custo:2,desc:'Emb. Rural Ração Padrão'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:55,bal:0},{cod:155,qtd:115,bal:0},{cod:321,qtd:165,bal:0},{cod:435,qtd:1,bal:0},{cod:436,qtd:5,bal:0},{cod:543,qtd:630,bal:0},{cod:570,qtd:27,bal:0},{cod:721,qtd:0.2,bal:0},{cod:727,qtd:0.2,bal:0},{cod:790,qtd:0.4,bal:0},{cod:1149,qtd:1.2,bal:0}]},
   {cod:'1726',nome:'RURAL RAÇÃO 16% DR - sc 30 KG',cat:'Viacampus',batida:1000,pesoSaco:30,_origem:'rna',emb:{custo:2,desc:'Embalag. Rural Farelado'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:40,bal:0},{cod:155,qtd:50,bal:0},{cod:321,qtd:290,bal:0},{cod:436,qtd:4.25,bal:0},{cod:543,qtd:433,bal:0},{cod:570,qtd:24,bal:0},{cod:602,qtd:50,bal:0},{cod:790,qtd:0.4,bal:0},{cod:878,qtd:0.08,bal:0},{cod:1210,qtd:80,bal:0},{cod:1263,qtd:28,bal:0},{cod:1491,qtd:0.27,bal:0}]},
   {cod:'1727',nome:'RURAL LACTAÇÃO DR - sc 30 KG',cat:'Viacampus',batida:1000,pesoSaco:30,_origem:'rna',emb:{custo:2,desc:'Embalag. Rural Farelado'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:34.5,bal:0},{cod:154,qtd:215,bal:0},{cod:321,qtd:115,bal:0},{cod:436,qtd:1,bal:0},{cod:543,qtd:617,bal:0},{cod:570,qtd:15,bal:0},{cod:721,qtd:0.2,bal:0},{cod:790,qtd:1,bal:0},{cod:878,qtd:0.07,bal:0},{cod:1149,qtd:1.5,bal:0}]},
   {cod:'1736',nome:'RURALZINHO CREEP FINAL - sc 30 KG',cat:'Viacampus',batida:1000,pesoSaco:30,_origem:'rna',emb:{custo:2,desc:'Embalag. Rural Farelado'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:32.5,bal:0},{cod:154,qtd:300,bal:0},{cod:155,qtd:50,bal:0},{cod:435,qtd:1,bal:0},{cod:436,qtd:4,bal:0},{cod:449,qtd:120,bal:0},{cod:518,qtd:0.05,bal:0},{cod:543,qtd:441,bal:0},{cod:602,qtd:50,bal:0},{cod:790,qtd:1,bal:0},{cod:1149,qtd:0.5,bal:0}]},
@@ -1786,7 +1815,7 @@ let bibliotecaRNA=[
   {cod:'1529',nome:'RURAL VALE FÓS LEITE 85% - SC 30 kg',cat:'Rural Vale',batida:1020,pesoSaco:30,_origem:'rna',emb:{custo:2,desc:'Emb. Rural Sal Mineral'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:279.5,bal:0},{cod:435,qtd:312,bal:0},{cod:1809,qtd:168,bal:0},{cod:436,qtd:204,bal:0},{cod:721,qtd:0.1,bal:0},{cod:790,qtd:25,bal:0},{cod:971,qtd:7,bal:0},{cod:1149,qtd:24.4,bal:0}]},
   {cod:'1530',nome:'RURAL VALEFÓS OVINOS - SC 30 kg',cat:'Rural Vale',batida:1020,pesoSaco:30,_origem:'rna',emb:{custo:2,desc:'Emb. Rural Sal Mineral'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:356,bal:0},{cod:435,qtd:237.9,bal:0},{cod:1809,qtd:128.1,bal:0},{cod:436,qtd:255,bal:0},{cod:721,qtd:0.1,bal:0},{cod:790,qtd:12.3,bal:0},{cod:1149,qtd:30.6,bal:0}]},
   {cod:'1531',nome:'RURAL VALE FÓS RECRIA 60 - SC 30 kg',cat:'Rural Vale',batida:1020,pesoSaco:30,_origem:'rna',emb:{custo:2,desc:'Emb. Rural Sal Mineral'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:297,bal:0},{cod:435,qtd:221,bal:0},{cod:1809,qtd:119,bal:0},{cod:436,qtd:350,bal:0},{cod:721,qtd:0.1,bal:0},{cod:790,qtd:20,bal:0},{cod:1149,qtd:12.9,bal:0}]},
-  {cod:'1040',nome:'RURAL CONCENTRADO 130 - sc 25 KG',cat:'Rural Vale',batida:1000,pesoSaco:25,_origem:'rna',emb:{custo:2,desc:'Emb. Rural Sal Mineral'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:215,bal:0},{cod:136,qtd:10,bal:0},{cod:435,qtd:469.95,bal:0},{cod:1809,qtd:253.05,bal:0},{cod:790,qtd:30,bal:0},{cod:1149,qtd:14,bal:0},{cod:1194,qtd:8,bal:0}]},
+  {cod:'1040.1',nome:'RURAL CONCENTRADO 130 RURAL VALE - sc 25 KG',cat:'Rural Vale',batida:1000,pesoSaco:25,_origem:'rna',emb:{custo:2,desc:'Emb. Rural Sal Mineral'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:215,bal:0},{cod:136,qtd:10,bal:0},{cod:435,qtd:469.95,bal:0},{cod:1809,qtd:253.05,bal:0},{cod:790,qtd:30,bal:0},{cod:1149,qtd:14,bal:0},{cod:1194,qtd:8,bal:0}]},
   {cod:'1772',nome:'SOLIPRIME PROTEICO ENERGETICO 20PB - SC 30 KG',cat:'Linha Rural',batida:1000,pesoSaco:30,_origem:'rna',emb:{custo:2,desc:'Embalag. Rural Farelado'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:74.9,bal:0},{cod:136,qtd:0.6,bal:0},{cod:321,qtd:220,bal:0},{cod:436,qtd:21.5,bal:0},{cod:543,qtd:395,bal:0},{cod:570,qtd:25,bal:0},{cod:790,qtd:1.6,bal:0},{cod:878,qtd:0.3,bal:0},{cod:1149,qtd:1.1,bal:0},{cod:1263,qtd:260,bal:0}]},
     {cod:'1771',nome:'SOLIPRIME CORTE PREMIUM - SC 30 KG',cat:'Linha Rural',batida:1000,pesoSaco:30,_origem:'rna',emb:{custo:2,desc:'Embalag. Rural Farelado'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:25.9,bal:0},{cod:321,qtd:353,bal:0},{cod:436,qtd:7,bal:0},{cod:543,qtd:400,bal:0},{cod:570,qtd:13,bal:0},{cod:790,qtd:0.6,bal:0},{cod:878,qtd:0.1,bal:0},{cod:1149,qtd:0.4,bal:0},{cod:1263,qtd:200,bal:0}]},
     {cod:'1773',nome:'NUCLEO SOLIPRIME CORTE PREMIUM',cat:'Linha Rural',batida:34,pesoSaco:1,_origem:'rna',emb:{custo:2,desc:'Embalag. Rural Farelado'},cif:{mo:0,enc:0,ee:0,out:0},ings:[{cod:133,qtd:25.9,bal:0},{cod:436,qtd:7,bal:0},{cod:790,qtd:0.6,bal:0},{cod:878,qtd:0.1,bal:0},{cod:1149,qtd:0.4,bal:0}]},
@@ -1865,8 +1894,9 @@ function init(){
   renderMP(); renderIngs();
 }
 function popularSelectsEmbalagem(){
-  var embs=MPitens.filter(function(m){return m.t==='emb';}).sort(function(a,b){return a.d.localeCompare(b.d);});
-  var optsHtml=embs.map(function(m){return '<option value="'+MPcusto[m.cod]+'" data-cod="'+m.cod+'">'+m.cod+' — '+m.d+'</option>';}).join('')
+  /* Inativas continuam na lista (no fim, marcadas) para as formulas antigas que ainda as usam acharem a embalagem. */
+  var embs=MPitens.filter(function(m){return m.t==='emb';}).sort(function(a,b){return (a.inativo?1:0)-(b.inativo?1:0)||a.d.localeCompare(b.d);});
+  var optsHtml=embs.map(function(m){return '<option value="'+MPcusto[m.cod]+'" data-cod="'+m.cod+'">'+m.cod+' — '+m.d+(m.inativo?' (inativa)':'')+'</option>';}).join('')
     +'<option value="custom">Outro valor...</option>';
   ['emb-sel','op-emb-sel','opi-emb-sel'].forEach(function(id){
     var sel=$(id);
@@ -1874,7 +1904,7 @@ function popularSelectsEmbalagem(){
   });
 }
 function popularSelectsAdicionarMP(){
-  var mps=MPitens.filter(function(m){return m.t==='mp';}).sort(function(a,b){return a.d.localeCompare(b.d);});
+  var mps=MPitens.filter(function(m){return m.t==='mp'&&!m.inativo;}).sort(function(a,b){return a.d.localeCompare(b.d);});
   var optsHtml='<option value="">selecione a materia-prima...</option>'+mps.map(function(m){return '<option value="'+m.cod+'">'+m.cod+' — '+m.d+'</option>';}).join('');
   ['op-add-mp-sel','opi-add-mp-sel'].forEach(function(id){
     var sel=$(id);
@@ -1885,10 +1915,10 @@ function popularSelectsAdicionarMP(){
 let mpFiltroTipo='todas';
 function renderMP(filtro=''){
   const f=filtro.toLowerCase();
-  const porTipo=m=>mpFiltroTipo==='todas'||m.t===mpFiltroTipo;
+  const porTipo=m=>mpFiltroTipo==='inativas'?!!m.inativo:(!m.inativo&&(mpFiltroTipo==='todas'||m.t===mpFiltroTipo));
   const lista=MPitens.filter(m=>porTipo(m)&&(!f||m.d.toLowerCase().includes(f)||String(m.cod).includes(f)));
-  const todosMP=MPitens.filter(m=>m.t==='mp');
-  const todosEmb=MPitens.filter(m=>m.t==='emb');
+  const todosMP=MPitens.filter(m=>m.t==='mp'&&!m.inativo);
+  const todosEmb=MPitens.filter(m=>m.t==='emb'&&!m.inativo);
   const alt=MPitens.filter(m=>MPalterado[m.cod]).length;
   const zeros=MPitens.filter(m=>MPcusto[m.cod]===0).length;
   const emUso=MPitens.filter(m=>codEmFicha(m.cod)).length;
@@ -1922,7 +1952,9 @@ function renderMP(filtro=''){
       +'<td style="font-size:11px;color:var(--t3)">'+ultimaAlteracaoMPTexto(m.cod)+'</td>'
       +'<td style="text-align:center;font-size:12px">'+(usada?'<span style="color:var(--blue);font-weight:600">em uso</span>':'—')+'</td>'
       +'<td style="text-align:center"><button type="button" class="action-btn" style="background:'+(nNutri>0?'var(--grn-lt)':'var(--s1)')+';color:'+(nNutri>0?'var(--green)':'var(--t3)')+';border-color:'+(nNutri>0?'var(--grn-bd)':'var(--border)')+'" title="Composição nutricional" onclick="abrirComposicaoMP('+m.cod+')">🧪'+(nNutri>0?' '+nNutri:'')+'</button></td>'
-      +'<td><button class="del" onclick="delMP('+m.cod+')">x</button></td>'
+      +'<td>'+(m.inativo
+        ?'<button type="button" class="action-btn" title="Reativar" onclick="reativarMP('+m.cod+')">↩</button>'
+        :'<button class="del" title="Marcar como inativa" onclick="delMP('+m.cod+')">x</button>')+'</td>'
       +'</tr>';
   }).join('');
 }
@@ -1938,8 +1970,18 @@ function renomearMP(cod,novoNome){
   salvarMPRemoto(cod,novoNome,MPcusto[cod],item?item.t:'mp');
   toast('Nome atualizado e salvo para todos os colaboradores.');
 }
+/* Le numero digitado em pt-BR ("1.250,50", "1250,5", "1250.5"). Devolve NaN se vazio/invalido. */
+function lerNumeroBR(v){
+  var t=String(v==null?'':v).replace(/[^\d,.\-]/g,'').trim();
+  if(!t)return NaN;
+  if(t.indexOf(',')>-1)t=t.replace(/\./g,'').replace(',','.');
+  else if(/^-?[1-9]\d{0,2}(\.\d{3})+$/.test(t))t=t.replace(/\./g,'');
+  return parseFloat(t);
+}
 function updMP(cod,val){
-  const novo=parseFloat(val)||0;
+  const novo=lerNumeroBR(val);
+  /* Campo vazio/invalido gravava custo 0 na planilha para todos. */
+  if(isNaN(novo)||novo<0){toast('Custo inválido — nada foi alterado.');renderMP($('mp-busca').value);return;}
   if(!MPalterado[cod])MPanterior[cod]=MPcusto[cod];
   MPcusto[cod]=novo;MPalterado[cod]=true;
   renderMP($('mp-busca').value);recalc();
@@ -1981,7 +2023,10 @@ function addMP(){
     const tipoSugerido=classificarTipoMP(desc);
     const tipoIn=(prompt('Tipo: digite "mp" para matéria-prima ou "emb" para embalagem',tipoSugerido)||tipoSugerido).toLowerCase();
     const t=tipoIn==='emb'?'emb':'mp';
-    const custo=parseFloat(prompt(t==='emb'?'Custo R$/unidade:':'Custo R$/ton:'))||0;
+    const custoTxt=prompt(t==='emb'?'Custo R$/unidade (ex.: 1,85):':'Custo R$/ton (ex.: 1.250,00):');
+    if(custoTxt===null)return;
+    const custo=lerNumeroBR(custoTxt);
+    if(isNaN(custo)||custo<0){alert('Custo inválido. Cadastro cancelado.');return;}
     MPcusto[cod]=custo;MPanterior[cod]=custo;MPalterado[cod]=false;
     MPitens.push({cod,d:desc,t});MPitens.sort((a,b)=>a.cod-b.cod);
     renderMP();
@@ -1993,7 +2038,38 @@ function addMP(){
     alert('Não foi possível confirmar com a planilha agora (sem internet?). Cadastro cancelado por segurança — tente novamente em alguns segundos.');
   });
 }
-function delMP(cod){if(codEmFicha(cod)){alert('Item em uso.');return;}if(!confirm('Remover '+cod+'?'))return;delete MPcusto[cod];delete MPanterior[cod];delete MPalterado[cod];MPitens=MPitens.filter(m=>m.cod!==cod);renderMP();}
+/* Excluir MP = marcar como INATIVA para todos (grava na planilha com tipo "mp-inativo" / "emb-inativo").
+   Antes so sumia neste navegador e voltava ao atualizar. Inativa some das listas para adicionar em formulas,
+   mas o custo continua valendo para as formulas que ja a usam. */
+function formulasQueUsamMP(cod){
+  var nomes={};
+  function ver(f,banco){(f.ings||[]).forEach(function(i){if(i.cod==cod)nomes[banco+':'+f.cod]=f.cod+' — '+f.nome;});}
+  biblioteca.forEach(function(f){ver(f,'banco');});
+  bibliotecaRNA.forEach(function(f){ver(f,'rna');});
+  Object.keys(formulasEditadasRemoto).forEach(function(k){var r=formulasEditadasRemoto[k];ver({cod:codBaseDaChave(k),nome:r.nome,ings:lerIngsJSON(r.ingsJSON)},/-5$/.test(k)?'rna':'banco');});
+  return Object.keys(nomes).map(function(k){return nomes[k];});
+}
+function delMP(cod){
+  var item=MPitens.find(function(m){return m.cod===cod;});if(!item)return;
+  var usos=formulasQueUsamMP(cod);
+  var msg='Marcar "'+cod+' — '+item.d+'" como INATIVA para todos?\n\nEla deixa de aparecer para adicionar em fórmulas e cotações. Pode ser reativada no filtro "Inativas".';
+  if(usos.length)msg+='\n\n⚠️ Ainda é usada em '+usos.length+' fórmula(s), que continuam calculando com o custo dela:\n'+usos.slice(0,8).join('\n')+(usos.length>8?'\n...':'');
+  if(!confirm(msg))return;
+  mudarAtividadeMP(item,true);
+}
+function reativarMP(cod){
+  var item=MPitens.find(function(m){return m.cod===cod;});if(!item)return;
+  mudarAtividadeMP(item,false);
+}
+function mudarAtividadeMP(item,inativo){
+  var antes=!!item.inativo;
+  function redesenhar(){renderMP($('mp-busca')?$('mp-busca').value:'');popularSelectsEmbalagem();popularSelectsAdicionarMP();}
+  item.inativo=inativo;redesenhar();
+  salvarMPRemoto(item.cod,item.d,MPcusto[item.cod],item.t).then(function(ok){
+    if(ok){toast('MP '+item.cod+(inativo?' marcada como inativa.':' reativada.'));return;}
+    item.inativo=antes;redesenhar();
+  });
+}
 
 /* ===== Composição nutricional das matérias-primas (para Níveis de Garantia) ===== */
 /* Composicao nutricional confirmada por laudo/certificado de analise (ver conversa) */
@@ -2295,6 +2371,73 @@ function imprimirApresentacaoProduto(){
     +'<div class="footer">Rural Nutrição Animal</div>'
     +'</body></html>';
   var win=window.open('','_blank','width=900,height=900');
+  if(!win){alert('O navegador bloqueou a janela de impressão. Libere pop-ups para este site e tente de novo.');return;}
+  win.document.write(doc);
+  win.document.close();
+}
+
+/* ===== Imprimir ficha de composicao (botao "Imprimir ficha" da Ficha Tecnica; a funcao nao existia) ===== */
+function imprimirFicha(){
+  if(ings.length===0){alert('Carregue ou monte uma fórmula antes de imprimir a ficha.');return;}
+  function h(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  /* Mesmos calculos da tela (recalc), para a ficha impressa bater com o que esta na tela. */
+  var batida=gv('batida')||1000,peso=gv('peso-saco')||25,sacos=batida/peso;
+  var emb=gv('emb-custo'),cifBat=gv('cif-mo')*(1+gv('cif-enc')/100)+gv('cif-ee')+gv('cif-out');
+  var totalKg=ings.reduce(function(s,i){return s+i.qtd;},0);
+  var mpBat=0,linhas='',acum=0;
+  ings.forEach(function(ing){
+    var cTon=MPcusto[ing.cod]!==undefined?MPcusto[ing.cod]:0;
+    var tot=ing.qtd*cTon/1000;mpBat+=tot;acum+=ing.qtd;
+    var nome=(MPitens.find(function(m){return m.cod==ing.cod;})||{d:'não encontrado'}).d;
+    linhas+='<tr><td class="c">'+h(ing.cod||'')+'</td><td>'+h(nome)+'</td>'
+      +'<td class="r">'+fd2(ing.qtd)+'</td><td class="r">'+fd2(acum)+'</td>'
+      +'<td class="r">'+(totalKg>0?fp(ing.qtd/totalKg*100,2):'0')+'%</td>'
+      +'<td class="r">'+(cTon>0?fn(cTon):'—')+'</td><td class="r">'+(tot>0?f2(tot):'—')+'</td></tr>';
+  });
+  var mpSaco=sacos>0?mpBat/sacos:0,cifSaco=sacos>0?cifBat/sacos:0;
+  var cmvSaco=mpSaco+emb+cifSaco,cmvKg=peso>0?cmvSaco/peso:0;
+  var embSel=$('emb-sel');
+  var embDesc=embSel&&embSel.selectedIndex>=0?embSel.options[embSel.selectedIndex].text:'—';
+  var cod=$('p-cod').value||'—',nome=$('p-nome').value||'—',cat=$('p-cat')?$('p-cat').value:'';
+  var agora=new Date().toLocaleString('pt-BR');
+  var doc='<html><head><meta charset="UTF-8"><title>Ficha — '+h(cod)+' '+h(nome)+'</title>'
+    +'<style>'
+    +'*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:-apple-system,Segoe UI,sans-serif;font-size:13px;color:#18180f;padding:24px}'
+    +'@media print{@page{margin:12mm;size:A4 portrait}.pbtn{display:none}}'
+    +'.hdr{display:flex;align-items:center;gap:16px;border-bottom:3px solid #1d4ed8;padding-bottom:12px;margin-bottom:16px}'
+    +'.hdr img{height:50px}.hdr-titulo{font-size:19px;font-weight:800;color:#1d4ed8}.hdr-sub{font-size:11px;color:#6b7280}'
+    +'.prod{font-size:21px;font-weight:800;margin-bottom:10px}'
+    +'.info{display:flex;flex-wrap:wrap;gap:8px 22px;margin-bottom:14px;font-size:12px;color:#374151}.info b{color:#18180f}'
+    +'table{width:100%;border-collapse:collapse;margin-bottom:16px}'
+    +'th{background:#f0efe9;text-align:left;font-size:11px;text-transform:uppercase;padding:6px 7px;border-bottom:2px solid #c8c5bc}'
+    +'td{padding:5px 7px;border-bottom:1px solid #e2dfd7}td.r,th.r{text-align:right}td.c{font-family:monospace;color:#6b7280}'
+    +'tfoot td{font-weight:800;border-top:2px solid #c8c5bc}'
+    +'.custos{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}'
+    +'.custos div{border:1px solid #e2dfd7;border-radius:6px;padding:8px}.custos span{display:block;font-size:10px;text-transform:uppercase;color:#6b7280}.custos b{font-size:15px}'
+    +'.cmv{background:#eff6ff;border-color:#93c5fd!important}'
+    +'.pbtn{position:fixed;top:16px;right:16px;padding:10px 18px;background:#1d4ed8;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer}'
+    +'</style></head><body>'
+    +'<button class="pbtn" onclick="window.print()">Imprimir / PDF</button>'
+    +'<div class="hdr"><img src="'+LOGO_RURAL+'" alt="Rural"><div><div class="hdr-titulo">Ficha de Composição</div><div class="hdr-sub">Emitida em '+h(agora)+'</div></div></div>'
+    +'<div class="prod">'+h(cod)+' — '+h(nome)+'</div>'
+    +'<div class="info">'+(cat?'<div>Categoria: <b>'+h(cat)+'</b></div>':'')
+    +'<div>Batida: <b>'+fn(batida)+' kg</b></div><div>Peso do saco: <b>'+fn(peso)+' kg</b></div>'
+    +'<div>Sacos/batida: <b>'+fn(sacos,sacos%1===0?0:1)+'</b></div><div>Embalagem: <b>'+h(embDesc)+'</b></div></div>'
+    +'<table><thead><tr><th>Código</th><th>Ingrediente</th><th class="r">Kg/batida</th><th class="r">Acumulado</th><th class="r">%</th><th class="r">R$/ton</th><th class="r">R$/batida</th></tr></thead>'
+    +'<tbody>'+linhas+'</tbody>'
+    +'<tfoot><tr><td></td><td>Total</td><td class="r">'+fd2(totalKg)+'</td><td></td><td class="r">100%</td><td></td><td class="r">'+f2(mpBat)+'</td></tr></tfoot></table>'
+    +(Math.abs(totalKg-batida)>=0.01?'<p style="color:#b91c1c;font-weight:700;margin-bottom:12px">⚠ Os ingredientes somam '+fd2(totalKg)+' kg e a batida é de '+fn(batida)+' kg.</p>':'')
+    +'<div class="custos">'
+    +'<div><span>MP / saco</span><b>'+f2(mpSaco)+'</b></div>'
+    +'<div><span>Embalagem / saco</span><b>'+f2(emb)+'</b></div>'
+    +'<div><span>CIF / saco</span><b>'+f2(cifSaco)+'</b></div>'
+    +'<div class="cmv"><span>CMV / saco</span><b>'+f2(cmvSaco)+'</b></div>'
+    +'<div class="cmv"><span>CMV / kg</span><b>'+f6(cmvKg)+'</b></div>'
+    +'</div>'
+    +'</body></html>';
+  var win=window.open('','_blank','width=960,height=900');
+  if(!win){alert('O navegador bloqueou a janela de impressão. Libere pop-ups para este site e tente de novo.');return;}
   win.document.write(doc);
   win.document.close();
 }
@@ -2306,13 +2449,19 @@ function ultimaAlteracaoMPTexto(cod){
   if(!r||!r.dataHora)return '—';
   return r.dataHora+(r.editadoPor?' · '+r.editadoPor:'');
 }
+/* Tipo gravado na planilha: "mp"/"emb", com "-inativo" se a MP estiver inativa (renomear/alterar custo mantem o status). */
+function tipoMpComStatus_(cod,tipo){
+  var item=MPitens.find(function(m){return m.cod==cod;});
+  var base=String(tipo||'mp').replace(/-inativo$/,'');
+  return base+(item&&item.inativo?'-inativo':'');
+}
 function salvarMPRemoto(cod,desc,custo,tipo){
   var payload={
     tipo:'mp',
     cod:String(cod),
     desc:desc,
     custo:custo,
-    tipoMp:tipo,
+    tipoMp:tipoMpComStatus_(cod,tipo),
     editadoPor:getNomeColaborador(),
     dataHora:new Date().toLocaleString('pt-BR')
   };
@@ -2321,6 +2470,7 @@ function salvarMPRemoto(cod,desc,custo,tipo){
   mpGravacoesPendentes[payload.cod]=(mpGravacoesPendentes[payload.cod]||0)+1;
   if($('mp-tbody'))renderMP($('mp-busca')?$('mp-busca').value:'');
   return apiPost(payload).then(function(){
+    gravadoLocalEm['mp:'+payload.cod]=Date.now();
     syncGravou();
     atualizarEtiquetaBaseMP(false);
     return true;
@@ -2336,6 +2486,10 @@ function salvarMPRemoto(cod,desc,custo,tipo){
 }
 /* MPs com gravacao ainda em andamento: a leitura da planilha nao pode sobrescreve-las com o valor antigo. */
 let mpGravacoesPendentes={};
+/* Momento da ultima gravacao confirmada neste navegador, por chave ('mp:COD' ou chave da formula).
+   Uma leitura que COMECOU antes dessa gravacao traz a foto antiga da planilha e nao pode desfaze-la (S6). */
+let gravadoLocalEm={};
+function gravadoDepoisDe(chave,t0){return (gravadoLocalEm[chave]||0)>=t0;}
 /* Etiqueta do cabecalho: antes era o texto fixo "base MP: 16/03/2026". Agora mostra a ultima alteracao real. */
 function atualizarEtiquetaBaseMP(falhou){
   var el=$('base-mp-tag');if(!el)return;
@@ -2357,11 +2511,12 @@ function atualizarEtiquetaBaseMP(falhou){
 }
 function carregarMPRemoto(){
   syncMarcar('mp','carregando');
+  var t0=Date.now();
   return apiGet('materiasprimas')
     .then(function(data){
       data=data||{};
       Object.keys(data).forEach(function(codStr){
-        if(mpGravacoesPendentes[codStr])return;
+        if(mpGravacoesPendentes[codStr]||gravadoDepoisDe('mp:'+codStr,t0))return;
         var r=data[codStr];
         mpRemoto[codStr]=r;
         var cod=parseInt(codStr);
@@ -2369,10 +2524,12 @@ function carregarMPRemoto(){
         var item=MPitens.find(function(m){return m.cod===cod;});
         /* Nunca deixa a planilha rebaixar uma embalagem pra "mp" por engano:
            confia no nome (classificarTipoMP) e no tipo local ja conhecido, alem do campo da planilha */
-        var tipo=(r.tipoMp==='emb'||r.tipo==='emb'||classificarTipoMP(r.desc)==='emb'||(item&&item.t==='emb'))?'emb':'mp';
+        var tipoTxt=String(r.tipoMp||r.tipo||'');
+        var inativo=/-inativo$/.test(tipoTxt);
+        var tipo=(/^emb/.test(tipoTxt)||classificarTipoMP(r.desc)==='emb'||(item&&item.t==='emb'))?'emb':'mp';
         MPcusto[cod]=custo;MPanterior[cod]=custo;MPalterado[cod]=false;
-        if(item){item.d=r.desc||item.d;item.t=tipo;}
-        else{MPitens.push({cod:cod,d:r.desc||('MP '+cod),t:tipo});}
+        if(item){item.d=r.desc||item.d;item.t=tipo;item.inativo=inativo;}
+        else{MPitens.push({cod:cod,d:r.desc||('MP '+cod),t:tipo,inativo:inativo});}
         /* REMOVIDO: aqui havia uma regravacao automatica quando "r.tipoMp!==tipo". A planilha devolve o campo como
            "tipo" (nao "tipoMp"), entao a condicao era sempre verdadeira e TODA abertura da ferramenta regravava as
            ~44 MPs uma a uma: sobrecarregava o Apps Script (lentidao/erro 404), inflava MateriasPrimasHistorico
@@ -2408,7 +2565,7 @@ function renderIngs(){
       +'<td><input type="number" value="'+(ing.cod||'')+'" style="width:56px" onchange="updIngCod('+idx+',this.value)" placeholder="cod"></td>'
       +'<td style="font-size:12px;max-width:140px;color:var(--t2)">'+nome+'</td>'
       +'<td style="text-align:center;padding:3px 4px"><select style="font-size:11px;padding:2px 3px;border:1px solid var(--border);border-radius:4px;'+balStyle+'" onchange="updIngBal('+idx+',this.value)"><option value="0"'+(bal==0?' selected':'')+'>-</option><option value="1"'+(bal==1?' selected':'')+'>B1</option><option value="2"'+(bal==2?' selected':'')+'>B2</option><option value="3"'+(bal==3?' selected':'')+'>B3</option></select></td>'
-      +'<td class="r"><input type="number" class="r" value="'+ing.qtd.toFixed(2)+'" step="0.01" min="0" style="width:80px" oninput="updIngQtd('+idx+',this.value)"></td>'
+      +'<td class="r"><input type="number" class="r" value="'+ing.qtd.toFixed(2)+'" step="0.01" min="0" style="width:80px" oninput="updIngQtd('+idx+',this.value,true)" onchange="updIngQtd('+idx+',this.value)"></td>'
       +'<td class="r" style="font-size:12px;font-weight:600;color:'+acumCor+'">'+fd2(acum)+'</td>'
       +'<td class="r" style="font-size:11px;color:var(--t3)">'+(pct>0?fp(pct,2)+'%':'—')+'</td>'
       +'<td class="r" style="font-size:12px">'+(cTon>0?fn(cTon):'—')+'</td>'
@@ -2423,7 +2580,8 @@ function renderIngs(){
   recalc();
 }
 function updIngCod(i,v){ings[i].cod=parseInt(v)||null;renderIngs();}
-function updIngQtd(i,v){ings[i].qtd=parseFloat(v)||0;renderIngs();}
+/* Enquanto digita (parcial=true) so recalcula: re-renderizar a tabela a cada tecla tirava o foco do campo. */
+function updIngQtd(i,v,parcial){ings[i].qtd=parseFloat(v)||0;if(parcial){recalc();return;}renderIngs();}
 function updIngBal(i,v){ings[i].bal=parseInt(v)||0;renderIngs();}
 function addIng(){ings.push({cod:null,qtd:0,bal:0});renderIngs();}
 function delIng(i){ings.splice(i,1);renderIngs();}
@@ -2457,7 +2615,12 @@ function recalc(){
   const idEl=$('ing-detalhe');
   if(idEl)idEl.innerHTML=sorted.map(r=>{const pct=cmvKg>0?r.vK/cmvKg*100:0;return '<div class="ing-row"><span class="ing-nome" title="'+r.nm+'">'+r.nm+'</span><span class="ing-pct">'+fn(pct,1)+'%</span><span class="ing-kg">'+fn(r.qtd,2)+' kg</span><span class="ing-val">'+f3(r.vK)+'/kg</span><div class="ing-bar"><div class="ing-bar-fill" style="width:'+Math.min(pct,100)+'%"></div></div></div>';}).join('');
 }
-function calcPV(modo='margem'){
+/* Modo atual do PV: 'preco' (PV digitado fixado) ou 'margem'. Antes, mudar ICMS/comissao chamava calcPV() no modo
+   margem e o PV fixado era abandonado sem aviso. Agora so digitar o lucro objetivo (ou limpar o PV) sai do modo preco. */
+var pvModoAtual='margem';
+function calcPV(modo){
+  if(modo)pvModoAtual=modo;
+  modo=pvModoAtual;
   const batida=gv('batida')||1000,peso=gv('peso-saco')||25,sacos=batida/peso;
   const emb=gv('emb-custo'),cifBat=gv('cif-mo')*(1+gv('cif-enc')/100)+gv('cif-ee')+gv('cif-out');
   let mpBat=0; ings.forEach(ing=>{const c=MPcusto[ing.cod]!==undefined?MPcusto[ing.cod]:0;mpBat+=ing.qtd*(c/1000);});
@@ -2507,8 +2670,10 @@ function calcPV(modo='margem'){
       +(Math.pow(1+gv('cg-taxa')/100,(gv('cg-dias')||30)/30)-1);
     const encBTemp=(gv('mm-folha')+gv('mm-alug')+gv('mm-ee')+gv('mm-manut')+gv('mm-depre')+gv('mm-honor')+gv('mm-outf'))/100;
     const margemReversa=pvSacoMan>0?1-cmvSacoTmp/pvSacoMan-encATemp-encBTemp:0;
-    pLucro=Math.max(0,margemReversa);
-    if($('pv-lucro')) $('pv-lucro').value=fp(pLucro*100,2);
+    /* Sem max(0,...): margem negativa = prejuizo, e precisa aparecer (antes mostrava 0% e um PV diferente do digitado). */
+    pLucro=margemReversa;
+    /* input type=number: precisa de ponto decimal (fp() gerava "12,34" e o campo ficava vazio = lucro 0%). */
+    if($('pv-lucro')) $('pv-lucro').value=(pLucro*100).toFixed(2);
     if(pvBadge) pvBadge.textContent='pelo PV';
     if(pvModeIcon) pvModeIcon.style.display='inline';
   } else {
@@ -2522,14 +2687,16 @@ function calcPV(modo='margem'){
   const pvKg=peso>0?pvSug/peso:0,pvMinKg=peso>0?pvMin/peso:0;
 
   const lvm=$('lucro-vs-mm');
-  if(lvm) lvm.innerHTML=pLucro>=pLucroMin
+  if(lvm&&encSug>=1) lvm.innerHTML=`<div class="alert alert-warn">⚠ Encargos + custos fixos + lucro somam ${fn(encSug*100,1)}% do preço (≥ 100%): não existe preço de venda possível. Reduza o lucro objetivo ou os percentuais.</div>`;
+  else if(lvm&&pLucro<0) lvm.innerHTML=`<div class="alert alert-warn" style="background:var(--red-lt,#fee2e2);color:var(--red,#b91c1c)">⛔ PREJUÍZO: com este preço o resultado é ${fn(pLucro*100,1)}% sobre o PV (${f3(pvManual*pLucro)}/kg).</div>`;
+  else if(lvm) lvm.innerHTML=pLucro>=pLucroMin
     ?`<div class="alert alert-ok">✓ Lucro objetivo (${fn(pLucro*100,1)}%) ≥ lucro mínimo (${fn(pLucroMin*100,1)}%).</div>`
     :`<div class="alert alert-warn">⚠ Lucro objetivo (${fn(pLucro*100,1)}%) abaixo do mínimo (${fn(pLucroMin*100,1)}%).</div>`;
 
   set('mk-sug',fnum(mkSug,4));
   set('mk-min',fnum(mkMin,4));
-  set('r-pv-kg',f3(pvKg));
-  set('r-pv-min-kg',f3(pvMinKg));
+  set('r-pv-kg',encSug<1?f3(pvKg):'—');
+  set('r-pv-min-kg',encMin<1?f3(pvMinKg):'—');
   set('r-mc-sug',fp(pLucro*100,1)+'% s/PV  ('+f3(pvSug*pLucro/peso)+'/kg)');
 
   const fkg=v=>f3(v/peso)+'/kg';
@@ -2648,6 +2815,10 @@ function removerNovoMP(idx){
   atualizarBarraEdicoesOP();
   renderOP();renderOPIvinhema();
 }
+/* Lotes digitados na OP, por fabrica e por codigo de MP. Antes ficavam so no campo da tabela, com id repetido
+   entre Eldorado e Ivinhema, e sumiam a cada re-renderizacao (troca de aba, n. de batidas, edicao). */
+var opLotes={banco:{},rna:{}};
+function escAttrLote(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
 function totalPendencias(){
   return Object.keys(opEdits).length+Object.keys(opTrocas).length+opRemovidos.size+opNovos.length;
 }
@@ -2664,10 +2835,18 @@ function atualizarBarraEdicoesOP(){
   if(discBtn2)discBtn2.style.display=n>0?'inline-block':'none';
   var cnt2=$('opi-edits-count');if(cnt2)cnt2.textContent=n;
 }
+/* Nome opcional da versao (ex.: cliente, troca de MP, aditivo). Devolve null se o usuario cancelar. */
+function pedirNomeVersao(){
+  var nome=prompt('Nome desta versão (opcional)\n\nEx.: "Cliente Oscar", "com aditivo Rumensin", "troca milho por sorgo".\nDeixe em branco se não quiser nomear. Cancelar = não salvar.','');
+  if(nome===null)return null;
+  return nome.trim().slice(0,80);
+}
 function salvarEdicoesOP(banco){
   banco=banco||'banco';
   var n=totalPendencias();
   if(n===0)return;
+  var nomeVersao=pedirNomeVersao();
+  if(nomeVersao===null)return;
   var novaLista=[];
   ings.forEach(function(ing){
     if(opRemovidos.has(ing.cod))return;
@@ -2693,10 +2872,11 @@ function salvarEdicoesOP(banco){
     batida:gv('batida')||1000,
     pesoSaco:gv('peso-saco')||25,
     emb:{custo:gv('emb-custo')||0,desc:($('emb-sel')&&$('emb-sel').selectedIndex>=0)?$('emb-sel').options[$('emb-sel').selectedIndex].text:''},
-    ings:novaLista
+    ings:novaLista,
+    nomeVersao:nomeVersao
   };
+  toast(n+' alteração(ões) aplicada(s). Salvando na planilha...');
   salvarEdicaoRemota(formulaAtual,banco);
-  toast(n+' alteracao(oes) aplicada(s) na formula carregada.');
 }
 function descartarEdicoesOP(){
   opEdits={};opTrocas={};opRemovidos=new Set();opNovos=[];
@@ -2707,7 +2887,7 @@ function descartarEdicoesOP(){
 function salvarEdicoesOPIvi(){salvarEdicoesOP('rna');}
 function descartarEdicoesOPIvi(){descartarEdicoesOP();}
 function opMpSelectHtml(codAtual,onchangeExpr){
-  var mps=MPitens.filter(function(m){return m.t==='mp';}).sort(function(a,b){return a.d.localeCompare(b.d);});
+  var mps=MPitens.filter(function(m){return m.t==='mp'&&(!m.inativo||m.cod==codAtual);}).sort(function(a,b){return a.d.localeCompare(b.d);});
   var opts=mps.map(function(m){return '<option value="'+m.cod+'"'+(m.cod==codAtual?' selected':'')+'>'+m.cod+' — '+m.d+'</option>';}).join('');
   return '<select style="font-size:15px;font-weight:600;padding:4px 6px;border:1px solid var(--border);border-radius:5px;max-width:260px" onchange="'+onchangeExpr+'">'+opts+'</select>';
 }
@@ -2810,7 +2990,7 @@ function renderOP(){
         +'<td class="r" style="color:var(--t3)">'+fp(pct,2)+'%</td>'
         +'<td class="r">'+f6(porSaco)+'</td>'
         +'<td class="r" style="font-weight:700;color:var(--blue)">'+fd2(totProd)+'</td>'
-        +'<td class="lote-input"><input type="text" class="lote-field" placeholder="N lote" id="lote-'+item.cod+'"></td>'
+        +'<td class="lote-input"><input type="text" class="lote-field" placeholder="N lote" id="lote-'+item.cod+'" value="'+escAttrLote(opLotes.banco[item.cod])+'" oninput="opLotes.banco['+item.cod+']=this.value"></td>'
         +'<td style="text-align:center">'+acaoBtn+'</td>'
         +'</tr>';
     });
@@ -2918,7 +3098,7 @@ function renderOPIvinhema(){
         +'<td class="r" style="color:var(--t3)">'+fp(pct,2)+'%</td>'
         +'<td class="r">'+f6(porSaco)+'</td>'
         +'<td class="r" style="font-weight:700;color:var(--blue)">'+fd2(totProd)+'</td>'
-        +'<td class="lote-input"><input type="text" class="lote-field" placeholder="N lote" id="lote-'+item.cod+'"></td>'
+        +'<td class="lote-input"><input type="text" class="lote-field" placeholder="N lote" id="lotei-'+item.cod+'" value="'+escAttrLote(opLotes.rna[item.cod])+'" oninput="opLotes.rna['+item.cod+']=this.value"></td>'
         +'<td style="text-align:center">'+acaoBtn+'</td>'
         +'</tr>';
     });
@@ -2940,8 +3120,9 @@ function renderOPIvinhema(){
 function onOpiEmbSel(){const opiSel=$('opi-emb-sel'),sel=$('emb-sel');if(!sel)return;sel.selectedIndex=opiSel.selectedIndex;onEmbSel();toast('Embalagem alterada para "'+opiSel.options[opiSel.selectedIndex].text+'".');}
 
 function imprimirOP(){
-  if(Object.keys(opEdits).length>0){
-    if(confirm('Existem quantidades alteradas NÃO salvas.\n\nOK = salvar antes de imprimir\nCancelar = imprimir com os valores originais')){salvarEdicoesOP();}
+  /* Antes so checava quantidades; trocas, remocoes e MPs novas saiam impressas com a receita antiga sem aviso. */
+  if(totalPendencias()>0){
+    if(confirm('Existem alterações NÃO salvas na OP (quantidades, trocas, remoções ou MPs novas).\n\nOK = salvar antes de imprimir\nCancelar = imprimir com a receita original, sem as alterações')){salvarEdicoesOP('banco');}
   }
   const batida=gv('batida')||1000,peso=gv('peso-saco')||25,sacos=batida/peso;
   const bigBag=peso>=1000;
@@ -2975,7 +3156,7 @@ function imprimirOP(){
       var porSaco=bigBag?(batida>0?ing.qtd/batida:0):(sacos>0?ing.qtd/sacos:0);
       var totProd=ing.qtd*nBat;
       var acB=acumBal[bk];
-      var loteVal=$('lote-'+ing.cod)?.value||'';
+      var loteVal=opLotes.banco[ing.cod]||'';
       linhas+='<tr>'
         +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;font-family:monospace;font-size:13px;color:#6b7280">'+ing.cod+'</td>'
         +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;font-size:19px;font-weight:700">'+nomeIng+'</td>'
@@ -3100,13 +3281,15 @@ function imprimirOP(){
     +'</body>'
     +'</html>';
   var win=window.open('','_blank','width=1050,height=800');
+  if(!win){alert('O navegador bloqueou a janela de impressão. Libere pop-ups para este site e tente de novo.');return;}
   win.document.write(doc);
   win.document.close();
 }
 
 function imprimirOPIvinhema(){
-  if(Object.keys(opEdits).length>0){
-    if(confirm('Existem quantidades alteradas NÃO salvas.\n\nOK = salvar antes de imprimir\nCancelar = imprimir com os valores originais')){salvarEdicoesOP();}
+  /* Antes salvava no banco de Eldorado (salvarEdicoesOP() sem 'rna') e so checava quantidades. */
+  if(totalPendencias()>0){
+    if(confirm('Existem alterações NÃO salvas na OP (quantidades, trocas, remoções ou MPs novas).\n\nOK = salvar antes de imprimir\nCancelar = imprimir com a receita original, sem as alterações')){salvarEdicoesOP('rna');}
   }
   const batida=gv('batida')||1000,peso=gv('peso-saco')||25,sacos=batida/peso;
   const bigBag=peso>=1000;
@@ -3141,7 +3324,7 @@ function imprimirOPIvinhema(){
       var porSaco=bigBag?(batida>0?ing.qtd/batida:0):(sacos>0?ing.qtd/sacos:0);
       var totProd=ing.qtd*nBat;
       var acB=acumBal[bk];
-      var loteVal=$('lote-'+ing.cod)?.value||'';
+      var loteVal=opLotes.rna[ing.cod]||'';
       linhas+='<tr>'
         +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;font-family:monospace;font-size:13px;color:#6b7280">'+ing.cod+'</td>'
         +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;font-size:19px;font-weight:700">'+nomeIng+'</td>'
@@ -3266,6 +3449,7 @@ function imprimirOPIvinhema(){
     +'</body>'
     +'</html>';
   var win=window.open('','_blank','width=1050,height=800');
+  if(!win){alert('O navegador bloqueou a janela de impressão. Libere pop-ups para este site e tente de novo.');return;}
   win.document.write(doc);
   win.document.close();
 }
@@ -3274,15 +3458,18 @@ function formulaParaMeta(){
   return {_versao:'1.0',_exportado:new Date().toISOString(),cod:$('p-cod')?.value||'',nome:$('p-nome')?.value||'',cat:$('p-cat')?.value||'',batida:gv('batida')||1000,pesoSaco:gv('peso-saco')||25,emb:{custo:gv('emb-custo'),desc:$('emb-sel')?.options[$('emb-sel')?.selectedIndex]?.text||''},cif:{mo:gv('cif-mo'),enc:gv('cif-enc'),ee:gv('cif-ee'),out:gv('cif-out')},ings:ings.map(i=>({cod:i.cod,qtd:i.qtd,bal:i.bal||0}))};
 }
 function formulaParaCSV(obj){
-  var esc=function(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';};
+  /* Numeros saem com virgula decimal: o Excel em pt-BR le "146.25" como texto/data e, ao salvar, a importacao truncava. */
+  var esc=function(v){if(typeof v==='number')v=String(v).replace('.',',');return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';};
   var linhas=[['#META','campo','valor'],['#META','versao',obj._versao||'1.0'],['#META','exportado',obj._exportado||''],['#META','cod',obj.cod],['#META','nome',obj.nome],['#META','cat',obj.cat||''],['#META','batida',obj.batida],['#META','pesoSaco',obj.pesoSaco],['#META','emb_custo',obj.emb?obj.emb.custo:0],['#META','emb_desc',obj.emb?obj.emb.desc:''],['#META','cif_mo',obj.cif?obj.cif.mo:0],['#META','cif_enc',obj.cif?obj.cif.enc:0],['#META','cif_ee',obj.cif?obj.cif.ee:0],['#META','cif_out',obj.cif?obj.cif.out:0],[],['#ING','cod_mp','qtd_kg','balanca']].concat((obj.ings||[]).map(function(i){return['#ING',i.cod,i.qtd,i.bal||0];}));
   return linhas.map(function(r){return r.map(function(v){return esc(v);}).join(';');}).join('\r\n');
 }
+/* Numero do CSV: com virgula = pt-BR ("1.146,25"); sem virgula = ponto decimal (arquivos antigos, "146.25"). */
+function numCSV(v){var t=String(v==null?'':v).trim();if(t.indexOf(',')>-1)t=t.replace(/\./g,'').replace(',','.');return parseFloat(t);}
 function csvParaFormula(texto){
   var linhas=texto.split(/\r?\n/),meta={},ings2=[];
-  for(var i=0;i<linhas.length;i++){var ln=linhas[i];if(!ln.trim())continue;var campos=[];var cur='',inQ=false;for(var j=0;j<ln.length;j++){var c=ln[j];if(c==='"'){if(inQ&&ln[j+1]==='"'){cur+='"';j++;}else inQ=!inQ;}else if(c===';'&&!inQ){campos.push(cur);cur='';}else cur+=c;}campos.push(cur);var tipo=campos[0];if(tipo==='#META'){meta[campos[1]]=campos[2];}else if(tipo==='#ING'){var cod=parseInt(campos[1]),qtd=parseFloat(campos[2]),bal=parseInt(campos[3])||0;if(!isNaN(cod))ings2.push({cod:cod,qtd:isNaN(qtd)?0:qtd,bal:bal});}}
+  for(var i=0;i<linhas.length;i++){var ln=linhas[i];if(!ln.trim())continue;var campos=[];var cur='',inQ=false;for(var j=0;j<ln.length;j++){var c=ln[j];if(c==='"'){if(inQ&&ln[j+1]==='"'){cur+='"';j++;}else inQ=!inQ;}else if(c===';'&&!inQ){campos.push(cur);cur='';}else cur+=c;}campos.push(cur);var tipo=campos[0];if(tipo==='#META'){meta[campos[1]]=campos[2];}else if(tipo==='#ING'){var cod=parseInt(campos[1]),qtd=numCSV(campos[2]),bal=parseInt(campos[3])||0;if(!isNaN(cod))ings2.push({cod:cod,qtd:isNaN(qtd)?0:qtd,bal:bal});}}
   if(!meta.nome&&!meta.cod) throw new Error('CSV invalido');
-  return {_versao:meta.versao||'1.0',_exportado:meta.exportado||'',cod:meta.cod||'',nome:meta.nome||'',cat:meta.cat||'',batida:parseFloat(meta.batida)||1000,pesoSaco:parseFloat(meta.pesoSaco)||25,emb:{custo:parseFloat(meta.emb_custo)||0,desc:meta.emb_desc||''},cif:{mo:parseFloat(meta.cif_mo)||0,enc:parseFloat(meta.cif_enc)||0,ee:parseFloat(meta.cif_ee)||0,out:parseFloat(meta.cif_out)||0},ings:ings2};
+  return {_versao:meta.versao||'1.0',_exportado:meta.exportado||'',cod:meta.cod||'',nome:meta.nome||'',cat:meta.cat||'',batida:numCSV(meta.batida)||1000,pesoSaco:numCSV(meta.pesoSaco)||25,emb:{custo:numCSV(meta.emb_custo)||0,desc:meta.emb_desc||''},cif:{mo:numCSV(meta.cif_mo)||0,enc:numCSV(meta.cif_enc)||0,ee:numCSV(meta.cif_ee)||0,out:numCSV(meta.cif_out)||0},ings:ings2};
 }
 function exportarFormula(){var obj=formulaParaMeta();var csv=formulaParaCSV(obj);var nomeBase=(obj.cod?'formula_'+obj.cod+'_':'')+obj.nome.replace(/[^a-zA-Z0-9]/g,'_').slice(0,40);var blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download=(nomeBase||'formula')+'.csv';a.click();URL.revokeObjectURL(url);toast('Exportado: '+(nomeBase||'formula')+'.csv');}
 function importarArquivo(input){var file=input.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(e){try{var obj=csvParaFormula(e.target.result);adicionarNaBiblioteca(obj,'importado');input.value='';}catch(err){alert('Arquivo invalido: '+err.message);}};reader.readAsText(file,'utf-8');}
@@ -3294,7 +3481,8 @@ function exportarDaBiblioteca(idx){var obj=biblioteca[idx];if(!obj)return;var cs
 
 function carregarObjFormula(f){
   if(!f)return;
-  opEdits={};atualizarBarraEdicoesOP();
+  /* Zera TODAS as pendencias da OP (antes so opEdits: trocas/remocoes/novas da formula anterior iam para a nova). */
+  opEdits={};opTrocas={};opRemovidos=new Set();opNovos=[];atualizarBarraEdicoesOP();
   $('p-cod').value=f.cod||'';$('p-nome').value=f.nome||'';
   if($('p-cat')&&f.cat)$('p-cat').value=f.cat;
   $('batida').value=f.batida||1000;$('peso-saco').value=f.pesoSaco||25;
@@ -3315,9 +3503,12 @@ function carregarObjFormula(f){
   if(f.cif){$('cif-mo').value=f.cif.mo||0;$('cif-enc').value=f.cif.enc||0;$('cif-ee').value=f.cif.ee||0;$('cif-out').value=f.cif.out||0;}
   ings=(f.ings||[]).map(function(i){return{cod:i.cod,qtd:i.qtd,bal:i.bal||0};});
   renderIngs();
+  /* PV fixado e de um produto so: nao levar para a formula que acabou de ser carregada. */
+  if($('pv-manual'))$('pv-manual').value='';pvModoAtual='margem';
   carregarPrecificacao(f.cod);
   renderOP();
   renderOPIvinhema();
+  atualizarBadgeUnidadeFicha();
 }
 
 function listaTodasFormulas(){
@@ -3375,7 +3566,7 @@ function formulaFromRemoto(f){
     cod:codBaseDaChave(f.cod),nome:f.nome,cat:f.cat,batida:parseFloat(f.batida)||0,pesoSaco:parseFloat(f.pesoSaco)||0,
     emb:{custo:parseFloat(f.embCusto)||0,desc:f.embDesc||''},
     cif:{mo:0,enc:0,ee:0,out:0},
-    ings:JSON.parse(f.ingsJSON||'[]'),
+    ings:lerIngsJSON(f.ingsJSON),
     _remoto:true,_editadoPor:f.editadoPor,_dataHora:f.dataHora
   };
 }
@@ -3639,17 +3830,29 @@ function apiFetch_(url,opts){
     })
     .finally(function(){if(timer)clearTimeout(timer);});
 }
-/* Leitura: tenta ate 2 vezes. */
+/* Leitura: tenta ate 2 vezes. Textos limpos antes de ir para a tela (X3). */
 function apiGet(tipo){
   var url=APPS_SCRIPT_URL+'?tipo='+encodeURIComponent(tipo);
-  return apiFetch_(url).catch(function(err){
+  return apiFetch_(url).then(limparTextosRemotos_).catch(function(err){
     console.warn('Leitura "'+tipo+'" falhou ('+err.message+'), tentando de novo...');
-    return new Promise(function(res){setTimeout(res,3000);}).then(function(){return apiFetch_(url);});
+    return new Promise(function(res){setTimeout(res,3000);}).then(function(){return apiFetch_(url);}).then(limparTextosRemotos_);
   });
 }
 /* Gravacao: uma unica tentativa (repetir poderia duplicar linhas na planilha). */
 function apiPost(payload){
   return apiFetch_(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+}
+/* Seguranca (X3): textos vindos da planilha vao para a tela via innerHTML. Remove < > (e aspas nos campos
+   simples) para que um nome de MP/formula/cotacao nao consiga injetar codigo no navegador dos colegas.
+   Os campos *JSON (ingredientes, tabela) so perdem < >, para nao quebrar o JSON. */
+function limparTextosRemotos_(dado,chave){
+  if(typeof dado==='string'){
+    var s=dado.replace(/[<>]/g,'');
+    return /JSON$/.test(chave||'')?s:s.replace(/["`]/g,'”');
+  }
+  if(Array.isArray(dado))return dado.map(function(v){return limparTextosRemotos_(v,chave);});
+  if(dado&&typeof dado==='object'){var o={};Object.keys(dado).forEach(function(k){o[k]=limparTextosRemotos_(dado[k],k);});return o;}
+  return dado;
 }
 /* Trava um botao enquanto a planilha nao responde (evita clique duplo gravando 2x). */
 function travarBotao(btn,texto){
@@ -3704,15 +3907,20 @@ function normalizarChavesFormulasRemotas(data){
     if(/-[25]$/.test(chave))return;
     var f=data[chave];
     var nova=chaveFormulaRemota(chave,bancoDoCat(f&&f.cat));
-    if(!out[nova])out[nova]=Object.assign({},f,{cod:nova});
+    /* Se a chave antiga foi gravada DEPOIS da nova (versao antiga da ferramenta ainda em uso), ela e a mais recente. */
+    if(!out[nova]||parseDataHoraBr_(f&&f.dataHora)>parseDataHoraBr_(out[nova].dataHora))out[nova]=Object.assign({},f,{cod:nova});
   });
   return out;
 }
 function carregarFormulasEditadasRemoto(){
   syncMarcar('formulas','carregando');
+  var t0=Date.now();
   return apiGet('formulas')
     .then(function(data){
-      formulasEditadasRemoto=normalizarChavesFormulasRemotas(data);
+      var novo=normalizarChavesFormulasRemotas(data);
+      /* Mantem as formulas salvas aqui depois que esta leitura comecou (a resposta ainda nao as contem). */
+      Object.keys(formulasEditadasRemoto).forEach(function(k){if(gravadoDepoisDe(k,t0))novo[k]=formulasEditadasRemoto[k];});
+      formulasEditadasRemoto=novo;
       syncMarcar('formulas','ok');
       renderBancoFormulas($('banco-busca')?$('banco-busca').value:'');
       renderBancoRNA($('rna-busca')?$('rna-busca').value:'');
@@ -3775,9 +3983,13 @@ function abrirHistoricoFormula(cod,banco){
           +'</div>';
       }
       var d=v.dado;
+      var esc=function(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};
+      var selo=v.maisRecente?' <span style="font-size:10px;padding:1px 6px;background:var(--grn-lt);color:var(--green);border-radius:10px;border:1px solid var(--grn-bd);font-weight:700">versão atual</span>':'';
+      var titulo=d.nomeVersao
+        ?'<strong>“'+esc(d.nomeVersao)+'”</strong>'+selo+'<div style="font-size:11px;color:var(--t3)">'+esc(d.editadoPor||'Não informado')+' · '+esc(fmtDataHoraBr(d.dataHora))+'</div>'
+        :'<strong>'+esc(d.editadoPor||'Não informado')+'</strong>'+selo+'<div style="font-size:11px;color:var(--t3)">'+esc(fmtDataHoraBr(d.dataHora))+' · sem nome</div>';
       return '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">'
-        +'<div><strong>'+(d.editadoPor||'Não informado')+'</strong>'+(v.maisRecente?' <span style="font-size:10px;padding:1px 6px;background:var(--grn-lt);color:var(--green);border-radius:10px;border:1px solid var(--grn-bd);font-weight:700">versão atual</span>':'')
-        +'<div style="font-size:11px;color:var(--t3)">'+(d.dataHora||'?')+'</div></div>'
+        +'<div>'+titulo+'</div>'
         +'<button class="btn btn-ghost" onclick="carregarVersaoHistorico('+idx+')">Carregar</button>'
         +'</div>';
     }).join('');
@@ -3795,18 +4007,60 @@ function carregarVersaoHistorico(idx){
     toast('Versão padrão carregada.');
   } else {
     carregarObjFormula(formulaFromRemoto(v.dado));
-    toast('Versão de '+(v.dado.editadoPor||'?')+' ('+(v.dado.dataHora||'?')+') carregada.');
+    toast('Versão '+(v.dado.nomeVersao?'“'+v.dado.nomeVersao+'” ':'')+'de '+(v.dado.editadoPor||'?')+' ('+fmtDataHoraBr(v.dado.dataHora)+') carregada.');
   }
   fecharHistoricoFormula();
 }
-/* ===== Identificacao obrigatoria do usuario (login por nome, sem senha) ===== */
+/* ===== Identificacao obrigatoria do usuario (login por nome, sem senha) =====
+   Chave de acesso fica para depois (Gilberto vai implantar no Index que da acesso a todas as ferramentas).
+   Rascunho pronto de backend com chave pessoal: Claude outputs\Code_producao_v3.gs (NAO implantado). */
 const NOMES_COLABORADORES=['Gilberto','Ronei','Joao Victor','Giseli','Alan'];
 function getNomeColaborador(){
-  var nome=localStorage.getItem('nomeColaborador');
+  var nome=null;try{nome=localStorage.getItem('nomeColaborador');}catch(e){}
   return nome||'Nao informado';
 }
+/* ===== Unidade de trabalho (Eldorado = 'banco', Ivinhema = 'rna', ou 'todas') =====
+   Escolhida no login. Com uma unidade, so aparecem as formulas/OPs/cotacoes dela e tudo e gravado nela. */
+let UNIDADE='todas';
+const NOME_UNIDADE={banco:'Eldorado',rna:'Ivinhema',todas:'Todas as unidades'};
+function unidadeSalva(){try{var u=localStorage.getItem('unidadeAtiva');return (u==='banco'||u==='rna'||u==='todas')?u:'';}catch(e){return '';}}
+/* A formula/cotacao pertence a unidade ativa? (em "todas", sempre) */
+function daUnidade(banco){return UNIDADE==='todas'||(banco==='rna'?'rna':'banco')===UNIDADE;}
+function atualizarBadgeUnidadeFicha(){
+  var b=$('ficha-unid-badge');if(!b)return;
+  var temFormula=ings.length>0||($('p-cod')&&$('p-cod').value);
+  if(!temFormula){b.textContent='';b.className='unid-badge';return;}
+  b.textContent=fichaBancoAtual==='rna'?'Ivinhema':'Eldorado';
+  b.className='unid-badge u-'+(fichaBancoAtual==='rna'?'rna':'banco');
+}
+function aplicarUnidade(u,silencioso){
+  var mudou=u!==UNIDADE;
+  UNIDADE=u;
+  document.body.dataset.unidade=u;
+  try{localStorage.setItem('unidadeAtiva',u);}catch(e){}
+  var t=$('unidade-tag');
+  if(t){t.textContent='🏭 '+NOME_UNIDADE[u];t.className='hdr-tag unid-tag'+(u==='todas'?'':' u-'+u);}
+  if(u!=='todas'&&fichaBancoAtual!==u){
+    /* A formula aberta na Ficha e da outra unidade: fecha para nao gravar no lugar errado. */
+    var tinha=ings.length>0;
+    fichaBancoAtual=u;
+    if(tinha){
+      carregarObjFormula({cod:'',nome:'',batida:1000,pesoSaco:25,emb:{custo:gv('emb-custo'),desc:''},ings:[]});
+      if(!silencioso)toast('A fórmula que estava aberta era da outra unidade e foi fechada. Carregue uma fórmula de '+NOME_UNIDADE[u]+'.',7000);
+    }
+  }
+  atualizarBadgeUnidadeFicha();
+  if(mudou){
+    atualizarSelectFormulas();
+    renderCotacoes();
+    var ativa=document.querySelector('.tab.active');
+    if(ativa&&getComputedStyle(ativa).display==='none')irPara('inicio');
+  }
+}
 function abrirModalNomeUsuario(){
-  var ultimo=localStorage.getItem('nomeColaborador')||'';
+  var uSalva=unidadeSalva()||(UNIDADE!=='todas'?UNIDADE:'');
+  document.querySelectorAll('input[name="unidade-login"]').forEach(function(r){r.checked=(r.value===uSalva);});
+  var ultimo=getNomeColaborador();if(ultimo==='Nao informado')ultimo='';
   if(NOMES_COLABORADORES.indexOf(ultimo)>=0){
     $('nome-usuario-select').value=ultimo;
     $('nome-usuario-outro-wrap').style.display='none';
@@ -3830,11 +4084,21 @@ function confirmarNomeUsuario(){
   if(!v){alert('Selecione um nome da lista para continuar.');return;}
   var nome=v;
   if(v==='__outro__'){
-    nome=($('nome-usuario-outro').value||'').trim();
+    nome=($('nome-usuario-outro').value||'').trim().replace(/[<>"`]/g,'').slice(0,40);
     if(!nome){alert('Digite seu nome para continuar.');return;}
   }
-  localStorage.setItem('nomeColaborador',nome);
+  var rUnid=document.querySelector('input[name="unidade-login"]:checked');
+  if(!rUnid){alert('Escolha a unidade em que vai trabalhar (Eldorado, Ivinhema ou Todas).');return;}
+  var jaEntrou=$('usuario-tag')&&$('usuario-tag').dataset.entrou==='1';
+  if(jaEntrou&&rUnid.value!==UNIDADE&&haEdicaoOPPendente()){
+    alert('Você tem alterações não salvas na Ordem de Produção. Salve ou descarte antes de trocar de unidade.');return;
+  }
+  try{localStorage.setItem('nomeColaborador',nome);}catch(e){}
   $('nome-usuario-modal').style.display='none';
+  var ut=$('usuario-tag');if(ut){ut.textContent='👤 '+nome;ut.dataset.entrou='1';}
+  var trocouUnid=rUnid.value!==UNIDADE;
+  aplicarUnidade(rUnid.value,!jaEntrou);
+  if(jaEntrou){toast(trocouUnid?'Trabalhando em '+NOME_UNIDADE[UNIDADE]+' como '+nome+'.':'Agora as alterações serão registradas como '+nome+'.');return;}
   iniciarAppAposLogin();
 }
 function iniciarAppAposLogin(){
@@ -3890,7 +4154,7 @@ function atualizarDadosRemotos(manual){
     });
 }
 document.addEventListener('visibilitychange',function(){
-  if(document.visibilityState==='visible'){
+  if(document.visibilityState==='visible'&&$('nome-usuario-modal').style.display==='none'){
     if(!ultimaAtualizacaoRemota||(Date.now()-ultimaAtualizacaoRemota)>120000){
       atualizarDadosRemotos(false);
     }
@@ -3909,9 +4173,11 @@ function salvarEdicaoRemota(f,banco){
     embDesc:f.emb?f.emb.desc:'',
     ingsJSON:JSON.stringify(f.ings),
     editadoPor:getNomeColaborador(),
-    dataHora:new Date().toLocaleString('pt-BR')
+    dataHora:new Date().toLocaleString('pt-BR'),
+    nomeVersao:f.nomeVersao||''
   };
   return apiPost(payload).then(function(){
+    gravadoLocalEm[payload.cod]=Date.now();
     formulasEditadasRemoto[payload.cod]=payload;
     if(!formulasHistorico[payload.cod])formulasHistorico[payload.cod]=[];
     formulasHistorico[payload.cod].push(payload);
@@ -3945,11 +4211,12 @@ function carregarCotacoesRemoto(){
       cotacoesRemoto=data||{};
       syncMarcar('cotacoes','ok');
       renderCotacoes();
+      atualizarSelectFormulas(); /* cotacoes em andamento tambem aparecem no seletor da Ficha */
     })
     .catch(function(err){console.error('Erro ao carregar cotacoes:',err);syncMarcar('cotacoes','erro',err.message);throw err;});
 }
 function popularSelectEmbCot(){
-  var embs=MPitens.filter(function(m){return m.t==='emb';}).sort(function(a,b){return a.d.localeCompare(b.d);});
+  var embs=MPitens.filter(function(m){return m.t==='emb'&&!m.inativo;}).sort(function(a,b){return a.d.localeCompare(b.d);});
   $('cot-emb').innerHTML='<option value="">— sem embalagem —</option>'+embs.map(function(m){return '<option value="'+m.cod+'">'+m.cod+' — '+m.d+'</option>';}).join('');
 }
 function atualizarGrupoCot(){
@@ -3959,7 +4226,10 @@ function atualizarGrupoCot(){
 function abrirNovaCotacao(){
   cotIngRows=[{cod:null,qtd:0}];
   $('cot-nome').value='';
-  $('cot-banco').value='banco';
+  /* Cotacao nasce na unidade em que a pessoa entrou (em "Todas", escolhe). */
+  $('cot-banco').value=UNIDADE==='todas'?'banco':UNIDADE;
+  $('cot-banco').disabled=UNIDADE!=='todas';
+  $('cot-banco').title=UNIDADE!=='todas'?'Definida pela unidade escolhida no login (clique em 🏭 no topo para trocar)':'';
   $('cot-batida').value=1000;
   $('cot-peso').value=30;
   atualizarGrupoCot();
@@ -3973,7 +4243,7 @@ function cotRemoveIngLinha(idx){cotIngRows.splice(idx,1);renderCotIngs();}
 function cotUpdateIngCod(idx,val){cotIngRows[idx].cod=val?parseInt(val):null;}
 function cotUpdateIngQtd(idx,val){cotIngRows[idx].qtd=parseFloat(val)||0;atualizarCotTotal();}
 function renderCotIngs(){
-  var mps=MPitens.filter(function(m){return m.t==='mp';}).sort(function(a,b){return a.d.localeCompare(b.d);});
+  var mps=MPitens.filter(function(m){return m.t==='mp'&&(!m.inativo||cotIngRows.some(function(r){return r.cod===m.cod;}));}).sort(function(a,b){return a.d.localeCompare(b.d);});
   $('cot-ings-tbody').innerHTML=cotIngRows.map(function(row,idx){
     var opts='<option value="">selecione...</option>'+mps.map(function(m){return '<option value="'+m.cod+'"'+(row.cod===m.cod?' selected':'')+'>'+m.cod+' — '+m.d+'</option>';}).join('');
     return '<tr>'
@@ -4024,6 +4294,7 @@ function salvarNovaCotacao(){
     cotacoesRemoto[id]=payload;
     fecharNovaCotacao();
     renderCotacoes();
+    atualizarSelectFormulas();
     toast('✅ Cotação "'+nome+'" salva! Aguardando precificação.');
   }).catch(function(err){
     destravar();
@@ -4032,7 +4303,7 @@ function salvarNovaCotacao(){
 }
 function renderCotacoes(){
   var f=($('cot-busca')?$('cot-busca').value:'').toLowerCase();
-  var todas=Object.values(cotacoesRemoto).sort(function(a,b){return parseDataHoraBr_(b.dataHora)-parseDataHoraBr_(a.dataHora);});
+  var todas=Object.values(cotacoesRemoto).filter(function(c){return daUnidade(c.banco);}).sort(function(a,b){return parseDataHoraBr_(b.dataHora)-parseDataHoraBr_(a.dataHora);});
   set('cot-count-pendente',todas.filter(function(c){return (c.status||'')==='pendente';}).length);
   set('cot-count-aprovada',todas.filter(function(c){return (c.status||'').indexOf('aprovada')===0;}).length);
   var lista=todas.filter(function(c){return !f||(c.nomeGenerico||'').toLowerCase().includes(f);});
@@ -4043,7 +4314,10 @@ function renderCotacoes(){
   tbody.innerHTML=lista.map(function(c){
     var pendente=(c.status||'')==='pendente';
     var bancoNome=c.banco==='rna'?'RNA - Ivinhema':'RURAL - Eldorado';
-    var statusBadge=pendente
+    var recusada=(c.status||'').indexOf('recusada')===0;
+    var statusBadge=recusada
+      ?'<span class="badge bdg-neu" style="background:var(--red-lt);color:var(--red);border-color:var(--red-bd)">'+c.status+'</span>'
+      :pendente
       ?'<span class="badge bdg-neu" style="background:var(--amb-lt);color:var(--amber);border-color:var(--amb-bd)">Pendente</span>'
       :'<span class="badge bdg-neu" style="background:var(--blu-lt);color:var(--blue);border-color:var(--blu-bd)">'+(c.status||'Aprovada')+'</span>';
     var acoes=pendente
@@ -4077,7 +4351,7 @@ function abrirPrecificarCotacao(id){
   $('pc-custo-frete-ton').value=0;
   $('pc-comissao').value=0;
   $('pc-impostos').value=0;
-  var ings=JSON.parse(c.ingsJSON||'[]');
+  var ings=lerIngsJSON(c.ingsJSON);
   $('pc-ings-tbody').innerHTML=ings.map(function(i){
     var nome=(MPitens.find(function(m){return m.cod==i.cod;})||{d:'não encontrado'}).d;
     return '<tr><td class="mono">'+i.cod+'</td><td>'+nome+'</td><td class="r">'+fn(i.qtd,2)+'</td></tr>';
@@ -4092,7 +4366,7 @@ function atualizarPrecificacaoCotacao(){
   var batida=parseFloat(c.batida)||0,peso=parseFloat(c.pesoSaco)||0;
   var sacos=peso>0?batida/peso:0;
   var embCusto=parseFloat(c.embCusto)||0;
-  var ings=JSON.parse(c.ingsJSON||'[]');
+  var ings=lerIngsJSON(c.ingsJSON);
   var mpBat=0;
   ings.forEach(function(i){var custo=MPcusto[i.cod]!==undefined?MPcusto[i.cod]:0;mpBat+=(i.qtd||0)*(custo/1000);});
   var custoSaco=sacos>0?(mpBat/sacos)+embCusto:0;
@@ -4149,7 +4423,7 @@ function aprovarCotacao(){
     _origem:c.banco==='rna'?'rna':'importado',
     emb:{custo:parseFloat(c.embCusto)||0,desc:c.embDesc||''},
     cif:{mo:0,enc:0,ee:0,out:0},
-    ings:JSON.parse(c.ingsJSON||'[]')
+    ings:lerIngsJSON(c.ingsJSON)
   };
   /* Em sequencia: so marca a cotacao como aprovada depois que a formula foi gravada na planilha.
      Antes as duas gravacoes iam juntas; se a da formula falhasse, a cotacao sumia da fila e o produto nao existia. */
@@ -4175,15 +4449,20 @@ function aprovarCotacao(){
 function recusarCotacao(){
   var c=cotacoesRemoto[cotAtualId];
   if(!c)return;
-  if(!confirm('Excluir esta cotação? Essa ação não pode ser desfeita.'))return;
-  var destravar=travarBotao(document.querySelector('[onclick^="recusarCotacao("]'),'Excluindo...');
-  excluirCotacaoRemoto(c.id).then(function(ok){
+  /* Antes excluia a linha da planilha (sem volta). Agora fica registrada como recusada, com motivo, autor e data. */
+  var motivo=prompt('Motivo da recusa (ex.: cliente desistiu, preço acima do mercado):','');
+  if(motivo===null)return;
+  motivo=motivo.trim().slice(0,120);
+  var novoStatus='recusada'+(motivo?': '+motivo:'')+' ('+(getNomeColaborador()||'?')+', '+new Date().toLocaleDateString('pt-BR')+')';
+  var destravar=travarBotao(document.querySelector('[onclick^="recusarCotacao("]'),'Salvando...');
+  marcarStatusCotacaoRemoto(c,novoStatus).then(function(ok){
     destravar();
     if(!ok)return;
-    delete cotacoesRemoto[c.id];
+    c.status=novoStatus;
     fecharPrecificarCotacao();
     renderCotacoes();
-    toast('Cotação excluída.');
+    atualizarSelectFormulas();
+    toast('Cotação marcada como recusada.');
   });
 }
 
@@ -4196,33 +4475,43 @@ function carregarFormulaEditadaRemoto(cod,banco){
     cod:codBaseDaChave(f.cod),nome:f.nome,cat:f.cat,batida:parseFloat(f.batida),pesoSaco:parseFloat(f.pesoSaco),
     emb:{custo:parseFloat(f.embCusto)||0,desc:f.embDesc||''},
     cif:{mo:0,enc:0,ee:0,out:0},
-    ings:JSON.parse(f.ingsJSON||'[]')
+    ings:lerIngsJSON(f.ingsJSON)
   };
   carregarObjFormula(obj);
-  toast('Fórmula com edições carregada (última edição: '+(f.editadoPor||'?')+' em '+fmtDataHoraBr(f.dataHora)+').');
+  toast('Fórmula com edições carregada (última edição'+(f.nomeVersao?' “'+f.nomeVersao+'”':'')+': '+(f.editadoPor||'?')+' em '+fmtDataHoraBr(f.dataHora)+').');
 }
 
+/* ingsJSON vindo da planilha: uma linha corrompida nao pode derrubar a lista inteira (antes o erro parava a tela). */
+function lerIngsJSON(s){
+  if(!s)return [];
+  try{var v=JSON.parse(s);return Array.isArray(v)?v:[];}
+  catch(e){console.error('ingsJSON invalido na planilha:',String(s).slice(0,120));return [];}
+}
 function carregarBancoFormulas(){try{return JSON.parse(localStorage.getItem('RURAL_FORMULAS')||'{}');}catch(e){return {};}}
 function salvarBancoFormulas(banco){localStorage.setItem('RURAL_FORMULAS',JSON.stringify(banco));}
 function carregarBancoPrecos(){try{return JSON.parse(localStorage.getItem('RURAL_PRECOS')||'{}');}catch(e){return {};}}
 function salvarBancoPrecos(banco){localStorage.setItem('RURAL_PRECOS',JSON.stringify(banco));}
 
 let epBancoAtual=null, epCodAtual=null, epBatidaOriginal=null;
+/* Versao de partida do "Editar produto": a ULTIMA versao salva na planilha (edicoes dos colegas), e so depois a
+   versao padrao embutida. Antes partia da padrao e, ao salvar, desfazia os ajustes de ingredientes dos outros (C7). */
 function epBuscarFormula(banco,cod){
+  var remota=formulasEditadasRemoto[chaveFormulaRemota(cod,banco)];
+  var local=null;
   if(banco==='rna'){
-    var fRna=bibliotecaRNA.find(function(f){return String(f.cod)===String(cod);});
-    if(fRna)return fRna;
+    local=bibliotecaRNA.find(function(f){return String(f.cod)===String(cod);})||null;
   } else {
     var bancoLocal=carregarBancoFormulas();
-    if(bancoLocal[cod])return bancoLocal[cod];
-    var fb=biblioteca.find(function(f){return String(f.cod)===String(cod);});
-    if(fb)return fb;
+    local=bancoLocal[cod]||biblioteca.find(function(f){return String(f.cod)===String(cod);})||null;
   }
-  // Nao achou local -> deve ser um item so remoto (criado por outro colaborador ou via Cotacao)
-  if(formulasEditadasRemoto[chaveFormulaRemota(cod,banco)]){
-    return formulaFromRemoto(formulasEditadasRemoto[chaveFormulaRemota(cod,banco)]);
+  if(remota){
+    var fr=formulaFromRemoto(remota);
+    if(!fr.cat&&local)fr.cat=local.cat;
+    if(local&&local.cif)fr.cif=JSON.parse(JSON.stringify(local.cif));
+    if(local&&local.emb&&local.emb.pesoReal&&fr.emb)fr.emb.pesoReal=local.emb.pesoReal;
+    return fr;
   }
-  return null;
+  return local;
 }
 function abrirEditarProduto(banco,cod){
   var f=epBuscarFormula(banco,cod);
@@ -4235,7 +4524,7 @@ function abrirEditarProduto(banco,cod){
   $('ep-peso').value=f.pesoSaco||0;
   $('ep-peso-real').value=(f.emb&&f.emb.pesoReal)?f.emb.pesoReal:'';
   $('ep-batida-aviso').style.display='none';
-  var embs=MPitens.filter(function(m){return m.t==='emb';}).sort(function(a,b){return a.d.localeCompare(b.d);});
+  var embs=MPitens.filter(function(m){return m.t==='emb'&&(!m.inativo||(f.emb&&m.d===f.emb.desc));}).sort(function(a,b){return a.d.localeCompare(b.d);});
   var embAtualCod=null;
   if(f.emb&&f.emb.desc){
     var match=embs.find(function(m){return m.d===f.emb.desc;});
@@ -4261,69 +4550,59 @@ function epAplicarNovaBatida(f,novaBatida){
 }
 function salvarEdicaoProduto(){
   var novoNome=$('ep-nome').value.trim();
-  var novaBatida=parseFloat($('ep-batida').value)||0;
-  var novoPeso=parseFloat($('ep-peso').value)||0;
+  var novaBatida=lerNumeroBR($('ep-batida').value)||0;
+  var novoPeso=lerNumeroBR($('ep-peso').value)||0;
   var pesoRealVal=$('ep-peso-real').value.trim();
-  var novoPesoReal=pesoRealVal?parseFloat(pesoRealVal):null;
+  var novoPesoReal=pesoRealVal?lerNumeroBR(pesoRealVal):null;
   var embVal=$('ep-emb').value;
   if(!novoNome){alert('Informe o nome do produto.');return;}
   if(novaBatida<=0){alert('Informe uma batida maior que zero.');return;}
   if(novoPeso<=0){alert('Informe um peso de saco maior que zero.');return;}
+  if(pesoRealVal&&!(novoPesoReal>0)){alert('Peso real inválido.');return;}
 
-  if(epBancoAtual==='rna'){
-    var f=bibliotecaRNA.find(function(x){return String(x.cod)===String(epCodAtual);});
-    if(!f){
-      // Item so existia remotamente (criado por outro colaborador/Cotacao) -> passa a integrar o array local tambem
-      f=epBuscarFormula('rna',epCodAtual);
-      if(!f){toast('Produto não encontrado.');return;}
-      delete f._remoto;delete f._editadoPor;delete f._dataHora;
-      f._origem='rna';
-      bibliotecaRNA.push(f);
+  var banco=epBancoAtual,cod=epCodAtual;
+  var base=epBuscarFormula(banco,cod);
+  if(!base){toast('Produto não encontrado.');return;}
+  /* Trabalha numa copia: a biblioteca local so e atualizada depois que a planilha confirmar. */
+  var f=JSON.parse(JSON.stringify(base));
+  delete f._remoto;delete f._editadoPor;delete f._dataHora;
+  epAplicarNovaBatida(f,novaBatida);
+  f.nome=novoNome;f.pesoSaco=novoPeso;
+  if(embVal){var item=MPitens.find(function(m){return m.cod===parseInt(embVal);});if(item)f.emb={custo:MPcusto[item.cod]||0,desc:item.d};}
+  if(!f.emb)f.emb={custo:0,desc:''};
+  if(novoPesoReal)f.emb.pesoReal=novoPesoReal; else delete f.emb.pesoReal;
+  f.nomeVersao='Editar produto: '+novoNome;
+
+  var destravar=travarBotao(document.querySelector('[onclick^="salvarEdicaoProduto("]'),'Salvando...');
+  salvarEdicaoRemota(f,banco).then(function(ok){
+    destravar();
+    if(!ok)return;
+    function aplicar(alvo){
+      alvo.nome=f.nome;alvo.batida=f.batida;alvo.pesoSaco=f.pesoSaco;alvo.emb=f.emb;
+      alvo.ings=JSON.parse(JSON.stringify(f.ings||[]));
     }
-    epAplicarNovaBatida(f,novaBatida);
-    f.nome=novoNome;f.pesoSaco=novoPeso;
-    if(embVal){var item=MPitens.find(function(m){return m.cod===parseInt(embVal);});if(item)f.emb={custo:MPcusto[item.cod]||0,desc:item.d};}
-    if(!f.emb)f.emb={custo:0,desc:''};
-    if(novoPesoReal)f.emb.pesoReal=novoPesoReal; else delete f.emb.pesoReal;
-    salvarEdicaoRemota(f,'rna');
-    renderBancoRNA($('rna-busca')?$('rna-busca').value:'');
-  } else {
-    var bancoLocal=carregarBancoFormulas();
-    if(bancoLocal[epCodAtual]){
-      var fl=bancoLocal[epCodAtual];
-      epAplicarNovaBatida(fl,novaBatida);
-      fl.nome=novoNome;fl.pesoSaco=novoPeso;
-      if(embVal){var itemL=MPitens.find(function(m){return m.cod===parseInt(embVal);});if(itemL)fl.emb={custo:MPcusto[itemL.cod]||0,desc:itemL.d};}
-      if(!fl.emb)fl.emb={custo:0,desc:''};
-      if(novoPesoReal)fl.emb.pesoReal=novoPesoReal; else delete fl.emb.pesoReal;
-      salvarBancoFormulas(bancoLocal);
-      salvarEdicaoRemota(fl,'banco');
+    if(banco==='rna'){
+      var lr=bibliotecaRNA.find(function(x){return String(x.cod)===String(cod);});
+      if(lr)aplicar(lr);
+      renderBancoRNA($('rna-busca')?$('rna-busca').value:'');
     } else {
-      var fb=biblioteca.find(function(x){return String(x.cod)===String(epCodAtual);});
-      if(!fb){
-        // Item so existia remotamente -> passa a integrar o array local tambem
-        fb=epBuscarFormula('banco',epCodAtual);
-        if(!fb){toast('Produto não encontrado.');return;}
-        delete fb._remoto;delete fb._editadoPor;delete fb._dataHora;
-        fb._origem='importado';
-        biblioteca.push(fb);
-      }
-      epAplicarNovaBatida(fb,novaBatida);
-      fb.nome=novoNome;fb.pesoSaco=novoPeso;
-      if(embVal){var itemB=MPitens.find(function(m){return m.cod===parseInt(embVal);});if(itemB)fb.emb={custo:MPcusto[itemB.cod]||0,desc:itemB.d};}
-      if(!fb.emb)fb.emb={custo:0,desc:''};
-      if(novoPesoReal)fb.emb.pesoReal=novoPesoReal; else delete fb.emb.pesoReal;
-      salvarEdicaoRemota(fb,'banco');
+      var bancoLocal=carregarBancoFormulas();
+      if(bancoLocal[cod]){aplicar(bancoLocal[cod]);salvarBancoFormulas(bancoLocal);}
+      var lb=biblioteca.find(function(x){return String(x.cod)===String(cod);});
+      if(lb)aplicar(lb);
+      renderBancoFormulas($('banco-busca')?$('banco-busca').value:'');
     }
-    renderBancoFormulas($('banco-busca')?$('banco-busca').value:'');
-  }
-  atualizarSelectFormulas();
-  fecharEditarProduto();
-  toast('Produto "'+novoNome+'" atualizado e salvo para todos os colaboradores.');
+    atualizarSelectFormulas();
+    fecharEditarProduto();
+    toast('Produto "'+novoNome+'" atualizado e salvo para todos os colaboradores.');
+  });
 }
 function gravarFormula(){
   var cod=$('p-cod')?.value||'';if(!cod){toast('Informe o codigo antes de gravar.');return;}
+  var nomeVersao=pedirNomeVersao();
+  if(nomeVersao===null)return;
   var formulaObj={
+    nomeVersao:nomeVersao,
     cod:cod,
     nome:$('p-nome')?.value||'',
     cat:$('p-cat')?.value||'',
@@ -4332,8 +4611,8 @@ function gravarFormula(){
     emb:{custo:gv('emb-custo'),desc:$('emb-sel')?.options[$('emb-sel')?.selectedIndex]?.text||''},
     ings:ings.map(function(i){return{cod:i.cod,qtd:i.qtd,bal:i.bal||0};})
   };
+  toast('Salvando a fórmula "'+cod+'" na planilha ('+(fichaBancoAtual==='rna'?'RNA - Ivinhema':'RURAL - Eldorado')+')...');
   salvarEdicaoRemota(formulaObj,fichaBancoAtual);
-  toast('Formula "'+cod+'" salva na planilha ('+(fichaBancoAtual==='rna'?'RNA - Ivinhema':'RURAL - Eldorado')+') para todos os colaboradores.');
 }
 function gravarPrecificacao(){
   var cod=$('p-cod')?.value||'';if(!cod){toast('Carregue um produto antes de gravar.');return;}
@@ -4357,15 +4636,24 @@ function mostrarPrecoAnterior(cod){
   else{el.style.display='none';}
 }
 let formulaSelectList=[];
+/* Formulas de Ivinhema para o seletor da Ficha (antes a Ficha so listava Eldorado; RNA so pela aba do banco). */
+function listaFormulasRNAFicha(){
+  var extras=formulasRemotasDoBanco('rna',bibliotecaRNA);
+  return bibliotecaRNA.map(function(f){return Object.assign({},f,{_origem:f._origem||'rna'});}).concat(extras)
+    .sort(function(a,b){return (parseFloat(a.cod)||0)-(parseFloat(b.cod)||0);});
+}
 function atualizarSelectFormulas(){
   var sel=$('formula-sel');if(!sel)return;
-  var todas=listaTodasFormulas();
+  var eld=UNIDADE==='rna'?[]:listaTodasFormulas().map(function(f){return Object.assign(f,{_banco:'banco'});});
+  var ivi=UNIDADE==='banco'?[]:listaFormulasRNAFicha().map(function(f){return Object.assign(f,{_banco:'rna'});});
+  var todas=eld.concat(ivi);
   formulaSelectList=todas;
-  var normais=todas.filter(function(f){return f._origem==='builtin'||f._origem!=='local';});
-  var locals=todas.filter(function(f){return f._origem==='local';});
+  var sufixoGrupo=UNIDADE==='todas';
+  var normais=eld.filter(function(f){return f._origem==='builtin'||f._origem!=='local';});
+  var locals=eld.filter(function(f){return f._origem==='local';});
   var html='<option value="">- selecione para carregar -</option>';
   if(normais.length){
-    html+='<optgroup label="Fórmulas cadastradas">';
+    html+='<optgroup label="Fórmulas cadastradas'+(sufixoGrupo?' — Eldorado':'')+'">';
     normais.forEach(function(f){html+='<option value="'+todas.indexOf(f)+'">'+f.cod+' - '+f.nome+'</option>';});
     html+='</optgroup>';
   }
@@ -4374,22 +4662,44 @@ function atualizarSelectFormulas(){
     locals.forEach(function(f){html+='<option value="'+todas.indexOf(f)+'">'+f.cod+' - '+f.nome+' [banco]</option>';});
     html+='</optgroup>';
   }
+  if(ivi.length){
+    html+='<optgroup label="Fórmulas cadastradas'+(sufixoGrupo?' — Ivinhema':'')+'">';
+    ivi.forEach(function(f){html+='<option value="'+todas.indexOf(f)+'">'+f.cod+' - '+f.nome+(f.cat?' ['+f.cat+']':'')+'</option>';});
+    html+='</optgroup>';
+  }
+  var cots=cotacoesComoFormulas();
+  if(cots.length){
+    html+='<optgroup label="🧮 Cotações em andamento (ainda não são produto)">';
+    cots.forEach(function(f){html+='<option value="'+String(f.cod).replace(/"/g,'&quot;')+'">'+rotuloProduto(f).replace(/</g,'&lt;')+'</option>';});
+    html+='</optgroup>';
+  }
   sel.innerHTML=html;
 }
 function carregarFormula(idxVal){
   if(idxVal===''||idxVal===undefined||idxVal===null)return;
+  /* Cotacao em andamento: carrega na Ficha / Formacao do Preco so para simular (sem codigo de produto). */
+  if(String(idxVal).indexOf('COT:')===0){
+    var fc=cotacoesComoFormulas().find(function(x){return x.cod===idxVal;});
+    $('formula-sel').value='';
+    if(!fc){toast('Cotação não encontrada (talvez já aprovada ou excluída).');return;}
+    fichaBancoAtual=fc._banco==='rna'?'rna':'banco';
+    carregarObjFormula(Object.assign({},fc,{cod:'',nome:'COTAÇÃO — '+fc.nome}));
+    toast('🧮 Cotação "'+fc.nome+'" carregada para simulação. Ela ainda não é um produto: para criar, aprove na aba Cotações.',7000);
+    return;
+  }
   var idx=parseInt(idxVal);
   var f=formulaSelectList[idx];
   if(!f){toast('Formula nao encontrada.');return;}
   /* Se existe edicao salva na planilha para esta formula, carrega a versao editada (antes carregava sempre a padrao,
      e parecia que as edicoes dos colegas "nao sincronizavam"). */
-  if(!f._remoto&&f._origem!=='local'&&formulasEditadasRemoto[chaveFormulaRemota(f.cod,'banco')]){
-    carregarFormulaEditadaRemoto(f.cod,'banco');
+  var bancoF=f._banco==='rna'?'rna':'banco';
+  if(!f._remoto&&f._origem!=='local'&&formulasEditadasRemoto[chaveFormulaRemota(f.cod,bancoF)]){
+    carregarFormulaEditadaRemoto(f.cod,bancoF);
     carregarPrecificacao(f.cod);
     $('formula-sel').value='';
     return;
   }
-  fichaBancoAtual='banco';
+  fichaBancoAtual=bancoF;
   carregarObjFormula(f);
   carregarPrecificacao(f.cod);
   $('formula-sel').value='';
@@ -4480,19 +4790,89 @@ function abrirNovaFormula(banco){
   $('nf-titulo').textContent='Nova fórmula — '+(banco==='rna'?'RNA - Ivinhema':'RURAL - Eldorado');
   toggleModoCotacao();
   renderNFIngs();
+  $('nf-copiar-busca').value='';
+  popularListaCopiarNF();
   $('nova-formula-modal').style.display='flex';
 }
 function fecharNovaFormula(){$('nova-formula-modal').style.display='none';}
+
+/* ===== Copiar uma formula existente para o novo produto =====
+   Lista as formulas das duas unidades, sempre na versao mais recente (edicao da planilha, quando existir). */
+let nfCopiaMapa={};
+function formulasParaCopiar(){
+  /* Com uma unidade escolhida, copia so dela; copiar entre unidades fica no modo "Todas". */
+  var lista=[];
+  if(UNIDADE!=='rna')listaTodasFormulas().forEach(function(f){
+    var ed=!f._remoto&&formulasEditadasRemoto[chaveFormulaRemota(f.cod,'banco')];
+    lista.push({f:ed?formulaFromRemoto(ed):f,unidade:'Eldorado'});
+  });
+  if(UNIDADE!=='banco')bibliotecaRNA.concat(formulasRemotasDoBanco('rna',bibliotecaRNA)).forEach(function(f){
+    var ed=!f._remoto&&formulasEditadasRemoto[chaveFormulaRemota(f.cod,'rna')];
+    lista.push({f:ed?formulaFromRemoto(ed):f,unidade:'Ivinhema'});
+  });
+  return lista;
+}
+function popularListaCopiarNF(){
+  nfCopiaMapa={};
+  var dl=$('nf-copiar-lista');if(!dl)return;
+  dl.innerHTML='';
+  formulasParaCopiar().forEach(function(x){
+    var rotulo=x.f.cod+' — '+x.f.nome+' ['+x.unidade+(x.f._remoto?', editada':'')+']';
+    if(nfCopiaMapa[rotulo])return;
+    nfCopiaMapa[rotulo]=x;
+    var o=document.createElement('option');o.value=rotulo;dl.appendChild(o);
+  });
+}
+/* Acha a embalagem da formula no cadastro de MPs: pelo codigo no inicio da descricao ("1319 — Emb. ..."),
+   depois pelo nome, depois pelo custo. */
+function nfAcharEmbalagem(emb){
+  if(!emb||(!emb.desc&&!emb.custo))return null;
+  var embs=MPitens.filter(function(m){return m.t==='emb';});
+  var desc=String(emb.desc||'').trim();
+  var mCod=desc.match(/^(\d+)\s*[—-]/);
+  if(mCod){var porCod=embs.find(function(m){return m.cod===parseInt(mCod[1]);});if(porCod)return porCod;}
+  var nome=desc.replace(/^\d+\s*[—-]\s*/,'').toLowerCase();
+  if(nome){var porNome=embs.find(function(m){return m.d.toLowerCase()===nome;});if(porNome)return porNome;}
+  if(emb.custo){var porCusto=embs.find(function(m){return Math.abs((MPcusto[m.cod]||0)-emb.custo)<0.001;});if(porCusto)return porCusto;}
+  return null;
+}
+function nfCopiarFormula(){
+  var txt=$('nf-copiar-busca').value.trim();
+  if(!txt){toast('Digite o código ou o nome da fórmula e escolha na lista.');return;}
+  var x=nfCopiaMapa[txt];
+  if(!x){
+    /* aceita so o codigo digitado, se for unico */
+    var achados=Object.keys(nfCopiaMapa).filter(function(k){return k.indexOf(txt+' — ')===0;});
+    if(achados.length===1)x=nfCopiaMapa[achados[0]];
+    else{toast(achados.length>1?'Esse código existe nas duas unidades — escolha na lista qual copiar.':'Fórmula não encontrada. Escolha uma opção da lista.');return;}
+  }
+  var f=x.f;
+  var temIngs=nfIngRows.some(function(r){return r.cod&&r.qtd>0;});
+  if(temIngs&&!confirm('Substituir os ingredientes já digitados pelos da fórmula "'+f.nome+'"?'))return;
+  nfIngRows=(f.ings||[]).map(function(i){return {cod:parseInt(i.cod),qtd:parseFloat(i.qtd)||0};});
+  if(!nfIngRows.length)nfIngRows=[{cod:null,qtd:0}];
+  $('nf-batida').value=f.batida||1000;
+  $('nf-peso').value=f.pesoSaco||30;
+  if([].some.call($('nf-cat').options,function(o){return o.value===f.cat;}))$('nf-cat').value=f.cat;
+  var emb=nfAcharEmbalagem(f.emb);
+  $('nf-emb').value=emb?String(emb.cod):'';
+  if(!$('nf-nome').value.trim())$('nf-nome').value=f.nome+' (cópia)';
+  renderNFIngs();
+  var semMP=nfIngRows.filter(function(r){return r.cod&&!MPitens.some(function(m){return m.cod===r.cod&&m.t==='mp';});}).map(function(r){return r.cod;});
+  toast('📋 Copiados '+nfIngRows.length+' ingredientes de "'+f.nome+'" ('+x.unidade+'). Ajuste o código, o nome e o que mudar.'
+    +(emb||!(f.emb&&f.emb.desc)?'':' Embalagem "'+f.emb.desc+'" não encontrada — escolha manualmente.')
+    +(semMP.length?' Atenção: MP '+semMP.join(', ')+' não está no cadastro.':''),8000);
+}
 function popularSelectEmbNF(){
-  var embs=MPitens.filter(function(m){return m.t==='emb';}).sort(function(a,b){return a.d.localeCompare(b.d);});
-  $('nf-emb').innerHTML='<option value="">— sem embalagem —</option>'+embs.map(function(m){return '<option value="'+m.cod+'">'+m.cod+' — '+m.d+'</option>';}).join('');
+  var embs=MPitens.filter(function(m){return m.t==='emb';}).sort(function(a,b){return (a.inativo?1:0)-(b.inativo?1:0)||a.d.localeCompare(b.d);});
+  $('nf-emb').innerHTML='<option value="">— sem embalagem —</option>'+embs.map(function(m){return '<option value="'+m.cod+'">'+m.cod+' — '+m.d+(m.inativo?' (inativa)':'')+'</option>';}).join('');
 }
 function nfAddIngLinha(){nfIngRows.push({cod:null,qtd:0});renderNFIngs();}
 function nfRemoveIngLinha(idx){nfIngRows.splice(idx,1);renderNFIngs();}
 function nfUpdateIngCod(idx,val){nfIngRows[idx].cod=val?parseInt(val):null;atualizarNFTotal();}
 function nfUpdateIngQtd(idx,val){nfIngRows[idx].qtd=parseFloat(val)||0;atualizarNFTotal();}
 function renderNFIngs(){
-  var mps=MPitens.filter(function(m){return m.t==='mp';}).sort(function(a,b){return a.d.localeCompare(b.d);});
+  var mps=MPitens.filter(function(m){return m.t==='mp'&&(!m.inativo||nfIngRows.some(function(r){return r.cod===m.cod;}));}).sort(function(a,b){return a.d.localeCompare(b.d);});
   $('nf-ings-tbody').innerHTML=nfIngRows.map(function(row,idx){
     var opts='<option value="">selecione...</option>'+mps.map(function(m){return '<option value="'+m.cod+'"'+(row.cod===m.cod?' selected':'')+'>'+m.cod+' — '+m.d+'</option>';}).join('');
     return '<tr>'
@@ -4536,13 +4916,19 @@ function salvarNovaFormula(){
     cif:{mo:0,enc:0,ee:0,out:0},
     ings:ingsValidos.map(function(r){return {cod:r.cod,qtd:r.qtd,bal:0};})
   };
-  arr.push(novaFormula);
-  fecharNovaFormula();
-  if(nfBancoAlvo==='rna'){renderBancoRNA($('rna-busca')?$('rna-busca').value:'');}
-  else{renderBancoFormulas($('banco-busca')?$('banco-busca').value:'');}
-  atualizarSelectFormulas();
-  salvarEdicaoRemota(novaFormula,nfBancoAlvo);
-  toast((nfModoCotacao?'Cotação aprovada — produto ':'Fórmula ')+'"'+nome+'" criado e disponível para todos os colaboradores!');
+  /* So fecha e adiciona na lista depois que a planilha confirmou a gravacao. */
+  var bancoAlvo=nfBancoAlvo,modoCot=nfModoCotacao;
+  var destravar=travarBotao($('nf-save-btn'),'Salvando...');
+  salvarEdicaoRemota(novaFormula,bancoAlvo).then(function(ok){
+    destravar();
+    if(!ok)return;
+    arr.push(novaFormula);
+    fecharNovaFormula();
+    if(bancoAlvo==='rna'){renderBancoRNA($('rna-busca')?$('rna-busca').value:'');}
+    else{renderBancoFormulas($('banco-busca')?$('banco-busca').value:'');}
+    atualizarSelectFormulas();
+    toast('✅ '+(modoCot?'Cotação aprovada — produto ':'Fórmula ')+'"'+nome+'" criado e disponível para todos os colaboradores!');
+  });
 }
 
 function irPara(id){
@@ -4595,7 +4981,7 @@ Object.keys(PT_CATALOG_STATE).forEach(brand=>{
   });
 });
 let PT_GROUP_RATES = JSON.parse(JSON.stringify(PT_GROUP_RATES_DEFAULT));
-const PT_LINKS_PADRAO = {"Viacampus|Viacampus Rações|0": "180", "Viacampus|Viacampus Rações|1": "1747", "Viacampus|Viacampus Rações|2": "1736", "Viacampus|Viacampus Rações|4": "1726", "Viacampus|Viacampus Rações|5": "1727", "Viacampus|Viacampus Rações|6": "1743", "Viacampus|Viacampus Rações|11": "1509", "Viacampus|Viacampus Proteicos|0": "505", "Viacampus|Viacampus Proteicos|1": "654", "Viacampus|Viacampus Proteicos|2": "818", "Viacampus|Viacampus Proteicos|3": "1027", "Viacampus|Viacampus Proteicos|9": "1638", "Viacampus|Viacampus Proteicos|10": "1637", "Viacampus|Viacampus Proteicos|11": "1766", "Viacampus|Viacampus Mineral|4": "586", "Viacampus|Viacampus Mineral|5": "588", "Viacampus|Viacampus Mineral|6": "1015", "Viacampus|Viacampus Mineral|7": "1231", "Viacampus|Viacampus Mineral|8": "1478", "RNA|RNA Linha Farelado|3": "1556", "RNA|RNA Linha Farelado|4": "1627", "RNA|RNA Linha Farelado|5": "1702", "RNA|RNA Linha Farelado|6": "1614", "RNA|RNA Linha Farelado|8": "1479", "RNA|RNA Linha Farelado|10": "1638", "RNA|RNA Linha Farelado|11": "1764", "RNA|RNA Linha Farelado|13": "1803", "RNA|RNA Linha Farelado|21": "1650", "RNA|Rural Linha Farelado|1": "1287", "RNA|Rural Linha Fós|0": "937", "RNA|Rural Linha Fós|1": "938", "RNA|Rural Linha Fós|2": "939", "RNA|Rural Linha Fós|3": "1189", "RNA|Rural Linha Fós|4": "1475", "RNA|Rural Linha Fós|5": "1569", "RNA|Rural Linha Fós|7": "1768", "RNA|Rural Linha Fós|8": "1769", "RNA|Rural Linha Fós|9": "1801", "RNA|Rural Linha Núcleos|0": "1499", "RNA|Rural Linha Núcleos|1": "1578"}; // vinculos automaticos por nome (itens Viacampus/RNA sem codigo -> formula real)
+const PT_LINKS_PADRAO = {"Viacampus|Viacampus Rações|0": "180.1", "Viacampus|Viacampus Rações|1": "1747", "Viacampus|Viacampus Rações|2": "1736", "Viacampus|Viacampus Rações|4": "1726", "Viacampus|Viacampus Rações|5": "1727", "Viacampus|Viacampus Rações|6": "1743", "Viacampus|Viacampus Rações|11": "1509", "Viacampus|Viacampus Proteicos|0": "505", "Viacampus|Viacampus Proteicos|1": "654", "Viacampus|Viacampus Proteicos|2": "818", "Viacampus|Viacampus Proteicos|3": "1027", "Viacampus|Viacampus Proteicos|9": "1638", "Viacampus|Viacampus Proteicos|10": "1637", "Viacampus|Viacampus Proteicos|11": "1766", "Viacampus|Viacampus Mineral|4": "586", "Viacampus|Viacampus Mineral|5": "588", "Viacampus|Viacampus Mineral|6": "1015", "Viacampus|Viacampus Mineral|7": "1231", "Viacampus|Viacampus Mineral|8": "1478", "RNA|RNA Linha Farelado|3": "1556", "RNA|RNA Linha Farelado|4": "1627", "RNA|RNA Linha Farelado|5": "1702", "RNA|RNA Linha Farelado|6": "1614", "RNA|RNA Linha Farelado|8": "1479", "RNA|RNA Linha Farelado|10": "1638", "RNA|RNA Linha Farelado|11": "1764", "RNA|RNA Linha Farelado|13": "1803", "RNA|RNA Linha Farelado|21": "1650", "RNA|Rural Linha Farelado|1": "1287", "RNA|Rural Linha Fós|0": "937", "RNA|Rural Linha Fós|1": "938", "RNA|Rural Linha Fós|2": "939", "RNA|Rural Linha Fós|3": "1189", "RNA|Rural Linha Fós|4": "1475", "RNA|Rural Linha Fós|5": "1569", "RNA|Rural Linha Fós|7": "1768", "RNA|Rural Linha Fós|8": "1769", "RNA|Rural Linha Fós|9": "1801", "RNA|Rural Linha Núcleos|0": "1499", "RNA|Rural Linha Núcleos|1": "1578"}; // vinculos automaticos por nome (itens Viacampus/RNA sem codigo -> formula real)
 let PT_LINKS = JSON.parse(JSON.stringify(PT_LINKS_PADRAO));
 let PT_EXTRA_PRICES = {};
 let PT_EMB_SIZES = {}; // override por código de fórmula: tamanho real da embalagem em kg (para fórmulas com pesoSaco=1)
@@ -4625,6 +5011,8 @@ function ptParseBRL(text){
   if(!text) return 0;
   let t=text.toString().replace(/[^\d,.\-]/g,'').trim();
   if(t.includes(',')){ t=t.replace(/\./g,'').replace(',', '.'); }
+  /* Sem virgula e com ponto de milhar ("4.700", "1.250.000"): antes virava 4,70. */
+  else if(/^-?[1-9]\d{0,2}(\.\d{3})+$/.test(t)){ t=t.replace(/\./g,''); }
   const n=parseFloat(t);
   return isNaN(n)?0:n;
 }
@@ -4662,6 +5050,10 @@ function ptColetarEstadoRemoto(){
 let ptRemotoPronto=false;
 let ptUltimoEstadoPublicado='';
 let ptAvisouNaoPublicado=false;
+/* Versao da planilha que esta tela conhece (dataHora|editadoPor do registro "global"). Antes de publicar, confere se
+   alguem publicou outra versao depois: sem isso, quem deixava a aba aberta o dia todo publicava dados antigos por cima (S1). */
+let ptVersaoConhecida='';
+function ptAssinaturaReg(reg){return reg?String(reg.dataHora||'')+'|'+String(reg.editadoPor||''):'';}
 function ptSalvarRemoto(){
   if(!ptRemotoPronto){
     if(!ptAvisouNaoPublicado){
@@ -4681,10 +5073,27 @@ function ptSalvarRemoto(){
       editadoPor:getNomeColaborador(),
       dataHora:new Date().toLocaleString('pt-BR')
     };
-    apiPost(payload)
-      .then(function(){ptUltimoEstadoPublicado=dadosJSON;syncGravou();})
-      .catch(function(err){syncFalhouGravar('a Tabela de Preços',err);});
+    apiGet('tabelaprecos').then(function(data){
+      var reg=data&&data['global'];
+      var assin=ptAssinaturaReg(reg);
+      if(reg&&reg.dadosJSON&&assin!==ptVersaoConhecida){
+        var quem=(reg.editadoPor||'outro colaborador')+' em '+fmtDataHoraBr(reg.dataHora);
+        if(confirm('⚠️ A Tabela de Preços foi publicada por '+quem+' depois que você abriu esta tela.\n\nOK = carregar a versão dela/dele (suas últimas alterações nesta aba serão descartadas)\nCancelar = publicar a SUA versão por cima')){
+          ptCarregarRemoto().then(function(ok){if(ok)ptRerenderAposCarregar();toast('Tabela de Preços recarregada com a versão de '+quem+'.');});
+          return;
+        }
+      }
+      return apiPost(payload).then(function(){
+        ptUltimoEstadoPublicado=dadosJSON;
+        ptVersaoConhecida=ptAssinaturaReg(payload);
+        syncGravou();
+      });
+    }).catch(function(err){syncFalhouGravar('a Tabela de Preços',err);});
   },3000);
+}
+function ptRerenderAposCarregar(){
+  if(typeof ptBooted!=='undefined'&&ptBooted){ptRenderCatalog();ptRenderDoc();if(ptCurrentSubTab==='margins')ptRenderMargins();}
+  if($('ptp-content')&&$('ptp-content').innerHTML){ptpRenderBrandBar();ptpRenderCompany(ptpActiveBrand);}
 }
 /* Guarda no navegador a versao que veio da planilha (sem publicar de volta). */
 function ptEspelharLocal(){
@@ -4707,7 +5116,7 @@ function ptCarregarRemoto(){
   return apiGet('tabelaprecos')
     .then(function(data){
       var reg=data&&data['global'];
-      if(!reg||!reg.dadosJSON){ptRemotoPronto=true;return false;} /* planilha ainda sem tabela: pode publicar */
+      if(!reg||!reg.dadosJSON){ptRemotoPronto=true;ptVersaoConhecida='';return false;} /* planilha ainda sem tabela: pode publicar */
       var estado;
       try{estado=JSON.parse(reg.dadosJSON);}catch(e){toast('⚠️ A Tabela de Preços na planilha está corrompida — nada será publicado até ser corrigida.',9000);return false;}
       if(estado.doc){ptDoc=estado.doc;ptActivePageId=estado.activePageId||(ptDoc.length?ptDoc[0].id:null);}
@@ -4721,7 +5130,7 @@ function ptCarregarRemoto(){
       if(estado.cdfOverrides)PT_CDF_OVERRIDES=estado.cdfOverrides;
       if(estado.exportPricing)PT_EXPORT=estado.exportPricing;
       if(estado.especial)PT_ESPECIAL=estado.especial;
-      ptRemotoPronto=true;ptAvisouNaoPublicado=false;
+      ptRemotoPronto=true;ptAvisouNaoPublicado=false;ptVersaoConhecida=ptAssinaturaReg(reg);
       ptUltimoEstadoPublicado=JSON.stringify(ptColetarEstadoRemoto());
       ptEspelharLocal();
       return true;
@@ -4911,11 +5320,63 @@ function ptEnsureFormulaDatalist(){
   dl.innerHTML = list.map(f=>`<option value="${f.cod} — ${f.nome}">`).join('');
   return dl;
 }
+/* Lista de busca da Cotacao Especial: produtos + cotacoes em andamento (a lista acima serve aos vinculos da Tabela). */
+function ptEnsureEspecialDatalist(){
+  let dl=document.getElementById('pt-esp-produtos-datalist');
+  if(!dl){dl=document.createElement('datalist');dl.id='pt-esp-produtos-datalist';document.body.appendChild(dl);}
+  const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+  const lista=Object.values(ptFormulaIndex()).sort((a,b)=>(a.nome||'').localeCompare(b.nome||''));
+  dl.innerHTML=lista.map(f=>`<option value="${esc(f.cod+' — '+f.nome)}">`).join('')
+    +cotacoesComoFormulas().map(f=>`<option value="${esc(ptFormulaLabelFor(f.cod))}">`).join('');
+  return dl;
+}
+/* ===== Cotacoes pendentes como "produtos" nas telas de precificacao =====
+   Ficam fora de ptFormulaIndex (que tambem alimenta Custos & Margens e os vinculos da Tabela). */
+function cotacoesComoFormulas(){
+  return Object.values(typeof cotacoesRemoto!=='undefined'?cotacoesRemoto:{}).filter(function(c){
+    return c&&c.id&&(c.status||'')==='pendente'&&daUnidade(c.banco);
+  }).map(function(c){
+    var ings=[];try{ings=lerIngsJSON(c.ingsJSON);}catch(e){}
+    return {
+      cod:'COT:'+c.id,nome:c.nomeGenerico||'(cotação sem nome)',cat:c.cat,
+      batida:parseFloat(c.batida)||0,pesoSaco:parseFloat(c.pesoSaco)||0,
+      emb:{custo:parseFloat(c.embCusto)||0,desc:c.embDesc||''},
+      cif:{mo:0,enc:0,ee:0,out:0},ings:ings,
+      _cotacao:true,_banco:c.banco,_criadoPor:c.criadoPor,_dataHora:c.dataHora
+    };
+  }).sort(function(a,b){return String(a.nome).localeCompare(String(b.nome));});
+}
+function ptIndexComCotacoes(){
+  var idx=ptFormulaIndex();
+  cotacoesComoFormulas().forEach(function(f){idx[f.cod]=f;});
+  return idx;
+}
+function rotuloProduto(f){
+  return f._cotacao?('🧮 Cotação: '+f.nome+(f._criadoPor?' ('+f._criadoPor+')':'')):(f.cod+' — '+f.nome);
+}
+/* <option>s: produtos cadastrados + grupo "Cotações em andamento". */
+function opcoesProdutosComCotacoes(codSelecionado){
+  var idx=ptFormulaIndex();
+  var esc=function(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');};
+  var html='';
+  var lista=Object.values(idx).sort(function(a,b){return String(a.nome).localeCompare(String(b.nome));});
+  html+='<optgroup label="Produtos cadastrados">'+lista.map(function(f){
+    return '<option value="'+esc(f.cod)+'"'+(String(f.cod)===String(codSelecionado)?' selected':'')+'>'+esc(f.cod+' — '+f.nome)+'</option>';
+  }).join('')+'</optgroup>';
+  var cots=cotacoesComoFormulas();
+  if(cots.length){
+    html+='<optgroup label="🧮 Cotações em andamento (ainda não são produto)">'+cots.map(function(f){
+      return '<option value="'+esc(f.cod)+'"'+(String(f.cod)===String(codSelecionado)?' selected':'')+'>'+esc(rotuloProduto(f))+'</option>';
+    }).join('')+'</optgroup>';
+  }
+  return html;
+}
 function ptFormulaLabelFor(cod){
   if(!cod) return '';
-  const idx=ptFormulaIndex();
+  const idx=ptIndexComCotacoes();
   const f=idx[String(cod)];
-  return f ? `${f.cod} — ${f.nome}` : String(cod);
+  /* Formato "codigo — nome" (ptParseFormulaCode le o codigo antes do travessao). */
+  return f ? `${f.cod} — ${f._cotacao?'🧮 Cotação: ':''}${f.nome}` : String(cod);
 }
 function ptParseFormulaCode(text){
   if(!text) return '';
@@ -5298,7 +5759,7 @@ function ptExportAtualizarMargem(valor){
 }
 function ptExportCustoBaseTon(){
   if(PT_EXPORT.produtoCod){
-    const idx=ptFormulaIndex();
+    const idx=ptIndexComCotacoes();
     const f=idx[String(PT_EXPORT.produtoCod)];
     if(f && typeof custoFormula==='function'){
       const c=custoFormula(f);
@@ -5353,20 +5814,14 @@ function ptRenderExportCalculo(){
   });
 }
 function ptExportOpcoesProdutos(){
-  const idx=ptFormulaIndex();
-  const lista=Object.values(idx).sort((a,b)=>String(a.nome).localeCompare(String(b.nome)));
-  let html='<option value="">— custo base manual —</option>';
-  lista.forEach(f=>{
-    const sel=String(f.cod)===String(PT_EXPORT.produtoCod)?' selected':'';
-    html+=`<option value="${f.cod}"${sel}>${f.cod} — ${f.nome}</option>`;
-  });
-  return html;
+  return '<option value="">— custo base manual —</option>'+opcoesProdutosComCotacoes(PT_EXPORT.produtoCod);
 }
 function ptExportNomeProduto(){
   if(PT_EXPORT.produtoCod){
-    const idx=ptFormulaIndex();
+    const idx=ptIndexComCotacoes();
     const f=idx[String(PT_EXPORT.produtoCod)];
-    if(f) return PT_EXPORT.produtoCod+' — '+f.nome;
+    if(f) return rotuloProduto(f);
+    if(String(PT_EXPORT.produtoCod).indexOf('COT:')===0) return 'Cotação não encontrada (já aprovada ou excluída)';
   }
   return 'Custo base manual (sem produto vinculado)';
 }
@@ -5435,6 +5890,7 @@ function ptExportGerarPDF(){
   <div class="footer">Rural Nutrição Animal — simulação de precificação de exportação</div>
   </body></html>`;
   const win=window.open('','_blank','width=900,height=1000');
+  if(!win){alert('O navegador bloqueou a janela de impressão. Libere pop-ups para este site e tente de novo.');return;}
   win.document.write(doc);
   win.document.close();
 }
@@ -5524,7 +5980,7 @@ function ptEspecialSalvar(){
 }
 function ptEspecialFormulaAtual(){
   if(!PT_ESPECIAL.produtoCod)return null;
-  const idx=ptFormulaIndex();
+  const idx=ptIndexComCotacoes();
   return idx[String(PT_ESPECIAL.produtoCod)]||null;
 }
 function ptEspecialSelecionarProduto(cod){
@@ -5535,7 +5991,7 @@ function ptEspecialSelecionarProduto(cod){
 }
 function ptEspecialBuscarProduto(texto){
   const cod=ptParseFormulaCode(texto);
-  const idx=ptFormulaIndex();
+  const idx=ptIndexComCotacoes();
   if(cod && idx[String(cod)] && String(cod)!==String(PT_ESPECIAL.produtoCod)){
     ptEspecialSelecionarProduto(cod);
   }
@@ -5651,14 +6107,7 @@ function ptRenderEspecialCalculo(){
   }
 }
 function ptEspecialOpcoesProdutos(){
-  const idx=ptFormulaIndex();
-  const lista=Object.values(idx).sort((a,b)=>String(a.nome).localeCompare(String(b.nome)));
-  let html='<option value="">— selecione um produto —</option>';
-  lista.forEach(f=>{
-    const sel=String(f.cod)===String(PT_ESPECIAL.produtoCod)?' selected':'';
-    html+=`<option value="${f.cod}"${sel}>${f.cod} — ${f.nome}</option>`;
-  });
-  return html;
+  return '<option value="">— selecione um produto —</option>'+opcoesProdutosComCotacoes(PT_ESPECIAL.produtoCod);
 }
 function ptEspecialGerarPDF(){
   const r=ptEspecialCalcular();
@@ -5698,7 +6147,7 @@ function ptEspecialGerarPDF(){
   <button class="pbtn" onclick="window.print()">Imprimir / Salvar PDF</button>
   <div class="hdr"><img src="${LOGO_RURAL}" alt="Rural"><div><div class="hdr-titulo">Cotação Especial</div><div class="hdr-sub">Simulação de negociação — preços de matéria-prima customizados</div></div></div>
   <div class="info">
-    <strong>Produto:</strong> ${r.f.cod} — ${r.f.nome}<br>
+    <strong>Produto:</strong> ${r.f._cotacao?('Cotação — '+r.f.nome):(r.f.cod+' — '+r.f.nome)}<br>
     <strong>Batida:</strong> ${fn(r.batida,0)} kg &nbsp;|&nbsp; <strong>Peso do saco:</strong> ${fn(r.pesoSaco,2)} kg &nbsp;|&nbsp; <strong>Data:</strong> ${dataHoje}
   </div>
 
@@ -5730,6 +6179,7 @@ function ptEspecialGerarPDF(){
   <div class="footer">Rural Nutrição Animal — cotação especial de negociação</div>
   </body></html>`;
   const win=window.open('','_blank','width=950,height=1000');
+  if(!win){alert('O navegador bloqueou a janela de impressão. Libere pop-ups para este site e tente de novo.');return;}
   win.document.write(doc);
   win.document.close();
 }
@@ -5737,6 +6187,7 @@ function ptRenderEspecial(){
   const cont=$('pt-especial-view');
   if(!cont)return;
   ptEnsureFormulaDatalist();
+  ptEnsureEspecialDatalist();
   const r=ptEspecialCalcular();
   cont.innerHTML=`
     <div style="max-width:960px;margin:0 auto">
@@ -5753,7 +6204,7 @@ function ptRenderEspecial(){
 
       <div class="card" style="padding:16px;margin-bottom:16px">
         <div class="f"><label>Produto (digite código ou nome para buscar)</label>
-          <input type="text" id="pt-esp2-busca-produto" list="pt-formula-datalist" placeholder="Ex: 125 ou Rural Engorda..." value="${PT_ESPECIAL.produtoCod?ptFormulaLabelFor(PT_ESPECIAL.produtoCod):''}" oninput="ptEspecialBuscarProduto(this.value)">
+          <input type="text" id="pt-esp2-busca-produto" list="pt-esp-produtos-datalist" placeholder="Ex: 125, Rural Engorda ou o nome de uma cotação..." value="${PT_ESPECIAL.produtoCod?ptFormulaLabelFor(PT_ESPECIAL.produtoCod):''}" oninput="ptEspecialBuscarProduto(this.value)">
         </div>
       </div>
 
