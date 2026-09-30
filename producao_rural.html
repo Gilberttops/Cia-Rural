@@ -389,6 +389,9 @@ table.ptp-table th.ptp-pr,table.ptp-table td.ptp-pr{text-align:center}
 table.ptp-table td{padding:6px 10px;border:1px solid #e2e2e2}
 table.ptp-table td.ptp-code{color:#666;text-align:center;width:70px}
 table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center;width:120px}
+/* Custos & Margens: com as colunas novas (tributos, comissao, fretes, fixas) a tabela pode passar da largura: rola. */
+#pt-margins-view .pt-brand-section,#pt-margins-view .pt-extra-section{overflow-x:auto}
+#pt-margins-view .pt-margins-table{min-width:980px}
 /* ─ Separacao por unidade: com uma unidade escolhida, somem abas/cartoes da outra ─ */
 body[data-unidade="banco"] [data-unid="rna"],body[data-unidade="rna"] [data-unid="banco"]{display:none !important}
 .unid-escolha{display:flex;gap:8px;flex-wrap:wrap}
@@ -476,6 +479,7 @@ body[data-unidade="banco"] [data-unid="rna"],body[data-unidade="rna"] [data-unid
     <span id="ultima-atualizacao" style="font-size:11px;color:var(--t3)"></span>
     <button class="btn btn-ghost" style="padding:5px 11px;font-size:11px" onclick="atualizarDadosRemotos(true)" title="Buscar a versão mais recente de fórmulas, matérias-primas, cotações e composição nutricional na planilha">🔄 Atualizar dados</button>
     <span class="hdr-tag" id="base-mp-tag" title="Data da última alteração de custo de matéria-prima na planilha">custos MP: carregando...</span>
+    <span class="hdr-tag" id="agrotis-tag" style="display:none" title="Data dos custos reais vindos do Agrotis (arquivo gerado pelo Compras)">Agrotis: —</span>
     <span class="hdr-tag unid-tag" id="unidade-tag" style="cursor:pointer" title="Unidade em uso. Clique para trocar" onclick="abrirModalNomeUsuario()">🏭 —</span>
     <span class="hdr-tag" id="usuario-tag" style="cursor:pointer" title="Clique para trocar de usuário" onclick="abrirModalNomeUsuario()">👤 —</span>
   </div>
@@ -593,6 +597,7 @@ body[data-unidade="banco"] [data-unid="rna"],body[data-unidade="rna"] [data-unid
           <th style="width:65px">Código</th><th>Descrição</th>
           <th style="width:110px;text-align:center">Tipo</th>
           <th class="r" style="width:130px">Custo atual</th>
+          <th class="r" style="width:120px" title="Última compra no Agrotis (F2 = Eldorado, F5 = Ivinhema), convertida para a mesma unidade do custo atual">Real Agrotis</th>
           <th class="r" style="width:100px">R$/kg ou R$/un</th>
           <th class="r" style="width:110px">Anterior (R$/ton)</th>
           <th style="width:80px;text-align:center">Variação</th>
@@ -626,9 +631,7 @@ body[data-unidade="banco"] [data-unid="rna"],body[data-unidade="rna"] [data-unid
           <div class="f" style="margin-bottom:12px">
             <label>Carregar fórmula cadastrada</label>
             <select id="formula-sel" onchange="carregarFormula(this.value)" style="font-weight:600">
-              <option value="">— selecione para carregar —</option>
-              <option value="190">190 — RURALZINHO CREEP - sc 25 kg</option>
-              <option value="1287">1287 — RURAL ACABAMENTO AS - sc 40 kg</option>
+              <option value="">— carregando fórmulas... —</option>
             </select>
           </div>
           <div class="g4">
@@ -646,15 +649,7 @@ body[data-unidade="banco"] [data-unid="rna"],body[data-unidade="rna"] [data-unid
             <div class="f"><label>Tamanho da batida (kg)</label><input type="number" id="batida" value="1000" min="1" oninput="recalc()"></div>
             <div class="f"><label>Peso por saco (kg)</label><input type="number" id="peso-saco" value="25" min="0.1" step="0.1" oninput="recalc()"></div>
             <div class="f"><label>Sacos por batida</label><input type="text" id="sacos-bat" readonly class="computed"><span class="hint">= batida ÷ peso/saco</span></div>
-            <div class="f"><label>Balança principal</label>
-              <select id="p-balanca" oninput="recalc()">
-                <option value="0">— não definida —</option>
-                <option value="1">⚖ Balança 1 (Farelados)</option>
-                <option value="2">⚖ Balança 2 (Fosfato, Ureia e Sal)</option>
-                <option value="3">⚖ Balança 3 (Outras MP)</option>
-              </select>
-              <span class="hint">Atribuída automaticamente por matéria-prima — pode ser ajustada por ingrediente.</span>
-            </div>
+            <div class="f"><span class="hint" style="margin-top:22px">A balança de cada ingrediente é definida na tabela abaixo (automática por matéria-prima).</span></div>
           </div>
         </div>
       </div>
@@ -707,14 +702,19 @@ body[data-unidade="banco"] [data-unid="rna"],body[data-unidade="rna"] [data-unid
                 <option value="custom">Outro valor...</option>
               </select>
             </div>
-            <div class="f"><label>R$/saco</label><input type="number" id="emb-custo" value="2.00" step="0.01" min="0" oninput="recalc()"></div>
+            <div class="f"><label>R$/embalagem</label><input type="number" id="emb-custo" value="2.00" step="0.01" min="0" oninput="recalc()"><span class="hint" id="emb-custo-hint"></span></div>
             <div class="f"><label>Total lote (R$)</label><input type="text" id="emb-total" readonly class="computed"></div>
+          </div>
+          <div class="g4" style="margin-top:8px">
+            <div class="f"><label>Peso real da embalagem (kg)</label><input type="number" id="emb-peso-real" step="0.1" min="0" placeholder="automático" oninput="recalc()"><span class="hint" id="emb-peso-hint"></span></div>
+            <div class="f" style="grid-column:span 3;align-self:center"><span class="hint">Quanto cabe em cada embalagem física. Nos núcleos (peso por saco = 1 kg, para a OP sair por kg) o custo da embalagem é dividido por este peso. Em branco = automático.</span></div>
           </div>
         </div>
       </div>
       <div class="card">
         <div class="card-hdr"><span class="card-title">5. Custos de transformação (por batida)</span></div>
         <div class="card-body">
+          <div class="alert alert-info" style="margin-bottom:8px">Deixe <strong>zerado</strong>: pessoal, energia e despesas da fábrica já entram pelas <strong>despesas fixas da unidade</strong> (Formação do Preço, seção B). Use só para um custo extra específico deste produto.</div>
           <div class="g4">
             <div class="f"><label>Mão de obra (R$)</label><input type="number" id="cif-mo" value="0" step="0.01" oninput="recalc()"></div>
             <div class="f"><label>Encargos s/ MO (%)</label><input type="number" id="cif-enc" value="0" step="0.01" oninput="recalc()"></div>
@@ -732,9 +732,20 @@ body[data-unidade="banco"] [data-unid="rna"],body[data-unidade="rna"] [data-unid
       </div>
       <div class="card" style="margin-top:-4px">
         <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px">
-          <div class="kpi blue"><div class="kpi-lbl">Custo / saco</div><div class="kpi-val" id="k-saco">R$ 0,00</div></div>
+          <div class="kpi blue"><div class="kpi-lbl" id="k-saco-lbl">Custo / saco</div><div class="kpi-val" id="k-saco">R$ 0,00</div></div>
           <div class="kpi blue"><div class="kpi-lbl">Custo / ton</div><div class="kpi-val" id="k-ton">R$ 0,00</div></div>
         </div>
+      </div>
+      <!-- Custo real (Agrotis) lado a lado com o custo de tabela -->
+      <div class="card" id="real-card" style="display:none">
+        <div class="card-hdr"><span class="card-title" title="Última compra no Agrotis (sem permuta)">📦 Custo real (Agrotis)</span></div>
+        <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px">
+          <div class="kpi"><div class="kpi-lbl">Real / kg</div><div class="kpi-val" id="real-kg">—</div></div>
+          <div class="kpi"><div class="kpi-lbl">Real / saco</div><div class="kpi-val" id="real-saco">—</div></div>
+          <div class="kpi" style="grid-column:1 / -1;display:flex;justify-content:space-between;align-items:center"><div class="kpi-lbl" style="margin:0">Real × tabela</div><div class="kpi-val" id="real-dif">—</div></div>
+        </div>
+        <div id="real-data" style="padding:0 12px 2px;font-size:10px;color:var(--t3)"></div>
+        <div id="real-obs" style="padding:0 12px 10px;font-size:11px;color:var(--t3)"></div>
       </div>
       <div class="card">
         <div class="card-hdr"><span class="card-title">Resumo da batida</span></div>
@@ -785,7 +796,10 @@ body[data-unidade="banco"] [data-unid="rna"],body[data-unidade="rna"] [data-unid
     <div class="ps-item" style="flex:1"><span class="ps-lbl">Produto</span><span class="ps-val" id="pv-nome">—</span></div>
     <div class="ps-item"><span class="ps-lbl">Peso/saco</span><span class="ps-val" id="pv-peso">—</span></div>
     <div class="ps-item"><span class="ps-lbl">CMV / kg</span><span class="ps-val blue" id="pv-cmv-kg">R$ 0,000</span></div>
+    <div class="ps-item"><span class="ps-lbl" id="pv-cmv-saco-lbl">CMV / saco</span><span class="ps-val blue" id="pv-cmv-saco">R$ 0,00</span></div>
     <div class="ps-item"><span class="ps-lbl">CMV / ton</span><span class="ps-val blue" id="pv-cmv-ton">R$ 0,00</span></div>
+    <div class="ps-item" style="margin-left:auto"><span class="chave-cmv-slot"></span></div>
+    <div class="ps-item" id="pv-real-item" style="display:none" title="CMV pelo custo real (última compra no Agrotis)"><span class="ps-lbl">CMV real / kg</span><span class="ps-val" id="pv-cmv-real">—</span></div>
   </div>
 
   <div class="pv-layout">
@@ -797,8 +811,8 @@ body[data-unidade="banco"] [data-unid="rna"],body[data-unidade="rna"] [data-unid
         <div class="enc-grid">
           <div class="enc-hd">Encargo</div><div class="enc-hd r">% s/PV</div><div class="enc-hd r">R$/kg prod.</div>
           <div class="enc-sec">Tributos</div>
-          <div class="enc-cel">ICMS s/ venda</div>
-          <div class="enc-cel r"><input type="number" id="e-icms" value="12" step="0.01" min="0" oninput="calcPV()"></div>
+          <div class="enc-cel">ICMS s/ venda <span style="font-size:10px;color:var(--t3)" title="Só em venda para fora do estado (dentro do estado = 0). Digite a alíquota para simular uma venda interestadual.">(só fora do estado)</span></div>
+          <div class="enc-cel r"><input type="number" id="e-icms" value="0" step="0.01" min="0" oninput="calcPV()" title="Só em venda para fora do estado: digite a alíquota para simular"></div>
           <div class="enc-cel r" id="ev-icms">—</div>
           <div class="enc-cel">PIS <span style="font-size:10px;color:var(--t3)">(LP cumulativo)</span></div>
           <div class="enc-cel r"><input type="number" id="e-pis" value="0.65" step="0.01" min="0" oninput="calcPV()"></div>
@@ -806,24 +820,30 @@ body[data-unidade="banco"] [data-unid="rna"],body[data-unidade="rna"] [data-unid
           <div class="enc-cel">COFINS <span style="font-size:10px;color:var(--t3)">(LP cumulativo)</span></div>
           <div class="enc-cel r"><input type="number" id="e-cofins" value="3" step="0.01" min="0" oninput="calcPV()"></div>
           <div class="enc-cel r" id="ev-cofins">—</div>
+          <div class="enc-cel">IRPJ <span style="font-size:10px;color:var(--t3)" title="Lucro presumido (15% + adicional 10%), como % da receita — DRE da unidade">(presumido · unidade)</span></div>
+          <div class="enc-cel r"><input type="number" id="e-irpj" value="2" step="0.01" min="0" oninput="calcPV();marcarDespesasFixasAlteradas()"></div>
+          <div class="enc-cel r" id="ev-irpj">—</div>
+          <div class="enc-cel">CSLL <span style="font-size:10px;color:var(--t3)" title="Lucro presumido (9% x 12% da receita bruta) — DRE da unidade">(presumido · unidade)</span></div>
+          <div class="enc-cel r"><input type="number" id="e-csll" value="1.1" step="0.01" min="0" oninput="calcPV();marcarDespesasFixasAlteradas()"></div>
+          <div class="enc-cel r" id="ev-csll">—</div>
           <div class="enc-cel" style="font-size:11px;color:var(--t3);padding-left:18px">↳ Base PIS/COF fora do ICMS (cascata)</div>
           <div class="enc-cel r" style="color:var(--t3);font-size:11px" id="ev-pisc-base">—</div>
           <div class="enc-cel r"></div>
           <div class="enc-sec">Despesas comerciais</div>
-          <div class="enc-cel">Comissões s/ Vendas</div>
+          <div class="enc-cel">Comissões s/ Vendas <span style="font-size:10px;color:var(--t3)" title="Percentual da empresa, igual para todos os produtos">(empresa)</span></div>
           <div class="enc-cel r"><input type="number" id="e-comis" value="7" step="0.01" min="0" oninput="calcPV()"></div>
           <div class="enc-cel r" id="ev-comis">—</div>
           <div class="enc-cel">Propaganda e Publicidade</div>
           <div class="enc-cel r"><input type="number" id="e-mkt" value="0.11" step="0.01" min="0" oninput="calcPV()"></div>
           <div class="enc-cel r" id="ev-mkt">—</div>
-          <div class="enc-cel">Fretes Exportação</div>
-          <div class="enc-cel r"><input type="number" id="e-frete-exp" value="1.49" step="0.01" min="0" oninput="calcPV()"></div>
+          <div class="enc-cel">Fretes e despesas de exportação <span style="font-size:10px;color:var(--t3)" title="Percentual da unidade (DRE), salvo em Despesas fixas da unidade">(unidade)</span></div>
+          <div class="enc-cel r"><input type="number" id="e-frete-exp" value="1.49" step="0.01" min="0" oninput="calcPV();marcarDespesasFixasAlteradas()"></div>
           <div class="enc-cel r" id="ev-frete-exp">—</div>
-          <div class="enc-cel">Fretes Produtos Acabados</div>
-          <div class="enc-cel r"><input type="number" id="e-frete-pa" value="1.33" step="0.01" min="0" oninput="calcPV()"></div>
+          <div class="enc-cel">Fretes produtos acabados <span style="font-size:10px;color:var(--t3)" title="Percentual da unidade (DRE), salvo em Despesas fixas da unidade">(unidade)</span></div>
+          <div class="enc-cel r"><input type="number" id="e-frete-pa" value="1.33" step="0.01" min="0" oninput="calcPV();marcarDespesasFixasAlteradas()"></div>
           <div class="enc-cel r" id="ev-frete-pa">—</div>
-          <div class="enc-cel">Demais Despesas de Entregas</div>
-          <div class="enc-cel r"><input type="number" id="e-entrega" value="0.85" step="0.01" min="0" oninput="calcPV()"></div>
+          <div class="enc-cel">Descargas e frota de entregas <span style="font-size:10px;color:var(--t3)" title="Percentual da unidade (DRE), salvo em Despesas fixas da unidade">(unidade)</span></div>
+          <div class="enc-cel r"><input type="number" id="e-entrega" value="0.85" step="0.01" min="0" oninput="calcPV();marcarDespesasFixasAlteradas()"></div>
           <div class="enc-cel r" id="ev-entrega">—</div>
           <div class="enc-cel">Inadimplência</div>
           <div class="enc-cel r"><input type="number" id="e-inadimp" value="0" step="0.01" min="0" oninput="calcPV()"></div>
@@ -853,31 +873,34 @@ body[data-unidade="banco"] [data-unid="rna"],body[data-unidade="rna"] [data-unid
 
       <!-- SEÇÃO B -->
       <div class="card">
-        <div class="card-hdr"><span class="card-title">B — Margem mínima (% s/PV)</span><span style="font-size:11px;color:var(--t3)">compõem o markup mínimo</span></div>
+        <div class="card-hdr"><span class="card-title">B — Despesas fixas da unidade (% s/PV)</span>
+          <button class="action-btn" id="df-salvar-btn" onclick="salvarDespesasFixas()" title="Gravar estes percentuais para a unidade, valendo para todos os colaboradores">💾 Salvar % da unidade</button>
+        </div>
+        <div id="df-info" style="padding:6px 12px;font-size:11px;color:var(--t3);background:var(--s1);border-bottom:1px solid var(--border)"></div>
         <div class="enc-grid">
-          <div class="enc-hd">Custo / despesa fixa</div><div class="enc-hd r">% s/PV</div><div class="enc-hd r">R$/kg prod.</div>
-          <div class="enc-cel">Despesas com Pessoal</div>
-          <div class="enc-cel r"><input type="number" id="mm-folha" value="5.32" step="0.01" min="0" oninput="calcPV()"></div>
+          <div class="enc-hd">Despesa fixa (DRE)</div><div class="enc-hd r">% s/PV</div><div class="enc-hd r">R$/kg prod.</div>
+          <div class="enc-cel">Pessoal</div>
+          <div class="enc-cel r"><input type="number" id="mm-folha" value="0" step="0.01" min="0" oninput="calcPV();marcarDespesasFixasAlteradas()"></div>
           <div class="enc-cel r" id="bv-folha">—</div>
-          <div class="enc-cel">Despesas Fixas</div>
-          <div class="enc-cel r"><input type="number" id="mm-alug" value="1.99" step="0.01" min="0" oninput="calcPV()"></div>
+          <div class="enc-cel">Ocupação</div>
+          <div class="enc-cel r"><input type="number" id="mm-alug" value="0" step="0.01" min="0" oninput="calcPV();marcarDespesasFixasAlteradas()"></div>
           <div class="enc-cel r" id="bv-alug">—</div>
-          <div class="enc-cel">Despesa Escritório Sede</div>
-          <div class="enc-cel r"><input type="number" id="mm-ee" value="0.19" step="0.01" min="0" oninput="calcPV()"></div>
+          <div class="enc-cel">Administrativas</div>
+          <div class="enc-cel r"><input type="number" id="mm-ee" value="0" step="0.01" min="0" oninput="calcPV();marcarDespesasFixasAlteradas()"></div>
           <div class="enc-cel r" id="bv-ee">—</div>
-          <div class="enc-cel">Despesa Indústria</div>
-          <div class="enc-cel r"><input type="number" id="mm-manut" value="0.97" step="0.01" min="0" oninput="calcPV()"></div>
+          <div class="enc-cel">Industriais</div>
+          <div class="enc-cel r"><input type="number" id="mm-manut" value="0" step="0.01" min="0" oninput="calcPV();marcarDespesasFixasAlteradas()"></div>
           <div class="enc-cel r" id="bv-manut">—</div>
-          <div class="enc-cel">Despesas com Vendas</div>
-          <div class="enc-cel r"><input type="number" id="mm-depre" value="0.80" step="0.01" min="0" oninput="calcPV()"></div>
+          <div class="enc-cel">Comerciais</div>
+          <div class="enc-cel r"><input type="number" id="mm-depre" value="0" step="0.01" min="0" oninput="calcPV();marcarDespesasFixasAlteradas()"></div>
           <div class="enc-cel r" id="bv-depre">—</div>
-          <div class="enc-cel">Veículos e Outras Despesas</div>
-          <div class="enc-cel r"><input type="number" id="mm-honor" value="1.43" step="0.01" min="0" oninput="calcPV()"></div>
+          <div class="enc-cel">Veículos</div>
+          <div class="enc-cel r"><input type="number" id="mm-honor" value="0" step="0.01" min="0" oninput="calcPV();marcarDespesasFixasAlteradas()"></div>
           <div class="enc-cel r" id="bv-honor">—</div>
-          <div class="enc-cel">Outros Custos Fixos</div>
-          <div class="enc-cel r"><input type="number" id="mm-outf" value="0" step="0.01" min="0" oninput="calcPV()"></div>
+          <div class="enc-cel">Outras Despesas</div>
+          <div class="enc-cel r"><input type="number" id="mm-outf" value="0" step="0.01" min="0" oninput="calcPV();marcarDespesasFixasAlteradas()"></div>
           <div class="enc-cel r" id="bv-outf">—</div>
-          <div class="enc-cel total">Total margem mínima B</div>
+          <div class="enc-cel total">Total despesas fixas B</div>
           <div class="enc-cel r total" id="bv-tot-pct">0,00%</div>
           <div class="enc-cel r total" id="bv-tot-val">—</div>
         </div>
@@ -905,9 +928,10 @@ body[data-unidade="banco"] [data-unid="rna"],body[data-unidade="rna"] [data-unid
               <span class="hint">Markup do preço mínimo.</span>
             </div>
             <div class="f">
-              <label>Preço de venda (R$/kg) <span id="pv-modo-badge" style="font-size:10px;padding:1px 6px;background:var(--blu-lt);color:var(--blue);border-radius:10px;border:1px solid var(--blu-bd);font-weight:700">pela margem</span></label>
+              <label>Preço de venda (R$/kg — fixar) <span id="pv-modo-badge" style="font-size:10px;padding:1px 6px;background:var(--blu-lt);color:var(--blue);border-radius:10px;border:1px solid var(--blu-bd);font-weight:700">pela margem</span></label>
               <div class="pv-input-wrap">
-                <input type="number" id="pv-manual" step="0.001" min="0" placeholder="Digite para fixar PV..." oninput="calcPV('preco')" style="width:100%">
+                <input type="number" id="pv-manual" step="0.001" min="0" placeholder="R$/kg para fixar o PV..." oninput="calcPV('preco')" style="width:100%">
+                <input type="number" id="pv-manual-saco" step="0.01" min="0" placeholder="ou R$/saco..." oninput="pvManualPorSaco(this.value)" style="width:100%;margin-top:4px" title="Digite o preço por saco (núcleos: saco pelo peso real da embalagem)">
                 <span class="pv-input-mode" onclick="limparPvManual()" title="Clique para voltar ao modo margem">✕ fixado</span>
               </div>
               <span class="hint">Digite o R$/kg para calcular a margem reversa. Clique ✕ para voltar ao modo margem.</span>
@@ -936,12 +960,17 @@ body[data-unidade="banco"] [data-unid="rna"],body[data-unidade="rna"] [data-unid
         <div class="pv-destaque blue">
           <div class="pv-d-lbl">💰 Preço — lucro objetivo</div>
           <div class="pv-d-val" id="r-pv-kg">R$ 0,000</div>
-          <div class="pv-d-sub">por kg produzido</div>
+          <div class="pv-d-sub">por kg</div>
+          <div class="pv-d-val" style="font-size:22px;margin-top:6px" id="r-pv-saco">R$ 0,00</div>
+          <div class="pv-d-sub pv-saco-lbl">por saco</div>
+          <div class="pv-d-sub" id="r-pv-real" style="display:none;margin-top:4px;font-weight:600"></div>
         </div>
         <div class="pv-destaque green">
           <div class="pv-d-lbl">🚧 Preço — lucro mínimo</div>
           <div class="pv-d-val" id="r-pv-min-kg">R$ 0,000</div>
-          <div class="pv-d-sub">por kg produzido</div>
+          <div class="pv-d-sub">por kg</div>
+          <div class="pv-d-val" style="font-size:22px;margin-top:6px" id="r-pv-min-saco">R$ 0,00</div>
+          <div class="pv-d-sub pv-saco-lbl">por saco</div>
         </div>
       </div>
 
@@ -966,7 +995,7 @@ body[data-unidade="banco"] [data-unid="rna"],body[data-unidade="rna"] [data-unid
               <th style="text-align:left">Lucro alvo</th>
               <th>Markup</th>
               <th>PV R$/kg</th>
-              <th>MC % s/PV</th>
+              <th class="pv-saco-th">PV R$/saco</th>
               <th>Δ vs mínimo</th>
             </tr></thead>
             <tbody id="sens-body"></tbody>
@@ -1406,32 +1435,34 @@ body[data-unidade="banco"] [data-unid="rna"],body[data-unidade="rna"] [data-unid
         <tbody id="pc-ings-tbody"></tbody>
       </table>
       <div style="padding:14px 16px;background:var(--blu-lt);border:1px solid var(--blu-bd);border-radius:8px">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--blue);margin-bottom:8px">Custos</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--blue)">Custos</span><span class="chave-cmv-slot"></span></div>
         <div class="nf-row" style="margin-bottom:10px">
           <div class="f"><label>Custo MP+Emb R$/kg</label><input id="pc-custo-kg" type="text" readonly style="background:var(--surface);font-weight:700"></div>
-          <div class="f"><label>Custo produção (R$/ton)</label><input id="pc-custo-producao-ton" type="number" value="0" min="0" step="1" oninput="atualizarPrecificacaoCotacao()"></div>
-          <div class="f"><label>Custo frete (R$/ton)</label><input id="pc-custo-frete-ton" type="number" value="0" min="0" step="1" oninput="atualizarPrecificacaoCotacao()"></div>
+          <div class="f"><label>Custos extras deste negócio (R$/ton)</label><input id="pc-custo-producao-ton" type="number" value="0" min="0" step="1" oninput="atualizarPrecificacaoCotacao()" title="Só custo específico (ex.: aditivo do cliente). Fabricação já está nas despesas fixas."></div>
+          <div class="f"><label>Frete específico (R$/ton)</label><input id="pc-custo-frete-ton" type="number" value="0" min="0" step="1" oninput="atualizarPrecificacaoCotacao()" title="Só frete fora do padrão. O frete normal já está nos % da unidade."></div>
         </div>
         <div class="nf-row" style="margin-bottom:10px">
           <div class="f"><label>Custo total R$/kg</label><input id="pc-custo-total-kg" type="text" readonly style="background:var(--surface);font-weight:700"></div>
           <div class="f"><label>Custo total R$/saco</label><input id="pc-custo-total-saco" type="text" readonly style="background:var(--surface);font-weight:700"></div>
         </div>
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--blue);margin:14px 0 8px">Comissão, impostos e margem (% sobre o preço de venda)</div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--blue);margin:14px 0 8px">Encargos da unidade e lucro (% sobre o preço de venda — mesmos da Formação do Preço, editáveis)</div>
         <div class="nf-row" style="margin-bottom:10px">
-          <div class="f"><label>Comissão sobre PV (%)</label><input id="pc-comissao" type="number" value="0" min="0" step="0.5" oninput="atualizarPrecificacaoCotacao()"></div>
-          <div class="f"><label>Impostos sobre PV (%)</label><input id="pc-impostos" type="number" value="0" min="0" step="0.5" oninput="atualizarPrecificacaoCotacao()"></div>
-          <div class="f"><label>Margem desejada (%)</label><input id="pc-margem" type="number" value="30" min="0" step="1" oninput="atualizarPrecificacaoCotacao()"></div>
+          <div class="f"><label>Tributos (%)</label><input id="pc-impostos" type="number" value="0" min="0" step="0.01" oninput="atualizarPrecificacaoCotacao()" title="PIS/COFINS + IRPJ/CSLL presumido (+ ICMS se for fora do estado)"></div>
+          <div class="f"><label>Comissão (%)</label><input id="pc-comissao" type="number" value="7" min="0" step="0.01" oninput="atualizarPrecificacaoCotacao()"></div>
+          <div class="f"><label>Fretes / comerciais (%)</label><input id="pc-fretes" type="number" value="0" min="0" step="0.01" oninput="atualizarPrecificacaoCotacao()" title="Fretes, entregas, propaganda e capital de giro da unidade"></div>
+          <div class="f"><label>Despesas fixas (%)</label><input id="pc-fixas" type="number" value="0" min="0" step="0.01" oninput="atualizarPrecificacaoCotacao()" title="Despesas fixas da unidade (DRE)"></div>
+          <div class="f"><label>Lucro líquido alvo (%)</label><input id="pc-margem" type="number" value="15" step="0.5" oninput="atualizarPrecificacaoCotacao()"></div>
         </div>
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--blue);margin:14px 0 8px">Preços calculados</div>
         <div class="nf-row" style="margin-bottom:10px">
-          <div class="f"><label>Preço c/ margem — R$/kg</label><input id="pc-preco-kg" type="text" readonly style="background:var(--surface);font-weight:700;color:var(--blue)"></div>
-          <div class="f"><label>Preço c/ margem — R$/saco</label><input id="pc-preco-saco" type="text" readonly style="background:var(--surface);font-weight:700;color:var(--blue)"></div>
+          <div class="f"><label>Preço c/ lucro alvo — R$/kg</label><input id="pc-preco-kg" type="text" readonly style="background:var(--surface);font-weight:700;color:var(--blue)"></div>
+          <div class="f"><label>Preço c/ lucro alvo — R$/saco</label><input id="pc-preco-saco" type="text" readonly style="background:var(--surface);font-weight:700;color:var(--blue)"></div>
         </div>
         <div class="nf-row">
-          <div class="f"><label>Preço c/ margem 0 — R$/kg</label><input id="pc-preco-kg-m0" type="text" readonly style="background:var(--surface);font-weight:700;color:var(--amber)"></div>
-          <div class="f"><label>Preço c/ margem 0 — R$/saco</label><input id="pc-preco-saco-m0" type="text" readonly style="background:var(--surface);font-weight:700;color:var(--amber)"></div>
+          <div class="f"><label>Preço mínimo (lucro 0) — R$/kg</label><input id="pc-preco-kg-m0" type="text" readonly style="background:var(--surface);font-weight:700;color:var(--amber)"></div>
+          <div class="f"><label>Preço mínimo (lucro 0) — R$/saco</label><input id="pc-preco-saco-m0" type="text" readonly style="background:var(--surface);font-weight:700;color:var(--amber)"></div>
         </div>
-        <div style="font-size:11px;color:var(--t3);margin-top:8px">"Margem 0" = preço mínimo que cobre custo + frete + comissão + impostos, sem lucro. Útil como piso de negociação.</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:8px">Preço mínimo = cobre custo + tributos + comissão + fretes + despesas fixas da unidade, sem lucro. Piso de negociação.</div>
       </div>
       <div class="nf-row" style="margin-top:16px;background:var(--grn-lt);padding:12px;border-radius:8px;border:1px solid var(--grn-bd)">
         <div class="f"><label>Código do produto (se aprovado)</label><input id="pc-cod-real" type="text" placeholder="Ex: 1900"></div>
@@ -1571,13 +1602,13 @@ body[data-unidade="banco"] [data-unid="rna"],body[data-unidade="rna"] [data-unid
         <div class="nf-row" style="margin-bottom:10px">
           <div class="f"><label>Custo R$/kg</label><input id="nf-custo-kg" type="text" readonly style="background:var(--surface);font-weight:700"></div>
           <div class="f"><label>Custo R$/saco</label><input id="nf-custo-saco" type="text" readonly style="background:var(--surface);font-weight:700"></div>
-          <div class="f"><label>Margem desejada (%)</label><input id="nf-margem" type="number" value="30" min="0" step="1" oninput="atualizarCotacaoCalc()"></div>
+          <div class="f"><label>Lucro líquido alvo (%)</label><input id="nf-margem" type="number" value="15" step="0.5" oninput="atualizarCotacaoCalc()"></div>
         </div>
         <div class="nf-row">
           <div class="f"><label>Preço sugerido R$/kg</label><input id="nf-preco-kg" type="text" readonly style="background:var(--surface);font-weight:700;color:var(--blue)"></div>
           <div class="f"><label>Preço sugerido R$/saco</label><input id="nf-preco-saco" type="text" readonly style="background:var(--surface);font-weight:700;color:var(--blue)"></div>
         </div>
-        <div style="font-size:11px;color:var(--t3);margin-top:8px">Cálculo simplificado (custo + margem). Para uma precificação completa com impostos, frete e despesas, use a aba "Formação do Preço de Venda" depois de aprovar o produto.</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:8px"><span id="nf-encargos-info">Preço = custo ÷ (1 − encargos da unidade − lucro), com os mesmos % da Formação do Preço.</span></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -1882,9 +1913,32 @@ let bibliotecaRNA=[
 
 function codEmFicha(cod){return ings.some(i=>i.cod==cod);}
 
+/* ===== Custo de MP por unidade =====
+   Custo base = linha "543" da planilha (ou MP_BASE embutido) e vale para as duas unidades.
+   Custo proprio da unidade = linhas "543-2" (Eldorado) e "543-5" (Ivinhema); quando existe, substitui o base.
+   MPcusto e a VISAO usada pelas telas: custos da unidade escolhida no login (em "Todas", da formula aberta na Ficha). */
+let MPcustoBase={},MPcustoUnid={banco:{},rna:{}};
+let unidadeCustoVisao='banco';
+function sufUnid(u){return u==='rna'?'-5':'-2';}
+function custoMPUnid(cod,u){
+  var x=MPcustoUnid[u==='rna'?'rna':'banco'][cod];
+  return x!==undefined?x:MPcustoBase[cod];
+}
+function temCustoProprio(cod,u){return MPcustoUnid[u==='rna'?'rna':'banco'][cod]!==undefined;}
+function unidadeDaVisaoCusto(){return UNIDADE!=='todas'?UNIDADE:(fichaBancoAtual==='rna'?'rna':'banco');}
+/* Monta MPcusto para a unidade certa. Devolve true se mudou de unidade. */
+function aplicarVisaoCustos(forcar){
+  var u=unidadeDaVisaoCusto();
+  if(!forcar&&u===unidadeCustoVisao)return false;
+  unidadeCustoVisao=u;
+  Object.keys(MPcustoBase).forEach(function(k){var c=custoMPUnid(k,u);MPcusto[k]=c;MPanterior[k]=c;MPalterado[k]=false;});
+  popularSelectsEmbalagem();
+  return true;
+}
 function init(){
   Object.entries(MP_BASE).forEach(([k,v])=>{
     const c=parseInt(k);
+    MPcustoBase[c]=v.c;
     MPcusto[c]=v.c; MPanterior[c]=v.c; MPalterado[c]=false;
     MPitens.push({cod:c,d:v.d,t:v.t||'mp'});
   });
@@ -1900,7 +1954,14 @@ function popularSelectsEmbalagem(){
     +'<option value="custom">Outro valor...</option>';
   ['emb-sel','op-emb-sel','opi-emb-sel'].forEach(function(id){
     var sel=$(id);
-    if(sel)sel.innerHTML=optsHtml;
+    if(!sel)return;
+    /* Mantem a embalagem escolhida (antes a selecao se perdia a cada atualizacao da lista). */
+    var opt=sel.options[sel.selectedIndex],codSel=opt?opt.getAttribute('data-cod'):null,eraCustom=sel.value==='custom';
+    sel.innerHTML=optsHtml;
+    if(codSel){var o=sel.querySelector('option[data-cod="'+codSel+'"]');if(o)o.selected=true;}
+    else if(eraCustom)sel.value='custom';
+    /* D4: embalagem do cadastro acompanha o custo atual (mudou no banco de MP ou trocou a unidade). */
+    if(id==='emb-sel'&&codSel&&sel.value!=='custom'&&$('emb-custo')&&$('emb-custo').readOnly)$('emb-custo').value=sel.value;
   });
 }
 function popularSelectsAdicionarMP(){
@@ -1945,7 +2006,18 @@ function renderMP(filtro=''){
       +'<td class="mono">'+m.cod+'</td>'
       +'<td><input type="text" class="mp-nome-input" value="'+m.d+'" onchange="renomearMP('+m.cod+',this.value)">'+(usada?' <span style="font-size:10px;color:var(--blue);font-weight:600">ficha</span>':'')+'</td>'
       +'<td style="text-align:center">'+tipoBdg+'</td>'
-      +'<td class="r"><input type="number" class="r" value="'+c+'" step="0.01" min="0" style="width:110px" onchange="updMP('+m.cod+',this.value)"><span style="color:var(--t3);font-size:10px;margin-left:3px">'+unidCusto+'</span></td>'
+      +(UNIDADE==='todas'
+        /* "Todas": custo de cada unidade lado a lado (cinza = ainda usando o custo base, igual nas duas). */
+        ?'<td class="r">'+['banco','rna'].map(function(u){
+            var cu=custoMPUnid(m.cod,u),prop=temCustoProprio(m.cod,u);
+            return '<div style="display:flex;align-items:center;gap:4px;justify-content:flex-end;margin:1px 0">'
+              +'<span class="unid-badge u-'+u+'" style="margin:0">'+(u==='rna'?'Ivi':'Eld')+'</span>'
+              +'<input type="number" class="r" value="'+(cu===undefined?'':cu)+'" step="0.01" min="0" style="width:78px'+(prop?'':';color:var(--t3)')+'"'
+              +' title="'+(prop?'Custo próprio de '+NOME_UNIDADE[u]:'Custo base (ainda igual nas duas unidades)')+'"'
+              +' onchange="updMPUnid('+m.cod+',\''+u+'\',this.value)"></div>';
+          }).join('')+'<span style="color:var(--t3);font-size:10px">'+unidCusto+'</span></td>'
+        :'<td class="r"><input type="number" class="r" value="'+c+'" step="0.01" min="0" style="width:110px'+(temCustoProprio(m.cod,unidadeCustoVisao)?'':';color:var(--t2)')+'" title="'+(temCustoProprio(m.cod,unidadeCustoVisao)?'Custo próprio de '+NOME_UNIDADE[unidadeCustoVisao]:'Custo base (ainda igual nas duas unidades). Alterar aqui muda só '+NOME_UNIDADE[unidadeCustoVisao])+'" onchange="updMP('+m.cod+',this.value)"><span style="color:var(--t3);font-size:10px;margin-left:3px">'+unidCusto+'</span></td>')
+      +celulaRealAgrotis(m)
       +'<td class="r" style="color:'+(c>0?'var(--text)':'var(--red)')+'">'+unitCol+'</td>'
       +'<td class="r" style="color:var(--t3);font-size:12px">'+(a?fn(ant):'—')+'</td>'
       +'<td style="text-align:center">'+bdg+'</td>'
@@ -1959,6 +2031,116 @@ function renderMP(filtro=''){
   }).join('');
 }
 function filtrarMPtipo(tipo){mpFiltroTipo=tipo;renderMP($('mp-busca').value);}
+
+/* ===== Custo REAL das materias-primas (Agrotis, via Compras) =====
+   O pipeline do Compras (run_compras_local.py, diario) grava custos_agrotis.js ao lado deste arquivo:
+   ultima compra de cada MP por filial (F2 = Eldorado, F5 = Ivinhema; media ponderada do dia; sem permuta).
+   Carregado por <script> (funciona no GitHub Pages e abrindo o arquivo local). A tabela continua sendo o custo padrao. */
+let AGROTIS=null;
+function carregarCustosAgrotis(){
+  var antigo=document.getElementById('script-custos-agrotis');if(antigo)antigo.remove();
+  var s=document.createElement('script');
+  s.id='script-custos-agrotis';
+  s.src='custos_agrotis.js?v='+Date.now();
+  s.onload=function(){AGROTIS=window.CUSTOS_AGROTIS||null;atualizarTelasAgrotis();};
+  s.onerror=function(){AGROTIS=null;atualizarTelasAgrotis();};
+  document.head.appendChild(s);
+}
+function agrotisIdadeHoras(){
+  if(!AGROTIS||!AGROTIS.gerado_em)return null;
+  var m=String(AGROTIS.gerado_em).match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+  if(!m)return null;
+  return (Date.now()-new Date(+m[3],+m[2]-1,+m[1],+m[4],+m[5]).getTime())/3600000;
+}
+function atualizarTelasAgrotis(){
+  var t=$('agrotis-tag');
+  if(t){
+    if(!AGROTIS){t.style.display='none';}
+    else{
+      var h=agrotisIdadeHoras(),velho=h!==null&&h>36;
+      t.style.display='';
+      t.textContent=(velho?'⚠️ ':'')+'Agrotis: '+String(AGROTIS.gerado_em).slice(0,16);
+      t.style.color=velho?'var(--amber)':'';
+      t.title='Custos reais (última compra) gerados pelo Compras em '+AGROTIS.gerado_em+(velho?' — há mais de 36 h: o pipeline pode não ter rodado.':'');
+    }
+  }
+  if($('mp-tbody'))renderMP($('mp-busca')?$('mp-busca').value:'');
+  recalc();
+  atualizarChavesCMV(); /* habilita o botao 'Real (Agrotis)' quando o arquivo carrega */
+  if($('pg-preco')&&$('pg-preco').classList.contains('active'))calcPV();
+}
+/* Custo real da MP na unidade, na mesma unidade do custo de tabela (R$/ton para MP, R$/un para embalagem).
+   Ivinhema sem compra propria usa a compra de Eldorado (transferencia), marcada "via F2". */
+function custoRealMP(cod,u){
+  if(!AGROTIS)return null;
+  var fil=u==='rna'?'F5':'F2',k=String(cod);
+  var r=AGROTIS[fil]&&AGROTIS[fil][k],via=null;
+  if(!r&&fil==='F5'&&AGROTIS.F2&&AGROTIS.F2[k]){r=AGROTIS.F2[k];via='F2';}
+  if(!r||!(r.preco>0))return null;
+  var item=MPitens.find(function(m){return m.cod==cod;});
+  var und=String(r.unidade||'').toUpperCase(),custo;
+  if(item&&item.t==='emb')custo=r.preco;               /* UN / SC: preco por peca */
+  else if(und==='KG')custo=r.preco*1000;              /* R$/kg -> R$/ton */
+  else if(und==='TON'||und==='T')custo=r.preco;
+  else return null;                                     /* unidade que nao da para converter */
+  return {custo:custo,data:r.data,tipo:r.tipo,fornecedor:r.fornecedor,via:via,n:r.n,qtd:r.qtd};
+}
+function celulaRealAgrotis(m){
+  if(!AGROTIS)return '<td class="r" style="color:var(--t3);font-size:11px" title="Arquivo custos_agrotis.js não encontrado">—</td>';
+  var unids=UNIDADE==='todas'?['banco','rna']:[unidadeCustoVisao];
+  return '<td class="r" style="font-size:11px;line-height:1.35">'+unids.map(function(u){
+    var r=custoRealMP(m.cod,u);
+    var rot=UNIDADE==='todas'?'<span class="unid-badge u-'+u+'" style="margin:0 3px 0 0">'+(u==='rna'?'Ivi':'Eld')+'</span>':'';
+    if(!r)return '<div style="color:var(--t3)" title="Sem compra desta MP no Agrotis">'+rot+'sem compra</div>';
+    var tab=custoMPUnid(m.cod,u)||0,dif=tab>0?(r.custo-tab)/tab*100:0;
+    var cor=Math.abs(dif)>=10?'var(--red)':Math.abs(dif)>=5?'var(--amber)':'var(--green)';
+    var tit='Última compra '+r.data+(r.via?' (via F2 — Ivinhema sem compra própria)':'')+' · '+(r.tipo||'')+' · '+(r.fornecedor||'')+(r.n>1?' · média de '+r.n+' compras do dia':'');
+    var usar=Math.abs(dif)>=0.5?' <button type="button" class="action-btn" style="padding:0 5px;font-size:10px" title="Copiar este custo real para a tabela de '+NOME_UNIDADE[u]+'" onclick="usarCustoReal('+m.cod+',\''+u+'\')">usar</button>':'';
+    return '<div title="'+tit.replace(/"/g,'&quot;')+'">'+rot+'<b>'+fn(r.custo,2)+'</b>'+(r.via?'<sup>F2</sup>':'')
+      +' <span style="color:'+cor+';font-weight:700">'+(dif>0?'+':'')+fn(dif,1)+'%</span>'+usar
+      +'<div style="color:var(--t3);font-size:10px">'+r.data+'</div></div>';
+  }).join('')+'</td>';
+}
+function usarCustoReal(cod,u){
+  var r=custoRealMP(cod,u);if(!r)return;
+  var item=MPitens.find(function(m){return m.cod===cod;});
+  if(!confirm('Atualizar o custo de tabela de "'+cod+' — '+(item?item.d:'')+'" em '+NOME_UNIDADE[u]+' para R$ '+fn(r.custo,2)+' (última compra de '+r.data+')?'))return;
+  updMPUnid(cod,u,String(r.custo));
+}
+/* CMV da formula aberta na Ficha pelo custo real (MP sem compra no Agrotis fica com o custo de tabela). */
+function cmvRealFicha(){
+  if(!AGROTIS||!ings.length)return null;
+  var u=unidadeCustoVisao;
+  var batida=gv('batida')||1000,peso=gv('peso-saco')||25,sacos=batida/peso;
+  var emb=gv('emb-custo'),cifBat=gv('cif-mo')*(1+gv('cif-enc')/100)+gv('cif-ee')+gv('cif-out');
+  var mpBat=0,nReal=0,semReal=[],total=0;
+  ings.forEach(function(ing){
+    if(!(ing.qtd>0))return;total++;
+    var r=custoRealMP(ing.cod,u),c=r?r.custo:(MPcusto[ing.cod]||0);
+    if(r)nReal++;else semReal.push(ing.cod);
+    mpBat+=ing.qtd*c/1000;
+  });
+  var sel=$('emb-sel'),opt=sel&&sel.options[sel.selectedIndex],embCod=opt&&opt.getAttribute('data-cod'),embReal=null;
+  if(embCod){embReal=custoRealMP(parseInt(embCod),u);if(embReal)emb=embReal.custo;}
+  emb=embPorSacoFicha(emb,peso); /* rateada pelo peso real da embalagem */
+  var mpSaco=sacos>0?mpBat/sacos:0,cifSaco=sacos>0?cifBat/sacos:0,cmvSaco=mpSaco+emb+cifSaco;
+  return {cmvSaco:cmvSaco,cmvKg:peso>0?cmvSaco/peso:0,nReal:nReal,total:total,semReal:semReal,embReal:!!embReal};
+}
+function atualizarRealFicha(cmvKgTab,cmvSacoTab){
+  var card=$('real-card');if(!card)return;
+  var r=cmvRealFicha();
+  if(!r){card.style.display='none';return;}
+  card.style.display='';
+  var dif=cmvKgTab>0?(r.cmvKg-cmvKgTab)/cmvKgTab*100:0;
+  set('real-kg',f3(r.cmvKg));set('real-saco',f2(r.cmvSaco));
+  var d=$('real-dif');
+  if(d){d.textContent=(dif>0?'+':'')+fn(dif,1)+'%';d.style.color=dif>0.05?'var(--red)':dif<-0.05?'var(--green)':'';d.title=(dif>0?'Real mais caro que a tabela em ':'Real mais barato que a tabela em ')+f2(Math.abs(r.cmvSaco-cmvSacoTab))+' por saco';}
+  set('real-data',NOME_UNIDADE[unidadeCustoVisao]+' · Agrotis '+String(AGROTIS.gerado_em||''));
+  var nomes=r.semReal.map(function(c){var it=MPitens.find(function(m){return m.cod==c;});return c+(it?' '+it.d:'');});
+  var obs=$('real-obs');
+  if(obs)obs.textContent=r.nReal+' de '+r.total+' MPs com compra no Agrotis'+(r.embReal?' + embalagem':'')
+    +(nomes.length?'. Pelo custo de tabela (sem compra): '+nomes.slice(0,6).join(', ')+(nomes.length>6?'…':''):'.');
+}
 function renomearMP(cod,novoNome){
   novoNome=novoNome.trim();
   if(!novoNome){renderMP($('mp-busca').value);return;}
@@ -1967,7 +2149,8 @@ function renomearMP(cod,novoNome){
   popularSelectsEmbalagem();
   popularSelectsAdicionarMP();
   renderMP($('mp-busca').value);
-  salvarMPRemoto(cod,novoNome,MPcusto[cod],item?item.t:'mp');
+  /* Nome e da MP (linha base, vale para as duas unidades): grava com o custo BASE, nunca com o da unidade. */
+  salvarMPRemoto(cod,novoNome,MPcustoBase[cod],item?item.t:'mp');
   toast('Nome atualizado e salvo para todos os colaboradores.');
 }
 /* Le numero digitado em pt-BR ("1.250,50", "1250,5", "1250.5"). Devolve NaN se vazio/invalido. */
@@ -1978,15 +2161,28 @@ function lerNumeroBR(v){
   else if(/^-?[1-9]\d{0,2}(\.\d{3})+$/.test(t))t=t.replace(/\./g,'');
   return parseFloat(t);
 }
-function updMP(cod,val){
+function updMP(cod,val){updMPUnid(cod,unidadeCustoVisao,val);}
+/* Altera o custo da MP SO na unidade indicada (grava "COD-2" ou "COD-5" na planilha). */
+function updMPUnid(cod,u,val){
+  u=u==='rna'?'rna':'banco';
   const novo=lerNumeroBR(val);
   /* Campo vazio/invalido gravava custo 0 na planilha para todos. */
   if(isNaN(novo)||novo<0){toast('Custo inválido — nada foi alterado.');renderMP($('mp-busca').value);return;}
-  if(!MPalterado[cod])MPanterior[cod]=MPcusto[cod];
-  MPcusto[cod]=novo;MPalterado[cod]=true;
+  var antes=MPcustoUnid[u][cod],tinha=antes!==undefined;
+  MPcustoUnid[u][cod]=novo;
+  if(u===unidadeCustoVisao){
+    if(!MPalterado[cod])MPanterior[cod]=MPcusto[cod];
+    MPcusto[cod]=novo;MPalterado[cod]=true;
+    popularSelectsEmbalagem();
+  }
   renderMP($('mp-busca').value);recalc();
   var item=MPitens.find(function(m){return m.cod===cod;});
-  salvarMPRemoto(cod,item?item.d:'',novo,item?item.t:'mp');
+  salvarMPRemoto(cod,item?item.d:'',novo,item?item.t:'mp',u).then(function(ok){
+    if(ok){toast('Custo da MP '+cod+' salvo para '+NOME_UNIDADE[u]+'.');return;}
+    if(tinha)MPcustoUnid[u][cod]=antes;else delete MPcustoUnid[u][cod];
+    if(u===unidadeCustoVisao){MPcusto[cod]=custoMPUnid(cod,u);popularSelectsEmbalagem();}
+    renderMP($('mp-busca').value);recalc();
+  });
 }
 function filtrarMP(){renderMP($('mp-busca').value);}
 function classificarTipoMP(desc){return /emb|big\s*bag|\bbag\b/i.test(desc||'')?'emb':'mp';}
@@ -2027,6 +2223,7 @@ function addMP(){
     if(custoTxt===null)return;
     const custo=lerNumeroBR(custoTxt);
     if(isNaN(custo)||custo<0){alert('Custo inválido. Cadastro cancelado.');return;}
+    MPcustoBase[cod]=custo; /* MP nova: o custo informado vale para as duas unidades ate alguem ajustar */
     MPcusto[cod]=custo;MPanterior[cod]=custo;MPalterado[cod]=false;
     MPitens.push({cod,d:desc,t});MPitens.sort((a,b)=>a.cod-b.cod);
     renderMP();
@@ -2065,7 +2262,7 @@ function mudarAtividadeMP(item,inativo){
   var antes=!!item.inativo;
   function redesenhar(){renderMP($('mp-busca')?$('mp-busca').value:'');popularSelectsEmbalagem();popularSelectsAdicionarMP();}
   item.inativo=inativo;redesenhar();
-  salvarMPRemoto(item.cod,item.d,MPcusto[item.cod],item.t).then(function(ok){
+  salvarMPRemoto(item.cod,item.d,MPcustoBase[item.cod],item.t).then(function(ok){
     if(ok){toast('MP '+item.cod+(inativo?' marcada como inativa.':' reativada.'));return;}
     item.inativo=antes;redesenhar();
   });
@@ -2201,7 +2398,8 @@ function carregarNutriRemoto(){
       /* No maximo 1 vez por codigo em cada navegador: evita uma rajada de gravacoes a cada abertura
          (mesmo problema que sobrecarregava a planilha com as MPs). */
       var semeados={};try{semeados=JSON.parse(localStorage.getItem('RURAL_NUTRI_SEMEADOS')||'{}');}catch(e){}
-      Object.keys(MPNutriPadrao).forEach(function(codStr){
+      /* Com a copia local (abertura rapida) nunca grava: so decide depois de ler a planilha de verdade. */
+      if(!modoCopia)Object.keys(MPNutriPadrao).forEach(function(codStr){
         var cod=parseInt(codStr);
         if(!data[codStr]&&!semeados[codStr]){
           semeados[codStr]=1;
@@ -2382,7 +2580,7 @@ function imprimirFicha(){
   function h(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
   /* Mesmos calculos da tela (recalc), para a ficha impressa bater com o que esta na tela. */
   var batida=gv('batida')||1000,peso=gv('peso-saco')||25,sacos=batida/peso;
-  var emb=gv('emb-custo'),cifBat=gv('cif-mo')*(1+gv('cif-enc')/100)+gv('cif-ee')+gv('cif-out');
+  var emb=embPorSacoFicha(gv('emb-custo'),peso),cifBat=gv('cif-mo')*(1+gv('cif-enc')/100)+gv('cif-ee')+gv('cif-out');
   var totalKg=ings.reduce(function(s,i){return s+i.qtd;},0);
   var mpBat=0,linhas='',acum=0;
   ings.forEach(function(ing){
@@ -2445,7 +2643,10 @@ function imprimirFicha(){
 /* ===== Sincronizacao do Banco de Materias-primas com a planilha ===== */
 let mpRemoto={};
 function ultimaAlteracaoMPTexto(cod){
-  var r=mpRemoto[String(cod)];
+  var r=(UNIDADE!=='todas'&&mpRemoto[String(cod)+sufUnid(unidadeCustoVisao)])||mpRemoto[String(cod)];
+  if(UNIDADE==='todas'){
+    [mpRemoto[cod+'-2'],mpRemoto[cod+'-5']].forEach(function(x){if(x&&(!r||parseDataHoraBr_(x.dataHora)>parseDataHoraBr_(r.dataHora)))r=x;});
+  }
   if(!r||!r.dataHora)return '—';
   return r.dataHora+(r.editadoPor?' · '+r.editadoPor:'');
 }
@@ -2455,10 +2656,11 @@ function tipoMpComStatus_(cod,tipo){
   var base=String(tipo||'mp').replace(/-inativo$/,'');
   return base+(item&&item.inativo?'-inativo':'');
 }
-function salvarMPRemoto(cod,desc,custo,tipo){
+/* unid (opcional): 'banco'/'rna' grava o custo proprio da unidade (COD-2 / COD-5); sem unid grava a linha base. */
+function salvarMPRemoto(cod,desc,custo,tipo,unid){
   var payload={
     tipo:'mp',
-    cod:String(cod),
+    cod:String(cod)+(unid?sufUnid(unid):''),
     desc:desc,
     custo:custo,
     tipoMp:tipoMpComStatus_(cod,tipo),
@@ -2501,6 +2703,8 @@ function atualizarEtiquetaBaseMP(falhou){
   }
   var maisRecente=null;
   Object.keys(mpRemoto).forEach(function(cod){
+    /* So conta a linha base e as da unidade em uso (em "Todas", todas). */
+    if(UNIDADE!=='todas'&&/-[25]$/.test(cod)&&cod.slice(-2)!==sufUnid(unidadeCustoVisao))return;
     var r=mpRemoto[cod],t=parseDataHoraBr_(r&&r.dataHora);
     if(t&&(!maisRecente||t>maisRecente.t))maisRecente={t:t,r:r,cod:cod};
   });
@@ -2519,6 +2723,9 @@ function carregarMPRemoto(){
         if(mpGravacoesPendentes[codStr]||gravadoDepoisDe('mp:'+codStr,t0))return;
         var r=data[codStr];
         mpRemoto[codStr]=r;
+        /* Linha de custo proprio da unidade ("543-2" Eldorado / "543-5" Ivinhema): so o custo; nome e tipo vem da linha base. */
+        var mu=codStr.match(/^(\d+)-([25])$/);
+        if(mu){MPcustoUnid[mu[2]==='5'?'rna':'banco'][parseInt(mu[1])]=parseFloat(r.custo)||0;return;}
         var cod=parseInt(codStr);
         var custo=parseFloat(r.custo)||0;
         var item=MPitens.find(function(m){return m.cod===cod;});
@@ -2527,7 +2734,7 @@ function carregarMPRemoto(){
         var tipoTxt=String(r.tipoMp||r.tipo||'');
         var inativo=/-inativo$/.test(tipoTxt);
         var tipo=(/^emb/.test(tipoTxt)||classificarTipoMP(r.desc)==='emb'||(item&&item.t==='emb'))?'emb':'mp';
-        MPcusto[cod]=custo;MPanterior[cod]=custo;MPalterado[cod]=false;
+        MPcustoBase[cod]=custo;
         if(item){item.d=r.desc||item.d;item.t=tipo;item.inativo=inativo;}
         else{MPitens.push({cod:cod,d:r.desc||('MP '+cod),t:tipo,inativo:inativo});}
         /* REMOVIDO: aqui havia uma regravacao automatica quando "r.tipoMp!==tipo". A planilha devolve o campo como
@@ -2536,6 +2743,7 @@ function carregarMPRemoto(){
            e trocava o "editado por" de todas as MPs para quem abriu a tela. */
       });
       MPitens.sort(function(a,b){return a.cod-b.cod;});
+      aplicarVisaoCustos(true); /* monta MPcusto = base + custo proprio da unidade em uso */
       syncMarcar('mp','ok');
       atualizarEtiquetaBaseMP(false);
       popularSelectsEmbalagem();
@@ -2585,12 +2793,43 @@ function updIngQtd(i,v,parcial){ings[i].qtd=parseFloat(v)||0;if(parcial){recalc(
 function updIngBal(i,v){ings[i].bal=parseInt(v)||0;renderIngs();}
 function addIng(){ings.push({cod:null,qtd:0,bal:0});renderIngs();}
 function delIng(i){ings.splice(i,1);renderIngs();}
-function onEmbSel(){const sel=$('emb-sel');if(sel.value!=='custom'){$('emb-custo').value=sel.value;$('emb-custo').readOnly=true;}else{$('emb-custo').readOnly=false;$('emb-custo').focus();}var opSel=$('op-emb-sel');if(opSel)opSel.selectedIndex=sel.selectedIndex;var opiSel=$('opi-emb-sel');if(opiSel)opiSel.selectedIndex=sel.selectedIndex;recalc();renderOP();renderOPIvinhema();}
+function onEmbSel(){const sel=$('emb-sel');const hE=$('emb-custo-hint');if(sel.value!=='custom'){$('emb-custo').value=sel.value;$('emb-custo').readOnly=true;if(hE)hE.textContent='custo atual do banco de MP';}else{$('emb-custo').readOnly=false;$('emb-custo').focus();if(hE)hE.textContent='';}var opSel=$('op-emb-sel');if(opSel)opSel.selectedIndex=sel.selectedIndex;var opiSel=$('opi-emb-sel');if(opiSel)opiSel.selectedIndex=sel.selectedIndex;recalc();renderOP();renderOPIvinhema();}
 function onOpEmbSel(){const opSel=$('op-emb-sel'),sel=$('emb-sel');if(!sel)return;sel.selectedIndex=opSel.selectedIndex;onEmbSel();toast('Embalagem alterada para "'+opSel.options[opSel.selectedIndex].text+'".');}
 
+/* Peso do saco de VENDA: o peso por saco da ficha; nos nucleos (ficha em 1 kg), o peso real da embalagem. */
+function pesoSacoVenda(){var p=gv('peso-saco')||25;return p>=5?p:(pesoEmbalagemReal(fichaComoFormula()).kg||p);}
+/* Preco fixado digitado por saco: converte para R$/kg e usa o mesmo calculo reverso. */
+function pvManualPorSaco(v){
+  var s=lerNumeroBR(v),ps=pesoSacoVenda();
+  $('pv-manual').value=(s>0&&ps>0)?(s/ps).toFixed(4):'';
+  if(!(s>0)){limparPvManual();return;}
+  calcPV('preco');
+}
+/* A formula aberta na Ficha no formato usado por pesoEmbalagemReal/custoFormula. */
+/* Sacos (embalagens fisicas) por batida na OP: batida / peso real da embalagem. */
+function sacosEmbOP(){var b=gv('batida')||1000,k=pesoEmbalagemReal(fichaComoFormula()).kg;return k>0?b/k:b/(gv('peso-saco')||25);}
+function fichaComoFormula(){
+  var sel=$('emb-sel'),opt=sel&&sel.options[sel.selectedIndex];
+  return {cod:($('p-cod')&&$('p-cod').value)||'',nome:($('p-nome')&&$('p-nome').value)||'',cat:($('p-cat')&&$('p-cat').value)||'',
+    pesoSaco:gv('peso-saco')||25,emb:{pesoReal:parseFloat($('emb-peso-real')&&$('emb-peso-real').value)||0,desc:(opt&&opt.value!=='custom')?opt.text:''}};
+}
+/* Custo de embalagem por SACO da ficha (peso por saco), rateado pelo peso real da embalagem. */
+function embPorSacoFicha(emb,peso){
+  var pe=pesoEmbalagemReal(fichaComoFormula());
+  return pe.kg>0?emb*peso/pe.kg:emb;
+}
+function atualizarHintPesoEmb(){
+  var h=$('emb-peso-hint'),inp=$('emb-peso-real');if(!h||!inp)return;
+  var pe=pesoEmbalagemReal(fichaComoFormula());
+  if(pe.fonte==='informado'){h.textContent='';h.style.color='';return;}
+  inp.placeholder='auto: '+fn(pe.kg,pe.kg%1===0?0:1)+' kg';
+  h.textContent=pe.fonte==='saco'?'= peso por saco':(pe.fonte==='padrão'?'⚠️ padrão de '+PESO_EMB_PADRAO+' kg — confirme':'pela '+(pe.fonte==='tabela'?'Tabela de Preços':pe.fonte));
+  h.style.color=pe.fonte==='padrão'?'var(--amber)':'';
+}
 function recalc(){
   const batida=gv('batida')||1000,peso=gv('peso-saco')||25,sacos=batida/peso;
-  const emb=gv('emb-custo'),cifBat=gv('cif-mo')*(1+gv('cif-enc')/100)+gv('cif-ee')+gv('cif-out');
+  const embUn=gv('emb-custo'),emb=embPorSacoFicha(embUn,peso),cifBat=gv('cif-mo')*(1+gv('cif-enc')/100)+gv('cif-ee')+gv('cif-out');
+  atualizarHintPesoEmb();
   let mpBat=0; ings.forEach(ing=>{const c=MPcusto[ing.cod]!==undefined?MPcusto[ing.cod]:0;mpBat+=ing.qtd*(c/1000);});
   const mpSaco=sacos>0?mpBat/sacos:0,cifSaco=sacos>0?cifBat/sacos:0;
   const cmvSaco=mpSaco+emb+cifSaco,cmvKg=peso>0?cmvSaco/peso:0;
@@ -2600,9 +2839,11 @@ function recalc(){
   const delta=totalKg-batida;
   const dEl=$('r-delta');if(dEl){dEl.textContent=(delta>0?'+':'')+fn(delta,2)+' kg';dEl.style.color=Math.abs(delta)<0.01?'var(--green)':Math.abs(delta)<batida*0.02?'var(--amber)':'var(--red)';}
   const aEl=$('delta-alert');if(aEl)aEl.innerHTML=Math.abs(delta)<0.01?'<div class="alert alert-ok">Ingredientes fecham com a batida.</div>':'<div class="alert alert-warn">Diferenca de '+fn(Math.abs(delta),2)+' kg.</div>';
-  if($('emb-total'))$('emb-total').value=f2(embBat)+' ('+fn(sacos,sacos%1===0?0:1)+' x '+f2(emb)+')';
+  if($('emb-total')){var nEmb=embUn>0?embBat/embUn:0;$('emb-total').value=f2(embBat)+' ('+fn(nEmb,nEmb%1===0?0:1)+' emb. x '+f2(embUn)+')';}
   set('cmv-kg',f3(cmvKg));set('cmv-sub','= '+f2(cmvKg*1000)+' / ton');
-  set('k-saco',f2(cmvSaco));set('k-ton',f2(cmvKg*1000));
+  /* Nucleos (ficha em 1 kg): "custo / saco" era o custo de 1 kg. Mostra o saco real da embalagem. */
+  const psF=pesoSacoVenda();
+  set('k-saco',f2(cmvKg*psF));set('k-saco-lbl','Custo / saco '+fn(psF,psF%1===0?0:1)+' kg');set('k-ton',f2(cmvKg*1000));
   set('b-mp',f2(mpBat));set('b-emb',f2(embBat));set('b-cif',f2(cifBat));set('b-tot',f2(mpBat+embBat+cifBat));
   set('tot-kg',fn(totalKg)+' kg');set('tot-pct',totalKg>0&&batida>0?fn(totalKg/batida*100,1)+'%':'—');
   set('tot-bat',f2(mpBat));set('tot-kgp',f3(batida>0?mpBat/batida:0));
@@ -2614,23 +2855,193 @@ function recalc(){
   const sorted=ings.filter(i=>i.qtd>0&&MPcusto[i.cod]!==undefined).map(i=>{const c=MPcusto[i.cod],v=i.qtd*c/1000,vK=batida>0?v/batida:0;return{nm:MPitens.find(m=>m.cod==i.cod)?.d||'—',qtd:i.qtd,vK};}).sort((a,b)=>b.vK-a.vK);
   const idEl=$('ing-detalhe');
   if(idEl)idEl.innerHTML=sorted.map(r=>{const pct=cmvKg>0?r.vK/cmvKg*100:0;return '<div class="ing-row"><span class="ing-nome" title="'+r.nm+'">'+r.nm+'</span><span class="ing-pct">'+fn(pct,1)+'%</span><span class="ing-kg">'+fn(r.qtd,2)+' kg</span><span class="ing-val">'+f3(r.vK)+'/kg</span><div class="ing-bar"><div class="ing-bar-fill" style="width:'+Math.min(pct,100)+'%"></div></div></div>';}).join('');
+  atualizarRealFicha(cmvKg,cmvSaco); /* custo real (Agrotis) lado a lado */
+}
+/* ===== Despesas fixas por unidade (secao B da Formacao do Preco) =====
+   Percentuais sobre o PV tirados da DRE de cada unidade (Gilberto, 30/09/2026 — 8 meses). Valem para TODOS os produtos
+   da unidade (antes eram 10,7% fixos no HTML e podiam ser gravados por produto so no navegador).
+   Compartilhados pela planilha: registro "despesas_fixas" na aba TabelaPrecos (nao muda o .gs). */
+const DESP_FIXAS_CAMPOS=['folha','alug','ee','manut','depre','honor','outf','freteExp','fretePa','entrega','irpj','csll'];
+/* id do campo na tela de cada chave (fixas = secao B; fretes/entregas = variaveis da secao A) */
+const DESP_CAMPO_ID={folha:'mm-folha',alug:'mm-alug',ee:'mm-ee',manut:'mm-manut',depre:'mm-depre',honor:'mm-honor',outf:'mm-outf',freteExp:'e-frete-exp',fretePa:'e-frete-pa',entrega:'e-entrega',irpj:'e-irpj',csll:'e-csll'};
+const DESP_FIXAS_PADRAO={
+  /* Rural: descargas 0,0% + frota de entregas 1,0% = 'Descargas e frota de entregas' */
+  banco:{v:{folha:3.5,alug:0.8,ee:0.8,manut:1.2,depre:0.7,honor:0.3,outf:0.1,freteExp:1.6,fretePa:1.1,entrega:1.0,irpj:2.0,csll:1.1},por:'DRE Rural (8 meses)',em:'30/09/2026'},
+  /* RNA: descargas 0,3% + frota de entregas 0% = 'Descargas e frota de entregas' */
+  rna:{v:{folha:6.3,alug:4.4,ee:1.1,manut:2.0,depre:0.2,honor:0.0,outf:0.1,freteExp:0.0,fretePa:3.7,entrega:0.3,irpj:1.8,csll:1.1},por:'DRE RNA (8 meses)',em:'30/09/2026'}
+};
+let despFixas=JSON.parse(JSON.stringify(DESP_FIXAS_PADRAO));
+try{var dfLocal=JSON.parse(localStorage.getItem('RURAL_DESPESAS_FIXAS')||'null');if(dfLocal&&dfLocal.banco&&dfLocal.rna)despFixas=dfLocal;}catch(e){}
+function unidadeFormacao(){return fichaBancoAtual==='rna'?'rna':'banco';}
+/* Percentuais da empresa, iguais para todos os produtos (Gilberto 30/09): comissao 7% sempre; PIS 0,65% e COFINS 3%
+   (lucro presumido, cumulativo). Antes podiam ser trocados pelos parametros gravados por produto no navegador. */
+/* ICMS: so em venda para fora do estado -> comeca em 0; digite a aliquota quando for venda interestadual. */
+const IMPOSTOS_EMPRESA={'e-icms':0,'e-pis':0.65,'e-cofins':3,'e-comis':7};
+/* Os MESMOS percentuais da Formacao do Preco (padrao da unidade) para Custos & Margens e Cotacao Especial
+   (antes: CD+F R$10/saco ou R$450/ton + imposto/comissao por grupo; Especial R$350/ton + frete + 7%/4%).
+   CMV = so MP + embalagem (Gilberto 30/09: a fabricacao esta nas despesas fixas). Tudo em fracao do PV (receita bruta). */
+function encargosPadraoUnidade(u){
+  u=u==='rna'?'rna':'banco';
+  var d=(despFixas[u]&&despFixas[u].v)||{},p=DESP_FIXAS_PADRAO[u].v;
+  var g=function(k){return ((d[k]!==undefined?d[k]:p[k])||0)/100;};
+  var icms=IMPOSTOS_EMPRESA['e-icms']/100,pis=IMPOSTOS_EMPRESA['e-pis']/100,cof=IMPOSTOS_EMPRESA['e-cofins']/100;
+  var trib=icms+(pis+cof)*(1-icms)+g('irpj')+g('csll');
+  var comis=IMPOSTOS_EMPRESA['e-comis']/100;
+  var fretes=g('freteExp')+g('fretePa')+g('entrega');
+  var outrosCom=(PRECO_PADRAO['e-mkt']+PRECO_PADRAO['e-inadimp']+PRECO_PADRAO['e-outros'])/100
+    +(Math.pow(1+PRECO_PADRAO['cg-taxa']/100,PRECO_PADRAO['cg-dias']/30)-1);
+  var fixas=['folha','alug','ee','manut','depre','honor','outf'].reduce(function(s,k){return s+g(k);},0);
+  return {u:u,trib:trib,irCsll:g('irpj')+g('csll'),comis:comis,fretes:fretes,outrosCom:outrosCom,fixas:fixas,total:trib+comis+fretes+outrosCom+fixas};
+}
+/* CMV por kg da formula pelo custo REAL (Agrotis, ultima compra); MP sem compra fica com o custo de tabela. */
+function cmvRealFormulaKg(f,u){
+  if(typeof AGROTIS==='undefined'||!AGROTIS||!f)return null;
+  u=u||(f._banco==='rna'?'rna':(f._banco||bancoDoCat(f.cat)));
+  var ings=(f.ings||[]).filter(function(i){return i.qtd>0;}),mp=0,n=0;
+  ings.forEach(function(i){var r=custoRealMP(i.cod,u);if(r)n++;mp+=i.qtd*((r?r.custo:(custoMPUnid(i.cod,u)||0))/1000);});
+  var pe=pesoEmbalagemReal(f),em=embMPdaFormula(f),er=em?custoRealMP(em.cod,u):null;
+  var embKg=(er?er.custo:custoEmbalagemAtual(f,u))/(pe.kg||1);
+  var kg=(parseFloat(f.batida)>0?mp/parseFloat(f.batida):0)+embKg;
+  return {kg:kg,n:n,total:ings.length};
+}
+/* ===== Base do CMV em TODAS as telas de precificacao: 'tabela' (banco de MP) ou 'real' (Agrotis, ultima compra) =====
+   Uma escolha so para a ferramenta (fica lembrada no navegador). MP sem compra no Agrotis usa o custo de tabela. */
+let CMV_BASE='tabela';
+try{if(localStorage.getItem('RURAL_MARGENS_BASE')==='real')CMV_BASE='real';}catch(e){}
+function temAgrotis(){return typeof AGROTIS!=='undefined'&&!!AGROTIS;}
+function baseCMVReal(){return CMV_BASE==='real'&&temAgrotis();}
+/* custo da MP (ou embalagem) conforme a base escolhida */
+function custoMPBase(cod,u){if(baseCMVReal()){var r=custoRealMP(cod,u);if(r)return r.custo;}return custoMPUnid(cod,u);}
+function custoEmbalagemBase(f,u){
+  u=u||(f._banco==='rna'?'rna':(f._banco||bancoDoCat(f.cat)));
+  if(baseCMVReal()){var em=embMPdaFormula(f),r=em?custoRealMP(em.cod,u):null;if(r)return r.custo;}
+  return custoEmbalagemAtual(f,u);
+}
+function htmlChaveCMV(){
+  var dt=temAgrotis()&&AGROTIS.gerado_em?' '+String(AGROTIS.gerado_em).slice(0,5):'';
+  var b=function(v,rot,extra){return '<button type="button" data-base-cmv="'+v+'" class="btn '+(CMV_BASE===v?'btn-primary':'btn-ghost')+'" style="padding:3px 9px;font-size:11px" onclick="mudarBaseCMV(\''+v+'\')" '+(extra||'')+'>'+rot+'</button>';};
+  return '<span class="chave-cmv" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--t3);white-space:nowrap" title="Qual CMV usar no cálculo do preço. MP sem compra no Agrotis fica com o custo de tabela.">Base do CMV: '
+    +b('tabela','Tabela (banco de MP)')+b('real','Real (Agrotis'+dt+')',temAgrotis()?'':'disabled title="Sem o arquivo custos_agrotis.js"')+'</span>';
+}
+function atualizarChavesCMV(){
+  document.querySelectorAll('.chave-cmv-slot').forEach(function(s){s.innerHTML=htmlChaveCMV();});
+  document.querySelectorAll('[data-base-cmv]').forEach(function(bt){bt.className='btn '+(bt.getAttribute('data-base-cmv')===CMV_BASE?'btn-primary':'btn-ghost');});
+}
+function mudarBaseCMV(b){
+  CMV_BASE=b==='real'?'real':'tabela';
+  try{localStorage.setItem('RURAL_MARGENS_BASE',CMV_BASE);}catch(e){}
+  atualizarChavesCMV();
+  if($('pg-preco')&&$('pg-preco').classList.contains('active'))calcPV();
+  if(typeof ptBooted!=='undefined'&&ptBooted){
+    if(ptCurrentSubTab==='margins')ptRenderMargins();
+    if(ptCurrentSubTab==='export')ptRenderExport();
+    if(ptCurrentSubTab==='especial')ptRenderEspecial();
+  }
+  if($('precificar-cotacao-modal')&&$('precificar-cotacao-modal').style.display==='flex')atualizarPrecificacaoCotacao();
+  toast('Base do CMV: '+(CMV_BASE==='real'?'custo REAL (Agrotis, última compra)':'custo de TABELA (banco de MP)')+' em todas as telas de preço.');
+}
+function ptMudarBaseMargens(b){mudarBaseCMV(b);}
+/* De onde vem o CMV "vivo" de um produto da Tabela: formula, versao, unidade, custos de MP, embalagem e o real (Agrotis). */
+function ptDescreverCMV(cost){
+  var f=cost&&cost.formulaObj;if(!f)return '';
+  var u=f._banco==='rna'?'rna':(f._banco||bancoDoCat(f.cat));
+  var linhas=['Fórmula '+f.cod+' — '+f.nome+' ('+NOME_UNIDADE[u]+')'];
+  linhas.push(f._remoto||f._editadoPor?('Versão editada na planilha por '+(f._editadoPor||'?')+' em '+fmtDataHoraBr(f._dataHora)):'Versão padrão (sem edição salva na planilha)');
+  var ings=(f.ings||[]).filter(function(i){return i.qtd>0;}),prop=ings.filter(function(i){return temCustoProprio(i.cod,u);}).length;
+  var semCusto=ings.filter(function(i){return !(custoMPUnid(i.cod,u)>0);}).map(function(i){return i.cod;});
+  linhas.push('Custo das MPs: banco de MP de '+NOME_UNIDADE[u]+' ('+prop+' de '+ings.length+' com custo próprio da unidade, o resto pelo custo base)'+(semCusto.length?' — SEM CUSTO: '+semCusto.join(', '):''));
+  var pe=pesoEmbalagemReal(f),ec=custoEmbalagemAtual(f,u),em=embMPdaFormula(f);
+  linhas.push('Embalagem: '+(em?em.cod+' '+em.d:(f.emb&&f.emb.desc)||'nenhuma')+' — R$ '+fn(ec,2)+' por embalagem de '+fn(pe.kg,pe.kg%1===0?0:1)+' kg ('+pe.fonte+')');
+  var c=custoFormula(f);
+  linhas.push('CMV: R$ '+fn(c.custoKg,3)+'/kg = MP + embalagem (sem fabricação: ela está nas despesas fixas)');
+  if(typeof AGROTIS!=='undefined'&&AGROTIS){
+    var mp=0,n=0;ings.forEach(function(i){var r=custoRealMP(i.cod,u);if(r)n++;mp+=i.qtd*((r?r.custo:(custoMPUnid(i.cod,u)||0))/1000);});
+    var er=em?custoRealMP(em.cod,u):null,embKg=(er?er.custo:ec)/(pe.kg||1);
+    var realKg=(parseFloat(f.batida)>0?mp/parseFloat(f.batida):0)+embKg;
+    linhas.push('Pelo custo real (Agrotis, última compra): R$ '+fn(realKg,3)+'/kg ('+(realKg>=c.custoKg?'+':'')+fn(c.custoKg>0?(realKg-c.custoKg)/c.custoKg*100:0,1)+'%) — '+n+' de '+ings.length+' MPs com compra');
+  }
+  return linhas.join('\n');
+}
+function ptAbrirFormulaNaFicha(cod,banco){
+  var f=ptFormulaIndex()[String(cod)];
+  if(!f){toast('Fórmula '+cod+' não encontrada nesta unidade.');return;}
+  fichaBancoAtual=banco==='rna'?'rna':'banco';
+  carregarObjFormula(f);
+  irPara('ficha');
+  toast('Fórmula '+cod+' aberta na Ficha (a mesma versão usada no CMV da tabela).');
+}
+function unidadeDoItemTabela(cost,brand){
+  if(cost&&cost.formulaObj&&cost.formulaObj._banco)return cost.formulaObj._banco;
+  if(typeof UNIDADE!=='undefined'&&UNIDADE!=='todas')return UNIDADE;
+  return /RNA|Viacampus|Alvorada/i.test(String(brand||''))?'rna':'banco';
+}
+function aplicarImpostosEmpresa(){Object.keys(IMPOSTOS_EMPRESA).forEach(function(id){var el=$(id);if(el)el.value=IMPOSTOS_EMPRESA[id];});}
+function aplicarDespesasFixas(){
+  var u=unidadeFormacao(),d=despFixas[u]||DESP_FIXAS_PADRAO[u];
+  aplicarImpostosEmpresa();
+  var pad=DESP_FIXAS_PADRAO[u].v;
+  DESP_FIXAS_CAMPOS.forEach(function(k){var el=$(DESP_CAMPO_ID[k]);if(el)el.value=(d.v[k]!==undefined?d.v[k]:pad[k]);});
+  var info=$('df-info');
+  if(info){info.textContent='Unidade: '+NOME_UNIDADE[u]+' · '+(d.por||'')+(d.em?' · '+d.em:'');info.style.color='';}
+}
+function marcarDespesasFixasAlteradas(){
+  var info=$('df-info');if(!info)return;
+  info.textContent='Unidade: '+NOME_UNIDADE[unidadeFormacao()]+' · ⚠️ alterado só nesta simulação — clique em "Salvar % da unidade" para valer para todos';
+  info.style.color='var(--amber)';
+}
+function carregarDespesasFixasRemoto(){
+  return apiGet('tabelaprecos').then(function(data){
+    var r=data&&data['despesas_fixas'];if(!r||!r.dadosJSON)return;
+    var o=JSON.parse(r.dadosJSON);
+    ['banco','rna'].forEach(function(u){if(o[u]&&o[u].v)despFixas[u]=o[u];});
+    try{localStorage.setItem('RURAL_DESPESAS_FIXAS',JSON.stringify(despFixas));}catch(e){}
+    aplicarDespesasFixas();
+    if($('pg-preco')&&$('pg-preco').classList.contains('active'))calcPV();
+  }).catch(function(err){console.warn('Despesas fixas não carregaram da planilha (usando a última cópia/padrão):',err);});
+}
+function salvarDespesasFixas(){
+  var u=unidadeFormacao(),v={};
+  DESP_FIXAS_CAMPOS.forEach(function(k){var el=$(DESP_CAMPO_ID[k]);v[k]=lerNumeroBR(el&&el.value)||0;});
+  var total=['folha','alug','ee','manut','depre','honor','outf'].reduce(function(s,k){return s+v[k];},0);
+  var fretes=v.freteExp+v.fretePa+v.entrega,irCsll=v.irpj+v.csll;
+  var ref=prompt('Salvar para TODOS os produtos de '+NOME_UNIDADE[u]+':\n• despesas fixas (seção B): '+fn(total,1)+'% s/PV\n• fretes e entregas (seção A): '+fn(fretes,2)+'% s/PV\n- IRPJ + CSLL (secao A): '+fn(irCsll,2)+'% s/PV\n\nReferência (ex.: "DRE jan-ago/2026"):',(despFixas[u]&&despFixas[u].por)||'');
+  if(ref===null)return;
+  var destravar=travarBotao($('df-salvar-btn'),'Salvando...');
+  /* Le a versao atual antes de gravar, para nao apagar o que alguem salvou para a outra unidade. */
+  apiGet('tabelaprecos').then(function(data){
+    var atual={};try{atual=JSON.parse((data&&data['despesas_fixas']&&data['despesas_fixas'].dadosJSON)||'{}');}catch(e){}
+    ['banco','rna'].forEach(function(x){if(!atual[x])atual[x]=despFixas[x];});
+    atual[u]={v:v,por:ref.trim().slice(0,60)||'—',em:new Date().toLocaleDateString('pt-BR')+' por '+getNomeColaborador()};
+    return apiPost({tipo:'tabelaprecos',id:'despesas_fixas',dadosJSON:JSON.stringify(atual),editadoPor:getNomeColaborador(),dataHora:new Date().toLocaleString('pt-BR')})
+      .then(function(){despFixas=atual;try{localStorage.setItem('RURAL_DESPESAS_FIXAS',JSON.stringify(despFixas));}catch(e){}aplicarDespesasFixas();calcPV();syncGravou();toast('✅ Despesas fixas de '+NOME_UNIDADE[u]+' salvas para todos.');});
+  }).catch(function(err){syncFalhouGravar('as despesas fixas',err);}).finally(destravar);
 }
 /* Modo atual do PV: 'preco' (PV digitado fixado) ou 'margem'. Antes, mudar ICMS/comissao chamava calcPV() no modo
    margem e o PV fixado era abandonado sem aviso. Agora so digitar o lucro objetivo (ou limpar o PV) sai do modo preco. */
-var pvModoAtual='margem';
+var pvModoAtual='margem',pvLucroAntesDeFixar=null;
 function calcPV(modo){
+  if(modo==='preco'&&pvModoAtual!=='preco'&&$('pv-lucro'))pvLucroAntesDeFixar=$('pv-lucro').value;
+  if(modo==='margem')pvLucroAntesDeFixar=null; /* digitou o lucro: vale o que foi digitado */
   if(modo)pvModoAtual=modo;
   modo=pvModoAtual;
   const batida=gv('batida')||1000,peso=gv('peso-saco')||25,sacos=batida/peso;
-  const emb=gv('emb-custo'),cifBat=gv('cif-mo')*(1+gv('cif-enc')/100)+gv('cif-ee')+gv('cif-out');
+  const emb=embPorSacoFicha(gv('emb-custo'),peso),cifBat=gv('cif-mo')*(1+gv('cif-enc')/100)+gv('cif-ee')+gv('cif-out');
   let mpBat=0; ings.forEach(ing=>{const c=MPcusto[ing.cod]!==undefined?MPcusto[ing.cod]:0;mpBat+=ing.qtd*(c/1000);});
-  const mpSaco=sacos>0?mpBat/sacos:0,cifSaco=sacos>0?cifBat/sacos:0,cmvSaco=mpSaco+emb+cifSaco,cmvKg=peso>0?cmvSaco/peso:0;
+  const mpSaco=sacos>0?mpBat/sacos:0,cifSaco=sacos>0?cifBat/sacos:0;
+  let cmvSaco=mpSaco+emb+cifSaco,cmvKg=peso>0?cmvSaco/peso:0;
+  /* Base do CMV escolhida (Tabela | Real Agrotis): o preco sai pela base; a outra aparece ao lado para comparar. */
+  const cmvSacoTab=cmvSaco,cmvKgTab=cmvKg,realF=temAgrotis()?cmvRealFicha():null,usaRealPV=baseCMVReal()&&!!realF;
+  if(usaRealPV){cmvSaco=realF.cmvSaco;cmvKg=realF.cmvKg;}
+  const mpSacoDecomp=usaRealPV?Math.max(0,cmvSaco-emb-cifSaco):mpSaco;
+  document.querySelectorAll('#pg-preco .chave-cmv-slot').forEach(function(s){s.innerHTML=htmlChaveCMV();});
 
   set('pv-cod',$('p-cod')?.value||'—'); set('pv-nome',$('p-nome')?.value||'—');
-  set('pv-peso',fn(peso)+' kg'); set('pv-cmv-kg',f3(cmvKg)); set('pv-cmv-ton',f2(cmvKg*1000));
+  set('pv-peso',fn(peso)+' kg'); set('pv-cmv-kg',f3(cmvKg)+(usaRealPV?' (real)':'')); set('pv-cmv-ton',f2(cmvKg*1000));
 
   const pICMS=gv('e-icms')/100,pPIS=gv('e-pis')/100,pCOFINS=gv('e-cofins')/100;
   const pPIScasc=(pPIS+pCOFINS)*(1-pICMS);
+  /* IRPJ e CSLL (lucro presumido) como % da receita, por unidade (DRE). Com eles, o lucro objetivo e LIQUIDO. */
+  const pIRPJ=gv('e-irpj')/100,pCSLL=gv('e-csll')/100;
   const pComis=gv('e-comis')/100,pMkt=gv('e-mkt')/100,pFreteExp=gv('e-frete-exp')/100;
   const pFretePa=gv('e-frete-pa')/100,pEntrega=gv('e-entrega')/100;
   const pInadimp=gv('e-inadimp')/100,pOutros=gv('e-outros')/100;
@@ -2640,7 +3051,7 @@ function calcPV(modo){
   if($('cg-pct')) $('cg-pct').value=fp(cgPct*100,4)+'%';
   set('ev-cg-pct',fp(cgPct*100,4)+'%');
 
-  const encA=pICMS+pPIScasc+pComis+pMkt+pFreteExp+pFretePa+pEntrega+pInadimp+pOutros+cgPct;
+  const encA=pICMS+pPIScasc+pIRPJ+pCSLL+pComis+pMkt+pFreteExp+pFretePa+pEntrega+pInadimp+pOutros+cgPct;
 
   const pPessoal=gv('mm-folha')/100,pFixas=gv('mm-alug')/100,pSede=gv('mm-ee')/100;
   const pIndust=gv('mm-manut')/100,pVendas=gv('mm-depre')/100,pVeic=gv('mm-honor')/100,pOutfx=gv('mm-outf')/100;
@@ -2656,19 +3067,9 @@ function calcPV(modo){
     // PV digitado em R$/kg → calcular margem reversa
     const peso=gv('peso-saco')||25;
     const pvSacoMan=pvManual*peso;
-    const cmvSacoTmp=(()=>{
-      const batida=gv('batida')||1000,sacos=batida/peso;
-      const emb=gv('emb-custo'),cifBat=gv('cif-mo')*(1+gv('cif-enc')/100)+gv('cif-ee')+gv('cif-out');
-      let mpBat=0; ings.forEach(ing=>{const c=MPcusto[ing.cod]!==undefined?MPcusto[ing.cod]:0;mpBat+=ing.qtd*(c/1000);});
-      const mpSaco=sacos>0?mpBat/sacos:0,cifSaco=sacos>0?cifBat/sacos:0;
-      return mpSaco+emb+cifSaco;
-    })();
+    const cmvSacoTmp=cmvSaco; /* mesmo CMV do topo (antes era uma copia da conta, que divergia quando a Ficha mudava) */
     // PV = CMV × 1/(1-enc) → margem = 1 - CMV/PV - encA - encB
-    const encATemp=gv('e-icms')/100+(gv('e-pis')/100+gv('e-cofins')/100)*(1-gv('e-icms')/100)
-      +gv('e-comis')/100+gv('e-mkt')/100+gv('e-frete-exp')/100+gv('e-frete-pa')/100
-      +gv('e-entrega')/100+gv('e-inadimp')/100+gv('e-outros')/100
-      +(Math.pow(1+gv('cg-taxa')/100,(gv('cg-dias')||30)/30)-1);
-    const encBTemp=(gv('mm-folha')+gv('mm-alug')+gv('mm-ee')+gv('mm-manut')+gv('mm-depre')+gv('mm-honor')+gv('mm-outf'))/100;
+    const encATemp=encA,encBTemp=encB; /* mesmos totais das secoes A e B (antes era uma copia da conta) */
     const margemReversa=pvSacoMan>0?1-cmvSacoTmp/pvSacoMan-encATemp-encBTemp:0;
     /* Sem max(0,...): margem negativa = prejuizo, e precisa aparecer (antes mostrava 0% e um PV diferente do digitado). */
     pLucro=margemReversa;
@@ -2697,11 +3098,34 @@ function calcPV(modo){
   set('mk-min',fnum(mkMin,4));
   set('r-pv-kg',encSug<1?f3(pvKg):'—');
   set('r-pv-min-kg',encMin<1?f3(pvMinKg):'—');
+  /* Precos tambem por SACO (nucleos: saco = peso real da embalagem, nao o "1 kg" da ficha) */
+  const psV=pesoSacoVenda(),rotSaco='por saco de '+fn(psV,psV%1===0?0:1)+' kg';
+  set('r-pv-saco',encSug<1?f2(pvKg*psV):'—');
+  set('r-pv-min-saco',encMin<1?f2(pvMinKg*psV):'—');
+  document.querySelectorAll('.pv-saco-lbl').forEach(function(e){e.textContent=rotSaco;});
+  document.querySelectorAll('.pv-saco-th').forEach(function(e){e.textContent='PV R$/saco '+fn(psV,psV%1===0?0:1)+' kg';});
+  set('pv-cmv-saco',f2(cmvKg*psV));set('pv-cmv-saco-lbl','CMV / saco '+fn(psV,psV%1===0?0:1)+' kg');
+  var pms=$('pv-manual-saco');if(pms&&document.activeElement!==pms){var pmk=parseFloat($('pv-manual')&&$('pv-manual').value);pms.value=pmk>0?(pmk*psV).toFixed(2):'';}
+  /* Lado a lado: CMV e preco sugerido pelo custo real (Agrotis), com os mesmos percentuais. */
+  (function(){
+    var real=realF,it=$('pv-real-item'),sub=$('r-pv-real');
+    if(!real){if(it)it.style.display='none';if(sub)sub.style.display='none';return;}
+    /* mostra a OUTRA base: se o preco esta pelo real, ao lado vai a tabela, e vice-versa */
+    var rotO=usaRealPV?'tabela':'real',oKg=usaRealPV?cmvKgTab:real.cmvKg,oSaco=usaRealPV?cmvSacoTab:real.cmvSaco;
+    var difC=cmvKg>0?(oKg-cmvKg)/cmvKg*100:0;
+    if(it){it.style.display='';var lb=it.querySelector('.ps-lbl');if(lb)lb.textContent='CMV '+rotO+' / kg';set('pv-cmv-real',f3(oKg)+' ('+(difC>0?'+':'')+fn(difC,1)+'%)');}
+    if(sub){
+      sub.style.display='';
+      if(encSug<1){var pvOKg=peso>0?oSaco*mkSug/peso:0;sub.textContent='pelo custo '+rotO+': '+f3(pvOKg)+'/kg · '+f2(pvOKg*pesoSacoVenda())+'/saco ('+(pvOKg>=pvKg?'+':'')+fn(pvKg>0?(pvOKg-pvKg)/pvKg*100:0,1)+'%)';}
+      else sub.textContent='';
+    }
+  })();
   set('r-mc-sug',fp(pLucro*100,1)+'% s/PV  ('+f3(pvSug*pLucro/peso)+'/kg)');
 
   const fkg=v=>f3(v/peso)+'/kg';
   const piscBase=pvSug*(1-pICMS);
   set('ev-icms',fkg(pvSug*pICMS)); set('ev-pis',fkg(piscBase*pPIS)); set('ev-cofins',fkg(piscBase*pCOFINS));
+  set('ev-irpj',fkg(pvSug*pIRPJ)); set('ev-csll',fkg(pvSug*pCSLL));
   set('ev-pisc-base',f2(piscBase));
   set('ev-comis',fkg(pvSug*pComis)); set('ev-mkt',pMkt>0?fkg(pvSug*pMkt):'—');
   set('ev-frete-exp',pFreteExp>0?fkg(pvSug*pFreteExp):'—'); set('ev-frete-pa',pFretePa>0?fkg(pvSug*pFretePa):'—');
@@ -2716,10 +3140,11 @@ function calcPV(modo){
 
   // Decomposição
   const partes=[
-    {l:'Matérias-primas',v:mpSaco/peso,cor:'#1d4ed8'},
+    {l:'Matérias-primas'+(usaRealPV?' (real)':''),v:mpSacoDecomp/peso,cor:'#1d4ed8'},
     {l:'Embalagem',v:emb/peso,cor:'#d97706'},
     {l:'Transformação (CIF)',v:cifSaco/peso,cor:'#6b7280'},
     {l:'Tributos (ICMS+PIS+COF)',v:pvSug*(pICMS+pPIScasc)/peso,cor:'#dc2626'},
+    {l:'IRPJ + CSLL (presumido)',v:pvSug*(pIRPJ+pCSLL)/peso,cor:'#991b1b'},
     {l:'Despesas comerciais',v:pvSug*(pComis+pMkt+pFreteExp+pFretePa+pEntrega+pInadimp+pOutros)/peso,cor:'#ea580c'},
     {l:'Custo capital de giro',v:pvSug*cgPct/peso,cor:'#0891b2'},
     {l:'Custos fixos (B)',v:pvSug*encB/peso,cor:'#7c3aed'},
@@ -2747,7 +3172,7 @@ function calcPV(modo){
       <td>${fn(m,1)}%${isObj?' ★':isMin?' ▲':''}</td>
       <td>${fnum(mk,4)}</td>
       <td>${f3(pvk)}</td>
-      <td>${fn(m,1)}%</td>
+      <td>${f2(pvk*psV)}</td>
       <td>${deltaStr}</td>
     </tr>`;
   }).join('');
@@ -2871,7 +3296,7 @@ function salvarEdicoesOP(banco){
     cat:$('p-cat')?.value||'',
     batida:gv('batida')||1000,
     pesoSaco:gv('peso-saco')||25,
-    emb:{custo:gv('emb-custo')||0,desc:($('emb-sel')&&$('emb-sel').selectedIndex>=0)?$('emb-sel').options[$('emb-sel').selectedIndex].text:''},
+    emb:{custo:gv('emb-custo')||0,desc:($('emb-sel')&&$('emb-sel').selectedIndex>=0)?$('emb-sel').options[$('emb-sel').selectedIndex].text:'',pesoReal:parseFloat($('emb-peso-real')&&$('emb-peso-real').value)||''},
     ings:novaLista,
     nomeVersao:nomeVersao
   };
@@ -2913,8 +3338,10 @@ function renderOP(){
   set('op-titulo',$('p-nome')?.value||'—');
   set('op-produto',($('p-nome')?.value||'—')+' . Cod. '+($('p-cod')?.value||'—'));
   set('op-bat-kg',fn(batida)+' kg');
-  set('op-sac-bat',fn(sacos,sacos%1===0?0:1)+' sc');
-  set('op-sac-tot',fn(sacos*nBat,(sacos*nBat)%1===0?0:1)+' sc');
+  /* Sacos/embalagens reais: nos nucleos (peso por saco = 1 kg) contava 1 saco por kg (1.000 sacos numa batida de 1.000 kg). */
+  const sE=sacosEmbOP();
+  set('op-sac-bat',fn(sE,sE%1===0?0:1)+' sc');
+  set('op-sac-tot',fn(sE*nBat,(sE*nBat)%1===0?0:1)+' sc');
   set('op-kg-tot',fn(batida*nBat)+' kg');
   var pbCalc=calcularProteinaBruta({batida:batida,ings:ings});
   if(!pbCalc){
@@ -2930,8 +3357,8 @@ function renderOP(){
   const embSel=$('emb-sel');
   var opEmbSel=$('op-emb-sel');
   if(opEmbSel&&embSel&&opEmbSel.selectedIndex!==embSel.selectedIndex)opEmbSel.selectedIndex=embSel.selectedIndex;
-  set('op-emb-bat',fn(sacos,sacos%1===0?0:1)+' un');
-  set('op-emb-tot',fn(sacos*nBat,(sacos*nBat)%1===0?0:1)+' un');
+  set('op-emb-bat',fn(sE,sE%1===0?0:1)+' un');
+  set('op-emb-tot',fn(sE*nBat,(sE*nBat)%1===0?0:1)+' un');
   const tbody=$('op-tbody');
   if(!tbody) return;
   /* Monta lista de trabalho: ings existentes (com troca/qtd aplicadas em memoria) + itens removidos (mostrados riscados) + itens novos */
@@ -3020,8 +3447,10 @@ function renderOPIvinhema(){
   set('opi-titulo',$('p-nome')?.value||'—');
   set('opi-produto',($('p-nome')?.value||'—')+' . Cod. '+($('p-cod')?.value||'—'));
   set('opi-bat-kg',fn(batida)+' kg');
-  set('opi-sac-bat',fn(sacos,sacos%1===0?0:1)+' sc');
-  set('opi-sac-tot',fn(sacos*nBat,(sacos*nBat)%1===0?0:1)+' sc');
+  /* Sacos/embalagens reais: nos nucleos (peso por saco = 1 kg) contava 1 saco por kg (1.000 sacos numa batida de 1.000 kg). */
+  const sE=sacosEmbOP();
+  set('opi-sac-bat',fn(sE,sE%1===0?0:1)+' sc');
+  set('opi-sac-tot',fn(sE*nBat,(sE*nBat)%1===0?0:1)+' sc');
   set('opi-kg-tot',fn(batida*nBat)+' kg');
   var pbCalcI=calcularProteinaBruta({batida:batida,ings:ings});
   if(!pbCalcI){
@@ -3037,8 +3466,8 @@ function renderOPIvinhema(){
   const embSel=$('emb-sel');
   var opiEmbSel=$('opi-emb-sel');
   if(opiEmbSel&&embSel&&opiEmbSel.selectedIndex!==embSel.selectedIndex)opiEmbSel.selectedIndex=embSel.selectedIndex;
-  set('opi-emb-bat',fn(sacos,sacos%1===0?0:1)+' un');
-  set('opi-emb-tot',fn(sacos*nBat,(sacos*nBat)%1===0?0:1)+' un');
+  set('opi-emb-bat',fn(sE,sE%1===0?0:1)+' un');
+  set('opi-emb-tot',fn(sE*nBat,(sE*nBat)%1===0?0:1)+' un');
   var itensExistentes2=ings.map(function(ing){
     var removido=opRemovidos.has(ing.cod);
     var codEfetivo=opTrocas[ing.cod]!==undefined?opTrocas[ing.cod]:ing.cod;
@@ -3177,7 +3606,7 @@ function imprimirOP(){
       +'<td style="padding:5px 8px;text-align:right;font-weight:700;color:'+bClr[bk]+'">'+fd2(acBTot*nBat)+' kg</td>'
       +'<td></td></tr>';
   });
-  var qtdEmbBat=sacos, qtdEmbTot=sacos*nBat;
+  var qtdEmbBat=sacosEmbOP(), qtdEmbTot=qtdEmbBat*nBat; /* embalagens reais (nucleos: pelo peso real do saco) */
   linhas+='<tr><td colspan="8" style="padding:6px 10px;background:#fef3c7;color:#92400e;font-size:12px;font-weight:800;text-transform:uppercase;border-top:2px solid #fcd34d;border-bottom:1px solid #fcd34d">EMBALAGEM</td></tr>';
   linhas+='<tr>'
     +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;font-family:monospace;font-size:13px;color:#6b7280">—</td>'
@@ -3228,7 +3657,7 @@ function imprimirOP(){
     +'<div style="grid-column:span 2"><div class="ml">Produto</div><div class="mv" style="font-size:26px;font-weight:800;line-height:1.25">'+codProd+' - '+nomeProd+'</div></div>'
     +'<div><div class="ml">Lote do produto</div><div class="lote-box'+(loteOPraw?'':' lote-box-vazio')+'">'+(loteOPraw||'')+'</div></div>'
     +'<div><div class="ml">N batidas</div><div class="mv" style="font-size:26px;font-weight:800;color:#1d4ed8">'+nBat+'</div></div>'
-    +'<div><div class="ml">Total sacos</div><div class="mv" style="font-size:26px;font-weight:800;color:#1d4ed8">'+fn(sacos*nBat,sacos*nBat%1===0?0:1)+'</div></div>'
+    +'<div><div class="ml">Total sacos</div><div class="mv" style="font-size:26px;font-weight:800;color:#1d4ed8">'+fn(qtdEmbTot,qtdEmbTot%1===0?0:1)+'</div></div>'
     +'</div>'
     +'<div class="meta-sub">'
     +'<span>Batida: '+fd2(batida)+' kg</span>'
@@ -3345,7 +3774,7 @@ function imprimirOPIvinhema(){
       +'<td style="padding:5px 8px;text-align:right;font-weight:700;color:'+bClr[bk]+'">'+fd2(acBTot*nBat)+' kg</td>'
       +'<td></td></tr>';
   });
-  var qtdEmbBat=sacos, qtdEmbTot=sacos*nBat;
+  var qtdEmbBat=sacosEmbOP(), qtdEmbTot=qtdEmbBat*nBat; /* embalagens reais (nucleos: pelo peso real do saco) */
   linhas+='<tr><td colspan="8" style="padding:6px 10px;background:#fef3c7;color:#92400e;font-size:12px;font-weight:800;text-transform:uppercase;border-top:2px solid #fcd34d;border-bottom:1px solid #fcd34d">EMBALAGEM</td></tr>';
   linhas+='<tr>'
     +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;font-family:monospace;font-size:13px;color:#6b7280">—</td>'
@@ -3396,7 +3825,7 @@ function imprimirOPIvinhema(){
     +'<div style="grid-column:span 2"><div class="ml">Produto</div><div class="mv" style="font-size:26px;font-weight:800;line-height:1.25">'+codProd+' - '+nomeProd+'</div></div>'
     +'<div><div class="ml">Lote do produto</div><div class="lote-box'+(loteOPraw?'':' lote-box-vazio')+'">'+(loteOPraw||'')+'</div></div>'
     +'<div><div class="ml">N batidas</div><div class="mv" style="font-size:26px;font-weight:800;color:#1d4ed8">'+nBat+'</div></div>'
-    +'<div><div class="ml">Total sacos</div><div class="mv" style="font-size:26px;font-weight:800;color:#1d4ed8">'+fn(sacos*nBat,sacos*nBat%1===0?0:1)+'</div></div>'
+    +'<div><div class="ml">Total sacos</div><div class="mv" style="font-size:26px;font-weight:800;color:#1d4ed8">'+fn(qtdEmbTot,qtdEmbTot%1===0?0:1)+'</div></div>'
     +'</div>'
     +'<div class="meta-sub">'
     +'<span>Batida: '+fd2(batida)+' kg</span>'
@@ -3481,6 +3910,8 @@ function exportarDaBiblioteca(idx){var obj=biblioteca[idx];if(!obj)return;var cs
 
 function carregarObjFormula(f){
   if(!f)return;
+  /* Em "Todas": ao abrir formula de outra unidade, os custos de MP passam a ser os dela (quem chama ja ajustou fichaBancoAtual). */
+  if(aplicarVisaoCustos()&&$('mp-tbody'))renderMP($('mp-busca')?$('mp-busca').value:'');
   /* Zera TODAS as pendencias da OP (antes so opEdits: trocas/remocoes/novas da formula anterior iam para a nova). */
   opEdits={};opTrocas={};opRemovidos=new Set();opNovos=[];atualizarBarraEdicoesOP();
   $('p-cod').value=f.cod||'';$('p-nome').value=f.nome||'';
@@ -3488,7 +3919,11 @@ function carregarObjFormula(f){
   $('batida').value=f.batida||1000;$('peso-saco').value=f.pesoSaco||25;
   var embSel=$('emb-sel'),found=false;
   var descAlvo=(f.emb&&f.emb.desc)?f.emb.desc.trim():'';
-  if(descAlvo){
+  /* Acha a embalagem pelo codigo/nome exato no banco de MP (antes: primeiro texto que "contivesse" o nome,
+     e "Emb. Rural Sal Mineral" casava com "Emb. Rural Sal Mineral Valvulada"). */
+  var embMP=embMPdaFormula(f);
+  if(embMP){var oM=embSel.querySelector('option[data-cod="'+embMP.cod+'"]');if(oM){oM.selected=true;found=true;}}
+  if(!found&&descAlvo){
     for(var i=0;i<embSel.options.length;i++){
       if(embSel.options[i].text.indexOf(descAlvo)>=0){embSel.selectedIndex=i;found=true;break;}
     }
@@ -3499,13 +3934,24 @@ function carregarObjFormula(f){
   if(!found){embSel.value='custom';$('emb-custo').readOnly=false;}
   var opSel0=$('op-emb-sel');if(opSel0)opSel0.selectedIndex=embSel.selectedIndex;
   var opiSel0=$('opi-emb-sel');if(opiSel0)opiSel0.selectedIndex=embSel.selectedIndex;
-  $('emb-custo').value=f.emb?f.emb.custo:2;
+  /* D4: embalagem do cadastro = custo ATUAL do banco de MP (campo travado, igual ao onEmbSel);
+     "Outro valor" = o custo gravado na formula, editavel. */
+  var gravado=f.emb?(parseFloat(f.emb.custo)||0):2,hintE=$('emb-custo-hint');
+  if(found&&embSel.value!=='custom'){
+    $('emb-custo').value=embSel.value;$('emb-custo').readOnly=true;
+    if(hintE)hintE.textContent=Math.abs((parseFloat(embSel.value)||0)-gravado)>0.004?'custo atual do banco de MP (na fórmula estava R$ '+fn(gravado,2)+')':'custo atual do banco de MP';
+  } else {
+    $('emb-custo').value=gravado;$('emb-custo').readOnly=false;
+    if(hintE)hintE.textContent=descAlvo?'embalagem não encontrada no banco de MP — valor gravado na fórmula':'';
+  }
+  if($('emb-peso-real'))$('emb-peso-real').value=(f.emb&&parseFloat(f.emb.pesoReal)>0)?f.emb.pesoReal:'';
   if(f.cif){$('cif-mo').value=f.cif.mo||0;$('cif-enc').value=f.cif.enc||0;$('cif-ee').value=f.cif.ee||0;$('cif-out').value=f.cif.out||0;}
   ings=(f.ings||[]).map(function(i){return{cod:i.cod,qtd:i.qtd,bal:i.bal||0};});
   renderIngs();
   /* PV fixado e de um produto so: nao levar para a formula que acabou de ser carregada. */
   if($('pv-manual'))$('pv-manual').value='';pvModoAtual='margem';
   carregarPrecificacao(f.cod);
+  aplicarDespesasFixas(); /* % de despesas fixas da unidade da formula (DRE) */
   renderOP();
   renderOPIvinhema();
   atualizarBadgeUnidadeFicha();
@@ -3527,18 +3973,58 @@ function listaTodasFormulas(){
   });
   return todas;
 }
+/* ===== Embalagem: peso real e custo atual (D3/D4, 30/09) =====
+   Peso real: os nucleos sao cadastrados com "peso por saco = 1 kg" (a OP sai por kg), mas a embalagem fisica e um saco
+   de 25-35 kg. Antes o custo da embalagem entrava como 1 saco por kg (37% a 128% de CMV a mais). Ordem usada:
+   1) peso salvo na formula (emb.pesoReal) 2) tamanho cadastrado na Tabela de Precos 3) "NN kg" no nome do produto ou da
+   embalagem 4) padrao de 30 kg, com aviso. Produto com saco "de verdade" (>= 5 kg) usa o proprio peso do saco. */
+const PESO_EMB_PADRAO=30;
+function detectarKgNoTexto(s){
+  var m=[...String(s||'').matchAll(/(\d{1,4}(?:[.,]\d+)?)\s*kg/gi)];
+  if(!m.length)return null;
+  var v=parseFloat(m[m.length-1][1].replace('.','').replace(',','.'));
+  return v>=5?v:null;
+}
+function pesoEmbalagemReal(f){
+  var peso=parseFloat(f&&f.pesoSaco)||0;
+  var salvo=f&&f.emb&&parseFloat(f.emb.pesoReal);
+  if(salvo>0)return {kg:salvo,fonte:'informado'};
+  if(peso>=5)return {kg:peso,fonte:'saco'};
+  var tab=(typeof PT_EMB_SIZES!=='undefined'&&f)?parseFloat(PT_EMB_SIZES[f.cod]):NaN;
+  if(tab>0)return {kg:tab,fonte:'tabela'};
+  var nome=detectarKgNoTexto(f&&f.nome);
+  if(nome)return {kg:nome,fonte:'nome do produto'};
+  var emb=detectarKgNoTexto(f&&f.emb&&f.emb.desc);
+  if(emb)return {kg:emb,fonte:'nome da embalagem'};
+  return {kg:PESO_EMB_PADRAO,fonte:'padrão'};
+}
+/* Embalagem da formula no cadastro de MP (pelo codigo no inicio da descricao ou pelo nome exato). */
+function normDescEmb(s){return String(s||'').replace(/^\s*\d+\s*[—-]\s*/,'').replace(/\s*\(inativa\)\s*$/,'').trim().toLowerCase();}
+function embMPdaFormula(f){
+  if(!f||!f.emb||!f.emb.desc)return null;
+  var mc=String(f.emb.desc).match(/^\s*(\d+)\s*[—-]/);
+  if(mc){var porCod=MPitens.find(function(m){return m.t==='emb'&&m.cod===parseInt(mc[1]);});if(porCod)return porCod;}
+  var alvo=normDescEmb(f.emb.desc);
+  return MPitens.find(function(m){return m.t==='emb'&&normDescEmb(m.d)===alvo;})||null;
+}
+/* Custo ATUAL da embalagem (banco de MP, na unidade da formula). Antes valia o custo gravado na formula no dia em que foi
+   salva: mudar o preco da embalagem no banco de MP nao chegava as formulas. Sem embalagem cadastrada, usa o valor gravado. */
+function custoEmbalagemAtual(f,u){
+  var m=embMPdaFormula(f);
+  if(m){var c=custoMPUnid(m.cod,u||f._banco||bancoDoCat(f.cat));if(c!==undefined&&c!==null)return c;}
+  return (f&&f.emb&&parseFloat(f.emb.custo))||0;
+}
 function custoFormula(f){
   var sacos=(f.batida&&f.pesoSaco)?f.batida/f.pesoSaco:0;
   var mpBat=0;
   (f.ings||[]).forEach(function(ing){
-    var c=MPcusto[ing.cod]!==undefined?MPcusto[ing.cod]:0;
+    /* Custo da MP na unidade da propria formula (Eldorado/Ivinhema), nao na unidade que esta na tela. */
+    var c=custoMPUnid(ing.cod,f._banco||bancoDoCat(f.cat))||0;
     mpBat+=(ing.qtd||0)*(c/1000);
   });
-  var embCusto=(f.emb&&f.emb.custo)?f.emb.custo:0;
-  // pesoReal = peso fisico real da embalagem (ex: saco de 30kg), usado SO pra ratear o custo da embalagem.
-  // Se nao estiver definido, cai no comportamento antigo (usa o proprio pesoSaco).
-  // Isso permite manter pesoSaco=1kg (pra tabela de MP por unidade da OP) sem inflar o custo de embalagem.
-  var pesoEmbReal=(f.emb&&f.emb.pesoReal)?parseFloat(f.emb.pesoReal):f.pesoSaco;
+  var embCusto=custoEmbalagemAtual(f);
+  // Embalagem rateada pelo peso REAL do saco (pesoEmbalagemReal): nucleos com pesoSaco=1 nao inflam mais o custo.
+  var pesoEmbReal=pesoEmbalagemReal(f).kg;
   var custoEmbPorKg=pesoEmbReal>0?(embCusto/pesoEmbReal):0;
   var custoKg=(f.batida>0)?(mpBat/f.batida)+custoEmbPorKg:0;
   var custoSaco=custoKg*(f.pesoSaco||0);
@@ -3564,7 +4050,7 @@ function alterarGrupoFormula(origem,chave,novoCat){
 function formulaFromRemoto(f){
   return {
     cod:codBaseDaChave(f.cod),nome:f.nome,cat:f.cat,batida:parseFloat(f.batida)||0,pesoSaco:parseFloat(f.pesoSaco)||0,
-    emb:{custo:parseFloat(f.embCusto)||0,desc:f.embDesc||''},
+    emb:{custo:parseFloat(f.embCusto)||0,desc:f.embDesc||'',pesoReal:parseFloat(f.embPesoReal)||''},
     cif:{mo:0,enc:0,ee:0,out:0},
     ings:lerIngsJSON(f.ingsJSON),
     _remoto:true,_editadoPor:f.editadoPor,_dataHora:f.dataHora
@@ -3833,9 +4319,10 @@ function apiFetch_(url,opts){
 /* Leitura: tenta ate 2 vezes. Textos limpos antes de ir para a tela (X3). */
 function apiGet(tipo){
   var url=APPS_SCRIPT_URL+'?tipo='+encodeURIComponent(tipo);
-  return apiFetch_(url).then(limparTextosRemotos_).catch(function(err){
+  var guardar=function(d){salvarCopiaLocal_(tipo,d);return d;}; /* copia para a abertura rapida */
+  return apiFetch_(url).then(limparTextosRemotos_).then(guardar).catch(function(err){
     console.warn('Leitura "'+tipo+'" falhou ('+err.message+'), tentando de novo...');
-    return new Promise(function(res){setTimeout(res,3000);}).then(function(){return apiFetch_(url);}).then(limparTextosRemotos_);
+    return new Promise(function(res){setTimeout(res,3000);}).then(function(){return apiFetch_(url);}).then(limparTextosRemotos_).then(guardar);
   });
 }
 /* Gravacao: uma unica tentativa (repetir poderia duplicar linhas na planilha). */
@@ -4050,9 +4537,21 @@ function aplicarUnidade(u,silencioso){
     }
   }
   atualizarBadgeUnidadeFicha();
+  /* Custos de MP da unidade escolhida (ou, em "Todas", da formula aberta na Ficha). */
+  aplicarVisaoCustos(mudou);
+  aplicarDespesasFixas();
+  renderMP($('mp-busca')?$('mp-busca').value:'');recalc();
   if(mudou){
     atualizarSelectFormulas();
     renderCotacoes();
+    /* Tabela de Precos / Custos & Margens / Exportacao / Especial ja abertos: redesenha filtrados pela nova unidade. */
+    if(typeof ptBooted!=='undefined'&&ptBooted){
+      try{ptRenderCatalog();ptRenderDoc();
+        if(ptCurrentSubTab==='margins')ptRenderMargins();
+        if(ptCurrentSubTab==='export'&&typeof ptRenderExport==='function')ptRenderExport();
+        if(ptCurrentSubTab==='especial'&&typeof ptRenderEspecial==='function')ptRenderEspecial();
+      }catch(e){console.error('Erro ao redesenhar a Tabela de Preços:',e);}
+    }
     var ativa=document.querySelector('.tab.active');
     if(ativa&&getComputedStyle(ativa).display==='none')irPara('inicio');
   }
@@ -4102,7 +4601,45 @@ function confirmarNomeUsuario(){
   iniciarAppAposLogin();
 }
 function iniciarAppAposLogin(){
-  atualizarDadosRemotos(false);
+  /* Abertura rapida: mostra na hora a ultima copia (deste navegador) e busca a planilha em seguida. */
+  usarCopiaLocal().then(function(){atualizarDadosRemotos(false);});
+  carregarCustosAgrotis();
+  aplicarDespesasFixas();carregarDespesasFixasRemoto();
+  /* Tamanhos reais de saco cadastrados na Tabela de Precos (ex.: 1593 = 25 kg): antes so eram lidos ao abrir a Tabela,
+     e a Ficha usava o padrao de 30 kg. Usa a ultima copia deste navegador ja na entrada. */
+  try{if(typeof PT_EMB_SIZES!=='undefined'&&!Object.keys(PT_EMB_SIZES).length){PT_EMB_SIZES=JSON.parse(localStorage.getItem(PT_KEY_EMBSIZE)||'{}')||{};}}catch(e){}
+}
+/* ===== Abertura rapida com a ultima copia da planilha =====
+   Cada leitura bem-sucedida fica guardada neste navegador. Ao entrar, a ferramenta usa essa copia na hora
+   (inclusive nos 15-20 s em que o Google "acorda" o script) e troca pelos dados novos assim que chegam.
+   A Tabela de Precos fica de fora: ela ja tem copia propria e so publica depois de carregar da planilha. */
+const COPIA_TIPOS=['formulas','formulas_historico','cotacoes','materiasprimas','nutricaomp'];
+let modoCopia=false,copiaDe=null;
+function salvarCopiaLocal_(tipo,data){
+  if(modoCopia||COPIA_TIPOS.indexOf(tipo)<0)return;
+  try{localStorage.setItem('RURAL_COPIA_'+tipo,JSON.stringify({t:Date.now(),d:data}));}catch(e){}
+}
+function lerCopiaLocal_(tipo){
+  try{var x=JSON.parse(localStorage.getItem('RURAL_COPIA_'+tipo)||'null');return x&&x.d?x:null;}catch(e){return null;}
+}
+function usarCopiaLocal(){
+  var carregadores={formulas:carregarFormulasEditadasRemoto,formulas_historico:carregarHistoricoFormulasRemoto,
+    cotacoes:carregarCotacoesRemoto,materiasprimas:carregarMPRemoto,nutricaomp:carregarNutriRemoto};
+  var copias={},maisAntiga=null;
+  COPIA_TIPOS.forEach(function(k){var c=lerCopiaLocal_(k);if(c){copias[k]=c.d;maisAntiga=maisAntiga===null?c.t:Math.min(maisAntiga,c.t);}});
+  var tipos=Object.keys(copias);
+  if(!tipos.length)return Promise.resolve(false);
+  var apiGetReal=apiGet;
+  modoCopia=true;
+  /* Os carregadores chamam apiGet logo no inicio: troca so durante essas chamadas. */
+  apiGet=function(tipo){return Promise.resolve(JSON.parse(JSON.stringify(copias[tipo])));};
+  var tarefas;
+  try{tarefas=tipos.map(function(k){return carregadores[k]().catch(function(e){console.warn('Cópia local de "'+k+'" não aplicada:',e);});});}
+  finally{apiGet=apiGetReal;}
+  return Promise.all(tarefas).then(function(){
+    modoCopia=false;copiaDe=maisAntiga;atualizarIndicadorUltimaAtualizacao();
+    return true;
+  });
 }
 /* ===== Atualizacao automatica dos dados remotos (evita trabalhar com planilha desatualizada) ===== */
 let ultimaAtualizacaoRemota=null;
@@ -4112,7 +4649,16 @@ function haEdicaoOPPendente(){
 function atualizarIndicadorUltimaAtualizacao(){
   var el=$('ultima-atualizacao');
   if(!el)return;
-  if(!ultimaAtualizacaoRemota){el.textContent='';return;}
+  el.style.color='';el.style.fontWeight='';el.title='';
+  if(!ultimaAtualizacaoRemota){
+    if(copiaDe){
+      var dc=new Date(copiaDe),txt=dc.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+      el.textContent=atualizandoRemoto?('Cópia de '+txt+' · atualizando…'):('⚠️ Cópia de '+txt+' — planilha não respondeu');
+      el.style.color=atualizandoRemoto?'var(--amber)':'var(--red)';el.style.fontWeight='600';
+      el.title='Mostrando a última cópia guardada neste navegador enquanto a planilha não responde. Os dados podem estar desatualizados.';
+    } else el.textContent=atualizandoRemoto?'Carregando dados da planilha…':'';
+    return;
+  }
   var d=new Date(ultimaAtualizacaoRemota);
   var hh=String(d.getHours()).padStart(2,'0'),mm=String(d.getMinutes()).padStart(2,'0');
   el.textContent='Dados de '+hh+':'+mm;
@@ -4125,7 +4671,8 @@ function atualizarDadosRemotos(manual){
   }
   if(atualizandoRemoto){if(manual)toast('Já estou buscando os dados na planilha, aguarde...');return;}
   atualizandoRemoto=true;
-  if(manual)toast('Buscando dados na planilha...');
+  atualizarIndicadorUltimaAtualizacao();
+  if(manual){toast('Buscando dados na planilha...');carregarCustosAgrotis();carregarDespesasFixasRemoto();}
   var tarefas=[
     carregarFormulasEditadasRemoto(),
     carregarHistoricoFormulasRemoto(),
@@ -4148,7 +4695,8 @@ function atualizarDadosRemotos(manual){
     .then(function(res){
       atualizandoRemoto=false;
       var falhas=res.filter(function(ok){return !ok;}).length;
-      if(falhas<res.length){ultimaAtualizacaoRemota=Date.now();atualizarIndicadorUltimaAtualizacao();}
+      if(falhas<res.length){ultimaAtualizacaoRemota=Date.now();}
+      atualizarIndicadorUltimaAtualizacao();
       if(falhas===0){if(manual)toast('✅ Dados atualizados a partir da planilha.');}
       else toast('⚠️ '+falhas+' de '+res.length+' partes não carregaram da planilha. Veja o aviso na tela e clique em 🔄 Atualizar dados para tentar de novo.',7000);
     });
@@ -4171,6 +4719,7 @@ function salvarEdicaoRemota(f,banco){
     pesoSaco:f.pesoSaco,
     embCusto:f.emb?f.emb.custo:0,
     embDesc:f.emb?f.emb.desc:'',
+    embPesoReal:(f.emb&&parseFloat(f.emb.pesoReal)>0)?parseFloat(f.emb.pesoReal):'', /* coluna "embPesoReal" nas abas Formulas/FormulasHistorico */
     ingsJSON:JSON.stringify(f.ings),
     editadoPor:getNomeColaborador(),
     dataHora:new Date().toLocaleString('pt-BR'),
@@ -4280,7 +4829,7 @@ function salvarNovaCotacao(){
     cat:cat,
     batida:batida,
     pesoSaco:peso,
-    embCusto:embItem?MPcusto[embItem.cod]:0,
+    embCusto:embItem?(custoMPUnid(embItem.cod,$('cot-banco').value)||0):0,
     embDesc:embItem?embItem.d:'',
     ingsJSON:JSON.stringify(ingsValidos.map(function(r){return {cod:r.cod,qtd:r.qtd,bal:0};})),
     criadoPor:getNomeColaborador(),
@@ -4346,16 +4895,21 @@ function abrirPrecificarCotacao(id){
   $('pc-banco-nome').textContent=c.banco==='rna'?'RNA - Ivinhema':'RURAL - Eldorado';
   $('pc-cod-real').value='';
   $('pc-nome-real').value=c.nomeGenerico;
-  $('pc-margem').value=30;
+  /* Mesmos % da Formacao do Preco, da unidade da cotacao (antes: tudo 0 e margem 30% sem encargos). */
+  var eC=encargosPadraoUnidade(c.banco);
+  $('pc-margem').value=PRECO_PADRAO['pv-lucro'];
   $('pc-custo-producao-ton').value=0;
   $('pc-custo-frete-ton').value=0;
-  $('pc-comissao').value=0;
-  $('pc-impostos').value=0;
+  $('pc-impostos').value=(eC.trib*100).toFixed(2);
+  $('pc-comissao').value=(eC.comis*100).toFixed(2);
+  $('pc-fretes').value=((eC.fretes+eC.outrosCom)*100).toFixed(2);
+  $('pc-fixas').value=(eC.fixas*100).toFixed(2);
   var ings=lerIngsJSON(c.ingsJSON);
   $('pc-ings-tbody').innerHTML=ings.map(function(i){
     var nome=(MPitens.find(function(m){return m.cod==i.cod;})||{d:'não encontrado'}).d;
     return '<tr><td class="mono">'+i.cod+'</td><td>'+nome+'</td><td class="r">'+fn(i.qtd,2)+'</td></tr>';
   }).join('');
+  atualizarChavesCMV();
   atualizarPrecificacaoCotacao();
   $('precificar-cotacao-modal').style.display='flex';
 }
@@ -4365,11 +4919,13 @@ function atualizarPrecificacaoCotacao(){
   if(!c)return;
   var batida=parseFloat(c.batida)||0,peso=parseFloat(c.pesoSaco)||0;
   var sacos=peso>0?batida/peso:0;
-  var embCusto=parseFloat(c.embCusto)||0;
+  var fC={cod:'',nome:c.nomeGenerico,cat:c.cat,pesoSaco:peso,emb:{custo:parseFloat(c.embCusto)||0,desc:c.embDesc||''}};
+  var embCusto=custoEmbalagemBase(fC,c.banco);                  /* D4 + base do CMV (tabela ou real) */
+  var embSaco=embCusto*peso/(pesoEmbalagemReal(fC).kg||peso||1); /* D3: rateio pelo peso real */
   var ings=lerIngsJSON(c.ingsJSON);
   var mpBat=0;
-  ings.forEach(function(i){var custo=MPcusto[i.cod]!==undefined?MPcusto[i.cod]:0;mpBat+=(i.qtd||0)*(custo/1000);});
-  var custoSaco=sacos>0?(mpBat/sacos)+embCusto:0;
+  ings.forEach(function(i){var custo=custoMPBase(i.cod,c.banco)||0;mpBat+=(i.qtd||0)*(custo/1000);});
+  var custoSaco=sacos>0?(mpBat/sacos)+embSaco:0;
   var custoKg=peso>0?custoSaco/peso:0;
 
   var custoProducaoTon=parseFloat($('pc-custo-producao-ton').value)||0;
@@ -4379,14 +4935,20 @@ function atualizarPrecificacaoCotacao(){
 
   var comissao=(parseFloat($('pc-comissao').value)||0)/100;
   var impostos=(parseFloat($('pc-impostos').value)||0)/100;
+  var fretesPct=(parseFloat($('pc-fretes')&&$('pc-fretes').value)||0)/100;
+  var fixasPct=(parseFloat($('pc-fixas')&&$('pc-fixas').value)||0)/100;
   var margem=(parseFloat($('pc-margem').value)||0)/100;
+  var enc=comissao+impostos+fretesPct+fixasPct;
+  /* Saco de venda: nucleos (ficha em 1 kg) usam o peso real da embalagem */
+  var pesoVenda=peso>=5?peso:(pesoEmbalagemReal(fC).kg||peso);
+  custoTotalSaco=custoTotalKg*pesoVenda;
 
-  var precoKg=custoTotalKg/(1-comissao-impostos-margem);
-  var precoSaco=custoTotalSaco/(1-comissao-impostos-margem);
-  var precoKgM0=custoTotalKg/(1-comissao-impostos);
-  var precoSacoM0=custoTotalSaco/(1-comissao-impostos);
+  var precoKg=(1-enc-margem)>0?custoTotalKg/(1-enc-margem):NaN;
+  var precoSaco=precoKg*pesoVenda;
+  var precoKgM0=(1-enc)>0?custoTotalKg/(1-enc):NaN;
+  var precoSacoM0=precoKgM0*pesoVenda;
 
-  $('pc-custo-kg').value='R$ '+custoKg.toFixed(3).replace('.',',');
+  $('pc-custo-kg').value='R$ '+custoKg.toFixed(3).replace('.',',')+(baseCMVReal()?' (real)':'');
   $('pc-custo-total-kg').value='R$ '+custoTotalKg.toFixed(3).replace('.',',');
   $('pc-custo-total-saco').value='R$ '+custoTotalSaco.toFixed(2).replace('.',',');
   $('pc-preco-kg').value='R$ '+(isFinite(precoKg)&&precoKg>0?precoKg.toFixed(3).replace('.',','):'—');
@@ -4473,7 +5035,7 @@ function carregarFormulaEditadaRemoto(cod,banco){
   fichaBancoAtual=banco;
   var obj={
     cod:codBaseDaChave(f.cod),nome:f.nome,cat:f.cat,batida:parseFloat(f.batida),pesoSaco:parseFloat(f.pesoSaco),
-    emb:{custo:parseFloat(f.embCusto)||0,desc:f.embDesc||''},
+    emb:{custo:parseFloat(f.embCusto)||0,desc:f.embDesc||'',pesoReal:parseFloat(f.embPesoReal)||''},
     cif:{mo:0,enc:0,ee:0,out:0},
     ings:lerIngsJSON(f.ingsJSON)
   };
@@ -4568,7 +5130,7 @@ function salvarEdicaoProduto(){
   delete f._remoto;delete f._editadoPor;delete f._dataHora;
   epAplicarNovaBatida(f,novaBatida);
   f.nome=novoNome;f.pesoSaco=novoPeso;
-  if(embVal){var item=MPitens.find(function(m){return m.cod===parseInt(embVal);});if(item)f.emb={custo:MPcusto[item.cod]||0,desc:item.d};}
+  if(embVal){var item=MPitens.find(function(m){return m.cod===parseInt(embVal);});if(item)f.emb={custo:custoMPUnid(item.cod,banco)||0,desc:item.d};}
   if(!f.emb)f.emb={custo:0,desc:''};
   if(novoPesoReal)f.emb.pesoReal=novoPesoReal; else delete f.emb.pesoReal;
   f.nomeVersao='Editar produto: '+novoNome;
@@ -4608,7 +5170,7 @@ function gravarFormula(){
     cat:$('p-cat')?.value||'',
     batida:gv('batida')||1000,
     pesoSaco:gv('peso-saco')||25,
-    emb:{custo:gv('emb-custo'),desc:$('emb-sel')?.options[$('emb-sel')?.selectedIndex]?.text||''},
+    emb:{custo:gv('emb-custo'),desc:$('emb-sel')?.options[$('emb-sel')?.selectedIndex]?.text||'',pesoReal:parseFloat($('emb-peso-real')?.value)||''},
     ings:ings.map(function(i){return{cod:i.cod,qtd:i.qtd,bal:i.bal||0};})
   };
   toast('Salvando a fórmula "'+cod+'" na planilha ('+(fichaBancoAtual==='rna'?'RNA - Ivinhema':'RURAL - Eldorado')+')...');
@@ -4619,12 +5181,16 @@ function gravarPrecificacao(){
   var banco=carregarBancoPrecos();
   var pvKgEl=$('r-pv-kg');var pvKg=pvKgEl?parseFloat(pvKgEl.textContent.replace('R$ ','').replace(',','.'))||0:0;
   var anterior=banco[cod]?banco[cod].pvKg:null;
-  banco[cod]={cod:cod,icms:gv('e-icms'),pis:gv('e-pis'),cofins:gv('e-cofins'),comis:gv('e-comis'),mkt:gv('e-mkt'),freteExp:gv('e-frete-exp'),fretePa:gv('e-frete-pa'),entrega:gv('e-entrega'),inadimp:gv('e-inadimp'),outros:gv('e-outros'),cgTaxa:gv('cg-taxa'),cgDias:gv('cg-dias'),folha:gv('mm-folha'),alug:gv('mm-alug'),ee:gv('mm-ee'),manut:gv('mm-manut'),depre:gv('mm-depre'),honor:gv('mm-honor'),outfx:gv('mm-outf'),lucro:gv('pv-lucro'),lucroMin:gv('pv-lucro-min'),pvKg:pvKg,pvKgAnterior:anterior,_salvo:new Date().toISOString()};
+  banco[cod]={cod:cod,mkt:gv('e-mkt'),inadimp:gv('e-inadimp'),outros:gv('e-outros'),cgTaxa:gv('cg-taxa'),cgDias:gv('cg-dias'),lucro:gv('pv-lucro'),lucroMin:gv('pv-lucro-min'),pvKg:pvKg,pvKgAnterior:anterior,_salvo:new Date().toISOString()};
   salvarBancoPrecos(banco);mostrarPrecoAnterior(cod);toast('Precificacao de "'+cod+'" gravada! PV='+f3(pvKg)+'/kg');
 }
+/* Parametros por produto que tem padrao: antes, produto sem parametros gravados herdava os do produto anterior. */
+const PRECO_PADRAO={'pv-lucro':15,'pv-lucro-min':8,'e-mkt':0.11,'e-inadimp':0,'e-outros':0,'cg-taxa':1.5,'cg-dias':30};
 function carregarPrecificacao(cod){
+  Object.keys(PRECO_PADRAO).forEach(function(id){if($(id))$(id).value=PRECO_PADRAO[id];});
+  pvLucroAntesDeFixar=null;
   if(!cod)return;var banco=carregarBancoPrecos();var p=banco[cod];if(!p)return;
-  var campos={'e-icms':p.icms,'e-pis':p.pis,'e-cofins':p.cofins,'e-comis':p.comis,'e-mkt':p.mkt,'e-frete-exp':p.freteExp,'e-frete-pa':p.fretePa,'e-entrega':p.entrega,'e-inadimp':p.inadimp,'e-outros':p.outros,'cg-taxa':p.cgTaxa,'cg-dias':p.cgDias,'mm-folha':p.folha,'mm-alug':p.alug,'mm-ee':p.ee,'mm-manut':p.manut,'mm-depre':p.depre,'mm-honor':p.honor,'mm-outf':p.outfx,'pv-lucro':p.lucro,'pv-lucro-min':p.lucroMin};
+  var campos={'e-mkt':p.mkt,'e-inadimp':p.inadimp,'e-outros':p.outros,'cg-taxa':p.cgTaxa,'cg-dias':p.cgDias,'pv-lucro':p.lucro,'pv-lucro-min':p.lucroMin};
   Object.entries(campos).forEach(function(e){if($(e[0])&&e[1]!==undefined)$(e[0]).value=e[1];});
   mostrarPrecoAnterior(cod);toast('Parametros de "'+cod+'" carregados.');
 }
@@ -4707,7 +5273,10 @@ function carregarFormula(idxVal){
 }
 function exportarLocalFormula(cod){var banco=carregarBancoFormulas();var f=banco[cod];if(!f)return;var csv=formulaParaCSV(f);var nomeBase='formula_'+cod+'_'+(f.nome||'').replace(/[^a-zA-Z0-9]/g,'_').slice(0,30);var blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download=nomeBase+'.csv';a.click();URL.revokeObjectURL(url);toast('Exportado: '+nomeBase+'.csv');}
 function removerLocal(cod){if(!confirm('Remover "'+cod+'" do banco local?'))return;var banco=carregarBancoFormulas();delete banco[cod];salvarBancoFormulas(banco);atualizarSelectFormulas();renderBiblioteca();renderBancoFormulas($('banco-busca')?$('banco-busca').value:'');toast('Formula removida do banco local.');}
-function limparPvManual(){var el=$('pv-manual');if(el){el.value='';calcPV('margem');}var badge=$('pv-modo-badge');if(badge)badge.textContent='pela margem';}
+function limparPvManual(){var el=$('pv-manual');if(el){el.value='';
+  /* volta o lucro objetivo que estava antes de fixar o preco (antes ficava o lucro da conta reversa) */
+  if(pvLucroAntesDeFixar!==null&&$('pv-lucro'))$('pv-lucro').value=pvLucroAntesDeFixar;pvLucroAntesDeFixar=null;
+  calcPV('margem');}var badge=$('pv-modo-badge');if(badge)badge.textContent='pela margem';}
 
 function carregarLocal(cod){var banco=carregarBancoFormulas();var f=banco[cod];if(!f){toast('Formula nao encontrada no banco.');return;}fichaBancoAtual='banco';carregarObjFormula(f);carregarPrecificacao(f.cod);toast('Formula "'+f.nome+'" carregada do banco local.');}
 function exportarLocal(cod){exportarLocalFormula(cod);}
@@ -4745,18 +5314,26 @@ function atualizarCotacaoCalc(){
   var peso=parseFloat($('nf-peso').value)||0;
   var sacos=peso>0?batida/peso:0;
   var embVal=$('nf-emb').value;
-  var embCusto=embVal?(MPcusto[parseInt(embVal)]||0):0;
+  var embCusto=embVal?(custoMPUnid(parseInt(embVal),nfBancoAlvo)||0):0;
   var mpBat=0;
   nfIngRows.forEach(function(r){
     if(!r.cod)return;
-    var c=MPcusto[r.cod]!==undefined?MPcusto[r.cod]:0;
+    var c=custoMPUnid(r.cod,nfBancoAlvo)||0;
     mpBat+=(r.qtd||0)*(c/1000);
   });
-  var custoSaco=sacos>0?(mpBat/sacos)+embCusto:0;
+  var fNF={cod:$('nf-cod').value,nome:$('nf-nome').value,pesoSaco:peso,emb:{desc:embVal?($('nf-emb').options[$('nf-emb').selectedIndex]||{}).text:''}};
+  var embSacoNF=embCusto*peso/(pesoEmbalagemReal(fNF).kg||peso||1); /* D3: rateio pelo peso real */
+  var custoSaco=sacos>0?(mpBat/sacos)+embSacoNF:0;
   var custoKg=peso>0?custoSaco/peso:0;
+  /* Mesmos % da Formacao do Preco (unidade do novo produto). Antes: custo / (1 - margem), sem nenhum encargo. */
+  var eNF=encargosPadraoUnidade(nfBancoAlvo);
   var margem=parseFloat($('nf-margem').value)||0;
-  var precoKg=custoKg/(1-margem/100);
-  var precoSaco=custoSaco/(1-margem/100);
+  var divNF=1-eNF.total-margem/100;
+  var pesoVendaNF=peso>=5?peso:(pesoEmbalagemReal(fNF).kg||peso);
+  var precoKg=divNF>0?custoKg/divNF:NaN;
+  var precoSaco=precoKg*pesoVendaNF;
+  custoSaco=custoKg*pesoVendaNF;
+  if($('nf-encargos-info'))$('nf-encargos-info').textContent='Preço = custo ÷ (1 − encargos '+NOME_UNIDADE[eNF.u]+' '+fn(eNF.total*100,1)+'% − lucro), mesmos % da Formação do Preço'+(peso<5?' · saco de '+fn(pesoVendaNF,0)+' kg':'')+'.';
   $('nf-custo-kg').value='R$ '+custoKg.toFixed(3).replace('.',',');
   $('nf-custo-saco').value='R$ '+custoSaco.toFixed(2).replace('.',',');
   $('nf-preco-kg').value='R$ '+(isFinite(precoKg)?precoKg.toFixed(3).replace('.',','):'—');
@@ -4783,7 +5360,7 @@ function abrirNovaFormula(banco){
   $('nf-nome').value='';
   $('nf-batida').value=1000;
   $('nf-peso').value=30;
-  $('nf-margem').value=30;
+  $('nf-margem').value=PRECO_PADRAO['pv-lucro'];
   $('nf-modo-cotacao').checked=false;
   $('nf-cat').innerHTML=gruposParaBanco(banco).map(function(g){return '<option>'+g+'</option>';}).join('');
   popularSelectEmbNF();
@@ -4912,7 +5489,7 @@ function salvarNovaFormula(){
   var novaFormula={
     cod:cod,nome:nome,cat:cat,batida:batida,pesoSaco:peso,
     _origem:nfBancoAlvo==='rna'?'rna':'importado',
-    emb:{custo:embItem?MPcusto[embItem.cod]:0,desc:embItem?embItem.d:''},
+    emb:{custo:embItem?(custoMPUnid(embItem.cod,nfBancoAlvo)||0):0,desc:embItem?embItem.d:''},
     cif:{mo:0,enc:0,ee:0,out:0},
     ings:ingsValidos.map(function(r){return {cod:r.cod,qtd:r.qtd,bal:0};})
   };
@@ -5193,15 +5770,19 @@ function ptToggleActive(itemId){
 }
 
 /* ---------- CMV ao vivo, a partir das fichas técnicas já carregadas ---------- */
+/* Separacao por unidade: o indice de produtos (Tabela, Custos & Margens, Exportacao, Especial) so tem as formulas da
+   unidade escolhida no login; em "Todas", as duas (Eldorado tem prioridade quando o codigo existe nas duas).
+   Cada formula leva _banco, para custoFormula usar o custo de MP da unidade dela. */
 function ptFormulaIndex(){
   const idx={};
+  const u=(typeof UNIDADE!=='undefined')?UNIDADE:'todas';
   // listaTodasFormulas() já mescla biblioteca + banco local (RURAL_FORMULAS)
-  if(typeof listaTodasFormulas==='function'){
-    listaTodasFormulas().forEach(f=>{ idx[String(f.cod)]=f; });
+  if(u!=='rna'&&typeof listaTodasFormulas==='function'){
+    listaTodasFormulas().forEach(f=>{ f._banco='banco'; idx[String(f.cod)]=f; });
   }
   // bibliotecaRNA é um array separado (fórmulas Viacampus/RNA) — mescla também
-  if(typeof bibliotecaRNA!=='undefined'){
-    bibliotecaRNA.forEach(f=>{ if(!idx[String(f.cod)]) idx[String(f.cod)]=f; });
+  if(u!=='banco'&&typeof bibliotecaRNA!=='undefined'){
+    bibliotecaRNA.forEach(f=>{ if(!idx[String(f.cod)]) idx[String(f.cod)]=Object.assign({},f,{_banco:'rna'}); });
   }
   // Sobrepoe com a ultima edicao salva na planilha (ings/nome/peso etc. mais recentes),
   // assim a Cotacao Especial e a Tabela de Precos sempre usam a formula "com edicoes"
@@ -5213,14 +5794,43 @@ function ptFormulaIndex(){
     Object.keys(formulasEditadasRemoto).forEach(function(chave){
       var base=codBaseDaChave(chave);
       var ehRna=/-5$/.test(chave);
-      /* Ivinhema so assume o codigo se ele nao for uma formula de Eldorado (mesma regra de prioridade acima). */
-      if(ehRna&&(codsEldorado[base]||(idx[base]&&idx[base]._remotoEldorado)))return;
+      if((u==='banco'&&ehRna)||(u==='rna'&&!ehRna))return; /* edicao da outra unidade */
+      /* Em "Todas", Ivinhema so assume o codigo se ele nao for uma formula de Eldorado (mesma regra de prioridade acima). */
+      if(u==='todas'&&ehRna&&(codsEldorado[base]||(idx[base]&&idx[base]._remotoEldorado)))return;
       var f=formulaFromRemoto(formulasEditadasRemoto[chave]);
+      f._banco=ehRna?'rna':'banco';
       if(!ehRna)f._remotoEldorado=true;
       idx[base]=f;
     });
   }
   return idx;
+}
+/* Em qual unidade um item da Tabela de Precos aparece: onde existe a formula ligada a ele (codigo do item ou vinculo);
+   item sem formula ligada segue a marca (Rural/Copacol = Eldorado; RNA/Viacampus/Alvorada = Ivinhema).
+   Devolve uma funcao (item, marcaPadrao) -> true/false para a unidade ativa. */
+function ptFiltroUnidade(){
+  if(typeof UNIDADE==='undefined'||UNIDADE==='todas')return function(){return true;};
+  var cods={};
+  if(UNIDADE==='banco'){
+    biblioteca.forEach(function(f){cods[String(f.cod)]=1;});
+    Object.keys(carregarBancoFormulas()).forEach(function(c){cods[String(c)]=1;});
+  } else {
+    bibliotecaRNA.forEach(function(f){cods[String(f.cod)]=1;});
+  }
+  var suf=UNIDADE==='rna'?'-5':'-2';
+  Object.keys(formulasEditadasRemoto||{}).forEach(function(k){if(k.slice(-2)===suf)cods[codBaseDaChave(k)]=1;});
+  var outras={};
+  (UNIDADE==='banco'?bibliotecaRNA:biblioteca).forEach(function(f){outras[String(f.cod)]=1;});
+  Object.keys(formulasEditadasRemoto||{}).forEach(function(k){if(/-[25]$/.test(k)&&k.slice(-2)!==suf)outras[codBaseDaChave(k)]=1;});
+  return function(item,marcaPadrao){
+    var cid=String(item.catalogId||item.id||'');
+    var cand=[PT_LINKS[cid],item.code].filter(function(c){return c!==undefined&&c!==null&&String(c).trim()!=='';}).map(String);
+    for(var i=0;i<cand.length;i++){if(cods[cand[i]])return true;}
+    for(var j=0;j<cand.length;j++){if(outras[cand[j]])return false;}  /* formula so da outra unidade */
+    var marca=(cid.indexOf('|')>0?cid.split('|')[0]:'')||marcaPadrao||'';
+    var marcaIvi=/RNA|Viacampus|Alvorada/i.test(marca);
+    return UNIDADE==='rna'?marcaIvi:!marcaIvi;
+  };
 }
 function ptFindFormula(item){
   const idx=ptFormulaIndex();
@@ -5247,7 +5857,7 @@ function ptGetEmbSize(f){
 }
 function ptComputeLiveCost(f){
   if(typeof custoFormula!=='function') return {cmv:null, unidade:'saco'};
-  const embCusto=(f.emb && f.emb.custo) ? f.emb.custo : 0;
+  const embCusto=custoEmbalagemAtual(f); /* D4: custo atual da embalagem */
   if(f.pesoSaco===1){
     // A ficha usa "pesoSaco=1kg" só como referência de custo por kg (útil pra tabela de MP por
     // unidade da OP) — a embalagem real (o saco/bag físico) é bem maior. ptGetEmbSize resolve o
@@ -5447,7 +6057,11 @@ function ptRenderCatalog(){
   const el=$('pt-catalog');
   if(!el) return;
   el.innerHTML='';
+  const visivel=ptFiltroUnidade();
   Object.keys(PT_CATALOG_STATE).forEach(brand=>{
+    /* So grupos/itens da unidade escolhida (em "Todas", tudo). Filtra so a exibicao: nada e apagado da tabela. */
+    const gruposVis=PT_CATALOG_STATE[brand].groups.map(g=>({g:g,items:g.items.filter(it=>visivel(it,brand))})).filter(x=>x.items.length);
+    if(!gruposVis.length) return;
     const bBlock=document.createElement('div');
     bBlock.className='pt-brand-block';
     const bTitle=document.createElement('div');
@@ -5456,12 +6070,12 @@ function ptRenderCatalog(){
     const bBody=document.createElement('div');
     bBody.className='pt-brand-body';
     bTitle.onclick=()=>bBody.classList.toggle('open');
-    PT_CATALOG_STATE[brand].groups.forEach(g=>{
+    gruposVis.forEach(({g,items:itensVis})=>{
       const gRow=document.createElement('div');
       gRow.className='pt-group-row';
       const gHead=document.createElement('div');
       gHead.className='pt-group-head';
-      gHead.innerHTML=`<span>${g.name}<span class="pt-cnt">(${g.items.length})</span></span>`;
+      gHead.innerHTML=`<span>${g.name}<span class="pt-cnt">(${itensVis.length})</span></span>`;
       const addBtn=document.createElement('button');
       addBtn.className='pt-add-btn';
       addBtn.textContent='+ grupo';
@@ -5469,7 +6083,7 @@ function ptRenderCatalog(){
       gHead.appendChild(addBtn);
       const itemList=document.createElement('div');
       itemList.className='pt-item-list';
-      g.items.forEach(it=>{
+      itensVis.forEach(it=>{
         const line=document.createElement('div');
         line.className='pt-item-line';
         line.innerHTML=`<span class="pt-nm">${it.code? '['+it.code+'] ':''}${it.name}</span><span class="pt-pr">${ptFmtPrice(it.price)}</span>`;
@@ -5598,7 +6212,13 @@ function ptRenderDoc(){
   const el=$('pt-doc-scroll');
   if(!el) return;
   el.innerHTML='';
-  ptDoc.forEach(page=>{
+  /* Separacao por unidade: mostra (e imprime) so itens/grupos/paginas da unidade escolhida. Nada e apagado. */
+  const visivel=ptFiltroUnidade();
+  const marcaDaPagina=p=>{const t=String(p.title||'');return /RNA|Viacampus|Alvorada/i.test(t)?'RNA':'Rural';};
+  const itensVisiveis=(p,g)=>g.items.filter(it=>visivel(it,marcaDaPagina(p)));
+  const paginasVis=ptDoc.filter(p=>!p.groups.length||p.groups.some(g=>itensVisiveis(p,g).length));
+  if(paginasVis.length&&!paginasVis.some(p=>p.id===ptActivePageId))ptActivePageId=paginasVis[0].id;
+  paginasVis.forEach(page=>{
     const pageDiv=document.createElement('div');
     pageDiv.className='pt-page'+(page.id===ptActivePageId?' pt-active-target':'');
     pageDiv.onclick=(e)=>{
@@ -5632,6 +6252,8 @@ function ptRenderDoc(){
     }
 
     page.groups.forEach(g=>{
+      const itensVis=itensVisiveis(page,g);
+      if(g.items.length&&!itensVis.length) return; /* grupo so da outra unidade */
       const gDiv=document.createElement('div');
       gDiv.className='pt-doc-group';
       const gHead=document.createElement('div');
@@ -5662,7 +6284,7 @@ function ptRenderDoc(){
         : '<tr><th>Produto</th><th class="pt-pr">Preço Sugerido</th><th style="width:24px"></th></tr>';
       table.appendChild(thead);
       const tbody=document.createElement('tbody');
-      g.items.forEach(it=>{
+      itensVis.forEach(it=>{
         const tr=document.createElement('tr');
         const linked=!!it.catalogId;
         const priceCellHtml=linked
@@ -5708,6 +6330,8 @@ function ptRenderDoc(){
 }
 
 function ptClearDoc(){
+  /* A Tabela e uma so para as duas unidades: com uma unidade escolhida, "limpar tudo" apagaria tambem as paginas da outra. */
+  if(typeof UNIDADE!=='undefined'&&UNIDADE!=='todas'){alert('A Tabela de Preços é compartilhada pelas duas unidades. Para limpar tudo, entre no modo "Todas" (clique em 🏭 no topo).');return;}
   if(!confirm('Isso vai apagar todas as páginas do documento atual. Continuar?')) return;
   ptDoc=[]; ptActivePageId=null; ptRenderDoc(); ptSaveDoc();
 }
@@ -5762,19 +6386,52 @@ function ptExportCustoBaseTon(){
     const idx=ptIndexComCotacoes();
     const f=idx[String(PT_EXPORT.produtoCod)];
     if(f && typeof custoFormula==='function'){
+      if(baseCMVReal()){const rk=cmvRealFormulaKg(f);if(rk)return rk.kg*1000;} /* base do CMV: real (Agrotis) */
       const c=custoFormula(f);
       return (c.custoKg||0)*1000;
     }
   }
   return PT_EXPORT.custoBaseManual||0;
 }
+/* Exportacao: alem dos itens digitados, entram AUTOMATICAMENTE IRPJ+CSLL (presumido) e as despesas fixas da unidade do
+   produto (mesmos % da Formacao do Preco). PIS/COFINS/ICMS nao incidem na exportacao; comissao e fretes seguem na lista. */
+function ptExportUnidade(){
+  if(PT_EXPORT.produtoCod){const f=ptIndexComCotacoes()[String(PT_EXPORT.produtoCod)];if(f)return f._banco==='rna'?'rna':(f._banco||bancoDoCat(f.cat));}
+  return (typeof UNIDADE!=='undefined'&&UNIDADE!=='todas')?UNIDADE:'banco';
+}
+function ptExportItensAuto(){
+  const u=ptExportUnidade(),e=encargosPadraoUnidade(u);
+  return [
+    {id:'auto-ircsll',nome:'IRPJ + CSLL presumido ('+NOME_UNIDADE[u]+')',tipo:'PCT',valor:+(e.irCsll*100).toFixed(4),auto:true},
+    {id:'auto-fixas',nome:'Despesas fixas da unidade ('+NOME_UNIDADE[u]+')',tipo:'PCT',valor:+(e.fixas*100).toFixed(4),auto:true}
+  ];
+}
+/* Uma vez: tira o custo "produção" em R$/ton da lista (a fabricacao agora entra pelas despesas fixas da unidade). */
+function ptExportMigrarProducao(){
+  let mudou=false;
+  if(!PT_EXPORT._semProducao){
+    const antes=PT_EXPORT.itens.length;
+    PT_EXPORT.itens=PT_EXPORT.itens.filter(it=>!(it.tipo==='BRL_TON'&&/produ[cç][aã]o|fabrica/i.test(it.nome||'')));
+    PT_EXPORT._semProducao=true;
+    if(PT_EXPORT.itens.length<antes){mudou=true;toast('Exportação: removido o custo de produção em R$/ton — a fabricação agora entra pelas despesas fixas da unidade.',7000);}
+  }
+  /* "impostos" 4% era o IRPJ/CSLL: agora entra automatico pela unidade (Gilberto 30/09). "Impostos PY" (US$/ton) fica. */
+  if(!PT_EXPORT._semImpostosPct){
+    const antes2=PT_EXPORT.itens.length;
+    PT_EXPORT.itens=PT_EXPORT.itens.filter(it=>!(it.tipo==='PCT'&&/^\s*impostos?\s*$/i.test(it.nome||'')));
+    PT_EXPORT._semImpostosPct=true;
+    if(PT_EXPORT.itens.length<antes2){mudou=true;toast('Exportação: removido o item "impostos" (%) — IRPJ/CSLL agora entra automático pela unidade.',7000);}
+  }
+  if(mudou)ptExportSalvar();
+}
 function ptExportCalcular(){
   const baseTon=ptExportCustoBaseTon();
+  const itensTodos=PT_EXPORT.itens.concat(ptExportItensAuto());
   const cambio=PT_EXPORT.cambio||0;
   const margem=PT_EXPORT.margemDesejada||0;
   let custoFixoRton=baseTon;
   let pctTotal=0;
-  PT_EXPORT.itens.forEach(it=>{
+  itensTodos.forEach(it=>{
     if(it.tipo==='BRL_TON') custoFixoRton+=(it.valor||0);
     else if(it.tipo==='USD_TON') custoFixoRton+=(it.valor||0)*cambio;
     else if(it.tipo==='PCT') pctTotal+=(it.valor||0);
@@ -5783,7 +6440,7 @@ function ptExportCalcular(){
   const divisor=1-(pctTotalComMargem/100);
   const pvValido=divisor>0;
   const totalRton=pvValido?(custoFixoRton/divisor):null;
-  const detalhado=PT_EXPORT.itens.map(it=>{
+  const detalhado=itensTodos.map(it=>{
     let contribRton=0;
     if(it.tipo==='BRL_TON') contribRton=it.valor||0;
     else if(it.tipo==='USD_TON') contribRton=(it.valor||0)*cambio;
@@ -5822,6 +6479,8 @@ function ptExportNomeProduto(){
     const f=idx[String(PT_EXPORT.produtoCod)];
     if(f) return rotuloProduto(f);
     if(String(PT_EXPORT.produtoCod).indexOf('COT:')===0) return 'Cotação não encontrada (já aprovada ou excluída)';
+    /* Produto escolhido por alguem da outra unidade: nao existe aqui, entao o custo cai para o manual. */
+    if(typeof UNIDADE!=='undefined'&&UNIDADE!=='todas') return '⚠️ Produto '+PT_EXPORT.produtoCod+' não é de '+NOME_UNIDADE[UNIDADE]+' — usando o custo base manual. Escolha um produto desta unidade.';
   }
   return 'Custo base manual (sem produto vinculado)';
 }
@@ -5829,8 +6488,8 @@ function ptExportGerarPDF(){
   const r=ptExportCalcular();
   if(!r.pvValido){ alert('A soma dos percentuais + margem está em 100% ou mais. Ajuste antes de gerar o PDF.'); return; }
   const dataHoje=new Date().toLocaleDateString('pt-BR');
-  const linhasCustos=PT_EXPORT.itens.map((it,idx)=>{
-    const d=r.detalhado[idx];
+  const linhasCustos=r.detalhado.map((it,idx)=>{
+    const d=it;
     const tipoTxt=it.tipo==='BRL_TON'?'R$/ton':(it.tipo==='USD_TON'?'US$/ton':'% sobre PV');
     const valorTxt=it.tipo==='USD_TON'?('US$ '+fn(it.valor,2)):(it.tipo==='PCT'?(fn(it.valor,2)+'%'):('R$ '+fn(it.valor,2)));
     return `<tr><td>${it.nome||'(sem nome)'}</td><td>${tipoTxt}</td><td class="r">${valorTxt}</td><td class="r">R$ ${fn(d.contribRton,2)}/ton</td></tr>`;
@@ -5897,6 +6556,7 @@ function ptExportGerarPDF(){
 function ptRenderExport(){
   const cont=$('pt-export-view');
   if(!cont)return;
+  ptExportMigrarProducao();
   const usaFormula=!!PT_EXPORT.produtoCod;
   cont.innerHTML=`
     <div style="max-width:900px;margin:0 auto">
@@ -5906,6 +6566,7 @@ function ptRenderExport(){
           <div style="font-size:12px;color:var(--t3);margin-top:2px">Monte o custo de exportação por tonelada, somando quantos custos quiser — em R$/ton, US$/ton ou % sobre o custo base.</div>
         </div>
         <div style="display:flex;align-items:center;gap:10px">
+          <span class="chave-cmv-slot">${htmlChaveCMV()}</span>
           <span id="pt-exp-save-status" style="font-size:11px;color:var(--t3)"></span>
           <button class="btn btn-primary" onclick="ptExportGerarPDF()">📄 Gerar PDF</button>
         </div>
@@ -5951,6 +6612,11 @@ function ptRenderExport(){
           </div>
           <div style="text-align:right;font-size:11px;color:var(--t3);padding:2px 0 6px">Contribui com <span id="pt-exp-contrib-${it.id}">—</span></div>
           `).join('')}
+        </div>
+        <div style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--border)">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--t3);margin-bottom:4px" title="Mesmos % da Formação do Preço. Para mudar: Formação do Preço → Salvar % da unidade.">Automáticos da unidade (% sobre o preço)</div>
+          ${ptExportItensAuto().map(a=>`<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0"><span>${a.nome}</span><span><b>${fn(a.valor,2)}%</b> · <span id="pt-exp-contrib-${a.id}" style="color:var(--t3)">—</span></span></div>`).join('')}
+          <div style="font-size:11px;color:var(--t3);margin-top:4px">PIS/COFINS e ICMS não incidem na exportação. A fabricação está nas despesas fixas (não lance custo de produção em R$/ton).</div>
         </div>
         <div id="pt-exp-aviso" style="display:none;margin-top:10px;padding:10px 12px;background:var(--amb-lt);border:1px solid var(--amb-bd);color:var(--amber);border-radius:8px;font-size:12px">⚠️ A soma dos percentuais (impostos/comissão) + margem de lucro está em 100% ou mais — não é possível calcular um preço de venda válido. Reduza os percentuais.</div>
         <div style="font-size:11px;color:var(--t3);margin-top:8px">Os custos em R$/ton e US$/ton somam-se ao custo base normalmente. Os percentuais (impostos, comissões) e a margem de lucro incidem sobre o <strong>preço de venda final</strong> — não sobre o custo — por isso o cálculo é "por dentro": PV = (custo base + custos fixos) ÷ (1 − soma dos % − margem).</div>
@@ -6034,29 +6700,35 @@ function ptEspecialCalcular(){
   const sacos=(batida&&pesoSaco)?batida/pesoSaco:0;
   let mpBat=0;
   const linhas=(f.ings||[]).filter(function(i){return i.qtd>0;}).map(function(ing){
-    const custoPadrao=MPcusto[ing.cod]!==undefined?MPcusto[ing.cod]:0;
+    /* Custo de MP da unidade do produto (Eldorado/Ivinhema), nao da unidade que esta na tela. */
+    const custoPadrao=custoMPBase(ing.cod,f._banco||bancoDoCat(f.cat))||0; /* base do CMV: tabela ou real */
     const temOverride=PT_ESPECIAL.mpOverrides[ing.cod]!==undefined;
     const custoUsado=temOverride?PT_ESPECIAL.mpOverrides[ing.cod]:custoPadrao;
     mpBat+=(ing.qtd||0)*(custoUsado/1000);
     const item=MPitens.find(function(m){return m.cod===ing.cod;});
     return {cod:ing.cod,nome:item?item.d:('cod '+ing.cod),qtd:ing.qtd,custoPadrao:custoPadrao,custoUsado:custoUsado,temOverride:temOverride};
   });
-  const embCusto=(f.emb&&f.emb.custo)?f.emb.custo:0;
-  const pesoEmbReal=(f.emb&&f.emb.pesoReal)?parseFloat(f.emb.pesoReal):pesoSaco;
+  const embCusto=custoEmbalagemBase(f);         /* D4 + base do CMV (tabela ou real) */
+  const pesoEmbReal=pesoEmbalagemReal(f).kg;   /* D3: peso real (nucleos) */
   const custoEmbPorKg=pesoEmbReal>0?(embCusto/pesoEmbReal):0;
   const custoMPKg=batida>0?(mpBat/batida)+custoEmbPorKg:0;
   const custoMPSaco=custoMPKg*pesoSaco;
   const custoMPTon=custoMPKg*1000;
-  const custoFixoTon=custoMPTon+(PT_ESPECIAL.custoProducao||0)+(PT_ESPECIAL.frete||0);
-  const pctTotal=(PT_ESPECIAL.impostos||0)+(PT_ESPECIAL.comissao||0);
+  /* Mesmos % da Formacao do Preco (unidade do produto). Antes: R$ 350/ton de producao + frete R$/ton + impostos 7% +
+     comissao 4%, sem despesas fixas. Frete especifico e outros custos (R$/ton) sao extras deste negocio (padrao 0). */
+  const enc=encargosPadraoUnidade(f._banco||bancoDoCat(f.cat));
+  const extrasTon=(parseFloat(PT_ESPECIAL.freteTon)||0)+(parseFloat(PT_ESPECIAL.extraTon)||0);
+  const custoFixoTon=custoMPTon+extrasTon;
+  const lucroAlvo=(PT_ESPECIAL.lucroAlvo!==undefined&&PT_ESPECIAL.lucroAlvo!==null)?parseFloat(PT_ESPECIAL.lucroAlvo):PRECO_PADRAO['pv-lucro'];
+  const pctTotal=enc.total*100+lucroAlvo;
   const divisor=1-(pctTotal/100);
   const pvValido=divisor>0;
   const pvTon=pvValido?(custoFixoTon/divisor):null;
   var teste=null;
   if(PT_ESPECIAL.pvTestadoTon){
     var pvTesteTon=PT_ESPECIAL.pvTestadoTon;
-    var impostosTeste=pvTesteTon*(PT_ESPECIAL.impostos||0)/100;
-    var comissaoTeste=pvTesteTon*(PT_ESPECIAL.comissao||0)/100;
+    var impostosTeste=pvTesteTon*enc.trib;
+    var comissaoTeste=pvTesteTon*(enc.comis+enc.fretes+enc.outrosCom+enc.fixas);
     var margemTesteRton=pvTesteTon-custoFixoTon-impostosTeste-comissaoTeste;
     teste={
       pvTesteTon:pvTesteTon,
@@ -6074,8 +6746,12 @@ function ptEspecialCalcular(){
     pvTon: pvValido?pvTon:null,
     pvKg: pvValido?(pvTon/1000):null,
     pvSaco: pvValido?(pvTon/1000*pesoSaco):null,
-    contribImpostos: pvValido?(pvTon*(PT_ESPECIAL.impostos||0)/100):0,
-    contribComissao: pvValido?(pvTon*(PT_ESPECIAL.comissao||0)/100):0
+    enc:enc, lucroAlvo:lucroAlvo, extrasTon:extrasTon,
+    contribImpostos: pvValido?(pvTon*enc.trib):0,
+    contribComissao: pvValido?(pvTon*enc.comis):0,
+    contribFretes: pvValido?(pvTon*(enc.fretes+enc.outrosCom)):0,
+    contribFixas: pvValido?(pvTon*enc.fixas):0,
+    contribLucro: pvValido?(pvTon*lucroAlvo/100):0
   };
 }
 function ptRenderEspecialCalculo(){
@@ -6100,7 +6776,7 @@ function ptRenderEspecialCalculo(){
       $('pt-esp2-teste-margem-saco').textContent=margemLabel;
       $('pt-esp2-teste-margem-saco').style.color=r.teste.margemTesteRton>=0?'var(--green)':'var(--red)';
       $('pt-esp2-teste-margem-ton').textContent='';
-      $('pt-esp2-teste-encargos').textContent='R$ '+fn(r.teste.impostosTeste+r.teste.comissaoTeste,2)+'/ton (impostos+comissão)';
+      $('pt-esp2-teste-encargos').textContent='R$ '+fn(r.teste.impostosTeste+r.teste.comissaoTeste,2)+'/ton (tributos, comissão, fretes e fixas)';
     } else {
       $('pt-esp2-teste-resultado').style.display='none';
     }
@@ -6162,16 +6838,18 @@ function ptEspecialGerarPDF(){
     <thead><tr><th>Item</th><th class="r">Valor</th><th class="r">Contribuição (R$/ton)</th></tr></thead>
     <tbody>
       <tr><td>Custo de MP (com preços negociados)</td><td class="r">—</td><td class="r">R$ ${fn(r.custoMPTon,2)}/ton</td></tr>
-      <tr><td>Custo de produção</td><td class="r">R$ ${fn(PT_ESPECIAL.custoProducao,2)}/ton</td><td class="r">R$ ${fn(PT_ESPECIAL.custoProducao,2)}/ton</td></tr>
-      <tr><td>Frete</td><td class="r">R$ ${fn(PT_ESPECIAL.frete,2)}/ton</td><td class="r">R$ ${fn(PT_ESPECIAL.frete,2)}/ton</td></tr>
-      <tr><td>Impostos sobre venda</td><td class="r">${fn(PT_ESPECIAL.impostos,2)}%</td><td class="r">R$ ${fn(r.contribImpostos,2)}/ton</td></tr>
-      <tr><td>Comissões sobre venda</td><td class="r">${fn(PT_ESPECIAL.comissao,2)}%</td><td class="r">R$ ${fn(r.contribComissao,2)}/ton</td></tr>
+      <tr><td>Frete específico + outros custos</td><td class="r">R$ ${fn(r.extrasTon,2)}/ton</td><td class="r">R$ ${fn(r.extrasTon,2)}/ton</td></tr>
+      <tr><td>Tributos (PIS/COFINS, IRPJ/CSLL, ICMS)</td><td class="r">${fn(r.enc.trib*100,2)}%</td><td class="r">R$ ${fn(r.contribImpostos,2)}/ton</td></tr>
+      <tr><td>Comissões sobre venda</td><td class="r">${fn(r.enc.comis*100,2)}%</td><td class="r">R$ ${fn(r.contribComissao,2)}/ton</td></tr>
+      <tr><td>Fretes e despesas comerciais</td><td class="r">${fn((r.enc.fretes+r.enc.outrosCom)*100,2)}%</td><td class="r">R$ ${fn(r.contribFretes,2)}/ton</td></tr>
+      <tr><td>Despesas fixas da unidade</td><td class="r">${fn(r.enc.fixas*100,2)}%</td><td class="r">R$ ${fn(r.contribFixas,2)}/ton</td></tr>
+      <tr><td>Lucro líquido</td><td class="r">${fn(r.lucroAlvo,2)}%</td><td class="r">R$ ${fn(r.contribLucro,2)}/ton</td></tr>
     </tbody>
   </table>
 
   <div class="sec-titulo">Resultado</div>
   <div class="kpis">
-    <div class="kpi"><div class="lbl">Custo total (MP+produção+frete)</div><div class="val">R$ ${fn(r.custoFixoTon,2)}/ton</div></div>
+    <div class="kpi"><div class="lbl">Custo (MP + embalagem + extras)</div><div class="val">R$ ${fn(r.custoFixoTon,2)}/ton</div></div>
     <div class="kpi dest"><div class="lbl">Preço de venda por tonelada</div><div class="val">R$ ${fn(r.pvTon,2)}</div></div>
     <div class="kpi dest"><div class="lbl">Preço de venda por saco</div><div class="val">R$ ${fn(r.pvSaco,2)}</div></div>
   </div>
@@ -6197,6 +6875,7 @@ function ptRenderEspecial(){
           <div style="font-size:12px;color:var(--t3);margin-top:2px">Carregue um produto, edite o custo negociado de cada matéria-prima e chegue ao preço de venda para grandes negociações.</div>
         </div>
         <div style="display:flex;align-items:center;gap:10px">
+          <span class="chave-cmv-slot">${htmlChaveCMV()}</span>
           <span id="pt-esp2-save-status" style="font-size:11px;color:var(--t3)"></span>
           <button class="btn btn-primary" onclick="ptEspecialGerarPDF()">📄 Gerar PDF</button>
         </div>
@@ -6232,18 +6911,18 @@ function ptRenderEspecial(){
       <div class="card" style="padding:16px;margin-bottom:16px">
         <label style="font-weight:700;font-size:12px;text-transform:uppercase;color:var(--t3);display:block;margin-bottom:10px">Custos fixos e encargos padrão (editáveis)</label>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
-          <div class="f"><label>Custo de produção (R$/ton)</label><input type="number" step="0.01" min="0" value="${PT_ESPECIAL.custoProducao}" onchange="ptEspecialAtualizarCampo('custoProducao',this.value)"></div>
-          <div class="f"><label>Frete (R$/ton)</label><input type="number" step="0.01" min="0" value="${PT_ESPECIAL.frete}" onchange="ptEspecialAtualizarCampo('frete',this.value)"></div>
-          <div class="f"><label>Impostos sobre venda (%)</label><input type="number" step="0.1" min="0" value="${PT_ESPECIAL.impostos}" onchange="ptEspecialAtualizarCampo('impostos',this.value)"></div>
-          <div class="f"><label>Comissões sobre venda (%)</label><input type="number" step="0.1" min="0" value="${PT_ESPECIAL.comissao}" onchange="ptEspecialAtualizarCampo('comissao',this.value)"></div>
+          <div class="f"><label>Lucro líquido alvo (% s/PV)</label><input type="number" step="0.1" value="${(PT_ESPECIAL.lucroAlvo!==undefined&&PT_ESPECIAL.lucroAlvo!==null)?PT_ESPECIAL.lucroAlvo:PRECO_PADRAO['pv-lucro']}" onchange="ptEspecialAtualizarCampo('lucroAlvo',this.value)"></div>
+          <div class="f"><label>Frete específico deste negócio (R$/ton)</label><input type="number" step="0.01" min="0" value="${PT_ESPECIAL.freteTon||0}" onchange="ptEspecialAtualizarCampo('freteTon',this.value)"></div>
+          <div class="f"><label>Outros custos extras (R$/ton)</label><input type="number" step="0.01" min="0" value="${PT_ESPECIAL.extraTon||0}" onchange="ptEspecialAtualizarCampo('extraTon',this.value)"></div>
+          <div class="f"><label>Encargos da unidade (Formação)</label><div style="font-size:11px;color:var(--t2);padding-top:6px;line-height:1.4" title="Mudar em Formação do Preço → Salvar % da unidade">${(function(){const ff=ptEspecialFormulaAtual();const e=encargosPadraoUnidade(ff?(ff._banco||bancoDoCat(ff.cat)):(UNIDADE==='rna'?'rna':'banco'));return NOME_UNIDADE[e.u]+': tributos '+fn(e.trib*100,1)+'% · comissão '+fn(e.comis*100,1)+'% · fretes/com. '+fn((e.fretes+e.outrosCom)*100,1)+'% · fixas '+fn(e.fixas*100,1)+'%';})()}</div></div>
         </div>
-        <div id="pt-esp2-aviso" style="display:none;margin-top:10px;padding:10px 12px;background:var(--amb-lt);border:1px solid var(--amb-bd);color:var(--amber);border-radius:8px;font-size:12px">⚠️ A soma de impostos + comissão está em 100% ou mais — não é possível calcular um preço de venda válido.</div>
+        <div id="pt-esp2-aviso" style="display:none;margin-top:10px;padding:10px 12px;background:var(--amb-lt);border:1px solid var(--amb-bd);color:var(--amber);border-radius:8px;font-size:12px">⚠️ Encargos da unidade + lucro alvo somam 100% ou mais — não é possível calcular um preço de venda válido.</div>
         <div style="font-size:11px;color:var(--t3);margin-top:8px">Impostos e comissões incidem sobre o <strong>preço de venda final</strong> (cálculo "por dentro"), igual à Precificação Exportação.</div>
       </div>
 
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:12px">
         <div class="pt-exp-kpi"><div class="lbl">Custo de MP (negociado)</div><div class="val" id="pt-esp2-custo-mp">—</div></div>
-        <div class="pt-exp-kpi"><div class="lbl">Custo total (MP+produção+frete)</div><div class="val" id="pt-esp2-custo-fixo">—</div></div>
+        <div class="pt-exp-kpi"><div class="lbl">Custo (MP + embalagem + extras)</div><div class="val" id="pt-esp2-custo-fixo">—</div></div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
         <div class="pt-exp-kpi" style="background:var(--blu-lt);border-color:var(--blu-bd)"><div class="lbl">Preço de venda por tonelada</div><div class="val" id="pt-esp2-pv-ton" style="color:var(--blue);font-size:19px">—</div></div>
@@ -6260,7 +6939,7 @@ function ptRenderEspecial(){
           <div style="font-size:11px;color:var(--t3)">Informe o preço em qualquer um dos dois campos (o outro se ajusta sozinho) e veja quanto de margem sobra, já descontando o custo total e os encargos (impostos + comissão) definidos acima.</div>
         </div>
         <div id="pt-esp2-teste-resultado" style="display:none;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px">
-          <div class="pt-exp-kpi"><div class="lbl">Impostos + comissão nesse preço</div><div class="val" id="pt-esp2-teste-encargos" style="font-size:15px">—</div></div>
+          <div class="pt-exp-kpi"><div class="lbl">Encargos nesse preço</div><div class="val" id="pt-esp2-teste-encargos" style="font-size:15px">—</div></div>
           <div class="pt-exp-kpi"><div class="lbl">Margem em R$</div><div class="val" id="pt-esp2-teste-margem-saco">—</div></div>
           <div class="pt-exp-kpi" style="background:var(--s1)"><div class="lbl">Margem em %</div><div class="val" id="pt-esp2-teste-margem-pct">—</div></div>
         </div>
@@ -6281,7 +6960,7 @@ function ptRenderMargins(){
   toolbar.className='pt-margins-toolbar';
   toolbar.innerHTML=`
     <input type="text" id="pt-margins-search" placeholder="Buscar produto...">
-    <span style="font-size:11px;color:var(--t3);white-space:nowrap">CD+F por tonelada (núcleos): R$ <input type="number" step="1" min="0" id="pt-cdfton-input" style="width:60px;font-size:11px;padding:2px 4px" value="${PT_CDF_TON}"></span>
+    <span class="chave-cmv-slot">${htmlChaveCMV()}</span>
     <div class="pt-legend">
       <span><span class="pt-legend-dot" style="background:#B23A3A"></span>margem negativa</span>
       <span><span class="pt-legend-dot" style="background:#c98a00"></span>abaixo de 8%</span>
@@ -6289,7 +6968,7 @@ function ptRenderMargins(){
       <span><span class="pt-legend-dot" style="background:#2463AA"></span>acima de 20%</span>
       <span><span class="pt-src-tag pt-src-live">CMV vivo</span> = matérias-primas calculadas agora pela ficha técnica</span>
       <span><span class="pt-src-tag pt-src-static">estático</span> = CMV da última planilha de cálculo (sem ficha vinculada)</span>
-      <span>CD+F: R$10 padrão / R$${PT_CDF_TON} para produtos por tonelada (núcleos)</span>
+      <span>Custo total = CMV (MP + embalagem) + os mesmos % da Formação do Preço da unidade (tributos, comissão, fretes, despesas fixas). Margem = lucro líquido sobre o preço da tabela.</span>
     </div>`;
   el.appendChild(toolbar);
 
@@ -6299,11 +6978,12 @@ function ptRenderMargins(){
   function build(filterText){
     contentWrap.innerHTML='';
     const q=(filterText||'').toLowerCase();
+    const visivel=ptFiltroUnidade(); /* so produtos da unidade escolhida (CMV com a formula e o custo de MP dela) */
     Object.keys(PT_CATALOG_STATE).forEach(brand=>{
       const groups=PT_CATALOG_STATE[brand].groups;
       const brandRows=[];
       groups.forEach(g=>{
-        const rows=g.items.filter(it=>!q || it.name.toLowerCase().includes(q) || (it.code||'').includes(q));
+        const rows=g.items.filter(it=>visivel(it,brand)&&(!q || it.name.toLowerCase().includes(q) || (it.code||'').includes(q)));
         if(rows.length) brandRows.push({group:g, rows});
       });
       if(!brandRows.length) return;
@@ -6313,23 +6993,16 @@ function ptRenderMargins(){
       section.innerHTML=`<div class="pt-brand-section-title">${brand}</div>`;
 
       brandRows.forEach(({group:g, rows})=>{
-        const rate=ptGetGroupRate(brand, g.name);
+        /* Mesmos % da Formacao do Preco (unidade do produto). Antes: CD+F + imposto/comissao do grupo. */
+        const eU=encargosPadraoUnidade(unidadeDoItemTabela(null,brand));
+        const pc=x=>fn(x*100,1)+'%';
         const gt=document.createElement('div');
         gt.className='pt-margin-group-title';
         gt.innerHTML=`
           <span>${g.name}</span>
-          <span class="pt-rate-controls">
-            Imposto <input type="number" step="0.1" min="0" class="pt-rate-input" data-field="imposto" value="${rate.imposto}">%
-            &nbsp;&nbsp;Comissão <input type="number" step="0.1" min="0" class="pt-rate-input" data-field="comissao" value="${rate.comissao}">%
+          <span class="pt-rate-controls" style="font-size:11px" title="Percentuais da Formação do Preço (unidade do produto). Para mudar: Formação do Preço → Salvar % da unidade.">
+            ${NOME_UNIDADE[eU.u]}: tributos ${pc(eU.trib)} · comissão ${pc(eU.comis)} · fretes/comerciais ${pc(eU.fretes+eU.outrosCom)} · fixas ${pc(eU.fixas)}
           </span>`;
-        gt.querySelectorAll('.pt-rate-input').forEach(inp=>{
-          inp.addEventListener('change', e=>{
-            const val=parseFloat(e.target.value.replace(',','.'))||0;
-            ptSetGroupRate(brand, g.name, e.target.dataset.field, val);
-            build($('pt-margins-search').value);
-          });
-          inp.addEventListener('click', e=>e.stopPropagation());
-        });
         section.appendChild(gt);
 
         const table=document.createElement('table');
@@ -6338,13 +7011,14 @@ function ptRenderMargins(){
           <th style="width:50px">Ativo</th>
           ${g.hasCode?'<th>Código</th>':''}
           <th>Produto</th>
-          <th>CMV</th>
-          <th>CD+F</th>
-          <th>Imposto (${rate.imposto}%)</th>
-          <th>Comissão (${rate.comissao}%)</th>
+          <th title="MP + embalagem">CMV</th>
+          <th title="PIS/COFINS + IRPJ/CSLL (ICMS 0 dentro do estado)">Tributos</th>
+          <th>Comissão</th>
+          <th title="Fretes, entregas, propaganda, capital de giro">Fretes / comerc.</th>
+          <th title="Despesas fixas da unidade (DRE)">Desp. fixas</th>
           <th>Custo Total</th>
-          <th>Preço Sugerido</th>
-          <th>Lucro</th>
+          <th>Preço (tabela)</th>
+          <th>Lucro líq.</th>
           <th>Margem</th>
         </tr></thead>`;
         const tbody=document.createElement('tbody');
@@ -6358,12 +7032,13 @@ function ptRenderMargins(){
 
           let nomeCell=it.name;
           if(cost.source==='live'){
-            nomeCell+=`<span class="pt-src-tag pt-src-live" title="Ficha: ${cost.formulaCod} — ${cost.formulaNome}">CMV vivo${cost.unidade==='ton'?' /ton':''}</span>`;
+            nomeCell+=`<span class="pt-src-tag pt-src-live" style="cursor:help" title="${ptDescreverCMV(cost).replace(/"/g,'&quot;')}">CMV vivo${cost.unidade==='ton'?' /ton':''}</span>`
+              +`<button type="button" class="action-btn" style="padding:0 5px;font-size:10px;margin-left:3px" title="Abrir esta fórmula na Ficha de Custo" onclick="event.stopPropagation();ptAbrirFormulaNaFicha('${String(cost.formulaCod).replace(/'/g,'')}','${cost.formulaObj&&cost.formulaObj._banco==='rna'?'rna':'banco'}')">🔍</button>`;
             if(cost.embInfo) nomeCell+=ptEmbInfoHtml(cost.embInfo, cost.formulaCod);
           } else if(cost.source==='static'){
-            nomeCell+=`<span class="pt-src-tag pt-src-static">estático</span>`;
+            nomeCell+=`<span class="pt-src-tag pt-src-static" style="cursor:help;background:#fef3c7;color:#92400e" title="CMV FIXO de uma planilha antiga — não acompanha os custos de MP. Vincule a fórmula (campo abaixo do nome) para usar o CMV vivo.">⚠ estático</span>`;
           } else {
-            nomeCell+=`<span class="pt-src-tag pt-src-static">sem custo</span>`;
+            nomeCell+=`<span class="pt-src-tag pt-src-static" title="Sem fórmula vinculada e sem CMV: vincule uma fórmula para calcular.">sem custo</span>`;
           }
           if(!it.code){
             // produto sem código próprio (Viacampus/RNA) — permite vincular manualmente a uma ficha técnica
@@ -6372,22 +7047,31 @@ function ptRenderMargins(){
           cells+=`<td>${nomeCell}</td>`;
 
           if(cost.cmv!==null && cost.cmv!==undefined){
-            const imposto=it.price*(rate.imposto/100);
-            const comissao=it.price*(rate.comissao/100);
-            const custoTotal=(cost.cmv||0)+(cost.cdf||0)+imposto+comissao;
+            const e=encargosPadraoUnidade(unidadeDoItemTabela(cost,brand));
+            /* CMV pela tabela (banco de MP) e pelo real (Agrotis): um move as colunas, o outro aparece embaixo */
+            const rk=(cost.source==='live')?cmvRealFormulaKg(cost.formulaObj):null;
+            const cmvReal=rk?(cost.unidade==='ton'?rk.kg*1000:rk.kg*(parseFloat(cost.formulaObj.pesoSaco)||0)):null;
+            const usaReal=CMV_BASE==='real'&&cmvReal!==null;
+            const cmvBase=usaReal?cmvReal:cost.cmv, cmvOutro=usaReal?cost.cmv:cmvReal;
+            const trib=it.price*e.trib, comissao=it.price*e.comis, fretes=it.price*(e.fretes+e.outrosCom), fixas=it.price*e.fixas;
+            const custoTotal=(cmvBase||0)+trib+comissao+fretes+fixas;
             const lucro=it.price-custoTotal;
             const pct=it.price?(lucro/it.price*100):null;
-            cells+=`<td>${ptFmtPrice(cost.cmv)}</td>`;
-            cells+=`<td class="pt-cdf-edit" contenteditable="true" data-id="${it.id}">${ptFmtPrice(cost.cdf)}</td>`;
-            cells+=`<td>${ptFmtPrice(imposto)}</td>`;
+            const pctOutro=(cmvOutro!==null&&it.price)?((it.price-cmvOutro-it.price*e.total)/it.price*100):null;
+            const rotOutro=usaReal?'tabela':'real';
+            /* preco que da o lucro objetivo padrao (15%), para comparar com o da tabela */
+            const pvObj=(1-e.total-PRECO_PADRAO['pv-lucro']/100)>0?(cmvBase||0)/(1-e.total-PRECO_PADRAO['pv-lucro']/100):null;
+            cells+=`<td>${ptFmtPrice(cmvBase)}${usaReal?' <span style="font-size:9px;color:#1f7a44;font-weight:700">REAL</span>':''}${cmvOutro!==null?`<div style="font-size:10px;color:var(--t3)" title="${rotOutro==='real'?'Pelo custo real (Agrotis, última compra) — '+rk.n+' de '+rk.total+' MPs com compra':'Pelo custo de tabela (banco de MP)'}">${rotOutro}: ${ptFmtPrice(cmvOutro)}</div>`:''}</td>`;
+            cells+=`<td>${ptFmtPrice(trib)}</td>`;
             cells+=`<td>${ptFmtPrice(comissao)}</td>`;
+            cells+=`<td>${ptFmtPrice(fretes)}</td>`;
+            cells+=`<td>${ptFmtPrice(fixas)}</td>`;
             cells+=`<td>${ptFmtPrice(custoTotal)}</td>`;
-            cells+=`<td class="pt-price-edit" contenteditable="true" data-id="${it.id}">${ptFmtPrice(it.price)}</td>`;
+            cells+=`<td class="pt-price-edit" contenteditable="true" data-id="${it.id}" title="${pvObj?'Preço para lucro líquido de '+PRECO_PADRAO['pv-lucro']+'%: '+ptFmtPrice(pvObj):''}">${ptFmtPrice(it.price)}</td>`;
             cells+=`<td>${ptFmtPrice(lucro)}</td>`;
-            cells+=`<td>${pct!==null?`<span class="pt-pct-pill ${ptPctClass(pct)}">${pct.toFixed(1)}%</span>`:'<span class="pt-na">informe um preço</span>'}</td>`;
+            cells+=`<td>${pct!==null?`<span class="pt-pct-pill ${ptPctClass(pct)}">${pct.toFixed(1)}%</span>`:'<span class="pt-na">informe um preço</span>'}${pctOutro!==null?`<div style="font-size:10px;color:var(--t3)">${rotOutro}: <b style="color:${pctOutro<0?'var(--red)':'var(--t2)'}">${pctOutro.toFixed(1)}%</b></div>`:''}${pvObj?`<div style="font-size:10px;color:var(--t3)">p/ ${PRECO_PADRAO['pv-lucro']}%: ${ptFmtPrice(pvObj)}</div>`:''}</td>`;
           } else {
-            const cdfCell = (cost.cdf!==null && cost.cdf!==undefined) ? ptFmtPrice(cost.cdf) : '—';
-            cells+=`<td class="pt-na">—</td><td class="pt-cdf-edit" contenteditable="true" data-id="${it.id}">${cdfCell}</td><td class="pt-na">—</td><td class="pt-na">—</td><td class="pt-na">—</td>`;
+            cells+=`<td class="pt-na">—</td><td class="pt-na">—</td><td class="pt-na">—</td><td class="pt-na">—</td><td class="pt-na">—</td><td class="pt-na">—</td>`;
             cells+=`<td class="pt-price-edit" contenteditable="true" data-id="${it.id}">${ptFmtPrice(it.price)}</td><td class="pt-na">—</td><td class="pt-na">vincule uma ficha</td>`;
           }
           tr.innerHTML=cells;
@@ -6469,31 +7153,18 @@ function ptRenderMargins(){
       extraSection.appendChild(extraBody);
 
       Object.keys(extraFiltered).forEach(cat=>{
-        const rate=ptGetGroupRate('Banco', cat);
         const gt=document.createElement('div');
         gt.className='pt-margin-group-title';
-        gt.innerHTML=`
-          <span>${cat}<span class="pt-cnt" style="opacity:.8"> (${extraFiltered[cat].length})</span></span>
-          <span class="pt-rate-controls">
-            Imposto <input type="number" step="0.1" min="0" class="pt-rate-input" data-field="imposto" value="${rate.imposto}">%
-            &nbsp;&nbsp;Comissão <input type="number" step="0.1" min="0" class="pt-rate-input" data-field="comissao" value="${rate.comissao}">%
-          </span>`;
-        gt.querySelectorAll('.pt-rate-input').forEach(inp=>{
-          inp.addEventListener('change', e=>{
-            const val=parseFloat(e.target.value.replace(',','.'))||0;
-            ptSetGroupRate('Banco', cat, e.target.dataset.field, val);
-            build($('pt-margins-search').value);
-          });
-          inp.addEventListener('click', e=>e.stopPropagation());
-        });
+        gt.innerHTML=`<span>${cat}<span class="pt-cnt" style="opacity:.8"> (${extraFiltered[cat].length})</span></span>
+          <span class="pt-rate-controls" style="font-size:11px">mesmos % da Formação do Preço (unidade do produto)</span>`;
         extraBody.appendChild(gt);
 
         const table=document.createElement('table');
         table.className='pt-margins-table';
         table.innerHTML=`<thead><tr>
-          <th>Código</th><th>Produto</th><th>CMV</th><th>CD+F</th>
-          <th>Imposto (${rate.imposto}%)</th><th>Comissão (${rate.comissao}%)</th>
-          <th>Custo Total</th><th>Preço (opcional)</th><th>Lucro</th><th>Margem</th>
+          <th>Código</th><th>Produto</th><th title="MP + embalagem">CMV</th><th>Tributos</th><th>Comissão</th>
+          <th>Fretes / comerc.</th><th>Desp. fixas</th>
+          <th>Custo Total</th><th>Preço (opcional)</th><th>Lucro líq.</th><th>Margem</th>
         </tr></thead>`;
         const tbody=document.createElement('tbody');
         extraFiltered[cat].forEach(f=>{
@@ -6505,22 +7176,22 @@ function ptRenderMargins(){
           if(cost.embInfo) nomeCell+=ptEmbInfoHtml(cost.embInfo, f.cod);
           let cells=`<td>${f.cod}</td><td>${nomeCell}</td>`;
           if(cost.cmv!==null){
-            const cdf = cost.cdf!==null && cost.cdf!==undefined ? cost.cdf : 0;
-            const imposto=price*(rate.imposto/100);
-            const comissao=price*(rate.comissao/100);
-            const custoTotal=cost.cmv+cdf+imposto+comissao;
+            const e=encargosPadraoUnidade(f._banco||bancoDoCat(f.cat));
+            const trib=price*e.trib, comissao=price*e.comis, fretes=price*(e.fretes+e.outrosCom), fixas=price*e.fixas;
+            const custoTotal=cost.cmv+trib+comissao+fretes+fixas;
             const lucro=price-custoTotal;
             const pct=price?(lucro/price*100):null;
             cells+=`<td>${ptFmtPrice(cost.cmv)}</td>`;
-            cells+=`<td>${cost.cdf!==null && cost.cdf!==undefined ? ptFmtPrice(cost.cdf) : '—'}</td>`;
-            cells+=`<td>${price?ptFmtPrice(imposto):'—'}</td>`;
+            cells+=`<td>${price?ptFmtPrice(trib):'—'}</td>`;
             cells+=`<td>${price?ptFmtPrice(comissao):'—'}</td>`;
+            cells+=`<td>${price?ptFmtPrice(fretes):'—'}</td>`;
+            cells+=`<td>${price?ptFmtPrice(fixas):'—'}</td>`;
             cells+=`<td>${price?ptFmtPrice(custoTotal):'—'}</td>`;
             cells+=`<td class="pt-price-edit" contenteditable="true" data-cod="${f.cod}">${price?ptFmtPrice(price):''}</td>`;
             cells+=`<td>${price?ptFmtPrice(lucro):'—'}</td>`;
             cells+=`<td>${pct!==null?`<span class="pt-pct-pill ${ptPctClass(pct)}">${pct.toFixed(1)}%</span>`:'<span class="pt-na">informe um preço</span>'}</td>`;
           } else {
-            cells+=`<td class="pt-na">—</td><td class="pt-na">—</td><td class="pt-na">—</td><td class="pt-na">—</td><td class="pt-na">—</td>`;
+            cells+=`<td class="pt-na">—</td><td class="pt-na">—</td><td class="pt-na">—</td><td class="pt-na">—</td><td class="pt-na">—</td><td class="pt-na">—</td>`;
             cells+=`<td class="pt-price-edit" contenteditable="true" data-cod="${f.cod}">${price?ptFmtPrice(price):''}</td><td class="pt-na">—</td><td class="pt-na">—</td>`;
           }
           tr.innerHTML=cells;
@@ -6547,12 +7218,7 @@ function ptRenderMargins(){
 
   build('');
   $('pt-margins-search').addEventListener('input', e=>build(e.target.value));
-  $('pt-cdfton-input').addEventListener('change', e=>{
-    const val=parseFloat(e.target.value.replace(',','.'))||0;
-    PT_CDF_TON=val;
-    ptSaveCdfTon();
-    build($('pt-margins-search').value);
-  });
+
 }
 
 /* O Construtor usa altura fixa (catalogo e documento rolam separados). Antes era "tela - 96px", mas o cabecalho
