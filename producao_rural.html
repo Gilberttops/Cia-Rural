@@ -274,6 +274,11 @@ table input:focus{border-color:var(--blue)}
 .pt-subtab{border:1px solid var(--bd2);background:#fff;color:var(--t2);padding:7px 14px;border-radius:7px;font-size:12.5px;cursor:pointer;font-family:inherit}
 .pt-subtab.active{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600}
 .pt-builder-view{flex:1;display:flex;overflow:hidden}
+/* Fora do Construtor, a caixa do construtor sai do layout (antes ficava vazia ocupando metade da tela) e a pagina
+   rola normalmente, sem a altura fixa que cortava Custos & Margens / Exportacao / Cotacao Especial. */
+.pt-builder-view.pt-hidden{display:none}
+.pt-shell.pt-flow{height:auto !important;min-height:0}
+.pt-shell.pt-flow #pt-margins-view,.pt-shell.pt-flow #pt-export-view,.pt-shell.pt-flow #pt-especial-view{flex:none;overflow:visible}
 #pt-sidebar{width:300px;min-width:260px;background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
 .pt-sidebar-hdr{padding:12px 14px;border-bottom:1px solid var(--border)}
 #pt-catalog{flex:1;overflow-y:auto;padding:8px}
@@ -447,7 +452,7 @@ table.ptp-table td.ptp-price{color:var(--blue);font-weight:700;text-align:center
   <div style="display:flex;align-items:center;gap:10px">
     <span id="ultima-atualizacao" style="font-size:11px;color:var(--t3)"></span>
     <button class="btn btn-ghost" style="padding:5px 11px;font-size:11px" onclick="atualizarDadosRemotos(true)" title="Buscar a versão mais recente de fórmulas, matérias-primas, cotações e composição nutricional na planilha">🔄 Atualizar dados</button>
-    <span class="hdr-tag">base MP: 16/03/2026</span>
+    <span class="hdr-tag" id="base-mp-tag" title="Data da última alteração de custo de matéria-prima na planilha">custos MP: carregando...</span>
   </div>
 </div>
 
@@ -1967,7 +1972,7 @@ function addMP(){
   const cod=parseInt(prompt('Codigo:'));
   if(!cod||MPcusto[cod]!==undefined){alert('Invalido.');return;}
   toast('Verificando na planilha se este código já existe...');
-  fetch(APPS_SCRIPT_URL+'?tipo=materiasprimas').then(function(r){return r.json();}).then(function(data){
+  apiGet('materiasprimas').then(function(data){
     if(data&&data[String(cod)]){
       alert('Este código já existe na planilha (cadastrado por outro colaborador enquanto você estava com a tela aberta). Escolha outro código.');
       return;
@@ -2092,23 +2097,24 @@ function salvarNutriRemoto(cod,lista){
     return {cod:String(cod),descricao:item?item.d:'',nutriente:n.nome,valorReferencia:n.ref,valorReal:(n.real===null||n.real===undefined?'':n.real),unidade:n.unidade,editadoPor:nomeColab,dataHora:dataHora};
   });
   var payload={tipo:'nutri',cod:String(cod),_excluirTodosDoCod:true,linhas:linhas};
-  fetch(APPS_SCRIPT_URL,{
-    method:'POST',
-    headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify(payload)
-  }).then(function(){
-    syncStatus='ok';atualizarIndicadorSync();
+  return apiPost(payload).then(function(){
+    syncGravou();
+    return true;
   }).catch(function(err){
-    console.error('Erro ao salvar composicao na planilha:',err);
-    syncStatus='erro';atualizarIndicadorSync();
-    toast('Nao foi possivel salvar na planilha (sem internet?). A composicao ficou so neste navegador.');
+    syncFalhouGravar('a composição nutricional da MP '+cod,err);
+    return false;
   });
 }
 function carregarNutriRemoto(){
-  fetch(APPS_SCRIPT_URL+'?tipo=nutricaomp')
-    .then(function(r){return r.json();})
+  syncMarcar('nutri','carregando');
+  return apiGet('nutricaomp')
     .then(function(data){
       data=data||{};
+      /* So aceita resposta no formato esperado ({cod:[linhas]}); qualquer outra coisa e tratada como falha,
+         para nao disparar a "auto-semeadura" abaixo, que apagaria as composicoes editadas. */
+      if(typeof data!=='object'||Array.isArray(data)||Object.keys(data).some(function(k){return !Array.isArray(data[k]);})){
+        throw new Error('resposta inesperada da planilha');
+      }
       Object.keys(data).forEach(function(codStr){
         var linhas=data[codStr]||[];
         MPNutri[parseInt(codStr)]=linhas.map(function(r){
@@ -2116,14 +2122,23 @@ function carregarNutriRemoto(){
         }).filter(function(n){return n.nome;});
       });
       /* Auto-semeia a planilha com os valores confirmados por laudo que ainda nao estao la */
+      /* No maximo 1 vez por codigo em cada navegador: evita uma rajada de gravacoes a cada abertura
+         (mesmo problema que sobrecarregava a planilha com as MPs). */
+      var semeados={};try{semeados=JSON.parse(localStorage.getItem('RURAL_NUTRI_SEMEADOS')||'{}');}catch(e){}
       Object.keys(MPNutriPadrao).forEach(function(codStr){
         var cod=parseInt(codStr);
-        if(!data[codStr]){salvarNutriRemoto(cod,MPNutriPadrao[codStr]);}
+        if(!data[codStr]&&!semeados[codStr]){
+          semeados[codStr]=1;
+          if(MPNutri[cod]===undefined)MPNutri[cod]=MPNutriPadrao[codStr];
+          salvarNutriRemoto(cod,MPNutriPadrao[codStr]);
+        }
       });
+      try{localStorage.setItem('RURAL_NUTRI_SEMEADOS',JSON.stringify(semeados));}catch(e){}
+      syncMarcar('nutri','ok');
       renderMP($('mp-busca')?$('mp-busca').value:'');
       renderComposicaoTabela();
     })
-    .catch(function(err){console.error('Erro ao carregar composicao nutricional da planilha:',err);});
+    .catch(function(err){console.error('Erro ao carregar composicao nutricional da planilha:',err);syncMarcar('nutri','erro',err.message);throw err;});
 }
 /* Calcula os niveis de garantia por kg de produto final, a partir dos ingredientes de uma formula */
 function calcularNiveisGarantia(formula){
@@ -2301,46 +2316,77 @@ function salvarMPRemoto(cod,desc,custo,tipo){
     editadoPor:getNomeColaborador(),
     dataHora:new Date().toLocaleString('pt-BR')
   };
-  /* Atualiza a data de "ultima alteracao" na hora, sem esperar a resposta do servidor. */
+  var anterior=mpRemoto[payload.cod];
   mpRemoto[payload.cod]=payload;
+  mpGravacoesPendentes[payload.cod]=(mpGravacoesPendentes[payload.cod]||0)+1;
   if($('mp-tbody'))renderMP($('mp-busca')?$('mp-busca').value:'');
-  fetch(APPS_SCRIPT_URL,{
-    method:'POST',
-    headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify(payload)
-  }).then(function(){
-    syncStatus='ok';atualizarIndicadorSync();
+  return apiPost(payload).then(function(){
+    syncGravou();
+    atualizarEtiquetaBaseMP(false);
+    return true;
   }).catch(function(err){
-    console.error('Erro ao salvar MP na planilha:',err);
-    syncStatus='erro';atualizarIndicadorSync();
-    toast('Nao foi possivel salvar na planilha (sem internet?). A alteracao ficou so neste navegador.');
+    if(anterior)mpRemoto[payload.cod]=anterior;else delete mpRemoto[payload.cod];
+    if($('mp-tbody'))renderMP($('mp-busca')?$('mp-busca').value:'');
+    syncFalhouGravar('o custo da MP '+payload.cod+' ('+desc+')',err);
+    return false;
+  }).finally(function(){
+    mpGravacoesPendentes[payload.cod]--;
+    if(mpGravacoesPendentes[payload.cod]<=0)delete mpGravacoesPendentes[payload.cod];
   });
 }
+/* MPs com gravacao ainda em andamento: a leitura da planilha nao pode sobrescreve-las com o valor antigo. */
+let mpGravacoesPendentes={};
+/* Etiqueta do cabecalho: antes era o texto fixo "base MP: 16/03/2026". Agora mostra a ultima alteracao real. */
+function atualizarEtiquetaBaseMP(falhou){
+  var el=$('base-mp-tag');if(!el)return;
+  if(falhou&&!Object.keys(mpRemoto).length){
+    el.textContent='custos MP: planilha não carregou';
+    el.title='Os custos exibidos são os embutidos no arquivo e podem estar desatualizados. Clique em 🔄 Atualizar dados.';
+    el.style.color='var(--amber)';
+    return;
+  }
+  var maisRecente=null;
+  Object.keys(mpRemoto).forEach(function(cod){
+    var r=mpRemoto[cod],t=parseDataHoraBr_(r&&r.dataHora);
+    if(t&&(!maisRecente||t>maisRecente.t))maisRecente={t:t,r:r,cod:cod};
+  });
+  if(!maisRecente){el.textContent='custos MP: sem data';el.title='';el.style.color='';return;}
+  el.textContent='custos MP: '+fmtDataHoraBr(maisRecente.r.dataHora);
+  el.title='Última alteração de custo de matéria-prima: '+(maisRecente.r.desc||('MP '+maisRecente.cod))+(maisRecente.r.editadoPor?' — por '+maisRecente.r.editadoPor:'');
+  el.style.color='';
+}
 function carregarMPRemoto(){
-  fetch(APPS_SCRIPT_URL+'?tipo=materiasprimas')
-    .then(function(r){return r.json();})
+  syncMarcar('mp','carregando');
+  return apiGet('materiasprimas')
     .then(function(data){
-      mpRemoto=data||{};
-      Object.keys(mpRemoto).forEach(function(codStr){
-        var r=mpRemoto[codStr];
+      data=data||{};
+      Object.keys(data).forEach(function(codStr){
+        if(mpGravacoesPendentes[codStr])return;
+        var r=data[codStr];
+        mpRemoto[codStr]=r;
         var cod=parseInt(codStr);
         var custo=parseFloat(r.custo)||0;
         var item=MPitens.find(function(m){return m.cod===cod;});
         /* Nunca deixa a planilha rebaixar uma embalagem pra "mp" por engano:
            confia no nome (classificarTipoMP) e no tipo local ja conhecido, alem do campo da planilha */
-        var tipo=(r.tipoMp==='emb'||classificarTipoMP(r.desc)==='emb'||(item&&item.t==='emb'))?'emb':'mp';
+        var tipo=(r.tipoMp==='emb'||r.tipo==='emb'||classificarTipoMP(r.desc)==='emb'||(item&&item.t==='emb'))?'emb':'mp';
         MPcusto[cod]=custo;MPanterior[cod]=custo;MPalterado[cod]=false;
-        if(item){item.d=r.desc;item.t=tipo;}
-        else{MPitens.push({cod:cod,d:r.desc,t:tipo});}
-        if(r.tipoMp!==tipo){salvarMPRemoto(cod,r.desc,custo,tipo);}
+        if(item){item.d=r.desc||item.d;item.t=tipo;}
+        else{MPitens.push({cod:cod,d:r.desc||('MP '+cod),t:tipo});}
+        /* REMOVIDO: aqui havia uma regravacao automatica quando "r.tipoMp!==tipo". A planilha devolve o campo como
+           "tipo" (nao "tipoMp"), entao a condicao era sempre verdadeira e TODA abertura da ferramenta regravava as
+           ~44 MPs uma a uma: sobrecarregava o Apps Script (lentidao/erro 404), inflava MateriasPrimasHistorico
+           e trocava o "editado por" de todas as MPs para quem abriu a tela. */
       });
       MPitens.sort(function(a,b){return a.cod-b.cod;});
+      syncMarcar('mp','ok');
+      atualizarEtiquetaBaseMP(false);
       popularSelectsEmbalagem();
       popularSelectsAdicionarMP();
       renderMP($('mp-busca')?$('mp-busca').value:'');
       recalc();
     })
-    .catch(function(err){console.error('Erro ao carregar materias-primas da planilha:',err);});
+    .catch(function(err){console.error('Erro ao carregar materias-primas da planilha:',err);syncMarcar('mp','erro',err.message);atualizarEtiquetaBaseMP(true);throw err;});
 }
 
 function renderIngs(){
@@ -3397,7 +3443,7 @@ function renderBancoRNA(filtro){
     var editadaInfo=formulasEditadasRemoto[chaveFormulaRemota(x.cod,'rna')];
     if(editadaInfo){
       acoes=acoes.replace('>Carregar<','>Carregar padrão<');
-      acoes+='<button class="action-btn btn-load" style="background:var(--grn-lt);color:var(--green);border-color:var(--grn-bd)" title="Ultima edicao: '+(editadaInfo.editadoPor||'?')+' em '+(editadaInfo.dataHora||'?')+'" onclick="carregarFormulaEditadaRemoto(\''+x.cod+'\',\'rna\')">☁️ Carregar c/ edições</button>';
+      acoes+='<button class="action-btn btn-load" style="background:var(--grn-lt);color:var(--green);border-color:var(--grn-bd)" title="Ultima edicao: '+(editadaInfo.editadoPor||'?')+' em '+fmtDataHoraBr(editadaInfo.dataHora)+'" onclick="carregarFormulaEditadaRemoto(\''+x.cod+'\',\'rna\')">☁️ Carregar c/ edições</button>';
     }
     acoes+='<button class="action-btn" style="background:var(--amb-lt);color:var(--amber);border-color:var(--amb-bd)" onclick="abrirEditarProduto(\'rna\',\''+x.cod+'\')" title="Editar nome e peso da embalagem">✏️ Editar</button>';
     acoes+='<button class="action-btn" style="background:var(--blu-lt);color:var(--blue);border-color:var(--blu-bd)" onclick="irParaCotacaoEspecial(\''+x.cod+'\')" title="Abrir na Cotação Especial">🎯 Cotação</button>';
@@ -3480,7 +3526,7 @@ function renderBancoFormulas(filtro){
     var editadaInfo=isRemoto?null:formulasEditadasRemoto[chaveFormulaRemota(x.cod,'banco')];
     if(editadaInfo){
       acoes=acoes.replace('>Carregar<','>Carregar padrão<');
-      acoes+='<button class="action-btn btn-load" style="background:var(--grn-lt);color:var(--green);border-color:var(--grn-bd)" title="Ultima edicao: '+(editadaInfo.editadoPor||'?')+' em '+(editadaInfo.dataHora||'?')+'" onclick="carregarFormulaEditadaRemoto(\''+x.cod+'\',\'banco\')">☁️ Carregar c/ edições</button>';
+      acoes+='<button class="action-btn btn-load" style="background:var(--grn-lt);color:var(--green);border-color:var(--grn-bd)" title="Ultima edicao: '+(editadaInfo.editadoPor||'?')+' em '+fmtDataHoraBr(editadaInfo.dataHora)+'" onclick="carregarFormulaEditadaRemoto(\''+x.cod+'\',\'banco\')">☁️ Carregar c/ edições</button>';
     }
     if(!isRemoto){
       acoes+='<button class="action-btn" style="background:var(--amb-lt);color:var(--amber);border-color:var(--amb-bd)" onclick="abrirEditarProduto(\'banco\',\''+x.cod+'\')" title="Editar nome e peso da embalagem">✏️ Editar</button>';
@@ -3566,45 +3612,144 @@ function toast(msg,dur){var el=$('toast');if(!el)return;el.textContent=msg;el.cl
 const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbzE_Dgj63tjh9ECZHymw6pG-08LFoXEbBuRR0FdX7i5pGTj23aHURBXjsT1nZ0XJ07N/exec';
 let formulasEditadasRemoto={};
 let formulasHistorico={};
-let syncStatus='carregando';
+
+/* ===== Comunicacao com a planilha: tempo limite, nova tentativa e conferencia da resposta =====
+   Antes, qualquer resposta (inclusive erro 404 do Google) era tratada como "sincronizado". */
+const API_TIMEOUT_MS=60000;
+function apiFetch_(url,opts){
+  var ctrl=(typeof AbortController!=='undefined')?new AbortController():null;
+  var timer=ctrl?setTimeout(function(){ctrl.abort();},API_TIMEOUT_MS):null;
+  var isPost=!!(opts&&opts.method==='POST');
+  return fetch(url,Object.assign({},opts||{},ctrl?{signal:ctrl.signal}:{}))
+    .then(function(r){
+      return r.text().then(function(txt){
+        if(!r.ok)throw new Error('a planilha respondeu com erro '+r.status);
+        var data;
+        try{data=JSON.parse(txt);}
+        catch(e){
+          if(isPost&&!/<html/i.test(txt))return {ok:true,resposta:txt};
+          throw new Error('resposta inválida da planilha');
+        }
+        if(data&&(data.erro||data.error||data.ok===false))throw new Error(String(data.erro||data.error||'erro na planilha'));
+        return data;
+      });
+    },function(err){
+      if(err&&err.name==='AbortError')throw new Error('tempo esgotado ('+(API_TIMEOUT_MS/1000)+' s)');
+      throw new Error('sem conexão com a planilha');
+    })
+    .finally(function(){if(timer)clearTimeout(timer);});
+}
+/* Leitura: tenta ate 2 vezes. */
+function apiGet(tipo){
+  var url=APPS_SCRIPT_URL+'?tipo='+encodeURIComponent(tipo);
+  return apiFetch_(url).catch(function(err){
+    console.warn('Leitura "'+tipo+'" falhou ('+err.message+'), tentando de novo...');
+    return new Promise(function(res){setTimeout(res,3000);}).then(function(){return apiFetch_(url);});
+  });
+}
+/* Gravacao: uma unica tentativa (repetir poderia duplicar linhas na planilha). */
+function apiPost(payload){
+  return apiFetch_(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+}
+/* Trava um botao enquanto a planilha nao responde (evita clique duplo gravando 2x). */
+function travarBotao(btn,texto){
+  if(!btn)return function(){};
+  var original=btn.innerHTML;
+  btn.disabled=true;btn.style.opacity='0.6';btn.style.cursor='wait';
+  if(texto)btn.textContent=texto;
+  return function(){btn.disabled=false;btn.style.opacity='';btn.style.cursor='';btn.innerHTML=original;};
+}
+
+/* ===== Indicador de sincronizacao por modulo ===== */
+const SYNC_NOMES={formulas:'Fórmulas',historico:'Histórico',cotacoes:'Cotações',mp:'Matérias-primas',nutri:'Nutrição'};
+let syncModulos={};
+let syncErroSalvar='';
+function syncMarcar(mod,estado,msg){
+  syncModulos[mod]={estado:estado,msg:msg||'',hora:Date.now()};
+  atualizarIndicadorSync();
+}
 function atualizarIndicadorSync(){
   var el=$('sync-status');
   var el2=$('sync-status-inicio');
+  var mods=Object.keys(SYNC_NOMES);
+  var carregando=mods.filter(function(m){return syncModulos[m]&&syncModulos[m].estado==='carregando';});
+  var falhas=mods.filter(function(m){return syncModulos[m]&&syncModulos[m].estado==='erro';});
   var txt,cor;
-  if(syncStatus==='ok'){txt='☁️ Edicoes sincronizadas';cor='var(--green)';}
-  else if(syncStatus==='erro'){txt='⚠️ Sem conexao com a planilha (edicoes ficam so neste navegador)';cor='var(--amber)';}
-  else{txt='☁️ Carregando edicoes...';cor='var(--t3)';}
+  if(syncErroSalvar){txt='⚠️ '+syncErroSalvar;cor='var(--red)';}
+  else if(falhas.length){txt='⚠️ Não carregou da planilha: '+falhas.map(function(m){return SYNC_NOMES[m];}).join(', ')+' — os dados dessas partes podem estar desatualizados. Clique em 🔄 Atualizar dados.';cor='var(--amber)';}
+  else if(carregando.length){txt='☁️ Carregando da planilha: '+carregando.map(function(m){return SYNC_NOMES[m];}).join(', ')+'...';cor='var(--t3)';}
+  else if(mods.some(function(m){return syncModulos[m];})){txt='☁️ Dados sincronizados com a planilha';cor='var(--green)';}
+  else{txt='☁️ Carregando edições...';cor='var(--t3)';}
   if(el){el.textContent=txt;el.style.color=cor;}
   if(el2){el2.textContent=txt;el2.style.color=cor;}
 }
+/* Resultado de uma gravacao: mostra erro verdadeiro (antes dizia "ficou neste navegador", o que nao era verdade). */
+function syncGravou(){syncErroSalvar='';atualizarIndicadorSync();}
+function syncFalhouGravar(oque,err){
+  console.error('Erro ao salvar '+oque+' na planilha:',err);
+  syncErroSalvar='NÃO salvou '+oque+' na planilha ('+(err&&err.message?err.message:'erro')+'). Tente salvar de novo.';
+  atualizarIndicadorSync();
+  toast('⚠️ NÃO salvou '+oque+' na planilha ('+(err&&err.message?err.message:'erro')+'). Tente de novo em instantes.',7000);
+}
+
+/* Edicoes gravadas antes de 17/09 usavam o codigo sem sufixo de unidade (ex.: "1742").
+   O codigo atual so procura "1742-2" (Eldorado) / "1742-5" (Ivinhema) e elas ficavam invisiveis.
+   Aqui elas sao convertidas para a chave com sufixo, sem sobrescrever uma edicao mais nova. */
+function normalizarChavesFormulasRemotas(data){
+  var out={};
+  Object.keys(data||{}).forEach(function(chave){
+    if(/-[25]$/.test(chave))out[chave]=data[chave];
+  });
+  Object.keys(data||{}).forEach(function(chave){
+    if(/-[25]$/.test(chave))return;
+    var f=data[chave];
+    var nova=chaveFormulaRemota(chave,bancoDoCat(f&&f.cat));
+    if(!out[nova])out[nova]=Object.assign({},f,{cod:nova});
+  });
+  return out;
+}
 function carregarFormulasEditadasRemoto(){
-  syncStatus='carregando';atualizarIndicadorSync();
-  fetch(APPS_SCRIPT_URL+'?tipo=formulas')
-    .then(function(r){return r.json();})
+  syncMarcar('formulas','carregando');
+  return apiGet('formulas')
     .then(function(data){
-      formulasEditadasRemoto=data||{};
-      syncStatus='ok';atualizarIndicadorSync();
+      formulasEditadasRemoto=normalizarChavesFormulasRemotas(data);
+      syncMarcar('formulas','ok');
       renderBancoFormulas($('banco-busca')?$('banco-busca').value:'');
       renderBancoRNA($('rna-busca')?$('rna-busca').value:'');
       atualizarSelectFormulas();
     })
     .catch(function(err){
       console.error('Erro ao carregar edicoes da planilha:',err);
-      syncStatus='erro';atualizarIndicadorSync();
+      syncMarcar('formulas','erro',err.message);
+      throw err;
     });
 }
 function carregarHistoricoFormulasRemoto(){
-  fetch(APPS_SCRIPT_URL+'?tipo=formulas_historico')
-    .then(function(r){return r.json();})
-    .then(function(data){ formulasHistorico=data||{}; })
-    .catch(function(err){console.error('Erro ao carregar historico de formulas:',err);});
+  syncMarcar('historico','carregando');
+  return apiGet('formulas_historico')
+    .then(function(data){
+      /* Mesmo caso das chaves antigas sem sufixo: junta o historico antigo ao da unidade certa. */
+      var h={};
+      Object.keys(data||{}).forEach(function(chave){
+        var lista=Array.isArray(data[chave])?data[chave]:[];
+        var destino=/-[25]$/.test(chave)?chave:chaveFormulaRemota(chave,bancoDoCat(lista[0]&&lista[0].cat));
+        h[destino]=(h[destino]||[]).concat(lista);
+      });
+      formulasHistorico=h;
+      syncMarcar('historico','ok');
+    })
+    .catch(function(err){console.error('Erro ao carregar historico de formulas:',err);syncMarcar('historico','erro',err.message);throw err;});
 }
 /* ===== Historico de versoes de formulas (padrao + cada edicao salva, com autor e data) ===== */
 function parseDataHoraBr_(s){
   if(!s)return 0;
   var m=String(s).match(/(\d{2})\/(\d{2})\/(\d{4}),?\s*(\d{2}):(\d{2}):(\d{2})/);
-  if(!m)return 0;
+  if(!m){var iso=Date.parse(s);return isNaN(iso)?0:iso;} /* a planilha as vezes devolve a data em ISO (2026-09-05T15:22:26.000Z) */
   return new Date(+m[3],+m[2]-1,+m[1],+m[4],+m[5],+m[6]).getTime();
+}
+function fmtDataHoraBr(s){
+  var t=parseDataHoraBr_(s);
+  return t?new Date(t).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):(s||'?');
 }
 let hfContexto=null;
 function abrirHistoricoFormula(cod,banco){
@@ -3708,19 +3853,41 @@ function atualizarIndicadorUltimaAtualizacao(){
   var hh=String(d.getHours()).padStart(2,'0'),mm=String(d.getMinutes()).padStart(2,'0');
   el.textContent='Dados de '+hh+':'+mm;
 }
+let atualizandoRemoto=false;
 function atualizarDadosRemotos(manual){
   if(!manual&&haEdicaoOPPendente()){
-    toast('Há uma versão mais nova dos dados na planilha, mas você tem alterações não salvas na Ordem de Produção. Salve ou descarte antes de atualizar.');
+    toast('Você tem alterações não salvas na Ordem de Produção. Salve ou descarte antes de atualizar os dados da planilha.');
     return;
   }
-  carregarFormulasEditadasRemoto();
-  carregarHistoricoFormulasRemoto();
-  carregarCotacoesRemoto();
-  carregarMPRemoto();
-  carregarNutriRemoto();
-  ultimaAtualizacaoRemota=Date.now();
-  atualizarIndicadorUltimaAtualizacao();
-  if(manual)toast('Dados atualizados a partir da planilha.');
+  if(atualizandoRemoto){if(manual)toast('Já estou buscando os dados na planilha, aguarde...');return;}
+  atualizandoRemoto=true;
+  if(manual)toast('Buscando dados na planilha...');
+  var tarefas=[
+    carregarFormulasEditadasRemoto(),
+    carregarHistoricoFormulasRemoto(),
+    carregarCotacoesRemoto(),
+    carregarMPRemoto(),
+    carregarNutriRemoto()
+  ];
+  /* Tabela de Precos: se ja foi aberta nesta sessao mas nao conseguiu carregar da planilha, tenta de novo. */
+  if(typeof ptDataLoaded!=='undefined'&&ptDataLoaded&&!ptRemotoPronto){
+    tarefas.push(ptCarregarRemoto().then(function(ok){
+      if(ok){
+        if(ptBooted){ptRenderCatalog();ptRenderDoc();if(ptCurrentSubTab==='margins')ptRenderMargins();}
+        if($('ptp-content')&&$('ptp-content').innerHTML){ptpRenderBrandBar();ptpRenderCompany(ptpActiveBrand);}
+      }
+      if(!ptRemotoPronto)throw new Error('tabela de precos');
+    }));
+  }
+  /* So marca "Dados de hh:mm" e avisa "atualizado" depois que as respostas chegam de fato. */
+  Promise.all(tarefas.map(function(p){return p.then(function(){return true;},function(){return false;});}))
+    .then(function(res){
+      atualizandoRemoto=false;
+      var falhas=res.filter(function(ok){return !ok;}).length;
+      if(falhas<res.length){ultimaAtualizacaoRemota=Date.now();atualizarIndicadorUltimaAtualizacao();}
+      if(falhas===0){if(manual)toast('✅ Dados atualizados a partir da planilha.');}
+      else toast('⚠️ '+falhas+' de '+res.length+' partes não carregaram da planilha. Veja o aviso na tela e clique em 🔄 Atualizar dados para tentar de novo.',7000);
+    });
 }
 document.addEventListener('visibilitychange',function(){
   if(document.visibilityState==='visible'){
@@ -3729,35 +3896,6 @@ document.addEventListener('visibilitychange',function(){
     }
   }
 });
-function salvarEdicaoRemota(f){
-  var payload={
-    cod:String(f.cod),
-    nome:f.nome,
-    cat:f.cat,
-    batida:f.batida,
-    pesoSaco:f.pesoSaco,
-    embCusto:f.emb?f.emb.custo:0,
-    embDesc:f.emb?f.emb.desc:'',
-    ingsJSON:JSON.stringify(f.ings),
-    editadoPor:getNomeColaborador(),
-    dataHora:new Date().toLocaleString('pt-BR')
-  };
-  fetch(APPS_SCRIPT_URL,{
-    method:'POST',
-    headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify(payload)
-  }).then(function(){
-    formulasEditadasRemoto[payload.cod]=payload;
-    syncStatus='ok';atualizarIndicadorSync();
-    renderBancoFormulas($('banco-busca')?$('banco-busca').value:'');
-    renderBancoRNA($('rna-busca')?$('rna-busca').value:'');
-    atualizarSelectFormulas();
-  }).catch(function(err){
-    console.error('Erro ao salvar edicao na planilha:',err);
-    syncStatus='erro';atualizarIndicadorSync();
-    toast('Nao foi possivel salvar na planilha (sem internet?). A edicao ficou so neste navegador.');
-  });
-}
 function salvarEdicaoRemota(f,banco){
   banco=banco||bancoDoCat(f.cat);
   var payload={
@@ -3773,20 +3911,19 @@ function salvarEdicaoRemota(f,banco){
     editadoPor:getNomeColaborador(),
     dataHora:new Date().toLocaleString('pt-BR')
   };
-  fetch(APPS_SCRIPT_URL,{
-    method:'POST',
-    headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify(payload)
-  }).then(function(){
+  return apiPost(payload).then(function(){
     formulasEditadasRemoto[payload.cod]=payload;
-    syncStatus='ok';atualizarIndicadorSync();
+    if(!formulasHistorico[payload.cod])formulasHistorico[payload.cod]=[];
+    formulasHistorico[payload.cod].push(payload);
+    syncGravou();
+    toast('✅ Fórmula "'+(f.nome||f.cod)+'" salva na planilha.');
     renderBancoFormulas($('banco-busca')?$('banco-busca').value:'');
     renderBancoRNA($('rna-busca')?$('rna-busca').value:'');
     atualizarSelectFormulas();
+    return true;
   }).catch(function(err){
-    console.error('Erro ao salvar edicao na planilha:',err);
-    syncStatus='erro';atualizarIndicadorSync();
-    toast('Nao foi possivel salvar na planilha (sem internet?). A edicao ficou so neste navegador.');
+    syncFalhouGravar('a fórmula "'+(f.nome||f.cod)+'"',err);
+    return false;
   });
 }
 
@@ -3802,13 +3939,14 @@ function pedirSenhaPrecificar(){
   return false;
 }
 function carregarCotacoesRemoto(){
-  fetch(APPS_SCRIPT_URL+'?tipo=cotacoes')
-    .then(function(r){return r.json();})
+  syncMarcar('cotacoes','carregando');
+  return apiGet('cotacoes')
     .then(function(data){
       cotacoesRemoto=data||{};
+      syncMarcar('cotacoes','ok');
       renderCotacoes();
     })
-    .catch(function(err){console.error('Erro ao carregar cotacoes:',err);});
+    .catch(function(err){console.error('Erro ao carregar cotacoes:',err);syncMarcar('cotacoes','erro',err.message);throw err;});
 }
 function popularSelectEmbCot(){
   var embs=MPitens.filter(function(m){return m.t==='emb';}).sort(function(a,b){return a.d.localeCompare(b.d);});
@@ -3879,23 +4017,22 @@ function salvarNovaCotacao(){
     dataHora:new Date().toLocaleString('pt-BR'),
     status:'pendente'
   };
-  fetch(APPS_SCRIPT_URL,{
-    method:'POST',
-    headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify(payload)
-  }).then(function(){
+  var destravar=travarBotao(document.querySelector('[onclick^="salvarNovaCotacao("]'),'Salvando...');
+  apiPost(payload).then(function(){
+    destravar();
+    syncGravou();
     cotacoesRemoto[id]=payload;
     fecharNovaCotacao();
     renderCotacoes();
-    toast('Cotação "'+nome+'" salva! Aguardando precificação.');
+    toast('✅ Cotação "'+nome+'" salva! Aguardando precificação.');
   }).catch(function(err){
-    console.error('Erro ao salvar cotacao:',err);
-    toast('Nao foi possivel salvar a cotacao (sem internet?).');
+    destravar();
+    syncFalhouGravar('a cotação "'+nome+'"',err);
   });
 }
 function renderCotacoes(){
   var f=($('cot-busca')?$('cot-busca').value:'').toLowerCase();
-  var todas=Object.values(cotacoesRemoto).sort(function(a,b){return (b.dataHora||'').localeCompare(a.dataHora||'');});
+  var todas=Object.values(cotacoesRemoto).sort(function(a,b){return parseDataHoraBr_(b.dataHora)-parseDataHoraBr_(a.dataHora);});
   set('cot-count-pendente',todas.filter(function(c){return (c.status||'')==='pendente';}).length);
   set('cot-count-aprovada',todas.filter(function(c){return (c.status||'').indexOf('aprovada')===0;}).length);
   var lista=todas.filter(function(c){return !f||(c.nomeGenerico||'').toLowerCase().includes(f);});
@@ -3985,12 +4122,14 @@ function atualizarPrecificacaoCotacao(){
 }
 function marcarStatusCotacaoRemoto(c,novoStatus){
   var payload=Object.assign({},c,{tipo:'cotacao',status:novoStatus});
-  fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)})
-    .catch(function(err){console.error('Erro ao atualizar status da cotacao:',err);});
+  return apiPost(payload)
+    .then(function(){syncGravou();return true;})
+    .catch(function(err){syncFalhouGravar('o status da cotação',err);return false;});
 }
 function excluirCotacaoRemoto(id){
-  fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({tipo:'cotacao',id:id,_excluir:true})})
-    .catch(function(err){console.error('Erro ao excluir cotacao:',err);});
+  return apiPost({tipo:'cotacao',id:id,_excluir:true})
+    .then(function(){syncGravou();return true;})
+    .catch(function(err){syncFalhouGravar('a exclusão da cotação',err);return false;});
 }
 function aprovarCotacao(){
   var c=cotacoesRemoto[cotAtualId];
@@ -4012,27 +4151,40 @@ function aprovarCotacao(){
     cif:{mo:0,enc:0,ee:0,out:0},
     ings:JSON.parse(c.ingsJSON||'[]')
   };
-  arr.push(novaFormula);
-  salvarEdicaoRemota(novaFormula,c.banco);
-  c.status='aprovada -> cod '+codReal;
-  cotacoesRemoto[c.id]=c;
-  marcarStatusCotacaoRemoto(c,c.status);
-  if(c.banco==='rna'){renderBancoRNA($('rna-busca')?$('rna-busca').value:'');}
-  else{renderBancoFormulas($('banco-busca')?$('banco-busca').value:'');}
-  atualizarSelectFormulas();
-  fecharPrecificarCotacao();
-  renderCotacoes();
-  toast('Cotação aprovada! Produto "'+nomeReal+'" ('+codReal+') criado e disponível para todos.');
+  /* Em sequencia: so marca a cotacao como aprovada depois que a formula foi gravada na planilha.
+     Antes as duas gravacoes iam juntas; se a da formula falhasse, a cotacao sumia da fila e o produto nao existia. */
+  var destravar=travarBotao(document.querySelector('[onclick^="aprovarCotacao("]'),'Salvando...');
+  toast('Salvando o produto na planilha...');
+  salvarEdicaoRemota(novaFormula,c.banco).then(function(ok){
+    if(!ok){destravar();return;}
+    arr.push(novaFormula);
+    var novoStatus='aprovada -> cod '+codReal;
+    return marcarStatusCotacaoRemoto(c,novoStatus).then(function(okStatus){
+      destravar();
+      if(okStatus){c.status=novoStatus;cotacoesRemoto[c.id]=c;}
+      if(c.banco==='rna'){renderBancoRNA($('rna-busca')?$('rna-busca').value:'');}
+      else{renderBancoFormulas($('banco-busca')?$('banco-busca').value:'');}
+      atualizarSelectFormulas();
+      fecharPrecificarCotacao();
+      renderCotacoes();
+      if(okStatus)toast('✅ Cotação aprovada! Produto "'+nomeReal+'" ('+codReal+') criado e disponível para todos.');
+      else toast('⚠️ O produto "'+nomeReal+'" foi criado, mas a cotação não foi marcada como aprovada na planilha. Não aprove de novo — avise o responsável.',9000);
+    });
+  });
 }
 function recusarCotacao(){
   var c=cotacoesRemoto[cotAtualId];
   if(!c)return;
   if(!confirm('Excluir esta cotação? Essa ação não pode ser desfeita.'))return;
-  excluirCotacaoRemoto(c.id);
-  delete cotacoesRemoto[c.id];
-  fecharPrecificarCotacao();
-  renderCotacoes();
-  toast('Cotação excluída.');
+  var destravar=travarBotao(document.querySelector('[onclick^="recusarCotacao("]'),'Excluindo...');
+  excluirCotacaoRemoto(c.id).then(function(ok){
+    destravar();
+    if(!ok)return;
+    delete cotacoesRemoto[c.id];
+    fecharPrecificarCotacao();
+    renderCotacoes();
+    toast('Cotação excluída.');
+  });
 }
 
 function carregarFormulaEditadaRemoto(cod,banco){
@@ -4047,7 +4199,7 @@ function carregarFormulaEditadaRemoto(cod,banco){
     ings:JSON.parse(f.ingsJSON||'[]')
   };
   carregarObjFormula(obj);
-  toast('Formula com edicoes carregada (ultima edicao: '+(f.editadoPor||'?')+' em '+(f.dataHora||'?')+').');
+  toast('Fórmula com edições carregada (última edição: '+(f.editadoPor||'?')+' em '+fmtDataHoraBr(f.dataHora)+').');
 }
 
 function carregarBancoFormulas(){try{return JSON.parse(localStorage.getItem('RURAL_FORMULAS')||'{}');}catch(e){return {};}}
@@ -4229,6 +4381,14 @@ function carregarFormula(idxVal){
   var idx=parseInt(idxVal);
   var f=formulaSelectList[idx];
   if(!f){toast('Formula nao encontrada.');return;}
+  /* Se existe edicao salva na planilha para esta formula, carrega a versao editada (antes carregava sempre a padrao,
+     e parecia que as edicoes dos colegas "nao sincronizavam"). */
+  if(!f._remoto&&f._origem!=='local'&&formulasEditadasRemoto[chaveFormulaRemota(f.cod,'banco')]){
+    carregarFormulaEditadaRemoto(f.cod,'banco');
+    carregarPrecificacao(f.cod);
+    $('formula-sel').value='';
+    return;
+  }
   fichaBancoAtual='banco';
   carregarObjFormula(f);
   carregarPrecificacao(f.cod);
@@ -4496,28 +4656,60 @@ function ptColetarEstadoRemoto(){
     cdfOverrides:PT_CDF_OVERRIDES,exportPricing:PT_EXPORT,especial:PT_ESPECIAL
   };
 }
+/* So publica na planilha depois que a versao da planilha foi carregada com sucesso nesta sessao.
+   Antes, quem abria a aba num computador novo (ou com a planilha lenta) publicava o modelo padrao / dados antigos
+   por cima do trabalho de todos, porque a tabela inteira e gravada de uma vez no registro "global". */
+let ptRemotoPronto=false;
+let ptUltimoEstadoPublicado='';
+let ptAvisouNaoPublicado=false;
 function ptSalvarRemoto(){
+  if(!ptRemotoPronto){
+    if(!ptAvisouNaoPublicado){
+      ptAvisouNaoPublicado=true;
+      toast('⚠️ A Tabela de Preços ainda não foi carregada da planilha. Sua alteração ficou só neste navegador e NÃO foi publicada. Clique em 🔄 Atualizar dados e refaça a alteração.',9000);
+    }
+    return;
+  }
   if(ptSalvarRemotoTimer)clearTimeout(ptSalvarRemotoTimer);
   ptSalvarRemotoTimer=setTimeout(function(){
+    var dadosJSON=JSON.stringify(ptColetarEstadoRemoto());
+    if(dadosJSON===ptUltimoEstadoPublicado)return; /* nada mudou de fato (ex.: so clicou e saiu da celula) */
     var payload={
       tipo:'tabelaprecos',
       id:'global',
-      dadosJSON:JSON.stringify(ptColetarEstadoRemoto()),
+      dadosJSON:dadosJSON,
       editadoPor:getNomeColaborador(),
       dataHora:new Date().toLocaleString('pt-BR')
     };
-    fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)})
-      .catch(function(err){console.error('Erro ao salvar tabela de precos na planilha:',err);});
+    apiPost(payload)
+      .then(function(){ptUltimoEstadoPublicado=dadosJSON;syncGravou();})
+      .catch(function(err){syncFalhouGravar('a Tabela de Preços',err);});
   },3000);
 }
+/* Guarda no navegador a versao que veio da planilha (sem publicar de volta). */
+function ptEspelharLocal(){
+  var e=ptColetarEstadoRemoto();
+  try{
+    localStorage.setItem(PT_KEY_DOC,JSON.stringify({doc:e.doc,activePageId:e.activePageId}));
+    localStorage.setItem(PT_KEY_OV,JSON.stringify(e.overrides));
+    localStorage.setItem(PT_KEY_RATES,JSON.stringify(e.rates));
+    localStorage.setItem(PT_KEY_LINKS,JSON.stringify(e.links));
+    localStorage.setItem(PT_KEY_EXTRA,JSON.stringify(e.extraPrices));
+    localStorage.setItem(PT_KEY_EMBSIZE,JSON.stringify(e.embSizes));
+    localStorage.setItem(PT_KEY_CDFTON,String(e.cdfTon));
+    localStorage.setItem(PT_KEY_ACTIVE,JSON.stringify(e.active));
+    localStorage.setItem(PT_KEY_CDFOV,JSON.stringify(e.cdfOverrides));
+    localStorage.setItem(PT_KEY_EXPORT,JSON.stringify(e.exportPricing));
+    localStorage.setItem(PT_KEY_ESPECIAL,JSON.stringify(e.especial));
+  }catch(err){}
+}
 function ptCarregarRemoto(){
-  return fetch(APPS_SCRIPT_URL+'?tipo=tabelaprecos')
-    .then(function(r){return r.json();})
+  return apiGet('tabelaprecos')
     .then(function(data){
       var reg=data&&data['global'];
-      if(!reg||!reg.dadosJSON)return false;
+      if(!reg||!reg.dadosJSON){ptRemotoPronto=true;return false;} /* planilha ainda sem tabela: pode publicar */
       var estado;
-      try{estado=JSON.parse(reg.dadosJSON);}catch(e){return false;}
+      try{estado=JSON.parse(reg.dadosJSON);}catch(e){toast('⚠️ A Tabela de Preços na planilha está corrompida — nada será publicado até ser corrigida.',9000);return false;}
       if(estado.doc){ptDoc=estado.doc;ptActivePageId=estado.activePageId||(ptDoc.length?ptDoc[0].id:null);}
       if(estado.overrides)Object.keys(estado.overrides).forEach(function(id){if(PT_CATALOG_INDEX[id])PT_CATALOG_INDEX[id].price=estado.overrides[id];});
       if(estado.rates)PT_GROUP_RATES=Object.assign({},PT_GROUP_RATES,estado.rates);
@@ -4529,9 +4721,16 @@ function ptCarregarRemoto(){
       if(estado.cdfOverrides)PT_CDF_OVERRIDES=estado.cdfOverrides;
       if(estado.exportPricing)PT_EXPORT=estado.exportPricing;
       if(estado.especial)PT_ESPECIAL=estado.especial;
+      ptRemotoPronto=true;ptAvisouNaoPublicado=false;
+      ptUltimoEstadoPublicado=JSON.stringify(ptColetarEstadoRemoto());
+      ptEspelharLocal();
       return true;
     })
-    .catch(function(err){console.error('Erro ao carregar tabela de precos da planilha:',err);return false;});
+    .catch(function(err){
+      console.error('Erro ao carregar tabela de precos da planilha:',err);
+      toast('⚠️ Não consegui carregar a Tabela de Preços da planilha ('+err.message+'). Você está vendo a última cópia deste navegador; alterações NÃO serão publicadas até carregar. Use 🔄 Atualizar dados.',9000);
+      return false;
+    });
 }
 function ptLoadAll(){
   try{ const ov=JSON.parse(localStorage.getItem(PT_KEY_OV)||'{}');
@@ -4598,8 +4797,18 @@ function ptFormulaIndex(){
   // Sobrepoe com a ultima edicao salva na planilha (ings/nome/peso etc. mais recentes),
   // assim a Cotacao Especial e a Tabela de Precos sempre usam a formula "com edicoes"
   if(typeof formulasEditadasRemoto!=='undefined'){
-    Object.keys(formulasEditadasRemoto).forEach(function(cod){
-      idx[String(cod)]=formulaFromRemoto(formulasEditadasRemoto[cod]);
+    /* As chaves da planilha tem sufixo de unidade ("125-2" Eldorado, "125-5" Ivinhema); o indice usa o codigo puro.
+       Antes a edicao ficava em "125-2" e a Tabela/Cotacao Especial continuavam usando a versao padrao de "125". */
+    var codsEldorado={};
+    biblioteca.forEach(function(f){codsEldorado[String(f.cod)]=true;});
+    Object.keys(formulasEditadasRemoto).forEach(function(chave){
+      var base=codBaseDaChave(chave);
+      var ehRna=/-5$/.test(chave);
+      /* Ivinhema so assume o codigo se ele nao for uma formula de Eldorado (mesma regra de prioridade acima). */
+      if(ehRna&&(codsEldorado[base]||(idx[base]&&idx[base]._remotoEldorado)))return;
+      var f=formulaFromRemoto(formulasEditadasRemoto[chave]);
+      if(!ehRna)f._remotoEldorado=true;
+      idx[base]=f;
     });
   }
   return idx;
@@ -5895,18 +6104,32 @@ function ptRenderMargins(){
   });
 }
 
+/* O Construtor usa altura fixa (catalogo e documento rolam separados). Antes era "tela - 96px", mas o cabecalho
+   com as abas quebrando em linhas passa de 96px e o fim da tabela ficava cortado. Agora mede o espaco real. */
+function ptAjustarAlturaShell(){
+  var shell=document.querySelector('#pg-precos .pt-shell');
+  if(!shell||shell.classList.contains('pt-flow')||!shell.offsetParent)return;
+  var topoNoDocumento=shell.getBoundingClientRect().top+window.scrollY;
+  shell.style.height=Math.max(420,window.innerHeight-topoNoDocumento)+'px';
+}
+window.addEventListener('resize',ptAjustarAlturaShell);
 function ptSwitchTab(tab){
   ptCurrentSubTab=tab;
   document.querySelectorAll('.pt-subtab').forEach(b=>b.classList.toggle('active', b.dataset.ptTab===tab));
   const sidebar=$('pt-sidebar'), docScroll=$('pt-doc-scroll'), marginsView=$('pt-margins-view'), exportView=$('pt-export-view'), especialView=$('pt-especial-view');
+  const builderView=$('pt-builder-view'), shell=document.querySelector('#pg-precos .pt-shell');
   sidebar.classList.add('pt-hidden');
   docScroll.classList.add('pt-hidden');
+  if(builderView)builderView.classList.add('pt-hidden');
+  if(shell)shell.classList.toggle('pt-flow',tab!=='builder');
   marginsView.classList.remove('visible');
   exportView.classList.remove('visible');
   especialView.classList.remove('visible');
   if(tab==='builder'){
     sidebar.classList.remove('pt-hidden');
     docScroll.classList.remove('pt-hidden');
+    if(builderView)builderView.classList.remove('pt-hidden');
+    ptAjustarAlturaShell();
   } else if(tab==='margins'){
     marginsView.classList.add('visible');
     ptRenderMargins();
@@ -5936,6 +6159,7 @@ function ptOnTabOpen(){
   } else if(ptCurrentSubTab==='margins'){
     ptRenderMargins(); // atualiza CMV vivo caso custos de MP tenham mudado em outra aba
   }
+  setTimeout(ptAjustarAlturaShell,0);
 }
 
 /* ======================================================================
