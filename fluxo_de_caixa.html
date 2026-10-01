@@ -12,6 +12,7 @@
   :root{
     --green-deep:#1B3A63;
     --green-mid:#2B914F;
+    --ok-text:#1F7A3E;   /* verde para texto: 5,4:1 em branco */
     --wheat:#FECA39;
     --wheat-soft:#FCEFC7;
     --cream:#FAF7F0;
@@ -21,6 +22,8 @@
     --line:#E2E6EC;
     --danger:#B4462E;
     --real-blue:#2463AA;
+    --plan:#3E5F8F;      /* série "previsto": tom de azul, para o verde ficar só com o significado "ok" */
+    --unit-b:#2A7F8E;    /* identidade da Filial (petróleo), distinta das cores de status */
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--cream);color:var(--ink);font-family:'Inter',sans-serif;}
@@ -39,26 +42,37 @@
   .tab:hover{border-color:var(--wheat);}
   .tab.active{background:var(--green-deep);border-color:var(--green-deep);color:var(--wheat-soft);}
 
+  .week-strip{align-items:center;}
+  .tab.passada:not(.active){color:#66707F;}
+  .tab.hoje:not(.active){border-color:var(--real-blue);color:var(--real-blue);}
+  .tab-nav{padding:9px 13px;}
+  .tab-hoje{background:var(--cream);}
+  .week-select{margin-left:auto;border:1.5px solid var(--line);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:0.85rem;font-weight:600;color:var(--ink-soft);background:var(--paper);max-width:100%;}
+
   .toggles-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:24px;}
   .unit-toggle{display:flex;gap:6px;}
-  .utab{padding:6px 14px;border-radius:999px;border:1.5px solid var(--green-mid);background:transparent;cursor:pointer;font-size:0.82rem;font-weight:600;color:var(--green-mid);}
-  .utab.active{background:var(--wheat);border-color:var(--wheat);color:var(--green-deep);}
+  .utab{padding:6px 14px;border-radius:999px;border:1.5px solid var(--green-deep);background:transparent;cursor:pointer;font-size:0.82rem;font-weight:600;color:var(--green-deep);}
+  .utab.active{background:var(--green-deep);border-color:var(--green-deep);color:#fff;}
 
   .view-toggle{display:flex;gap:6px;}
-  .vtab{padding:6px 14px;border-radius:999px;border:1.5px solid var(--real-blue);background:transparent;cursor:pointer;font-size:0.82rem;font-weight:600;color:var(--real-blue);}
-  .vtab.active{background:var(--real-blue);border-color:var(--real-blue);color:#fff;}
+  .vtab{padding:6px 14px;border-radius:999px;border:1.5px solid var(--green-deep);background:transparent;cursor:pointer;font-size:0.82rem;font-weight:600;color:var(--green-deep);}
+  .vtab.active{background:var(--green-deep);border-color:var(--green-deep);color:#fff;}
 
   .mode-toggle{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;}
   .mtab{padding:8px 18px;border-radius:8px;border:1.5px solid var(--green-deep);background:transparent;cursor:pointer;font-size:0.85rem;font-weight:700;color:var(--green-deep);}
   .mtab.active{background:var(--green-deep);color:#fff;}
+  .sub-toggle{display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 20px;padding-bottom:12px;border-bottom:1px solid var(--line);}
+  .stab{padding:6px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--paper);cursor:pointer;font-size:0.82rem;font-weight:600;color:var(--ink-soft);}
+  .stab:hover{border-color:var(--wheat);}
+  .stab.active{background:var(--wheat-soft);border-color:var(--wheat);color:var(--green-deep);}
 
   .bank-card{margin-bottom:22px;}
   .bank-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;}
   .bank-head h2{margin:0;}
-  .bank-updated{font-size:0.74rem;color:var(--ink-soft);}
+  .bank-updated{font-size:0.75rem;color:var(--ink-soft);}
   .bank-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
   @media(max-width:860px){.bank-grid{grid-template-columns:1fr;}}
-  .bank-unit-title{font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;font-weight:700;color:var(--ink-soft);margin-bottom:8px;}
+  .bank-unit-title{font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;font-weight:700;color:var(--ink-soft);margin-bottom:8px;}
   .bank-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
   .bank-row input.bank-name{flex:1;border:1px solid var(--line);border-radius:7px;padding:7px 9px;font-family:inherit;font-size:0.85rem;}
   .bank-row input.bank-saldo{width:150px;border:1px solid var(--line);border-radius:7px;padding:7px 9px;font-family:inherit;font-size:0.85rem;text-align:right;font-variant-numeric:tabular-nums;}
@@ -69,7 +83,7 @@
   .bank-total{display:flex;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:2px solid var(--line);font-weight:700;color:var(--green-deep);}
   .bank-grand-total{margin-top:16px;padding-top:16px;border-top:2px solid var(--green-deep);display:flex;justify-content:space-between;align-items:center;}
   .bank-grand-total .label{font-size:0.78rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-soft);font-weight:700;}
-  .bank-grand-total .value{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:700;color:var(--green-deep);}
+  .bank-grand-total .value{font-size:1.6rem;font-weight:700;color:var(--green-deep);font-variant-numeric:tabular-nums;letter-spacing:-0.3px;}
 
   .recebimentos-card{margin-bottom:22px;}
   .recebimentos-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
@@ -81,7 +95,7 @@
   .necessidade-kpi{border-color:var(--danger) !important;}
   .necessidade-kpi.surplus{border-color:var(--green-mid) !important;}
   .necessidade-kpi .value{color:var(--danger);}
-  .necessidade-kpi.surplus .value{color:var(--green-mid);}
+  .necessidade-kpi.surplus .value{color:var(--ok-text);}
 
   .rec-week-group{margin-bottom:18px;border:1px solid var(--line);border-radius:12px;overflow:hidden;}
   .rec-week-head{background:var(--wheat-soft);padding:10px 16px;display:flex;justify-content:space-between;align-items:center;font-weight:700;color:var(--green-deep);font-size:0.9rem;}
@@ -90,15 +104,15 @@
   .rec-summary-row .pill{background:var(--cream);border-radius:8px;padding:6px 12px;}
   .rec-summary-row .pill b{color:var(--green-deep);}
   .rec-table{width:100%;border-collapse:collapse;font-size:0.83rem;}
-  .rec-table th{text-align:left;font-size:0.68rem;text-transform:uppercase;color:var(--ink-soft);border-bottom:1.5px solid var(--line);padding:6px 4px;}
+  .rec-table th{text-align:left;font-size:0.75rem;text-transform:uppercase;color:var(--ink-soft);border-bottom:1.5px solid var(--line);padding:6px 4px;}
   .rec-table td{padding:6px 4px;border-bottom:1px solid var(--line);}
   .rec-table td.num{text-align:right;font-variant-numeric:tabular-nums;}
   .rec-del{background:none;border:none;color:var(--danger);cursor:pointer;padding:2px 6px;}
-  .status-badge{font-size:0.72rem;font-weight:700;padding:3px 9px;border-radius:999px;display:inline-block;}
-  .status-Pendente{background:#FCEFC7;color:#8A6A1F;}
-  .status-Recebido{background:#DDF0E2;color:var(--green-mid);}
+  .status-badge{font-size:0.75rem;font-weight:700;padding:3px 9px;border-radius:999px;display:inline-block;}
+  .status-Pendente{background:#FCEFC7;color:#6E520F;}
+  .status-Recebido{background:#DDF0E2;color:var(--ok-text);}
   .status-Antecipado{background:#DCE8F5;color:var(--real-blue);}
-  .status-Pago{background:#DDF0E2;color:var(--green-mid);}
+  .status-Pago{background:#DDF0E2;color:var(--ok-text);}
   .status-Parcial{background:#DCE8F5;color:var(--real-blue);}
   .diario-split{display:flex;gap:18px;flex-wrap:wrap;}
   .diario-block{flex:1;min-width:280px;border-radius:10px;padding:14px;background:var(--cream);}
@@ -106,11 +120,11 @@
   .diario-block-pagar{border-left:4px solid var(--danger);}
   .diario-block-pagar h3{color:var(--danger);}
   .diario-block-receber{border-left:4px solid var(--green-mid);}
-  .diario-block-receber h3{color:var(--green-mid);}
+  .diario-block-receber h3{color:var(--ok-text);}
   select.dup-status-select{border:1px solid var(--line);border-radius:6px;padding:3px 6px;font-family:inherit;font-size:0.78rem;}
 
   table.cf-table{width:100%;border-collapse:collapse;font-size:0.82rem;min-width:820px;}
-  table.cf-table th{background:var(--cream);text-align:center;font-size:0.68rem;text-transform:uppercase;color:var(--ink-soft);border:1px solid var(--line);padding:7px 6px;}
+  table.cf-table th{background:var(--cream);text-align:center;font-size:0.75rem;text-transform:uppercase;color:var(--ink-soft);border:1px solid var(--line);padding:7px 6px;}
   table.cf-table td{text-align:right;padding:7px 8px;border:1px solid var(--line);font-variant-numeric:tabular-nums;}
   table.cf-table td.week-label{text-align:left;font-weight:700;color:var(--green-deep);white-space:nowrap;}
   table.cf-table td.total-cell{font-weight:700;color:var(--danger);background:var(--wheat-soft);}
@@ -139,8 +153,8 @@
 
   .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:26px;}
   .kpi{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px 18px;}
-  .kpi .label{font-size:0.74rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-soft);font-weight:600;}
-  .kpi .value{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:600;color:var(--green-deep);margin-top:4px;}
+  .kpi .label{font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-soft);font-weight:600;}
+  .kpi .value{font-size:1.35rem;font-weight:700;color:var(--green-deep);margin-top:4px;font-variant-numeric:tabular-nums;letter-spacing:-0.3px;}
   .kpi.total{background:var(--green-deep);border-color:var(--green-deep);}
   .kpi.total .label{color:var(--wheat-soft);opacity:0.85;}
   .kpi.total .value{color:#fff;}
@@ -154,16 +168,16 @@
   .card h2{font-family:'Fraunces',serif;font-size:1.05rem;margin:0 0 14px;color:var(--green-deep);}
 
   table.catTable{width:100%;border-collapse:collapse;font-size:0.85rem;}
-  table.catTable th{text-align:left;font-size:0.7rem;text-transform:uppercase;color:var(--ink-soft);border-bottom:2px solid var(--line);padding:6px 4px;}
+  table.catTable th{text-align:left;font-size:0.75rem;text-transform:uppercase;color:var(--ink-soft);border-bottom:2px solid var(--line);padding:6px 4px;}
   table.catTable td{padding:7px 4px;border-bottom:1px solid var(--line);}
   table.catTable td.num{text-align:right;font-variant-numeric:tabular-nums;}
   table.catTable td.diff-pos{color:var(--danger);}
-  table.catTable td.diff-neg{color:var(--green-mid);}
+  table.catTable td.diff-neg{color:var(--ok-text);}
 
   table{width:100%;border-collapse:collapse;font-size:0.85rem;}
-  thead th{text-align:left;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-soft);border-bottom:2px solid var(--line);padding:8px 5px;font-weight:700;}
+  thead th{text-align:left;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-soft);border-bottom:2px solid var(--line);padding:8px 5px;font-weight:700;}
   tbody td{padding:6px 5px;border-bottom:1px solid var(--line);}
-  tbody tr:hover{background:var(--wheat-soft);}
+  tbody tr:hover{background:#F3F6FA;}
   td.val{text-align:right;font-variant-numeric:tabular-nums;}
   input.edit-val{width:92px;text-align:right;border:1px solid transparent;background:transparent;font-family:inherit;font-size:0.83rem;padding:3px 4px;border-radius:5px;font-variant-numeric:tabular-nums;}
   input.edit-val:focus{border-color:var(--wheat);background:#fff;outline:none;}
@@ -181,6 +195,9 @@
   .add-row input[name=item]{flex:1;min-width:130px;}
   .add-row input[name=day]{width:80px;}
   .add-row input[name=previsto], .add-row input[name=real]{width:100px;}
+  .pager{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:12px;font-size:0.85rem;color:var(--ink-soft);}
+  .pager button{background:var(--cream);border:1px solid var(--line, #d9d4c7);border-radius:7px;padding:6px 12px;font-size:0.85rem;cursor:pointer;color:var(--ink);}
+  .pager button:disabled{opacity:.45;cursor:default;}
   .btn-primary{background:var(--green-deep);color:#fff;border:none;border-radius:7px;padding:8px 16px;font-weight:600;font-size:0.84rem;cursor:pointer;}
   .btn-primary:hover{background:var(--green-mid);}
 
@@ -189,20 +206,20 @@
 
   .branch-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:28px;}
   @media(max-width:860px){.branch-grid{grid-template-columns:1fr;}}
-  .branch-card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:20px;border-top:4px solid var(--green-mid);}
-  .branch-card.filial{border-top-color:var(--wheat);}
+  .branch-card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:20px;border-top:4px solid var(--green-deep);}
+  .branch-card.filial{border-top-color:var(--unit-b);}
   .branch-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
   .branch-head h2{font-family:'Fraunces',serif;font-size:1.1rem;margin:0;color:var(--green-deep);}
-  .branch-tag{font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em;font-weight:700;color:var(--ink-soft);background:var(--wheat-soft);padding:3px 8px;border-radius:6px;}
+  .branch-tag{font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;font-weight:700;color:var(--ink-soft);background:var(--wheat-soft);padding:3px 8px;border-radius:6px;}
   .branch-totals{display:flex;gap:18px;margin-bottom:14px;}
-  .branch-totals div{font-family:'Fraunces',serif;font-size:1.25rem;font-weight:600;color:var(--green-deep);}
+  .branch-totals div{font-size:1.2rem;font-weight:700;color:var(--green-deep);font-variant-numeric:tabular-nums;letter-spacing:-0.3px;}
   .branch-totals .real-t{color:var(--real-blue);}
-  .branch-totals .lbl{display:block;font-family:'Inter';font-size:0.66rem;text-transform:uppercase;color:var(--ink-soft);font-weight:700;}
+  .branch-totals .lbl{display:block;font-family:'Inter';font-size:0.75rem;text-transform:uppercase;color:var(--ink-soft);font-weight:700;}
 
   .cat-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:9px;font-size:0.82rem;}
   .cat-bar-row .cname{width:120px;flex-shrink:0;color:var(--ink-soft);font-weight:600;}
   .cat-bar-track{flex:1;height:9px;background:var(--wheat-soft);border-radius:6px;overflow:hidden;position:relative;}
-  .cat-bar-fill{height:100%;background:var(--green-mid);border-radius:6px;}
+  .cat-bar-fill{height:100%;background:var(--plan);border-radius:6px;}
   .cat-val{width:90px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums;font-weight:600;font-size:0.8rem;}
 
   .day-group{margin-bottom:14px;border:1px solid var(--line);border-radius:10px;overflow:hidden;}
@@ -214,7 +231,7 @@
   .day-items table{width:100%;}
   .day-items td{padding:5px 4px;border-bottom:1px solid var(--line);font-size:0.82rem;}
   .day-items tr:last-child td{border-bottom:none;}
-  .day-toggle{font-size:0.72rem;color:var(--ink-soft);}
+  .day-toggle{font-size:0.75rem;color:var(--ink-soft);}
 
   .legend-note{font-size:0.76rem;color:var(--ink-soft);margin-bottom:16px;display:flex;gap:16px;align-items:center;}
   .legend-note .sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:middle;}
@@ -228,8 +245,18 @@
   #npKpi{grid-template-columns:repeat(3,1fr);}
   @media(max-width:640px){#npKpi{grid-template-columns:1fr;}}
   #npKpi .kpi .value, #npReport td.num{white-space:nowrap;}
-  .np-ksub{font-size:0.72rem;color:var(--ink-soft);margin-top:4px;line-height:1.5;}
+  td.neg{color:var(--danger);}
+  .kpi-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+  .kpi-strip .kpi{padding:14px 16px;}
+  .kpi-strip .kpi .value{font-size:1.25rem;white-space:nowrap;}
+  @media(max-width:980px){.kpi-strip{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:520px){.kpi-strip{grid-template-columns:1fr;}}
+  .np-info{background:#EAF4EE;border:1px solid #BFDCC9;color:#1F5A36;border-radius:10px;padding:10px 14px;margin-bottom:18px;font-size:0.82rem;line-height:1.5;}
+  .np-ksub{font-size:0.75rem;color:var(--ink-soft);margin-top:4px;line-height:1.5;}
   .kpi.total .np-ksub{color:var(--wheat-soft);opacity:0.9;}
+
+  /* foco visivel para navegacao por teclado (nao remove os estilos de campo existentes) */
+  button:focus-visible, select:focus-visible, input:focus-visible{outline:2px solid var(--real-blue);outline-offset:1px;}
 
   footer{text-align:center;color:var(--ink-soft);font-size:0.78rem;margin-top:30px;}
 </style>
@@ -250,6 +277,8 @@
     </div>
     <div class="save-badge" id="saveBadge"><span class="dot"></span> salvo automaticamente · dados compartilhados com quem tiver este link</div>
   </header>
+
+  <div class="kpi-strip" id="kpiStrip"></div>
 
   <div class="card bank-card">
     <div class="bank-head">
@@ -293,6 +322,7 @@
   </div>
 
   <div class="mode-toggle" id="modeToggle"></div>
+  <div class="sub-toggle" id="subToggle"></div>
 
   <div id="weeklyView">
     <div class="tabs" id="weekTabs"></div>
@@ -300,6 +330,8 @@
       <div class="unit-toggle" id="unitToggle"></div>
       <div class="view-toggle" id="viewToggle"></div>
     </div>
+
+    <div id="entradasFinInfoSemana" class="np-info" style="display:none"></div>
 
     <div id="compareView">
       <div class="branch-grid" id="branchGrid"></div>
@@ -325,7 +357,7 @@
       <div class="card" id="dailyCard" style="display:none">
         <h2 id="dailyCardTitle">Lançamentos por dia</h2>
         <div class="legend-note">
-          <span><span class="sw" style="background:var(--green-mid)"></span>Previsto</span>
+          <span><span class="sw" style="background:var(--plan)"></span>Previsto</span>
           <span><span class="sw" style="background:var(--real-blue)"></span>Real</span>
         </div>
         <div id="dailyGroups"></div>
@@ -342,7 +374,7 @@
         <div class="add-row">
           <input type="text" name="item" placeholder="Novo lançamento…">
           <select name="unit"><option value="Rural">Matriz (Rural)</option><option value="RNA">Filial (RNA)</option></select>
-          <select name="cat"></select>
+          <select name="cat" aria-label="Categoria"></select>
           <input type="text" name="day" placeholder="dd/mm (opcional)">
           <select name="currency"><option value="BRL">R$</option><option value="USD">US$</option></select>
           <input type="number" name="previsto" placeholder="Previsto" step="0.01">
@@ -358,6 +390,8 @@
     <div class="toggles-row">
       <div class="unit-toggle" id="monthUnitToggle"></div>
     </div>
+
+    <div id="entradasFinInfoMes" class="np-info" style="display:none"></div>
 
     <div id="monthCompareView">
       <div class="branch-grid" id="monthBranchGrid"></div>
@@ -456,6 +490,7 @@
           <tbody id="obrigacoesFullBody"></tbody>
         </table>
       </div>
+      <div class="pager" id="obrigacoesFullPager"></div>
     </div>
   </div>
 
@@ -601,6 +636,7 @@
           <tbody id="duplicatasFullBody"></tbody>
         </table>
       </div>
+      <div class="pager" id="duplicatasFullPager"></div>
     </div>
   </div>
 
@@ -1338,16 +1374,49 @@ function getCurrentWeekFromToday(){
 }
 currentWeek = getCurrentWeekFromToday(); // sempre abre mostrando a semana em andamento
 
+// Faixa de semanas curta (Fase 4a, 01/10/2026): em vez dos botões de todas as ~78 semanas, mostra uma janela
+// ao redor da semana escolhida, com setas, "Hoje" e uma lista suspensa para pular para qualquer semana.
+const SEMANAS_ANTES = 2, SEMANAS_DEPOIS = 6;
 function renderTabs(){
   const el = document.getElementById('weekTabs');
   el.innerHTML = '';
-  WEEKS.forEach(w=>{
+  el.classList.add('week-strip');
+  if(!WEEKS.length) return;
+  const idx = Math.max(0, WEEKS.indexOf(currentWeek));
+  const hojeIdx = WEEKS.indexOf(getCurrentWeekFromToday());
+  const tamanho = SEMANAS_ANTES + SEMANAS_DEPOIS + 1;
+  let ini = Math.min(Math.max(0, idx - SEMANAS_ANTES), Math.max(0, WEEKS.length - tamanho));
+  const fim = Math.min(WEEKS.length, ini + tamanho);
+
+  const botao = (texto, titulo, classe, aoClicar, desligado)=>{
     const b = document.createElement('button');
-    b.className = 'tab' + (w===currentWeek?' active':'');
-    b.textContent = weekLabel(w);
-    b.onclick = ()=>{ currentWeek = w; renderAll(); };
+    b.className = classe; b.textContent = texto; b.title = titulo || '';
+    if(desligado){ b.disabled = true; b.style.opacity = '0.4'; b.style.cursor = 'default'; }
+    else b.onclick = aoClicar;
     el.appendChild(b);
+    return b;
+  };
+  botao('‹', 'Semana anterior', 'tab tab-nav', ()=>{ currentWeek = WEEKS[idx-1]; renderAll(); }, idx <= 0);
+  for(let i = ini; i < fim; i++){
+    const w = WEEKS[i];
+    let classe = 'tab' + (w===currentWeek ? ' active' : '');
+    if(i < hojeIdx) classe += ' passada';
+    if(i === hojeIdx) classe += ' hoje';
+    botao(weekLabel(w), i === hojeIdx ? 'Semana atual' : '', classe, ()=>{ currentWeek = w; renderAll(); });
+  }
+  botao('›', 'Próxima semana', 'tab tab-nav', ()=>{ currentWeek = WEEKS[idx+1]; renderAll(); }, idx >= WEEKS.length - 1);
+  if(hojeIdx >= 0) botao('Hoje', 'Voltar para a semana atual', 'tab tab-hoje', ()=>{ currentWeek = WEEKS[hojeIdx]; renderAll(); }, idx === hojeIdx);
+
+  const sel = document.createElement('select');
+  sel.className = 'week-select'; sel.title = 'Ir para qualquer semana'; sel.setAttribute('aria-label', 'Escolher a semana');
+  WEEKS.forEach((w,i)=>{
+    const o = document.createElement('option');
+    o.value = w; o.textContent = weekLabel(w) + (i === hojeIdx ? '  • hoje' : '');
+    if(w === currentWeek) o.selected = true;
+    sel.appendChild(o);
   });
+  sel.onchange = ()=>{ currentWeek = sel.value; renderAll(); };
+  el.appendChild(sel);
 }
 
 function renderUnitToggle(){
@@ -1374,8 +1443,31 @@ function renderViewToggle(){
   });
 }
 
+// "Nova Tomada ..." (Financiamentos) é dinheiro que ENTRA (empréstimo tomado), não é saída de caixa
+// (Gilberto, 01/10/2026). Fica fora de todas as somas de saídas e aparece numa linha informativa.
+function ehEntradaFinanciamento_(r){ return /nova tomada/i.test(String((r && r.item) || '')); }
+
 function filteredRecords(week, unit){
-  return state.records.filter(r=> efetivoSemana(r)===week && (unit==='Comparar' || unit==='Todos' || unit==='Total' || r.unit===unit));
+  return state.records.filter(r=> !ehEntradaFinanciamento_(r) && efetivoSemana(r)===week && (unit==='Comparar' || unit==='Todos' || unit==='Total' || r.unit===unit));
+}
+
+// Linha informativa "Entradas de financiamento" da semana (modo 'semana') ou do mês (modo 'mes') exibido.
+function renderEntradasFin_(modo){
+  const el = document.getElementById(modo==='mes' ? 'entradasFinInfoMes' : 'entradasFinInfoSemana');
+  if(!el) return;
+  const unit = modo==='mes' ? currentMonthUnit : currentUnit;
+  const itens = state.records.filter(r=>{
+    if(!ehEntradaFinanciamento_(r) || !r.day) return false;
+    if(unit!=='Comparar' && unit!=='Total' && unit!=='Todos' && r.unit!==unit) return false;
+    return modo==='mes' ? efetivoDiaStr(r.day).split('/')[1]===currentMonth : efetivoSemana(r)===currentWeek;
+  });
+  if(!itens.length){ el.style.display='none'; el.innerHTML=''; return; }
+  const valor = r => (num(r.real) > 0 ? num(r.real) : num(r.previsto));
+  const total = itens.reduce((s,r)=>s+valor(r), 0);
+  el.style.display = '';
+  el.innerHTML = `<b>Entradas de financiamento: R$ ${fmt(total)}</b> · ` +
+    itens.map(r=>`${String(r.item).replace(/&/g,'&amp;').replace(/</g,'&lt;')} (R$ ${fmt(valor(r))})`).join(' · ') +
+    ' · dinheiro que entrou, não conta como saída.';
 }
 
 function sumField(recs, field, currency='BRL'){ return recs.filter(r=>(r.currency||'BRL')===currency).reduce((s,r)=>s+num(r[field]),0); }
@@ -1400,7 +1492,7 @@ function renderKPIs(){
   const diff = totalR - totalP;
   const diffCard = document.createElement('div');
   diffCard.className = 'kpi';
-  diffCard.innerHTML = `<div class="label">Diferença (Real − Previsto)</div><div class="value" style="color:${diff>0?'#B4462E':'#2B914F'}">${diff>=0?'+':''}R$ ${fmt(diff)}</div>`;
+  diffCard.innerHTML = `<div class="label">Diferença (Real − Previsto)</div><div class="value" style="color:${diff>0?'#B4462E':'#1F7A3E'}">${diff>=0?'+':''}R$ ${fmt(diff)}</div>`;
   el.appendChild(diffCard);
 
   const receb = recebimentoFor(currentUnit);
@@ -1601,13 +1693,13 @@ function renderDailyGroups(){
       const tdP = document.createElement('td');
       tdP.className='val';
       const inpP = document.createElement('input');
-      inpP.className='edit-val'; inpP.type='number'; inpP.step='0.01'; inpP.value = r.previsto;
+      inpP.className='edit-val'; inpP.type='number'; inpP.step='0.01'; inpP.setAttribute('aria-label','Valor previsto'); inpP.value = r.previsto;
       inpP.onchange = e=>{ r.previsto = parseFloat(e.target.value)||0; saveState(); renderAll(); };
       tdP.appendChild(inpP);
       const tdR = document.createElement('td');
       tdR.className='val';
       const inpR = document.createElement('input');
-      inpR.className='edit-val real-input'; inpR.type='number'; inpR.step='0.01';
+      inpR.className='edit-val real-input'; inpR.type='number'; inpR.step='0.01'; inpR.setAttribute('aria-label','Valor real');
       inpR.value = r.real===null||r.real===undefined ? '' : r.real;
       inpR.placeholder='—';
       inpR.onchange = e=>{ r.real = e.target.value===''? null : (parseFloat(e.target.value)||0); saveState(); renderAll(); };
@@ -1686,14 +1778,14 @@ function renderTable(){
     const tdP = document.createElement('td');
     tdP.className='val';
     const inpP = document.createElement('input');
-    inpP.className='edit-val'; inpP.type='number'; inpP.step='0.01'; inpP.value = r.previsto;
+    inpP.className='edit-val'; inpP.type='number'; inpP.step='0.01'; inpP.setAttribute('aria-label','Valor previsto'); inpP.value = r.previsto;
     inpP.onchange = e=>{ r.previsto = parseFloat(e.target.value)||0; saveState(); renderAll(); };
     tdP.appendChild(inpP);
 
     const tdR = document.createElement('td');
     tdR.className='val';
     const inpR = document.createElement('input');
-    inpR.className='edit-val real-input'; inpR.type='number'; inpR.step='0.01';
+    inpR.className='edit-val real-input'; inpR.type='number'; inpR.step='0.01'; inpR.setAttribute('aria-label','Valor real');
     inpR.value = r.real===null||r.real===undefined ? '' : r.real;
     inpR.placeholder='—';
     inpR.onchange = e=>{ r.real = e.target.value===''? null : (parseFloat(e.target.value)||0); saveState(); renderAll(); };
@@ -2081,6 +2173,29 @@ function obrigacaoStatus(r){
   return 'Parcial';
 }
 
+const PAGINA_TAM = 50;
+const paginaEstado_ = {};
+function paginar_(chave, assinatura, itens, pagerId, redesenhar){
+  const st = paginaEstado_[chave] || (paginaEstado_[chave] = {pag:0, sig:null});
+  if(st.sig !== assinatura){ st.pag = 0; st.sig = assinatura; }
+  const total = itens.length;
+  const paginas = Math.max(1, Math.ceil(total / PAGINA_TAM));
+  if(st.pag >= paginas) st.pag = paginas - 1;
+  const ini = st.pag * PAGINA_TAM;
+  const el = document.getElementById(pagerId);
+  if(el){
+    if(total <= PAGINA_TAM){ el.innerHTML = ''; }
+    else {
+      const ult = st.pag >= paginas - 1;
+      el.innerHTML = `<button type="button" data-d="-1" aria-label="Página anterior"${st.pag===0 ? ' disabled' : ''}>‹ Anterior</button>
+        <span>Linhas ${ini+1}–${Math.min(total, ini+PAGINA_TAM)} de ${total} · página ${st.pag+1} de ${paginas}</span>
+        <button type="button" data-d="1" aria-label="Próxima página"${ult ? ' disabled' : ''}>Próxima ›</button>`;
+      el.querySelectorAll('button').forEach(b=>{ b.onclick = ()=>{ st.pag += Number(b.dataset.d); redesenhar(); }; });
+    }
+  }
+  return itens.slice(ini, ini + PAGINA_TAM);
+}
+
 function renderObrigacoesFullView(){
   const search = (document.getElementById('obrFullSearch').value || '').toLowerCase();
   const unitFilter = document.getElementById('obrFullUnit').value;
@@ -2090,6 +2205,7 @@ function renderObrigacoesFullView(){
   document.getElementById('obrFullStatus').onchange = renderObrigacoesFullView;
 
   let items = state.records.filter(r=>{
+    if(ehEntradaFinanciamento_(r)) return false;
     if(unitFilter!=='Comparar' && r.unit!==unitFilter) return false;
     if(search && !(r.item||'').toLowerCase().includes(search)) return false;
     if(statusFilter && obrigacaoStatus(r)!==statusFilter) return false;
@@ -2113,8 +2229,10 @@ function renderObrigacoesFullView(){
   tbody.innerHTML = '';
   if(items.length===0){
     tbody.innerHTML = '<tr><td colspan="8" style="color:var(--ink-soft);">Nenhuma obrigação encontrada.</td></tr>';
+    document.getElementById('obrigacoesFullPager').innerHTML = '';
     return;
   }
+  items = paginar_('obr', search+'|'+unitFilter+'|'+statusFilter, items, 'obrigacoesFullPager', renderObrigacoesFullView);
   items.forEach(r=>{
     const st = obrigacaoStatus(r);
     const efDay = efetivoDiaStr(r.day);
@@ -2165,8 +2283,10 @@ function renderDuplicatasFullView(){
   tbody.innerHTML = '';
   if(items.length===0){
     tbody.innerHTML = '<tr><td colspan="8" style="color:var(--ink-soft);">Nenhuma duplicata encontrada.</td></tr>';
+    document.getElementById('duplicatasFullPager').innerHTML = '';
     return;
   }
+  items = paginar_('dup', search+'|'+unitFilter+'|'+statusFilter, items, 'duplicatasFullPager', renderDuplicatasFullView);
   items.forEach(r=>{
     const efDay = efetivoDiaStr(r.day);
     const diaTxt = efDay + (efDay!==r.day ? ` (venceu ${r.day||''})` : '');
@@ -2810,6 +2930,35 @@ document.getElementById('npImgBtn').addEventListener('click', async ()=>{
   } finally { btn.disabled = false; }
 });
 
+// ---------- Moeda no cabeçalho da tabela, não em cada célula (Fase 3b, 01/10/2026) ----------
+// Depois que qualquer tabela é redesenhada, tira o "R$ " das células que só têm um valor em reais e marca
+// o cabeçalho da coluna com "(R$)". Tabelas largas (mais de 4 colunas de valor, como o Rotativo) marcam só a
+// primeira coluna. Valores negativos ficam em vermelho. Não mexe em células com campos de edição ou texto misto.
+// A tabela de custo financeiro por semana (cabeçalho de 2 linhas) fica como está.
+function ajustarMoedaTabelas_(){
+  document.querySelectorAll('table').forEach(tb=>{
+    if(tb.id === 'custoFinWeekTable' || !tb.tHead || !tb.tHead.rows.length) return;
+    const head = tb.tHead.rows[tb.tHead.rows.length-1];
+    const cols = new Set();
+    tb.querySelectorAll('tbody td, tfoot td').forEach(td=>{
+      if(td.colSpan !== 1 || td.childNodes.length !== 1 || td.firstChild.nodeType !== 3) return;
+      const m = /^([+\-]?)\s*R\$\s?(-?[\d.]+,\d{2}|—)$/.exec(td.firstChild.nodeValue.trim());
+      if(!m) return;
+      td.firstChild.nodeValue = m[1] + m[2];
+      const negativo = m[2].startsWith('-') || (m[1]==='-' && m[2]!=='—');
+      if(negativo && !/diff-/.test(td.className)) td.classList.add('neg');   // "Diferença" já tem cor própria
+      cols.add(td.cellIndex);
+    });
+    if(!cols.size) return;
+    const marcar = th => { if(th && !/R\$/.test(th.textContent)) th.append(' (R$)'); };
+    if(cols.size > 4) marcar(head.cells[0]);
+    else cols.forEach(i=>marcar(head.cells[i]));
+  });
+}
+let _moedaTimer = null;
+new MutationObserver(()=>{ clearTimeout(_moedaTimer); _moedaTimer = setTimeout(ajustarMoedaTabelas_, 40); })
+  .observe(document.body, { childList:true, subtree:true });
+
 function renderCustoFinanceiro(){
   const weekBody = document.getElementById('custoFinWeekBody');
   weekBody.innerHTML = '';
@@ -2924,12 +3073,12 @@ function renderBankAccounts(){
       row.className = 'bank-row';
 
       const inpName = document.createElement('input');
-      inpName.className = 'bank-name';
+      inpName.className = 'bank-name'; inpName.setAttribute('aria-label', 'Nome do banco');
       inpName.value = acc.banco;
       inpName.onchange = e=>{ acc.banco = e.target.value; touchBankUpdated(); saveState(); };
 
       const inpSaldo = document.createElement('input');
-      inpSaldo.className = 'bank-saldo' + (acc.saldo<0?' negative':'');
+      inpSaldo.className = 'bank-saldo' + (acc.saldo<0?' negative':''); inpSaldo.setAttribute('aria-label', 'Saldo do banco');
       inpSaldo.type = 'number';
       inpSaldo.step = '0.01';
       inpSaldo.value = acc.saldo;
@@ -3068,21 +3217,49 @@ async function addHistSaldo(){
   }
 }
 
+// Navegação em 5 áreas com sub-abas (Fase 4b, 01/10/2026). Os modos (valores de currentMode) são os mesmos de antes:
+// só a forma de chegar neles mudou, de 13 abas soltas para 5 áreas.
+const AREAS = [
+  ['hoje',          'Hoje',          [['diario','Diário'],['saldos','Saldos e histórico']]],
+  ['projecao',      'Projeção',      [['semanal','Por semana'],['mensal','Por mês'],['rotativo','Rotativo (13 sem.)']]],
+  ['recebiveis',    'Recebíveis',    [['duplicatas','A receber por semana'],['duplicatas_full','Todas as duplicatas'],['recebimentos','Exportações']]],
+  ['financiamento', 'Financiamento', [['antecipacoes','Antecipações'],['custofinanceiro','Custo financeiro'],['concentracao','Bancos e concentração']]],
+  ['controle',      'Controle',      [['naoprevistos','Não previstos'],['obrigacoes_full','Obrigações (todas)'],['auditoria','Auditoria']]],
+];
+const ultimoModoDaArea_ = {};   // lembra a sub-aba que estava aberta em cada área
+function areaDoModo_(modo){ return AREAS.find(a=>a[2].some(s=>s[0]===modo)) || AREAS[1]; }
+
 function renderModeToggle(){
   const el = document.getElementById('modeToggle');
-  el.innerHTML = '';
-  [['semanal','Visão por semana'],['diario','Diário'],['mensal','Resumo mensal'],['rotativo','Rotativo (13 sem.)'],['recebimentos','Exportações'],['antecipacoes','Antecipações'],['duplicatas','Duplicatas a Receber'],['custofinanceiro','Custo Financeiro'],['obrigacoes_full','Obrigações (todas)'],['duplicatas_full','Duplicatas (todas)'],['naoprevistos','Não previstos'],['concentracao','Concentração / Bancos'],['auditoria','Auditoria']].forEach(([val,label])=>{
+  const sub = document.getElementById('subToggle');
+  el.innerHTML = ''; sub.innerHTML = '';
+  const area = areaDoModo_(currentMode);
+  ultimoModoDaArea_[area[0]] = currentMode;
+  const pendAud = pendingAuditIssues().length;
+
+  AREAS.forEach(a=>{
     const b = document.createElement('button');
-    b.className = 'mtab' + (val===currentMode?' active':'');
-    if(val==='auditoria'){
-      const n = pendingAuditIssues().length;
-      b.textContent = label + (n>0 ? ` (${n})` : '');
-      if(n>0) b.style.color = 'var(--danger)';
-    } else {
-      b.textContent = label;
+    b.className = 'mtab' + (a===area ? ' active' : '');
+    b.textContent = a[1];
+    if(a[0]==='controle' && pendAud>0){
+      b.textContent += ` (${pendAud})`;
+      if(a!==area) b.style.color = 'var(--danger)';
+    }
+    b.onclick = ()=>{ currentMode = ultimoModoDaArea_[a[0]] || a[2][0][0]; renderAll(); };
+    el.appendChild(b);
+  });
+
+  sub.style.display = area[2].length > 1 ? '' : 'none';
+  area[2].forEach(([val,label])=>{
+    const b = document.createElement('button');
+    b.className = 'stab' + (val===currentMode ? ' active' : '');
+    b.textContent = label;
+    if(val==='auditoria' && pendAud>0){
+      b.textContent += ` (${pendAud})`;
+      if(val!==currentMode) b.style.color = 'var(--danger)';
     }
     b.onclick = ()=>{ currentMode = val; renderAll(); };
-    el.appendChild(b);
+    sub.appendChild(b);
   });
 }
 
@@ -3439,6 +3616,7 @@ function monthLabel(m){ const f = MONTHS.find(x=>x[0]===m); return f ? f[1] : m;
 
 function filteredByMonth(month, unit){
   return state.records.filter(r=>{
+    if(ehEntradaFinanciamento_(r)) return false;
     if(!r.day) return false;
     const rm = efetivoDiaStr(r.day).split('/')[1];
     if(rm !== month) return false;
@@ -3549,7 +3727,7 @@ function renderMonthKPIs(){
   const diff = totalR - totalP;
   const diffCard = document.createElement('div');
   diffCard.className = 'kpi';
-  diffCard.innerHTML = `<div class="label">Diferença (Real − Previsto)</div><div class="value" style="color:${diff>0?'#B4462E':'#2B914F'}">${diff>=0?'+':''}R$ ${fmt(diff)}</div>`;
+  diffCard.innerHTML = `<div class="label">Diferença (Real − Previsto)</div><div class="value" style="color:${diff>0?'#B4462E':'#1F7A3E'}">${diff>=0?'+':''}R$ ${fmt(diff)}</div>`;
   el.appendChild(diffCard);
 
   const nWeeks = weeksInMonth(currentMonth);
@@ -3604,6 +3782,7 @@ function renderMonthCatTable(){
 function renderMonthAll(){
   renderMonthTabs();
   renderMonthUnitToggle();
+  renderEntradasFin_('mes');
   const isCompare = currentMonthUnit === 'Comparar';
   document.getElementById('monthCompareView').style.display = isCompare ? '' : 'none';
   document.getElementById('monthSingleView').style.display = isCompare ? 'none' : '';
@@ -3615,11 +3794,72 @@ function renderMonthAll(){
   }
 }
 
+// ---------- Faixa de KPIs fixa no topo (Fase 4c, 01/10/2026) ----------
+// Mesma conta do Rotativo (linhas semanais consolidadas) e da Necessidade de Caixa de cada unidade.
+function rotativoLinhas_(){
+  const startIdx = WEEKS.indexOf(getCurrentWeekFromToday());
+  const weeks = (startIdx===-1 ? WEEKS.slice(0,13) : WEEKS.slice(startIdx, startIdx+13));
+  let saldo = bankBalanceFor('Comparar');
+  return weeks.map(w=>{
+    const obrig = sumField(filteredRecords(w,'Comparar'),'previsto','BRL');
+    const receb = duplicatasPendentesForWeek(w,'Comparar') + recebimentosExportacaoPendentesForWeek(w,'Comparar');
+    const saldoFinal = saldo + receb - obrig;
+    saldo = saldoFinal;
+    return { week:w, obrig, receb, saldoFinal };
+  });
+}
+function necessidadeUnidade_(week, unit){
+  const prev = sumField(filteredRecords(week,unit),'previsto','BRL');
+  const abat = recebimentoFor(unit) + duplicatasPendentesForWeek(week,unit) + recebimentosExportacaoPendentesForWeek(week,unit)
+             + (isFirstWeek(week) ? bankBalanceFor(unit) : 0);
+  return prev - abat;
+}
+function renderKpiStrip_(){
+  const el = document.getElementById('kpiStrip');
+  if(!el) return;
+  try{
+    const rural = bankBalanceFor('Rural'), rna = bankBalanceFor('RNA'), total = rural + rna;
+    const linhas = rotativoLinhas_();
+    const minimo = linhas.reduce((m,l)=> (!m || l.saldoFinal < m.saldoFinal) ? l : m, null);
+    const negativas = linhas.filter(l=>l.saldoFinal < 0).length;
+    const semanaAtual = getCurrentWeekFromToday();
+    let antBruto = 0, antCusto = 0;
+    ['Rural','RNA'].forEach(u=>{
+      const n = necessidadeUnidade_(semanaAtual, u);
+      if(n > 0){ const a = calcAntecipacao(n, u); antBruto += a.bruto; antCusto += a.custoTotal; }
+    });
+    const mes = npMesKey_(new Date());
+    let npPago = 0;
+    state.records.forEach(r=>{
+      const c = npClassificar_(r);
+      if(c && NP_TIPOS.includes(c.tipo) && c.pago && npMesKey_(c.ref) === mes) npPago += c.valor;
+    });
+    const cor = v => v < 0 ? ' style="color:var(--danger)"' : '';
+    const card = (cls, label, valor, sub, valorStyle) =>
+      `<div class="kpi ${cls||''}"><div class="label">${label}</div><div class="value"${valorStyle||''}>${valor}</div><div class="np-ksub">${sub}</div></div>`;
+    el.innerHTML =
+      card('', 'Caixa hoje', 'R$ ' + fmt(total),
+           `Matriz <span${cor(rural)}>R$ ${fmt(rural)}</span> · Filial <span${cor(rna)}>R$ ${fmt(rna)}</span>`, cor(total)) +
+      card('', 'Menor saldo projetado', minimo ? 'R$ ' + fmt(minimo.saldoFinal) : '—',
+           minimo ? `semana ${weekLabel(minimo.week)} · negativo em ${negativas} de ${linhas.length} semanas` : 'sem dados',
+           minimo ? cor(minimo.saldoFinal) : '') +
+      card('', 'Antecipar na semana atual', 'R$ ' + fmt(antBruto),
+           antBruto > 0 ? `custo estimado R$ ${fmt(antCusto)} (duplicatas bancarizadas)` : 'sem necessidade de antecipação') +
+      card('', 'Não previsto no mês', 'R$ ' + fmt(npPago), `pago em ${npMesLabel_(mes)} · veja Controle › Não previstos`);
+  } catch(e){
+    console.warn('Faixa de KPIs não pôde ser calculada:', e);
+    el.innerHTML = '';
+  }
+}
+
 function renderAll(){
   renderBankAccounts();
   renderHistoricoSaldos();
   renderRecebimentos();
   renderModeToggle();
+  renderKpiStrip_();
+  // Saldos e histórico só aparecem em Hoje › Saldos e histórico; nas outras telas ficam recolhidos.
+  document.querySelectorAll('.bank-card').forEach(e=>{ e.style.display = currentMode==='saldos' ? '' : 'none'; });
   document.getElementById('weeklyView').style.display = currentMode==='semanal' ? '' : 'none';
   document.getElementById('monthlyView').style.display = currentMode==='mensal' ? '' : 'none';
   document.getElementById('recebimentosView').style.display = currentMode==='recebimentos' ? '' : 'none';
@@ -3634,6 +3874,9 @@ function renderAll(){
   document.getElementById('concentracaoView').style.display = currentMode==='concentracao' ? '' : 'none';
   document.getElementById('rotativoView').style.display = currentMode==='rotativo' ? '' : 'none';
 
+  if(currentMode==='saldos'){
+    return;   // só os cartões de saldos (já desenhados acima)
+  }
   if(currentMode==='auditoria'){
     renderAuditoriaView();
     return;
@@ -3686,6 +3929,7 @@ function renderAll(){
   renderTabs();
   renderUnitToggle();
   renderViewToggle();
+  renderEntradasFin_('semana');
 
   const isCompare = currentUnit === 'Comparar';
   document.getElementById('compareView').style.display = isCompare ? '' : 'none';
