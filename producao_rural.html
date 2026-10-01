@@ -628,11 +628,13 @@ body[data-unidade="banco"] [data-unid="rna"],body[data-unidade="rna"] [data-unid
           </div>
         </div>
         <div class="card-body">
-          <div class="f" style="margin-bottom:12px">
-            <label>Carregar fórmula cadastrada</label>
-            <select id="formula-sel" onchange="carregarFormula(this.value)" style="font-weight:600">
-              <option value="">— carregando fórmulas... —</option>
-            </select>
+          <div class="g2" style="margin-bottom:12px;gap:12px">
+            <div class="f"><label for="busca-formula-ficha">🔍 Carregar fórmula — código ou nome</label>
+              <input type="text" id="busca-formula-ficha" list="dl-formulas" placeholder="Ex.: 125 ou Rural Engorda..." autocomplete="off" onchange="buscarECarregarFormula(this)"></div>
+            <div class="f"><label>ou escolha na lista</label>
+              <select id="formula-sel" onchange="carregarFormula(this.value)" style="font-weight:600">
+                <option value="">— carregando fórmulas... —</option>
+              </select></div>
           </div>
           <div class="g4">
             <div class="f"><label>Código</label><input type="text" id="p-cod" value=""></div>
@@ -790,6 +792,8 @@ body[data-unidade="banco"] [data-unid="rna"],body[data-unidade="rna"] [data-unid
 
 <!-- ═══ ABA 3 — FORMAÇÃO DO PREÇO ═══ -->
 <div id="pg-preco" class="page">
+  <div class="f" style="max-width:520px;margin-bottom:10px"><label for="busca-formula-preco">🔍 Carregar fórmula — código ou nome</label>
+    <input type="text" id="busca-formula-preco" list="dl-formulas" placeholder="Ex.: 125 ou Rural Engorda..." autocomplete="off" onchange="buscarECarregarFormula(this)"></div>
   <!-- Strip produto -->
   <div class="ps-strip">
     <div class="ps-item"><span class="ps-lbl">Código</span><span class="ps-val" id="pv-cod">—</span></div>
@@ -1017,7 +1021,8 @@ body[data-unidade="banco"] [data-unid="rna"],body[data-unidade="rna"] [data-unid
           <div style="font-size:12px;color:var(--t3);margin-top:2px">Ordem de Producao &middot; sem exposicao de custos</div>
         </div>
       </div>
-      <div style="display:flex;gap:8px;align-items:center">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input type="text" id="busca-formula-op" list="dl-formulas" placeholder="🔍 Carregar fórmula (código ou nome)" autocomplete="off" onchange="buscarECarregarFormula(this)" style="min-width:260px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit">
         <button id="op-save-btn" onclick="salvarEdicoesOP()" style="display:none;padding:8px 16px;background:var(--green);color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer">💾 Salvar alterações</button>
         <button id="op-discard-btn" onclick="descartarEdicoesOP()" style="display:none;padding:8px 12px;background:transparent;color:var(--t2);border:1px solid var(--border);border-radius:6px;font-size:13px;font-weight:600;cursor:pointer">Descartar</button>
         <button class="print-op-btn" onclick="imprimirOP()">&#128424; Imprimir Ordem de Producao</button>
@@ -1113,7 +1118,8 @@ body[data-unidade="banco"] [data-unid="rna"],body[data-unidade="rna"] [data-unid
           <div style="font-size:12px;color:var(--t3);margin-top:2px">Ordem de Producao &middot; sem exposicao de custos</div>
         </div>
       </div>
-      <div style="display:flex;gap:8px;align-items:center">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input type="text" id="busca-formula-opi" list="dl-formulas" placeholder="🔍 Carregar fórmula (código ou nome)" autocomplete="off" onchange="buscarECarregarFormula(this)" style="min-width:260px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit">
         <button id="opi-save-btn" onclick="salvarEdicoesOPIvi()" style="display:none;padding:8px 16px;background:var(--green);color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer">💾 Salvar alterações</button>
         <button id="opi-discard-btn" onclick="descartarEdicoesOPIvi()" style="display:none;padding:8px 12px;background:transparent;color:var(--t2);border:1px solid var(--border);border-radius:6px;font-size:13px;font-weight:600;cursor:pointer">Descartar</button>
         <button class="print-op-btn" onclick="imprimirOPIvinhema()">&#128424; Imprimir Ordem de Producao</button>
@@ -5240,6 +5246,43 @@ function atualizarSelectFormulas(){
     html+='</optgroup>';
   }
   sel.innerHTML=html;
+  atualizarListaBuscaFormula();
+}
+/* ===== Busca de formula por codigo ou nome (Ficha, Formacao do Preco, OP Eldorado e OP Ivinhema) =====
+   Mesma lista do seletor da Ficha (unidade em uso + cotacoes em andamento), em um <datalist> que sugere ao digitar. */
+let buscaFormulaMapa={};
+function atualizarListaBuscaFormula(){
+  let dl=document.getElementById('dl-formulas');
+  if(!dl){dl=document.createElement('datalist');dl.id='dl-formulas';document.body.appendChild(dl);}
+  const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+  buscaFormulaMapa={};
+  const rots=[];
+  (formulaSelectList||[]).forEach(function(f,i){
+    const rot=f.cod+' — '+f.nome+(UNIDADE==='todas'?' ('+(f._banco==='rna'?'Ivinhema':'Eldorado')+')':'');
+    if(buscaFormulaMapa[rot]!==undefined)return;
+    buscaFormulaMapa[rot]=String(i);rots.push(rot);
+  });
+  cotacoesComoFormulas().forEach(function(f){const rot=rotuloProduto(f);buscaFormulaMapa[rot]=f.cod;rots.push(rot);});
+  dl.innerHTML=rots.map(r=>'<option value="'+esc(r)+'">').join('');
+}
+function buscarECarregarFormula(inp){
+  const t=String(inp&&inp.value||'').trim();
+  if(!t)return;
+  let v=buscaFormulaMapa[t];
+  if(v===undefined){
+    /* digitado a mao: pelo codigo exato; se nao achar, pelo nome (precisa ser um so) */
+    const cod=ptParseFormulaCode(t).replace(/\s*\(.*$/,'');
+    const lista=(formulaSelectList||[]).map((f,i)=>({f,i}));
+    let achados=lista.filter(x=>String(x.f.cod)===cod);
+    if(!achados.length){const q=t.toLowerCase();achados=lista.filter(x=>String(x.f.nome||'').toLowerCase().indexOf(q)>-1);}
+    if(achados.length===1)v=String(achados[0].i);
+    else if(achados.length>1){toast(achados.length+' fórmulas encontradas para "'+t+'" — escolha uma das sugestões da lista.');return;}
+    else{toast('Nenhuma fórmula encontrada para "'+t+'" nesta unidade.');return;}
+  }
+  carregarFormula(v);
+  inp.value='';inp.blur();
+  const pg=document.querySelector('.page.active');
+  if(pg&&pg.id==='pg-preco')calcPV();
 }
 function carregarFormula(idxVal){
   if(idxVal===''||idxVal===undefined||idxVal===null)return;
@@ -6361,8 +6404,23 @@ function ptExportAtualizarItem(id, campo, valor){
   ptExportSalvar();
   ptRenderExportCalculo(); // recalcula sem re-renderizar a lista inteira (evita perder foco do input)
 }
+/* Busca do produto na Exportacao por codigo ou nome (mesma lista da Cotacao Especial). Vazio = custo base manual. */
+function ptExportBuscarProduto(texto){
+  const t=String(texto||'').trim();
+  if(!t){if(PT_EXPORT.produtoCod)ptExportAtualizarProduto('');return;}
+  const idx=ptIndexComCotacoes();
+  let cod=ptParseFormulaCode(t);
+  if(!idx[String(cod)]){
+    const q=t.toLowerCase(),ach=Object.values(idx).filter(f=>String(f.nome||'').toLowerCase().indexOf(q)>-1);
+    if(ach.length===1)cod=String(ach[0].cod);
+    else{toast(ach.length?ach.length+' produtos encontrados — escolha um das sugestões.':'Nenhum produto encontrado para "'+t+'" nesta unidade.');ptRenderExport();return;}
+  }
+  if(String(cod)!==String(PT_EXPORT.produtoCod))ptExportAtualizarProduto(cod);
+}
 function ptExportAtualizarProduto(cod){
   PT_EXPORT.produtoCod=cod||null;
+  PT_EXPORT.mpOverrides={}; /* outro produto: custos dos ingredientes voltam ao padrao */
+  PT_EXPORT.pctAuto={};     /* ...e os percentuais automaticos tambem (podem ser de outra unidade) */
   ptExportSalvar();
   ptRenderExport();
 }
@@ -6381,15 +6439,39 @@ function ptExportAtualizarMargem(valor){
   ptExportSalvar();
   ptRenderExportCalculo();
 }
+/* Custo de cada ingrediente do produto da exportacao (igual a Cotacao Especial): padrao = base do CMV escolhida
+   (tabela ou real Agrotis) na unidade do produto; pode ser trocado so nesta exportacao (PT_EXPORT.mpOverrides). */
+function ptExportFormula(){return PT_EXPORT.produtoCod?(ptIndexComCotacoes()[String(PT_EXPORT.produtoCod)]||null):null;}
+function ptExportLinhasMP(f){
+  const u=f._banco==='rna'?'rna':(f._banco||bancoDoCat(f.cat)),ov=PT_EXPORT.mpOverrides||{};
+  const batida=parseFloat(f.batida)||0;let mpBat=0;
+  const linhas=(f.ings||[]).filter(i=>i.qtd>0).map(ing=>{
+    const custoPadrao=custoMPBase(ing.cod,u)||0;
+    const temOverride=ov[ing.cod]!==undefined;
+    const custoUsado=temOverride?ov[ing.cod]:custoPadrao;
+    mpBat+=(ing.qtd||0)*(custoUsado/1000);
+    const item=MPitens.find(m=>m.cod===ing.cod);
+    return {cod:ing.cod,nome:item?item.d:('cod '+ing.cod),qtd:ing.qtd,custoPadrao,custoUsado,temOverride,contribTon:batida>0?(ing.qtd/batida)*custoUsado:0};
+  });
+  const pe=pesoEmbalagemReal(f),emb=embMPdaFormula(f),embCusto=custoEmbalagemBase(f,u);
+  const embTon=pe.kg>0?embCusto/pe.kg*1000:0;
+  const mpTon=batida>0?mpBat/batida*1000:0;
+  return {u,batida,linhas,mpTon,embTon,embCusto,embNome:emb?(emb.cod+' '+emb.d):((f.emb&&f.emb.desc)||'sem embalagem'),pesoEmb:pe.kg,custoTon:mpTon+embTon};
+}
+function ptExportAtualizarMP(cod,valor){
+  if(!PT_EXPORT.mpOverrides)PT_EXPORT.mpOverrides={};
+  const v=lerNumeroBR(valor);
+  if(isNaN(v)||v<0) delete PT_EXPORT.mpOverrides[cod]; else PT_EXPORT.mpOverrides[cod]=v;
+  ptExportSalvar();ptRenderExport();
+}
+function ptExportResetarMP(cod){
+  if(PT_EXPORT.mpOverrides)delete PT_EXPORT.mpOverrides[cod];
+  ptExportSalvar();ptRenderExport();
+}
 function ptExportCustoBaseTon(){
   if(PT_EXPORT.produtoCod){
-    const idx=ptIndexComCotacoes();
-    const f=idx[String(PT_EXPORT.produtoCod)];
-    if(f && typeof custoFormula==='function'){
-      if(baseCMVReal()){const rk=cmvRealFormulaKg(f);if(rk)return rk.kg*1000;} /* base do CMV: real (Agrotis) */
-      const c=custoFormula(f);
-      return (c.custoKg||0)*1000;
-    }
+    const f=ptExportFormula();
+    if(f) return ptExportLinhasMP(f).custoTon; /* MP (com os custos editados) + embalagem pelo peso real */
   }
   return PT_EXPORT.custoBaseManual||0;
 }
@@ -6399,13 +6481,30 @@ function ptExportUnidade(){
   if(PT_EXPORT.produtoCod){const f=ptIndexComCotacoes()[String(PT_EXPORT.produtoCod)];if(f)return f._banco==='rna'?'rna':(f._banco||bancoDoCat(f.cat));}
   return (typeof UNIDADE!=='undefined'&&UNIDADE!=='todas')?UNIDADE:'banco';
 }
+/* Percentuais automaticos da exportacao, todos editaveis (igual a Cotacao Especial): padrao da unidade do produto;
+   o editado fica em PT_EXPORT.pctAuto (vazio = padrao; trocar de produto volta ao padrao). ICMS e PIS/COFINS: 0 (isentos). */
+function ptExportPctPadrao(u){
+  const e=encargosPadraoUnidade(u);
+  return {icms:0,pisCofins:0,irCsll:+(e.irCsll*100).toFixed(4),fixas:+(e.fixas*100).toFixed(4)};
+}
 function ptExportItensAuto(){
-  const u=ptExportUnidade(),e=encargosPadraoUnidade(u);
+  const u=ptExportUnidade(),pad=ptExportPctPadrao(u),ov=PT_EXPORT.pctAuto||{};
+  const val=k=>(ov[k]!==undefined&&ov[k]!==null&&ov[k]!=='')?parseFloat(ov[k]):pad[k];
   return [
-    {id:'auto-ircsll',nome:'IRPJ + CSLL presumido ('+NOME_UNIDADE[u]+')',tipo:'PCT',valor:+(e.irCsll*100).toFixed(4),auto:true},
-    {id:'auto-fixas',nome:'Despesas fixas da unidade ('+NOME_UNIDADE[u]+')',tipo:'PCT',valor:+(e.fixas*100).toFixed(4),auto:true}
+    {id:'auto-icms',k:'icms',nome:'ICMS',dica:'Isento na exportação (padrão 0%)',tipo:'PCT',valor:val('icms'),padrao:pad.icms,auto:true},
+    {id:'auto-piscofins',k:'pisCofins',nome:'PIS + COFINS',dica:'Isentos na exportação (padrão 0%)',tipo:'PCT',valor:val('pisCofins'),padrao:pad.pisCofins,auto:true},
+    {id:'auto-ircsll',k:'irCsll',nome:'IRPJ + CSLL presumido ('+NOME_UNIDADE[u]+')',dica:'Presumido, da unidade',tipo:'PCT',valor:val('irCsll'),padrao:pad.irCsll,auto:true},
+    {id:'auto-fixas',k:'fixas',nome:'Despesas fixas da unidade ('+NOME_UNIDADE[u]+')',dica:'Produção e estrutura (DRE da unidade)',tipo:'PCT',valor:val('fixas'),padrao:pad.fixas,auto:true}
   ];
 }
+function ptExportAtualizarPctAuto(k,valor){
+  if(!PT_EXPORT.pctAuto)PT_EXPORT.pctAuto={};
+  const t=String(valor==null?'':valor).trim();
+  if(t===''){delete PT_EXPORT.pctAuto[k];}
+  else{const n=lerNumeroBR(t);if(isNaN(n)||n<0){toast('Percentual inválido.');ptRenderExport();return;}PT_EXPORT.pctAuto[k]=n;}
+  ptExportSalvar();ptRenderExport();
+}
+function ptExportResetarPctAuto(){PT_EXPORT.pctAuto={};ptExportSalvar();ptRenderExport();toast('Percentuais da exportação voltaram ao padrão da unidade.');}
 /* Uma vez: tira o custo "produção" em R$/ton da lista (a fabricacao agora entra pelas despesas fixas da unidade). */
 function ptExportMigrarProducao(){
   let mudou=false;
@@ -6488,12 +6587,26 @@ function ptExportGerarPDF(){
   const r=ptExportCalcular();
   if(!r.pvValido){ alert('A soma dos percentuais + margem está em 100% ou mais. Ajuste antes de gerar o PDF.'); return; }
   const dataHoje=new Date().toLocaleDateString('pt-BR');
-  const linhasCustos=r.detalhado.map((it,idx)=>{
+  const linhasCustos=r.detalhado.filter(it=>!(it.auto&&!it.valor)).map((it,idx)=>{
     const d=it;
     const tipoTxt=it.tipo==='BRL_TON'?'R$/ton':(it.tipo==='USD_TON'?'US$/ton':'% sobre PV');
     const valorTxt=it.tipo==='USD_TON'?('US$ '+fn(it.valor,2)):(it.tipo==='PCT'?(fn(it.valor,2)+'%'):('R$ '+fn(it.valor,2)));
     return `<tr><td>${it.nome||'(sem nome)'}</td><td>${tipoTxt}</td><td class="r">${valorTxt}</td><td class="r">R$ ${fn(d.contribRton,2)}/ton</td></tr>`;
   }).join('');
+  /* Composicao do produto aberto: custo de cada MP (com os editados marcados), embalagem e custo base */
+  const fx=ptExportFormula(),mx=fx?ptExportLinhasMP(fx):null;
+  const htmlEsc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const secMP=!mx?'':`
+  <div class="sec-titulo">Composição do produto — ${htmlEsc(fx.cod+' — '+fx.nome)}</div>
+  <div class="info" style="margin-bottom:6px">Batida de ${fn(mx.batida,0)} kg · custos de ${baseCMVReal()?'compra real (Agrotis)':'tabela'} de ${NOME_UNIDADE[mx.u]}${mx.linhas.some(l=>l.temOverride)?' · <strong>*</strong> = custo ajustado nesta simulação':''}</div>
+  <table>
+    <thead><tr><th>Cód.</th><th>Matéria-prima</th><th class="r">Kg/batida</th><th class="r">%</th><th class="r">Custo (R$/ton)</th><th class="r">Contribuição (R$/ton)</th></tr></thead>
+    <tbody>
+      ${mx.linhas.map(l=>`<tr><td>${l.cod}</td><td>${htmlEsc(l.nome)}${l.temOverride?' <strong>*</strong>':''}</td><td class="r">${fn(l.qtd,2)}</td><td class="r">${mx.batida>0?fn(l.qtd/mx.batida*100,2):'0'}%</td><td class="r">R$ ${fn(l.custoUsado,2)}${l.temOverride?`<div style="font-size:10px;color:#6b7280">padrão R$ ${fn(l.custoPadrao,2)}</div>`:''}</td><td class="r">R$ ${fn(l.contribTon,2)}</td></tr>`).join('')}
+      <tr><td></td><td>Embalagem: ${htmlEsc(mx.embNome)} (R$ ${fn(mx.embCusto,2)} por embalagem de ${fn(mx.pesoEmb,mx.pesoEmb%1===0?0:1)} kg)</td><td></td><td></td><td></td><td class="r">R$ ${fn(mx.embTon,2)}</td></tr>
+      <tr><td></td><td><strong>Custo base (MP + embalagem)</strong></td><td class="r"><strong>${fn(mx.linhas.reduce((s,l)=>s+l.qtd,0),2)}</strong></td><td></td><td></td><td class="r"><strong>R$ ${fn(mx.custoTon,2)}</strong></td></tr>
+    </tbody>
+  </table>`;
   const doc=`<html><head><meta charset="UTF-8"><title>Precificação Exportação</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
@@ -6525,6 +6638,7 @@ function ptExportGerarPDF(){
     <strong>Produto:</strong> ${ptExportNomeProduto()}<br>
     <strong>Câmbio utilizado:</strong> R$ ${fn(PT_EXPORT.cambio,2)} por US$ &nbsp;|&nbsp; <strong>Data:</strong> ${dataHoje}
   </div>
+  ${secMP}
 
   <div class="sec-titulo">Custos e margem considerados</div>
   <table>
@@ -6557,6 +6671,7 @@ function ptRenderExport(){
   const cont=$('pt-export-view');
   if(!cont)return;
   ptExportMigrarProducao();
+  ptEnsureEspecialDatalist(); /* lista de busca de produtos (codigo ou nome) */
   const usaFormula=!!PT_EXPORT.produtoCod;
   cont.innerHTML=`
     <div style="max-width:900px;margin:0 auto">
@@ -6575,7 +6690,7 @@ function ptRenderExport(){
       <div class="card" style="padding:16px;margin-bottom:16px">
         <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:12px">
           <div class="f"><label>Produto (custo base ao vivo, opcional)</label>
-            <select onchange="ptExportAtualizarProduto(this.value)">${ptExportOpcoesProdutos()}</select>
+            <input type="text" id="pt-exp-busca-produto" list="pt-esp-produtos-datalist" autocomplete="off" placeholder="Ex.: 937, Rural Equinos ou o nome de uma cotação... (vazio = custo manual)" value="${PT_EXPORT.produtoCod?String(ptFormulaLabelFor(PT_EXPORT.produtoCod)).replace(/"/g,'&quot;'):''}" onchange="ptExportBuscarProduto(this.value)">
           </div>
           <div class="f"><label>Custo base manual (R$/ton)</label>
             <input type="number" step="0.01" min="0" value="${PT_EXPORT.custoBaseManual||0}" ${usaFormula?'disabled':''} onchange="ptExportAtualizarBaseManual(this.value)">
@@ -6589,6 +6704,39 @@ function ptRenderExport(){
         </div>
         ${usaFormula?'<div style="font-size:11px;color:var(--t3);margin-top:8px">Custo base puxado ao vivo da ficha técnica do produto selecionado.</div>':''}
       </div>
+
+      ${(function(){
+        /* Ingredientes do produto com o custo de cada um (editavel so nesta exportacao), igual a Cotacao Especial */
+        const fx=ptExportFormula();if(!fx)return '';
+        const m=ptExportLinhasMP(fx);
+        return `<div class="card" style="padding:16px;margin-bottom:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:10px;flex-wrap:wrap">
+            <label style="font-weight:700;font-size:12px;text-transform:uppercase;color:var(--t3)">Matérias-primas — ${fx.nome}</label>
+            <span style="font-size:11px;color:var(--t3)">padrão = ${baseCMVReal()?'custo real (Agrotis)':'custo de tabela'} de ${NOME_UNIDADE[m.u]} · edite para simular</span>
+          </div>
+          <div class="pt-esp2-row" style="font-size:11px;text-transform:uppercase;color:var(--t3);font-weight:700;border-bottom:2px solid var(--border)">
+            <div>Cód.</div><div>Ingrediente</div><div class="r">Qtd/batida</div><div class="r">Padrão (R$/ton)</div><div class="r">Usado (R$/ton)</div><div class="r">Contrib. no custo (R$/ton)</div><div></div>
+          </div>
+          ${m.linhas.map(l=>`
+          <div class="pt-esp2-row">
+            <div class="mono" style="color:var(--t3)">${l.cod}</div>
+            <div>${l.nome}</div>
+            <div class="r">${fn(l.qtd,2)} kg</div>
+            <div class="r">R$ ${fn(l.custoPadrao,2)}</div>
+            <input type="number" step="0.01" class="${l.temOverride?'alterado':''}" value="${(l.custoUsado||0).toFixed(2)}" onchange="ptExportAtualizarMP(${l.cod},this.value)">
+            <div class="r" style="font-weight:700">R$ ${fn(l.contribTon,2)}</div>
+            <div style="text-align:center">${l.temOverride?`<button type="button" class="nf-del-btn" onclick="ptExportResetarMP(${l.cod})" title="Voltar ao custo padrão">↺</button>`:''}</div>
+          </div>`).join('')}
+          <div class="pt-esp2-row" style="color:var(--t2)">
+            <div></div><div>Embalagem: ${m.embNome}</div><div class="r">${fn(m.pesoEmb,m.pesoEmb%1===0?0:1)} kg/emb.</div><div class="r">R$ ${fn(m.embCusto,2)}/emb.</div><div></div>
+            <div class="r" style="font-weight:700">R$ ${fn(m.embTon,2)}</div><div></div>
+          </div>
+          <div class="pt-esp2-row" style="border-bottom:0;font-weight:800">
+            <div></div><div>Custo base (MP + embalagem)</div><div></div><div></div><div></div>
+            <div class="r" style="color:var(--blue)">R$ ${fn(m.custoTon,2)}</div><div></div>
+          </div>
+        </div>`;
+      })()}
 
       <div class="card" style="padding:16px;margin-bottom:16px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -6614,9 +6762,21 @@ function ptRenderExport(){
           `).join('')}
         </div>
         <div style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--border)">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--t3);margin-bottom:4px" title="Mesmos % da Formação do Preço. Para mudar: Formação do Preço → Salvar % da unidade.">Automáticos da unidade (% sobre o preço)</div>
-          ${ptExportItensAuto().map(a=>`<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0"><span>${a.nome}</span><span><b>${fn(a.valor,2)}%</b> · <span id="pt-exp-contrib-${a.id}" style="color:var(--t3)">—</span></span></div>`).join('')}
-          <div style="font-size:11px;color:var(--t3);margin-top:4px">PIS/COFINS e ICMS não incidem na exportação. A fabricação está nas despesas fixas (não lance custo de produção em R$/ton).</div>
+          ${(function(){
+            const autos=ptExportItensAuto(),ov=PT_EXPORT.pctAuto||{};
+            const alt=a=>ov[a.k]!==undefined&&ov[a.k]!==null&&ov[a.k]!=='';
+            const algum=autos.some(alt);
+            return `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+                <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--t3)">Percentuais sobre o preço (editáveis nesta exportação)</div>
+                ${algum?'<button type="button" class="btn btn-ghost" style="padding:3px 10px;font-size:11px" onclick="ptExportResetarPctAuto()">↺ Voltar todos ao padrão</button>':'<span style="font-size:11px;color:var(--t3)">usando o padrão da unidade (Formação do Preço)</span>'}
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px">
+                ${autos.map(a=>`<div class="f"><label title="${a.dica}">${a.nome} (%)</label>
+                  <input type="number" step="0.01" min="0" value="${+(+a.valor).toFixed(4)}" title="${a.dica}" style="${alt(a)?'border-color:var(--amber);background:var(--amb-lt);font-weight:700':''}" onchange="ptExportAtualizarPctAuto('${a.k}',this.value)">
+                  <span class="hint">${alt(a)?'padrão: '+fn(a.padrao,2)+'% · <a href="#" onclick="event.preventDefault();ptExportAtualizarPctAuto(\''+a.k+'\',\'\')">voltar</a>':a.dica} · <span id="pt-exp-contrib-${a.id}">—</span></span></div>`).join('')}
+              </div>`;
+          })()}
+          <div style="font-size:11px;color:var(--t3);margin-top:6px">Comissão, fretes e despesas de despacho entram na lista de custos acima. A fabricação está nas despesas fixas (não lance custo de produção em R$/ton).</div>
         </div>
         <div id="pt-exp-aviso" style="display:none;margin-top:10px;padding:10px 12px;background:var(--amb-lt);border:1px solid var(--amb-bd);color:var(--amber);border-radius:8px;font-size:12px">⚠️ A soma dos percentuais (impostos/comissão) + margem de lucro está em 100% ou mais — não é possível calcular um preço de venda válido. Reduza os percentuais.</div>
         <div style="font-size:11px;color:var(--t3);margin-top:8px">Os custos em R$/ton e US$/ton somam-se ao custo base normalmente. Os percentuais (impostos, comissões) e a margem de lucro incidem sobre o <strong>preço de venda final</strong> — não sobre o custo — por isso o cálculo é "por dentro": PV = (custo base + custos fixos) ÷ (1 − soma dos % − margem).</div>
@@ -6649,9 +6809,52 @@ function ptEspecialFormulaAtual(){
   const idx=ptIndexComCotacoes();
   return idx[String(PT_ESPECIAL.produtoCod)]||null;
 }
+/* ===== Cotacao Especial: TODOS os percentuais editaveis por negocio =====
+   Cada % comeca no padrao da unidade do produto (mesmos da Formacao do Preco) e pode ser trocado so neste negocio
+   (PT_ESPECIAL.pct). Vazio = volta ao padrao. Trocar de produto volta tudo ao padrao. */
+const ESP_PCT_CAMPOS=[
+  {k:'icms',rot:'ICMS',dica:'Só em venda para fora do estado'},
+  {k:'pisCofins',rot:'PIS + COFINS',dica:'Cumulativo (lucro presumido), sobre a receita fora do ICMS'},
+  {k:'irCsll',rot:'IRPJ + CSLL',dica:'Presumido, da unidade'},
+  {k:'comis',rot:'Comissão',dica:'Comissão sobre a venda'},
+  {k:'fretes',rot:'Fretes e entregas',dica:'Fretes de produto acabado, exportação, descargas e frota'},
+  {k:'comerciais',rot:'Comerciais e capital de giro',dica:'Propaganda, inadimplência, outras despesas e custo do prazo'},
+  {k:'fixas',rot:'Despesas fixas (produção e estrutura)',dica:'Pessoal, ocupação, administrativas, industriais, comerciais e veículos (DRE da unidade)'}
+];
+function ptEspecialPctPadrao(u){
+  const e=encargosPadraoUnidade(u);
+  return {icms:IMPOSTOS_EMPRESA['e-icms'],pisCofins:IMPOSTOS_EMPRESA['e-pis']+IMPOSTOS_EMPRESA['e-cofins'],irCsll:+(e.irCsll*100).toFixed(4),
+    comis:+(e.comis*100).toFixed(4),fretes:+(e.fretes*100).toFixed(4),comerciais:+(e.outrosCom*100).toFixed(4),fixas:+(e.fixas*100).toFixed(4)};
+}
+function ptEspecialUnidade(f){return f?(f._banco==='rna'?'rna':(f._banco||bancoDoCat(f.cat))):((typeof UNIDADE!=='undefined'&&UNIDADE==='rna')?'rna':'banco');}
+/* Percentuais efetivos do negocio, no mesmo formato de encargosPadraoUnidade (fracoes do PV). */
+function ptEspecialEnc(f){
+  const u=ptEspecialUnidade(f),pad=ptEspecialPctPadrao(u),ov=PT_ESPECIAL.pct||{},v={};
+  ESP_PCT_CAMPOS.forEach(c=>{const x=ov[c.k];v[c.k]=(x!==undefined&&x!==null&&x!=='')?parseFloat(x):pad[c.k];});
+  const icms=v.icms/100;
+  const trib=icms+(v.pisCofins/100)*(1-icms)+v.irCsll/100;
+  const comis=v.comis/100,fretes=v.fretes/100,outrosCom=v.comerciais/100,fixas=v.fixas/100;
+  return {u:u,valores:v,padrao:pad,trib:trib,irCsll:v.irCsll/100,comis:comis,fretes:fretes,outrosCom:outrosCom,fixas:fixas,
+    total:trib+comis+fretes+outrosCom+fixas};
+}
+function ptEspecialAtualizarPct(campo,valor){
+  if(!PT_ESPECIAL.pct)PT_ESPECIAL.pct={};
+  const t=String(valor==null?'':valor).trim();
+  if(t===''){delete PT_ESPECIAL.pct[campo];}
+  else{const n=lerNumeroBR(t);if(isNaN(n)||n<0){toast('Percentual inválido.');ptRenderEspecial();return;}PT_ESPECIAL.pct[campo]=n;}
+  ptEspecialSalvar();
+  ptRenderEspecial();
+}
+function ptEspecialResetarPct(){
+  PT_ESPECIAL.pct={};
+  ptEspecialSalvar();
+  ptRenderEspecial();
+  toast('Percentuais da Cotação Especial voltaram ao padrão da unidade.');
+}
 function ptEspecialSelecionarProduto(cod){
   PT_ESPECIAL.produtoCod=cod||null;
   PT_ESPECIAL.mpOverrides={};
+  PT_ESPECIAL.pct={}; /* novo produto: percentuais voltam ao padrao da unidade dele */
   ptEspecialSalvar();
   ptRenderEspecial();
 }
@@ -6716,7 +6919,7 @@ function ptEspecialCalcular(){
   const custoMPTon=custoMPKg*1000;
   /* Mesmos % da Formacao do Preco (unidade do produto). Antes: R$ 350/ton de producao + frete R$/ton + impostos 7% +
      comissao 4%, sem despesas fixas. Frete especifico e outros custos (R$/ton) sao extras deste negocio (padrao 0). */
-  const enc=encargosPadraoUnidade(f._banco||bancoDoCat(f.cat));
+  const enc=ptEspecialEnc(f); /* padrao da unidade + o que foi editado neste negocio */
   const extrasTon=(parseFloat(PT_ESPECIAL.freteTon)||0)+(parseFloat(PT_ESPECIAL.extraTon)||0);
   const custoFixoTon=custoMPTon+extrasTon;
   const lucroAlvo=(PT_ESPECIAL.lucroAlvo!==undefined&&PT_ESPECIAL.lucroAlvo!==null)?parseFloat(PT_ESPECIAL.lucroAlvo):PRECO_PADRAO['pv-lucro'];
@@ -6909,14 +7112,34 @@ function ptRenderEspecial(){
       </div>
 
       <div class="card" style="padding:16px;margin-bottom:16px">
-        <label style="font-weight:700;font-size:12px;text-transform:uppercase;color:var(--t3);display:block;margin-bottom:10px">Custos fixos e encargos padrão (editáveis)</label>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
-          <div class="f"><label>Lucro líquido alvo (% s/PV)</label><input type="number" step="0.1" value="${(PT_ESPECIAL.lucroAlvo!==undefined&&PT_ESPECIAL.lucroAlvo!==null)?PT_ESPECIAL.lucroAlvo:PRECO_PADRAO['pv-lucro']}" onchange="ptEspecialAtualizarCampo('lucroAlvo',this.value)"></div>
-          <div class="f"><label>Frete específico deste negócio (R$/ton)</label><input type="number" step="0.01" min="0" value="${PT_ESPECIAL.freteTon||0}" onchange="ptEspecialAtualizarCampo('freteTon',this.value)"></div>
-          <div class="f"><label>Outros custos extras (R$/ton)</label><input type="number" step="0.01" min="0" value="${PT_ESPECIAL.extraTon||0}" onchange="ptEspecialAtualizarCampo('extraTon',this.value)"></div>
-          <div class="f"><label>Encargos da unidade (Formação)</label><div style="font-size:11px;color:var(--t2);padding-top:6px;line-height:1.4" title="Mudar em Formação do Preço → Salvar % da unidade">${(function(){const ff=ptEspecialFormulaAtual();const e=encargosPadraoUnidade(ff?(ff._banco||bancoDoCat(ff.cat)):(UNIDADE==='rna'?'rna':'banco'));return NOME_UNIDADE[e.u]+': tributos '+fn(e.trib*100,1)+'% · comissão '+fn(e.comis*100,1)+'% · fretes/com. '+fn((e.fretes+e.outrosCom)*100,1)+'% · fixas '+fn(e.fixas*100,1)+'%';})()}</div></div>
-        </div>
-        <div id="pt-esp2-aviso" style="display:none;margin-top:10px;padding:10px 12px;background:var(--amb-lt);border:1px solid var(--amb-bd);color:var(--amber);border-radius:8px;font-size:12px">⚠️ Encargos da unidade + lucro alvo somam 100% ou mais — não é possível calcular um preço de venda válido.</div>
+        ${(function(){
+          /* Percentuais deste negocio: todos editaveis; padrao = unidade do produto (Formacao do Preco) */
+          const ff=ptEspecialFormulaAtual(),e=ptEspecialEnc(ff),ov=PT_ESPECIAL.pct||{};
+          const algumAlterado=ESP_PCT_CAMPOS.some(c=>ov[c.k]!==undefined&&ov[c.k]!==null&&ov[c.k]!=='');
+          const campo=c=>{
+            const alt=ov[c.k]!==undefined&&ov[c.k]!==null&&ov[c.k]!=='';
+            return `<div class="f"><label title="${c.dica}">${c.rot} (%)</label>
+              <input type="number" step="0.01" min="0" value="${+(+e.valores[c.k]).toFixed(4)}" title="${c.dica}"
+                style="${alt?'border-color:var(--amber);background:var(--amb-lt);font-weight:700':''}"
+                onchange="ptEspecialAtualizarPct('${c.k}',this.value)">
+              <span class="hint">${alt?'padrão: '+fn(e.padrao[c.k],2)+'% · <a href="#" onclick="event.preventDefault();ptEspecialAtualizarPct(\''+c.k+'\',\'\')">voltar</a>':'padrão '+NOME_UNIDADE[e.u]}</span></div>`;
+          };
+          return `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+              <label style="font-weight:700;font-size:12px;text-transform:uppercase;color:var(--t3)">Percentuais sobre o preço de venda (editáveis neste negócio)</label>
+              ${algumAlterado?'<button type="button" class="btn btn-ghost" style="padding:3px 10px;font-size:11px" onclick="ptEspecialResetarPct()">↺ Voltar todos ao padrão de '+NOME_UNIDADE[e.u]+'</button>':'<span style="font-size:11px;color:var(--t3)">usando o padrão de '+NOME_UNIDADE[e.u]+' (Formação do Preço)</span>'}
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px">
+              ${ESP_PCT_CAMPOS.map(campo).join('')}
+              <div class="f"><label>Lucro líquido alvo (%)</label><input type="number" step="0.1" value="${(PT_ESPECIAL.lucroAlvo!==undefined&&PT_ESPECIAL.lucroAlvo!==null)?PT_ESPECIAL.lucroAlvo:PRECO_PADRAO['pv-lucro']}" onchange="ptEspecialAtualizarCampo('lucroAlvo',this.value)"><span class="hint">padrão ${PRECO_PADRAO['pv-lucro']}%</span></div>
+            </div>
+            <div style="font-size:12px;color:var(--t2);margin-top:8px">Total de encargos: <b>${fn(e.total*100,2)}%</b> (tributos ${fn(e.trib*100,2)}% · comissão ${fn(e.comis*100,2)}% · fretes e comerciais ${fn((e.fretes+e.outrosCom)*100,2)}% · despesas fixas ${fn(e.fixas*100,2)}%)</div>
+            <label style="font-weight:700;font-size:12px;text-transform:uppercase;color:var(--t3);display:block;margin:16px 0 10px">Custos extras deste negócio (R$/ton)</label>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px">
+              <div class="f"><label>Frete específico (R$/ton)</label><input type="number" step="0.01" min="0" value="${PT_ESPECIAL.freteTon||0}" onchange="ptEspecialAtualizarCampo('freteTon',this.value)"><span class="hint">soma ao custo, além dos fretes em %</span></div>
+              <div class="f"><label>Outros custos (R$/ton)</label><input type="number" step="0.01" min="0" value="${PT_ESPECIAL.extraTon||0}" onchange="ptEspecialAtualizarCampo('extraTon',this.value)"><span class="hint">ex.: aditivo ou serviço específico</span></div>
+            </div>`;
+        })()}
+        <div id="pt-esp2-aviso" style="display:none;margin-top:10px;padding:10px 12px;background:var(--amb-lt);border:1px solid var(--amb-bd);color:var(--amber);border-radius:8px;font-size:12px">⚠️ Os percentuais + lucro alvo somam 100% ou mais — não é possível calcular um preço de venda válido.</div>
         <div style="font-size:11px;color:var(--t3);margin-top:8px">Impostos e comissões incidem sobre o <strong>preço de venda final</strong> (cálculo "por dentro"), igual à Precificação Exportação.</div>
       </div>
 
@@ -6936,7 +7159,7 @@ function ptRenderEspecial(){
         <div style="display:grid;grid-template-columns:1fr 1fr 2fr;gap:12px;align-items:end">
           <div class="f"><label>Preço de venda a testar (R$/tonelada)</label><input type="number" step="0.01" min="0" value="${PT_ESPECIAL.pvTestadoTon?PT_ESPECIAL.pvTestadoTon.toFixed(2):''}" placeholder="Ex: 4700,00" oninput="ptEspecialAtualizarPVTesteTon(this.value)"></div>
           <div class="f"><label>...ou por saco (${fn(r.pesoSaco,r.pesoSaco%1===0?0:2)} kg)</label><input type="number" step="0.01" min="0" value="${(PT_ESPECIAL.pvTestadoTon&&r.pesoSaco>0)?(PT_ESPECIAL.pvTestadoTon/1000*r.pesoSaco).toFixed(2):''}" placeholder="Ex: 85,00" oninput="ptEspecialAtualizarPVTesteSaco(this.value)"></div>
-          <div style="font-size:11px;color:var(--t3)">Informe o preço em qualquer um dos dois campos (o outro se ajusta sozinho) e veja quanto de margem sobra, já descontando o custo total e os encargos (impostos + comissão) definidos acima.</div>
+          <div style="font-size:11px;color:var(--t3)">Informe o preço em qualquer um dos dois campos (o outro se ajusta sozinho) e veja quanto de margem sobra, já descontando o custo total e todos os percentuais definidos acima (tributos, comissão, fretes, comerciais e despesas fixas).</div>
         </div>
         <div id="pt-esp2-teste-resultado" style="display:none;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px">
           <div class="pt-exp-kpi"><div class="lbl">Encargos nesse preço</div><div class="val" id="pt-esp2-teste-encargos" style="font-size:15px">—</div></div>
