@@ -219,6 +219,18 @@
   .legend-note{font-size:0.76rem;color:var(--ink-soft);margin-bottom:16px;display:flex;gap:16px;align-items:center;}
   .legend-note .sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:middle;}
 
+  .np-head{display:flex;align-items:center;gap:14px;margin-bottom:16px;padding-bottom:12px;border-bottom:3px solid var(--green-deep);}
+  .np-head img{height:44px;width:auto;object-fit:contain;}
+  .np-head h2{font-family:'Fraunces',serif;font-size:1.3rem;margin:0;color:var(--green-deep);}
+  .np-head .np-sub{font-size:0.82rem;color:var(--ink-soft);margin-top:2px;}
+  .np-dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle;}
+  #naoPrevistosView .add-row{margin-top:0;}
+  #npKpi{grid-template-columns:repeat(3,1fr);}
+  @media(max-width:640px){#npKpi{grid-template-columns:1fr;}}
+  #npKpi .kpi .value, #npReport td.num{white-space:nowrap;}
+  .np-ksub{font-size:0.72rem;color:var(--ink-soft);margin-top:4px;line-height:1.5;}
+  .kpi.total .np-ksub{color:var(--wheat-soft);opacity:0.9;}
+
   footer{text-align:center;color:var(--ink-soft);font-size:0.78rem;margin-top:30px;}
 </style>
 </head>
@@ -510,6 +522,60 @@
     </div>
   </div>
 
+  <div id="naoPrevistosView" style="display:none">
+    <div class="card" id="npToolbar" style="margin-bottom:16px;">
+      <div class="add-row">
+        <label style="font-size:0.85rem;color:var(--ink-soft);">Período</label>
+        <select id="npMes"></select>
+        <label style="font-size:0.85rem;color:var(--ink-soft);">Unidade</label>
+        <select id="npUnit">
+          <option value="Comparar">Todas as unidades</option>
+          <option value="Rural">Matriz (Rural)</option>
+          <option value="RNA">Filial (RNA)</option>
+        </select>
+        <label style="font-size:0.85rem;color:var(--ink-soft);">Tipo</label>
+        <select id="npTipo"></select>
+        <span style="flex:1"></span>
+        <button class="btn-primary" id="npImgBtn">Gerar imagem</button>
+        <button class="btn-primary" id="npPdfBtn">Gerar PDF</button>
+      </div>
+    </div>
+
+    <div id="npReport" style="background:#fff;padding:18px;border-radius:14px;">
+      <div class="np-head">
+        <img id="npLogo" alt="Rural Nutrição Animal">
+        <div>
+          <h2>Saídas não previstas</h2>
+          <div class="np-sub" id="npSub"></div>
+        </div>
+      </div>
+      <div class="kpi-row" id="npKpi"></div>
+      <div class="card chart-card">
+        <h2>Por mês e tipo</h2>
+        <canvas id="npChart"></canvas>
+      </div>
+      <div class="card" style="margin-bottom:18px;">
+        <h2>Resumo por tipo</h2>
+        <div style="overflow-x:auto;">
+          <table class="rec-table">
+            <thead><tr><th>Tipo</th><th style="text-align:right">Qtd.</th><th style="text-align:right">Pago</th><th style="text-align:right">A pagar</th><th style="text-align:right">% do não previsto</th></tr></thead>
+            <tbody id="npResumoBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Detalhe <span class="bank-updated" id="npDetalheCount"></span></h2>
+        <div style="overflow-x:auto;">
+          <table class="rec-table">
+            <thead><tr><th>Data</th><th>Unidade</th><th>Item</th><th>Categoria</th><th>Tipo</th><th style="text-align:right">Valor</th><th>Situação</th><th>Conta</th></tr></thead>
+            <tbody id="npDetalheBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <p class="recebimentos-note" id="npRegras" style="margin-top:14px;"></p>
+    </div>
+  </div>
+
   <div id="duplicatasFullView" style="display:none">
     <div class="card">
       <h2>Todas as duplicatas a receber</h2>
@@ -649,57 +715,7 @@
     </div>
   </div>
 
-  <div id="conciliacaoView" style="display:none">
-    <p class="recebimentos-note" style="margin-bottom:14px;">Conciliação automática a partir de 01/08/2026: cruza as Obrigações e Duplicatas da planilha com o status real do Agrotis (CABRECPAG+SUBLANCA) — mostra se o título já foi pago/recebido, quanto, e por qual conta. Baseado numa extração feita em <span id="conciliacaoDataExtracao"></span>; para atualizar, peça uma nova extração.</p>
-
-    <div class="kpi-row" id="conciliacaoKpiRow"></div>
-
-    <div class="toggles-row" style="margin-bottom:14px;">
-      <div class="unit-toggle" id="conciliacaoUnitToggle"></div>
-    </div>
-
-    <div class="card">
-      <h2>Obrigações a pagar <span class="bank-updated" id="concPagarCount"></span></h2>
-      <div class="add-row" style="margin-bottom:10px;">
-        <input type="text" id="concPagarSearch" placeholder="Buscar por item/fornecedor..." style="flex:1;min-width:200px;">
-        <select id="concPagarStatus">
-          <option value="">Todos os status</option>
-          <option value="ok">Bate com a planilha</option>
-          <option value="divergente">Divergente</option>
-          <option value="nao_encontrado">Não encontrado no Agrotis</option>
-        </select>
-      </div>
-      <div id="concPagarKpi" class="rec-summary-row" style="margin-bottom:10px;"></div>
-      <div style="overflow-x:auto;max-height:520px;overflow-y:auto;">
-        <table class="rec-table" id="concPagarTable">
-          <thead><tr><th>Vencimento</th><th>Unidade</th><th>Item</th><th style="text-align:right">Previsto</th><th style="text-align:right">Real (planilha)</th><th>Situação Agrotis</th><th style="text-align:right">Pago (Agrotis)</th><th>Conta baixada</th></tr></thead>
-          <tbody id="concPagarBody"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>Duplicatas a receber <span class="bank-updated" id="concReceberCount"></span></h2>
-      <div class="add-row" style="margin-bottom:10px;">
-        <input type="text" id="concReceberSearch" placeholder="Buscar por cliente..." style="flex:1;min-width:200px;">
-        <select id="concReceberStatus">
-          <option value="">Todos os status</option>
-          <option value="ok">Bate com a planilha</option>
-          <option value="divergente">Divergente</option>
-          <option value="nao_encontrado">Não encontrado no Agrotis</option>
-        </select>
-      </div>
-      <div id="concReceberKpi" class="rec-summary-row" style="margin-bottom:10px;"></div>
-      <div style="overflow-x:auto;max-height:520px;overflow-y:auto;">
-        <table class="rec-table" id="concReceberTable">
-          <thead><tr><th>Vencimento</th><th>Unidade</th><th>Cliente</th><th style="text-align:right">Valor (planilha)</th><th>Status (planilha)</th><th>Situação Agrotis</th><th style="text-align:right">Pago (Agrotis)</th><th>Conta baixada</th></tr></thead>
-          <tbody id="concReceberBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <footer>Dados extraídos de Fluxo_de_caixa.xlsx e agenda de boletos DDA · ajuste livremente valores, datas e categorias acima.</footer>
+  <footer>Dados da planilha Fluxo_de_Caixa_BaseDeDados, atualizados diariamente pela conciliação com o Agrotis (terça a sábado).</footer>
 </div>
 
 <button id="saveFloatBtn" class="save-float-btn">💾 Gravar</button>
@@ -738,7 +754,6 @@ let SEED_RECEBIMENTOS_REAIS = [
 ];
 
 let SEED_DUPLICATAS = []; // Duplicatas vêm sempre da planilha (removido em 23/09/2026)
-let AGROTIS_RECONCILIACAO = {"gerado_em": null, "data_min": "2026-08-01", "titulos": []}; // visão Conciliação desativada em 23/09/2026
 
 let state = { records: [], nextId: 1, bankAccounts: null };
 
@@ -883,12 +898,6 @@ function applySheetData(data){
   state.__recebimentosReaisFromSheet = data.recebimentosReais || null;
   state.__antecipacoesFromSheet = data.antecipacoes || null;
   state.__limitesBancosFromSheet = Array.isArray(data.limitesBancos) ? data.limitesBancos : null;
-  // Se o Apps Script já estiver enviando a aba "ConciliacaoAgrotis" (ver Code.gs),
-  // usa ela em vez do retrato fixo gravado neste arquivo — assim a conciliação
-  // Agrotis passa a vir sempre da planilha, sem depender de eu reeditar o HTML.
-  if(data.conciliacaoAgrotis && Array.isArray(data.conciliacaoAgrotis.titulos)){
-    AGROTIS_RECONCILIACAO = data.conciliacaoAgrotis;
-  }
 }
 
 // Sincroniza de volta pra planilha as coisas que Gilberto/colaboradora editam
@@ -1820,9 +1829,10 @@ function isFirstWeek(week){
 const REF_MONDAY_JS = new Date(2026,5,29); // 29/06/2026
 function weekKeyFromDay(dayStr){
   if(!dayStr || !dayStr.includes('/')) return null;
-  const [dd,mm] = dayStr.split('/').map(Number);
+  const [dd,mm,yy] = dayStr.split('/').map(Number);
   if(!dd || !mm) return null;
-  const date = new Date(2026, mm-1, dd);
+  // Usa o ano da data quando ele existe (dd/mm/aaaa); sem ano, assume 2026 como antes.
+  const date = new Date(yy ? (yy < 100 ? 2000+yy : yy) : 2026, mm-1, dd);
   const diffDays = Math.round((date - REF_MONDAY_JS)/(1000*60*60*24));
   const n = Math.floor(diffDays/7)+1;
   if(n < 1) return null;
@@ -2552,202 +2562,253 @@ document.getElementById('diarioImgBtn').addEventListener('click', async ()=>{
   }
 });
 
-let conciliacaoUnit = 'Comparar';
-function renderConciliacaoUnitToggle(){
-  const el = document.getElementById('conciliacaoUnitToggle');
-  el.innerHTML = '';
-  ['Comparar','Rural','RNA'].forEach(u=>{
-    const b = document.createElement('button');
-    b.className = 'utab' + (u===conciliacaoUnit?' active':'');
-    b.textContent = u==='Comparar' ? 'Rural + RNA' : UNIT_LABEL[u];
-    b.onclick = ()=>{ conciliacaoUnit = u; renderConciliacao(); };
-    el.appendChild(b);
-  });
-}
+// ---------- Saídas não previstas (sugestão do Ronei, 01/10/2026) ----------
+// Regra (Gilberto, 01/10/2026): é "não previsto" tudo que NÃO foi lançado antes por ele no fluxo,
+// a menos que o Ronei avise com mais de 3 dias de antecedência e o título entre no fluxo.
+// Origem da linha: colunas origem_lancamento/data_insercao (gravadas pela conciliação v2 a partir de
+// 01/10/2026) ou, nas linhas antigas, o prefixo do id (obr_ag_ = título do Agrotis, obr_ronei_ = retirada).
+// Linhas manuais (ids obr_<hash>) só entram quando o real estoura o previsto ou não tinha previsto.
+// Antecedência mínima do aviso: 1 dia (Gilberto, 01/10/2026; no teste da cópia foram usados 3 dias).
+// Para mudar, é só trocar este número: os textos e nomes de tipo se ajustam sozinhos.
+const NP_DIAS_AVISO = 1;
+const NP_DIAS_TXT = NP_DIAS_AVISO + (NP_DIAS_AVISO === 1 ? ' dia' : ' dias');
+const NP_TIPO_CURTO = 'Vencimento em até ' + NP_DIAS_TXT;
+const NP_TIPOS = ['Retirada Ronei','Já pago na inserção',NP_TIPO_CURTO,'Estouro de valor','Real sem previsão'];
+const NP_TIPO_AVISO = 'Título novo (aviso > ' + NP_DIAS_TXT + ')';
+const NP_TIPO_HIST = 'Histórico sem data de inserção';
+const NP_TIPO_FIN = 'Operações financeiras';   // amortização, juros, cap giro, conta garantida: informativo, fora do total (Gilberto, 01/10/2026)
+const NP_TOL_ESTOURO = 0.10;                   // estouro só conta se o real passar 10% do previsto (Gilberto, 01/10/2026)
+// "Nova Tomada ..." é dinheiro que ENTRA (empréstimo tomado), não é saída: fica fora da tela e do total pago.
+function npEhEntrada_(r){ return /nova tomada/i.test(String(r.item||'')); }
+const NP_CORES = {
+  'Retirada Ronei':'#B4462E', 'Já pago na inserção':'#1B3A63', [NP_TIPO_CURTO]:'#2463AA',
+  'Estouro de valor':'#FECA39', 'Real sem previsão':'#5B6472',
+  [NP_TIPO_AVISO]:'#7AAE8A', [NP_TIPO_HIST]:'#B8BEC8', [NP_TIPO_FIN]:'#8C6A3F',
+};
+const NP_MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+let npMes = null, npUnit = 'Comparar', npTipo = '', npChart = null;
 
-// Extrai o numero do documento Agrotis de um texto tipo "FORNECEDOR X - Doc 165234-1".
-function extraiDocumento(texto){
-  const m = (texto||'').match(/-\s*Doc\.?\s*([A-Za-z0-9\/.\-]+(?:\s+[A-Za-z0-9\/.\-]+)*)\s*$/i);
-  return m ? m[1].replace(/\s+/g,'').toUpperCase() : null;
+function npEsc_(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function npParseData_(s){
+  if(s===null || s===undefined || s==='') return null;
+  const str = String(s).trim();
+  let m = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return new Date(+m[1], +m[2]-1, +m[3]);
+  m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if(m) return new Date(+m[3] < 100 ? 2000 + +m[3] : +m[3], +m[2]-1, +m[1]);
+  return inferDate(str);
 }
+function npMesKey_(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
+function npMesLabel_(k){ const [y,m] = k.split('-'); return NP_MESES[+m-1] + '/' + y; }
 
-// Monta os indices de busca (por documento e por unidade+dia+valor) uma vez por render.
-function indexaAgrotis(tipo){
-  const fonte = (typeof AGROTIS_RECONCILIACAO !== 'undefined') ? AGROTIS_RECONCILIACAO.titulos : [];
-  const porDoc = {}, porChave = {};
-  fonte.filter(t=>t.tipo===tipo).forEach(t=>{
-    const dt = t.vencimento ? t.vencimento.split('-').reverse().join('/').slice(0,5) : '';
-    if(t.documento){
-      const key = t.unit + '|' + String(t.documento).toUpperCase().replace(/\s+/g,'');
-      porDoc[key] = t;
-    }
-    const chave = t.unit + '|' + dt + '|' + Math.round(t.valor*100);
-    (porChave[chave] = porChave[chave] || []).push(t);
-  });
-  return { porDoc, porChave, gerado_em: (typeof AGROTIS_RECONCILIACAO !== 'undefined') ? AGROTIS_RECONCILIACAO.gerado_em : null };
+// Devolve null se a linha era prevista; senão {tipo, valor, pago, ref, r}.
+function npClassificar_(r){
+  const c = npClassificarBase_(r);
+  // Financiamentos (exceto retirada do Ronei) vão para o informativo "Operações financeiras".
+  if(c && c.tipo !== 'Retirada Ronei' && r.category === 'Financiamentos') c.tipo = NP_TIPO_FIN;
+  return c;
 }
-
-function buscaAgrotis(indice, unit, day, valor, textoComDoc){
-  const doc = extraiDocumento(textoComDoc);
-  if(doc){
-    const t = indice.porDoc[unit + '|' + doc];
-    if(t) return t;
+function npClassificarBase_(r){
+  if((r.currency||'BRL') !== 'BRL') return null;
+  if(npEhEntrada_(r)) return null;
+  const id = String(r.id||'');
+  const origem = String(r.origem_lancamento||'');
+  const previsto = num(r.previsto);
+  const real = (r.real===null || r.real===undefined || r.real==='') ? null : num(r.real);
+  const pagoVal = (real!==null && real>0) ? real : (num(r.valor_pago) > 0 ? num(r.valor_pago) : 0);
+  const pago = pagoVal > 0;
+  const baixa = npParseData_(r.data_baixa);
+  const venc = npParseData_(r.day_full || r.day);
+  const ref = baixa || venc;
+  if(!ref) return null;
+  const base = pago ? pagoVal : previsto;
+  if(origem === 'ronei' || id.startsWith('obr_ronei_')){
+    return { tipo:'Retirada Ronei', valor:base, pago, ref, r };
   }
-  const chave = unit + '|' + (day||'') + '|' + Math.round(num(valor)*100);
-  const cand = indice.porChave[chave];
-  return cand && cand.length ? cand[0] : null;
-}
-
-function situacaoBadgeClass(status){
-  if(status==='Pago') return 'Pago';
-  if(status==='Parcial') return 'Parcial';
-  return 'Pendente';
-}
-
-function renderConcPagar(indice){
-  const search = (document.getElementById('concPagarSearch').value || '').toLowerCase();
-  const statusFilter = document.getElementById('concPagarStatus').value;
-  document.getElementById('concPagarSearch').oninput = renderConciliacao;
-  document.getElementById('concPagarStatus').onchange = renderConciliacao;
-
-  const dataMin = (typeof AGROTIS_RECONCILIACAO !== 'undefined') ? AGROTIS_RECONCILIACAO.data_min : '2026-08-01';
-  let rows = state.records.filter(r=>{
-    if(conciliacaoUnit!=='Comparar' && r.unit!==conciliacaoUnit) return false;
-    const d = inferDate(r.day);
-    if(!d) return false;
-    return ymd(d) >= dataMin;
-  }).map(r=>{
-    const ag = buscaAgrotis(indice, r.unit, r.day, r.previsto, r.item);
-    let situacao = 'nao_encontrado';
-    if(ag){
-      const divergeValor = Math.abs(num(r.previsto) - num(ag.valor)) > 0.01;
-      const divergeReal = r.real!=null && r.real!=='' && Math.abs(num(r.real) - num(ag.pago)) > 0.01;
-      situacao = (divergeValor || divergeReal) ? 'divergente' : 'ok';
-    }
-    return { r, ag, situacao };
-  });
-
-  if(search) rows = rows.filter(x=>(x.r.item||'').toLowerCase().includes(search));
-  if(statusFilter) rows = rows.filter(x=>x.situacao===statusFilter);
-  rows.sort((a,b)=> (a.r.day||'').split('/').reverse().join('').localeCompare((b.r.day||'').split('/').reverse().join('')));
-
-  document.getElementById('concPagarCount').textContent = `(${rows.length})`;
-  const porSit = { ok:0, divergente:0, nao_encontrado:0 };
-  rows.forEach(x=>porSit[x.situacao]++);
-  document.getElementById('concPagarKpi').innerHTML = `
-    <span class="pill">${rows.length} lançamento(s)</span>
-    <span class="pill" style="background:#DDF0E2;">Bate: <b>${porSit.ok}</b></span>
-    <span class="pill" style="background:#DCE8F5;">Divergente: <b>${porSit.divergente}</b></span>
-    <span class="pill" style="background:#FADBD8;">Não encontrado: <b>${porSit.nao_encontrado}</b></span>`;
-
-  const tbody = document.getElementById('concPagarBody');
-  tbody.innerHTML = '';
-  if(rows.length===0){
-    tbody.innerHTML = '<tr><td colspan="8" style="color:var(--ink-soft);">Nenhum lançamento encontrado.</td></tr>';
-    return;
+  if(origem === 'agrotis' || id.startsWith('obr_ag_')){
+    const ins = npParseData_(r.data_insercao);
+    if(!ins) return { tipo:NP_TIPO_HIST, valor:base, pago, ref, r };
+    if(baixa && baixa <= ins) return { tipo:'Já pago na inserção', valor:base, pago, ref, r };
+    if(venc && (venc - ins)/86400000 <= NP_DIAS_AVISO) return { tipo:NP_TIPO_CURTO, valor:base, pago, ref, r };
+    return { tipo:NP_TIPO_AVISO, valor:base, pago, ref, r };
   }
-  rows.forEach(({r,ag,situacao})=>{
-    const tr = document.createElement('tr');
-    if(situacao==='divergente') tr.style.background = '#FCEFC7';
-    if(situacao==='nao_encontrado') tr.style.background = '#FADBD8';
-    tr.innerHTML = `
-      <td>${r.day||''}</td>
-      <td>${UNIT_LABEL[r.unit]||r.unit}</td>
-      <td>${r.item||''}</td>
-      <td class="num">R$ ${fmt(r.previsto)}</td>
-      <td class="num">${r.real!=null && r.real!=='' ? 'R$ '+fmt(r.real) : '-'}</td>
-      <td>${ag ? `<span class="status-badge status-${situacaoBadgeClass(ag.status)}">${ag.status}</span>` : '<span style="color:var(--ink-soft);">sem info</span>'}</td>
-      <td class="num">${ag ? 'R$ '+fmt(ag.pago) : '-'}</td>
-      <td>${ag && ag.banco_pagamento ? ag.banco_pagamento : '-'}</td>`;
-    tbody.appendChild(tr);
-  });
-}
-
-function renderConcReceber(indice){
-  const search = (document.getElementById('concReceberSearch').value || '').toLowerCase();
-  const statusFilter = document.getElementById('concReceberStatus').value;
-  document.getElementById('concReceberSearch').oninput = renderConciliacao;
-  document.getElementById('concReceberStatus').onchange = renderConciliacao;
-
-  const dataMin = (typeof AGROTIS_RECONCILIACAO !== 'undefined') ? AGROTIS_RECONCILIACAO.data_min : '2026-08-01';
-  let rows = state.duplicatasReceber.filter(r=>{
-    if(conciliacaoUnit!=='Comparar' && r.unit!==conciliacaoUnit) return false;
-    const d = inferDate(r.day);
-    if(!d) return false;
-    return ymd(d) >= dataMin;
-  }).map(r=>{
-    const ag = buscaAgrotis(indice, r.unit, r.day, r.valor, r.cliente);
-    let situacao = 'nao_encontrado';
-    if(ag){
-      const divergeValor = Math.abs(num(r.valor) - num(ag.valor)) > 0.01;
-      const divergeStatus = (r.status!=='Pendente') !== (ag.status!=='Pendente');
-      situacao = (divergeValor || divergeStatus) ? 'divergente' : 'ok';
-    }
-    return { r, ag, situacao };
-  });
-
-  if(search) rows = rows.filter(x=>(x.r.cliente||'').toLowerCase().includes(search));
-  if(statusFilter) rows = rows.filter(x=>x.situacao===statusFilter);
-  rows.sort((a,b)=> (a.r.day||'').split('/').reverse().join('').localeCompare((b.r.day||'').split('/').reverse().join('')));
-
-  document.getElementById('concReceberCount').textContent = `(${rows.length})`;
-  const porSit = { ok:0, divergente:0, nao_encontrado:0 };
-  rows.forEach(x=>porSit[x.situacao]++);
-  document.getElementById('concReceberKpi').innerHTML = `
-    <span class="pill">${rows.length} lançamento(s)</span>
-    <span class="pill" style="background:#DDF0E2;">Bate: <b>${porSit.ok}</b></span>
-    <span class="pill" style="background:#DCE8F5;">Divergente: <b>${porSit.divergente}</b></span>
-    <span class="pill" style="background:#FADBD8;">Não encontrado: <b>${porSit.nao_encontrado}</b></span>`;
-
-  const tbody = document.getElementById('concReceberBody');
-  tbody.innerHTML = '';
-  if(rows.length===0){
-    tbody.innerHTML = '<tr><td colspan="8" style="color:var(--ink-soft);">Nenhuma duplicata encontrada.</td></tr>';
-    return;
+  if(previsto > 0 && real !== null && real > previsto * (1 + NP_TOL_ESTOURO) + 0.005){
+    return { tipo:'Estouro de valor', valor:real - previsto, pago:true, ref, r };
   }
-  rows.forEach(({r,ag,situacao})=>{
-    const tr = document.createElement('tr');
-    if(situacao==='divergente') tr.style.background = '#FCEFC7';
-    if(situacao==='nao_encontrado') tr.style.background = '#FADBD8';
-    tr.innerHTML = `
-      <td>${r.day||''}</td>
-      <td>${UNIT_LABEL[r.unit]||r.unit}</td>
-      <td>${r.cliente||''}</td>
-      <td class="num">R$ ${fmt(r.valor)}</td>
-      <td><span class="status-badge status-${r.status}">${r.status}</span></td>
-      <td>${ag ? `<span class="status-badge status-${situacaoBadgeClass(ag.status)}">${ag.status}</span>` : '<span style="color:var(--ink-soft);">sem info</span>'}</td>
-      <td class="num">${ag ? 'R$ '+fmt(ag.pago) : '-'}</td>
-      <td>${ag && ag.banco_pagamento ? ag.banco_pagamento : '-'}</td>`;
-    tbody.appendChild(tr);
+  if(previsto <= 0 && pago) return { tipo:'Real sem previsão', valor:pagoVal, pago:true, ref, r };
+  return null;
+}
+
+function npDados_(){
+  const itens = [];
+  let totalPagoPorMes = {};
+  state.records.forEach(r=>{
+    if((r.currency||'BRL') !== 'BRL') return;
+    if(npEhEntrada_(r)) return;
+    if(npUnit !== 'Comparar' && r.unit !== npUnit) return;
+    const c = npClassificar_(r);
+    if(c) itens.push(c);
+    const real = num(r.real);
+    if(real > 0){
+      const ref = npParseData_(r.data_baixa) || npParseData_(r.day_full || r.day);
+      if(ref){ const k = npMesKey_(ref); totalPagoPorMes[k] = (totalPagoPorMes[k]||0) + real; }
+    }
   });
+  return { itens, totalPagoPorMes };
 }
 
-function renderConciliacao(){
-  renderConciliacaoUnitToggle();
-  const gerado_em = (typeof AGROTIS_RECONCILIACAO !== 'undefined') ? AGROTIS_RECONCILIACAO.gerado_em : '—';
-  document.getElementById('conciliacaoDataExtracao').textContent = gerado_em;
+function renderNaoPrevistosView(){
+  const logo = document.querySelector('.brand-logo');
+  if(logo) document.getElementById('npLogo').src = logo.src;
 
-  const idxPagar = indexaAgrotis('Pagar');
-  const idxReceber = indexaAgrotis('Receber');
-  renderConcPagar(idxPagar);
-  renderConcReceber(idxReceber);
+  const { itens, totalPagoPorMes } = npDados_();
+  const imprevistos = itens.filter(i=>NP_TIPOS.includes(i.tipo));
+  const meses = [...new Set(imprevistos.map(i=>npMesKey_(i.ref)))].sort();
+  const hojeKey = npMesKey_(new Date());
+  if(npMes === null) npMes = meses.includes(hojeKey) ? hojeKey : (meses.length ? meses[meses.length-1] : 'todos');
 
-  const totalPrevisto = state.records.filter(r=>{
-    if(conciliacaoUnit!=='Comparar' && r.unit!==conciliacaoUnit) return false;
-    const d = inferDate(r.day); return d && ymd(d) >= (typeof AGROTIS_RECONCILIACAO!=='undefined'?AGROTIS_RECONCILIACAO.data_min:'2026-08-01');
-  }).reduce((s,r)=>s+num(r.previsto),0);
-  const totalReceberPlanilha = state.duplicatasReceber.filter(r=>{
-    if(conciliacaoUnit!=='Comparar' && r.unit!==conciliacaoUnit) return false;
-    const d = inferDate(r.day); return d && ymd(d) >= (typeof AGROTIS_RECONCILIACAO!=='undefined'?AGROTIS_RECONCILIACAO.data_min:'2026-08-01');
-  }).reduce((s,r)=>s+num(r.valor),0);
+  const selMes = document.getElementById('npMes');
+  selMes.innerHTML = '<option value="todos">Todos os meses</option>' + meses.map(k=>`<option value="${k}">${npMesLabel_(k)}</option>`).join('');
+  selMes.value = (npMes==='todos' || meses.includes(npMes)) ? npMes : 'todos';
+  npMes = selMes.value;
+  selMes.onchange = ()=>{ npMes = selMes.value; renderNaoPrevistosView(); };
 
-  document.getElementById('conciliacaoKpiRow').innerHTML = `
-    <div class="kpi"><div class="label">Período</div><div class="value" style="font-size:1.1rem;">Desde 01/08/2026</div></div>
-    <div class="kpi"><div class="label">Obrigações a pagar (planilha)</div><div class="value">R$ ${fmt(totalPrevisto)}</div></div>
-    <div class="kpi"><div class="label">Duplicatas a receber (planilha)</div><div class="value">R$ ${fmt(totalReceberPlanilha)}</div></div>
-    <div class="kpi"><div class="label">Extração Agrotis</div><div class="value" style="font-size:1.1rem;">${gerado_em}</div></div>
-  `;
+  const selUnit = document.getElementById('npUnit');
+  selUnit.value = npUnit;
+  selUnit.onchange = ()=>{ npUnit = selUnit.value; renderNaoPrevistosView(); };
+
+  const selTipo = document.getElementById('npTipo');
+  selTipo.innerHTML = '<option value="">Todos os tipos</option>' + NP_TIPOS.map(t=>`<option value="${npEsc_(t)}">${t}</option>`).join('')
+    + [NP_TIPO_FIN, NP_TIPO_AVISO, NP_TIPO_HIST].map(t=>`<option value="${t}">${t} (informativo)</option>`).join('');
+  selTipo.value = npTipo;
+  selTipo.onchange = ()=>{ npTipo = selTipo.value; renderNaoPrevistosView(); };
+
+  const noPeriodo = i => npMes==='todos' || npMesKey_(i.ref) === npMes;
+  const doPeriodo = itens.filter(noPeriodo);
+  const nao = doPeriodo.filter(i=>NP_TIPOS.includes(i.tipo));
+  const soma = (arr, f) => arr.reduce((s,i)=>s+(f(i)?i.valor:0), 0);
+  const pagoNP = soma(nao, i=>i.pago);
+  const aPagarNP = soma(nao, i=>!i.pago);
+  const totalPago = npMes==='todos' ? Object.values(totalPagoPorMes).reduce((s,v)=>s+v,0) : (totalPagoPorMes[npMes]||0);
+  const pct = totalPago > 0 ? pagoNP/totalPago*100 : 0;
+  const maior = nao.slice().sort((a,b)=>b.valor-a.valor)[0];
+  const aviso = soma(doPeriodo.filter(i=>i.tipo===NP_TIPO_AVISO), ()=>true);
+  const hist = soma(doPeriodo.filter(i=>i.tipo===NP_TIPO_HIST), ()=>true);
+
+  let variacao = '';
+  if(npMes !== 'todos'){
+    const [y,m] = npMes.split('-').map(Number);
+    const ant = npMesKey_(new Date(y, m-2, 1));
+    const pagoAnt = imprevistos.filter(i=>npMesKey_(i.ref)===ant && i.pago).reduce((s,i)=>s+i.valor,0);
+    if(pagoAnt > 0){
+      const v = (pagoNP - pagoAnt)/pagoAnt*100;
+      variacao = `${v>=0?'+':''}${v.toFixed(0)}% vs ${npMesLabel_(ant)}`;
+    } else {
+      variacao = `sem registro em ${npMesLabel_(ant)}`;
+    }
+  }
+
+  document.getElementById('npSub').textContent =
+    (npMes==='todos' ? 'Todos os meses' : npMesLabel_(npMes)) + ' · ' + (npUnit==='Comparar' ? 'Matriz + Filial' : UNIT_LABEL[npUnit]) + (npTipo ? ' · ' + npTipo : '');
+
+  const kpi = (label, value, sub, cls) => `<div class="kpi ${cls||''}"><div class="label">${label}</div><div class="value">${value}</div>${sub?`<div class="np-ksub">${sub}</div>`:''}</div>`;
+  document.getElementById('npKpi').innerHTML =
+    kpi('Não previsto pago', 'R$ ' + fmt(pagoNP), variacao, 'total') +
+    kpi('% do total pago', pct.toFixed(1) + '%', 'sobre R$ ' + fmt(totalPago) + ' pagos no período') +
+    kpi('Não previsto a pagar', 'R$ ' + fmt(aPagarNP), 'não previstos que ainda não foram pagos') +
+    kpi('Maior item', maior ? 'R$ ' + fmt(maior.valor) : '—', maior ? npEsc_(maior.r.item) : 'nenhum no período') +
+    kpi('Títulos novos com aviso', 'R$ ' + fmt(aviso), 'inseridos com vencimento a mais de ' + NP_DIAS_TXT + ' · não entram no total') +
+    (hist > 0 ? kpi('Histórico sem data de inserção', 'R$ ' + fmt(hist), 'títulos do Agrotis anteriores a 01/10/2026 · não entram no total') : '');
+
+  // Resumo por tipo
+  const totalNP = nao.reduce((s,i)=>s+i.valor, 0);
+  const linhaTipo = (t, info) => {
+    const arr = doPeriodo.filter(i=>i.tipo===t);
+    const p = soma(arr, i=>i.pago), a = soma(arr, i=>!i.pago);
+    const pc = (!info && totalNP>0) ? ((p+a)/totalNP*100).toFixed(1) + '%' : '—';
+    return `<tr><td><span class="np-dot" style="background:${NP_CORES[t]}"></span>${t}${info?' <span class="bank-updated">(informativo)</span>':''}</td><td class="num">${arr.length}</td><td class="num">R$ ${fmt(p)}</td><td class="num">R$ ${fmt(a)}</td><td class="num">${pc}</td></tr>`;
+  };
+  document.getElementById('npResumoBody').innerHTML =
+    NP_TIPOS.map(t=>linhaTipo(t,false)).join('') +
+    `<tr style="font-weight:700"><td>Total não previsto</td><td class="num">${nao.length}</td><td class="num">R$ ${fmt(pagoNP)}</td><td class="num">R$ ${fmt(aPagarNP)}</td><td class="num">100%</td></tr>` +
+    linhaTipo(NP_TIPO_FIN,true) + linhaTipo(NP_TIPO_AVISO,true) + linhaTipo(NP_TIPO_HIST,true);
+
+  // Gráfico: por mês e tipo (todos os meses, respeitando unidade e tipo escolhidos)
+  const tiposGraf = npTipo && NP_TIPOS.includes(npTipo) ? [npTipo] : NP_TIPOS;
+  const datasets = tiposGraf.map(t=>({
+    label: t, backgroundColor: NP_CORES[t],
+    data: meses.map(k=>imprevistos.filter(i=>i.tipo===t && npMesKey_(i.ref)===k).reduce((s,i)=>s+i.valor,0)),
+  }));
+  if(npChart) npChart.destroy();
+  npChart = new Chart(document.getElementById('npChart'), {
+    type:'bar',
+    data:{ labels: meses.map(npMesLabel_), datasets },
+    options:{ responsive:true, plugins:{ legend:{ position:'bottom' } },
+      scales:{ x:{ stacked:true }, y:{ stacked:true, ticks:{ callback:v=>'R$ '+Number(v).toLocaleString('pt-BR') } } } },
+  });
+
+  // Detalhe
+  const detalhe = doPeriodo.filter(i=>!npTipo || i.tipo===npTipo).sort((a,b)=>b.ref - a.ref);
+  const LIM = 300;
+  document.getElementById('npDetalheCount').textContent = detalhe.length > LIM ? `(mostrando ${LIM} de ${detalhe.length})` : `(${detalhe.length})`;
+  document.getElementById('npDetalheBody').innerHTML = detalhe.length ? detalhe.slice(0, LIM).map(i=>{
+    const r = i.r;
+    return `<tr><td>${ddmmyyyy(i.ref)}</td><td>${r.unit==='RNA'?'Filial (RNA)':'Matriz (Rural)'}</td><td>${npEsc_(r.item)}</td><td>${npEsc_(CAT_LABELS[r.category]||r.category||'')}</td>` +
+      `<td><span class="np-dot" style="background:${NP_CORES[i.tipo]}"></span>${i.tipo}</td><td class="num">R$ ${fmt(i.valor)}</td>` +
+      `<td>${i.pago?'<span class="status-badge status-Pago">Pago</span>':'<span class="status-badge status-Pendente">A pagar</span>'}</td><td>${npEsc_(r.conta_pagamento||'')}</td></tr>`;
+  }).join('') : '<tr><td colspan="8" style="color:var(--ink-soft);">Nenhuma saída não prevista no período.</td></tr>';
+
+  document.getElementById('npRegras').innerHTML =
+    '<b>Como ler:</b> não previsto é o que entrou no fluxo sem ter sido lançado antes (títulos criados pelo Agrotis e retiradas do Ronei), mais o que estourou o valor previsto ou foi pago sem previsão. ' +
+    'Estouro só conta quando o real passa ' + Math.round(NP_TOL_ESTOURO*100) + '% do previsto. ' +
+    'Ficam fora do total e aparecem à parte: títulos novos com vencimento a mais de ' + NP_DIAS_TXT + ' da inserção (avisados), ' +
+    'operações financeiras (amortização, juros, cap giro) e linhas inseridas antes de 01/10/2026, que não têm data de inserção. ' +
+    '"Nova Tomada" é entrada de dinheiro e não é considerada.';
 }
+
+async function npCapturar_(){
+  return html2canvas(document.getElementById('npReport'), { scale: 2, backgroundColor: '#ffffff', ignoreElements: ignorarNaCaptura_ });
+}
+function npNomeArquivo_(ext){
+  return 'Saidas_Nao_Previstas_' + (npMes==='todos' ? 'todos' : npMes) + (npUnit==='Comparar' ? '' : '_' + npUnit) + '.' + ext;
+}
+document.getElementById('npPdfBtn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('npPdfBtn'); btn.disabled = true;
+  try{
+    const canvas = await npCapturar_();
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
+    const m = 8, availW = pdf.internal.pageSize.getWidth() - m*2, availH = pdf.internal.pageSize.getHeight() - m*2;
+    const ratio = availW / canvas.width;
+    const pageHpx = Math.floor(availH / ratio);
+    for(let y=0, p=0; y < canvas.height; y += pageHpx, p++){
+      const h = Math.min(pageHpx, canvas.height - y);
+      const parte = document.createElement('canvas');
+      parte.width = canvas.width; parte.height = h;
+      parte.getContext('2d').drawImage(canvas, 0, y, canvas.width, h, 0, 0, canvas.width, h);
+      if(p > 0) pdf.addPage();
+      pdf.addImage(parte.toDataURL('image/jpeg', 0.95), 'JPEG', m, m, availW, h * ratio);
+    }
+    pdf.save(npNomeArquivo_('pdf'));
+  } finally { btn.disabled = false; }
+});
+document.getElementById('npImgBtn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('npImgBtn'); btn.disabled = true;
+  try{
+    const canvas = await npCapturar_();
+    const blob = await new Promise(res=>canvas.toBlob(res, 'image/png'));
+    const nome = npNomeArquivo_('png');
+    const arquivo = new File([blob], nome, { type:'image/png' });
+    if(navigator.canShare && navigator.canShare({ files:[arquivo] })){
+      try{ await navigator.share({ files:[arquivo], title:'Saídas não previstas' }); return; }
+      catch(e){ if(e && e.name === 'AbortError') return; }
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = nome;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+  } finally { btn.disabled = false; }
+});
 
 function renderCustoFinanceiro(){
   const weekBody = document.getElementById('custoFinWeekBody');
@@ -3010,7 +3071,7 @@ async function addHistSaldo(){
 function renderModeToggle(){
   const el = document.getElementById('modeToggle');
   el.innerHTML = '';
-  [['semanal','Visão por semana'],['diario','Diário'],['mensal','Resumo mensal'],['rotativo','Rotativo (13 sem.)'],['recebimentos','Exportações'],['antecipacoes','Antecipações'],['duplicatas','Duplicatas a Receber'],['custofinanceiro','Custo Financeiro'],['obrigacoes_full','Obrigações (todas)'],['duplicatas_full','Duplicatas (todas)'],['concentracao','Concentração / Bancos'],['auditoria','Auditoria']].forEach(([val,label])=>{
+  [['semanal','Visão por semana'],['diario','Diário'],['mensal','Resumo mensal'],['rotativo','Rotativo (13 sem.)'],['recebimentos','Exportações'],['antecipacoes','Antecipações'],['duplicatas','Duplicatas a Receber'],['custofinanceiro','Custo Financeiro'],['obrigacoes_full','Obrigações (todas)'],['duplicatas_full','Duplicatas (todas)'],['naoprevistos','Não previstos'],['concentracao','Concentração / Bancos'],['auditoria','Auditoria']].forEach(([val,label])=>{
     const b = document.createElement('button');
     b.className = 'mtab' + (val===currentMode?' active':'');
     if(val==='auditoria'){
@@ -3158,7 +3219,7 @@ function renderRotativoView(){
       borderColor: '#2B914F',
       backgroundColor: 'rgba(43,145,79,0.12)',
       fill: true, tension: 0.25,
-      pointBackgroundColor: data.map(v=>v<0?'var(--danger)':'#2B914F'),
+      pointBackgroundColor: data.map(v=>v<0?'#B4462E':'#2B914F'),
       pointRadius: 4,
     }]},
     options: {
@@ -3565,7 +3626,7 @@ function renderAll(){
   document.getElementById('antecipacoesView').style.display = currentMode==='antecipacoes' ? '' : 'none';
   document.getElementById('duplicatasView').style.display = currentMode==='duplicatas' ? '' : 'none';
   document.getElementById('custoFinanceiroView').style.display = currentMode==='custofinanceiro' ? '' : 'none';
-  document.getElementById('conciliacaoView').style.display = currentMode==='conciliacao' ? '' : 'none';
+  document.getElementById('naoPrevistosView').style.display = currentMode==='naoprevistos' ? '' : 'none';
   document.getElementById('obrigacoesFullView').style.display = currentMode==='obrigacoes_full' ? '' : 'none';
   document.getElementById('duplicatasFullView').style.display = currentMode==='duplicatas_full' ? '' : 'none';
   document.getElementById('diarioView').style.display = currentMode==='diario' ? '' : 'none';
@@ -3589,8 +3650,8 @@ function renderAll(){
     renderDiarioView();
     return;
   }
-  if(currentMode==='conciliacao'){
-    renderConciliacao();
+  if(currentMode==='naoprevistos'){
+    renderNaoPrevistosView();
     return;
   }
   if(currentMode==='obrigacoes_full'){
