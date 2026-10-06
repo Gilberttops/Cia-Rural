@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Financiamentos · Rural</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="rural-ui.css">
+<link rel="icon" href="logo_rural.png">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="app"></div>
+<script src="rural-auth.js"></script>
+<script src="rural-ui.js"></script>
+<script src="financiamentos-app.js"></script>
+<script>
+  // Script de dados do Financiamentos (planilha "financiamentos rural"). Sem login ele não entrega nada.
+  var FINANCIAMENTOS_URL = 'https://script.google.com/macros/s/AKfycbxEClV1LjB2lShrsWkFmnWRAJvoFLCOYfNRKdfF_RpALazKzKUEfy-tH-wo3Jr0I5dF/exec';
+  RuralAuth.iniciar({
+    app: 'financiamentos',
+    aoEntrar: function (ctx) {
+      FinanciamentosApp.montar(document.getElementById('app'), {
+        url: FINANCIAMENTOS_URL, logo: 'logo_rural.png', usuario: ctx.usuario, apps: ctx.apps, aoSair: function () { RuralAuth.sair(); }
+      });
+    }
+  });
+</script>
+</body>
+</html>
