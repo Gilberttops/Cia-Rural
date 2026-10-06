@@ -1,0 +1,23 @@
+﻿<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Acessos Rural</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="rural-ui.css">
+<link rel="icon" href="logo_rural.png">
+</head>
+<body>
+<div id="app"></div>
+<script src="rural-auth.js"></script>
+<script src="admin.js"></script>
+<script>
+  // Quem nao for administrador ve "Acesso restrito" (o servidor recusa qualquer ação de admin de qualquer forma).
+  RuralAuth.iniciar({ aoEntrar: function () { RuralAdmin.montar(document.getElementById('app')); } });
+</script>
+</body>
+</html>

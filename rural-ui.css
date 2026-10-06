@@ -1,0 +1,143 @@
+﻿/* ============================================================================
+   KIT RURAL (rural-ui.css) - visual unico dos apps internos da Rural Nutricao Animal.
+   Cores tiradas do logo 25 anos. Fonte: Outfit (Google Fonts). Somente tema claro.
+   Para mudar uma cor ou a fonte em TODOS os apps, mude so as variaveis abaixo.
+   Uso no <head> de cada app:
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+     <link rel="stylesheet" href="rural-ui.css">
+   ============================================================================ */
+:root {
+  color-scheme: light;
+  /* marca */
+  --ru-azul: #2060A8;        /* azul Rural: marca, destaques, botao principal */
+  --ru-azul-esc: #1F3550;    /* titulos */
+  --ru-verde: #289048;       /* positivo, pago, ok */
+  --ru-amarelo: #F8C838;     /* atencao (fundo de destaque) */
+  --ru-amarelo-txt: #8A6414; /* texto sobre amarelo claro */
+  --ru-vermelho: #B4462E;    /* alerta, vencido, erro */
+  /* fundos claros de cada cor (etiquetas, linhas destacadas) */
+  --ru-azul-cl: #E4EDF8;
+  --ru-verde-cl: #E3F2E7;
+  --ru-amarelo-cl: #FDF1C9;
+  --ru-vermelho-cl: #FBE3DD;
+  /* neutros */
+  --ru-papel: #FAF8F3;       /* fundo da pagina */
+  --ru-branco: #FFFFFF;      /* cartoes */
+  --ru-tinta: #1F2A37;       /* texto */
+  --ru-tinta2: #6B7280;      /* texto secundario */
+  --ru-linha: #E3E1DA;       /* bordas */
+  --ru-sombra: 0 1px 2px rgba(31, 53, 80, .06);
+  --ru-raio: 12px;
+  --ru-fonte: 'Outfit', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ru-papel); color: var(--ru-tinta); font: 15px/1.5 var(--ru-fonte); -webkit-font-smoothing: antialiased; }
+button, input, select, textarea { font: inherit; }
+:focus-visible { outline: 2px solid var(--ru-azul); outline-offset: 2px; }
+
+/* ---------- pagina ---------- */
+.ru-pagina { max-width: 1400px; margin: 0 auto; padding: 18px 16px 48px; }
+.ru-pagina h2 { font-size: 1.05rem; font-weight: 600; color: var(--ru-azul-esc); margin: 0 0 10px; }
+.ru-sub { color: var(--ru-tinta2); font-size: .85rem; }
+.ru-nota { color: var(--ru-tinta2); font-size: .8rem; margin: 2px 0 10px; }
+.ru-erro { color: var(--ru-vermelho); font-weight: 600; }
+
+/* ---------- topo padrao ---------- */
+.ru-topo { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; padding-bottom: 14px; }
+.ru-topo-marca { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.ru-topo-marca img { height: 52px; width: auto; display: block; }
+.ru-topo-marca .ru-sep { width: 1px; height: 40px; background: var(--ru-linha); }
+.ru-topo h1 { margin: 0; font-size: 1.55rem; font-weight: 700; color: var(--ru-azul-esc); line-height: 1.15; letter-spacing: -.01em; }
+.ru-topo-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ru-usuario { font-size: .85rem; color: var(--ru-tinta2); padding: 0 4px; }
+.ru-faixa { display: flex; gap: 4px; height: 4px; margin-bottom: 18px; }
+.ru-faixa span { display: block; border-radius: 2px; }
+.ru-faixa span:nth-child(1) { flex: 62; background: var(--ru-azul); }
+.ru-faixa span:nth-child(2) { flex: 24; background: var(--ru-verde); }
+.ru-faixa span:nth-child(3) { flex: 14; background: var(--ru-amarelo); }
+
+/* menu de apps */
+.ru-menu { position: relative; }
+.ru-menu > summary { list-style: none; cursor: pointer; }
+.ru-menu > summary::-webkit-details-marker { display: none; }
+.ru-menu nav { position: absolute; right: 0; top: calc(100% + 6px); z-index: 50; min-width: 220px; background: var(--ru-branco); border: 1px solid var(--ru-linha); border-radius: var(--ru-raio); box-shadow: 0 10px 30px rgba(31, 53, 80, .14); padding: 6px; }
+.ru-menu nav a { display: block; padding: 9px 12px; border-radius: 8px; color: var(--ru-tinta); text-decoration: none; font-size: .9rem; }
+.ru-menu nav a:hover { background: var(--ru-azul-cl); }
+.ru-menu nav a[aria-current="page"] { color: var(--ru-azul); font-weight: 600; }
+
+/* ---------- botoes ---------- */
+.ru-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 38px; padding: 7px 14px; border-radius: 9px; border: 1px solid var(--ru-linha); background: var(--ru-branco); color: var(--ru-tinta); font-size: .88rem; font-weight: 600; cursor: pointer; text-decoration: none; }
+.ru-btn:hover { border-color: #CFCBC0; }
+.ru-btn.prim { background: var(--ru-azul); border-color: var(--ru-azul); color: #fff; }
+.ru-btn.prim:hover { background: #1A5293; }
+.ru-btn.perigo { color: var(--ru-vermelho); }
+.ru-btn.x { border: none; background: transparent; color: var(--ru-vermelho); min-height: 0; padding: 2px 8px; font-weight: 700; }
+.ru-btn:disabled { opacity: .6; cursor: wait; }
+
+/* ---------- indicadores ---------- */
+.ru-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.ru-kpi { background: var(--ru-branco); border: 1px solid var(--ru-linha); border-radius: var(--ru-raio); padding: 14px 16px; box-shadow: var(--ru-sombra); }
+.ru-kpi .r { font-size: .7rem; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--ru-tinta2); }
+.ru-kpi .v { font-size: 1.45rem; font-weight: 700; color: var(--ru-azul); margin-top: 2px; white-space: nowrap; letter-spacing: -.01em; }
+.ru-kpi .s { font-size: .78rem; color: var(--ru-tinta2); }
+.ru-kpi.alerta .v { color: var(--ru-vermelho); }
+.ru-kpi.bom .v { color: var(--ru-verde); }
+.ru-kpi.neutro .v { color: var(--ru-azul-esc); }
+
+/* ---------- cartoes, grade, graficos ---------- */
+.ru-card { background: var(--ru-branco); border: 1px solid var(--ru-linha); border-radius: var(--ru-raio); padding: 16px 18px; margin-bottom: 16px; box-shadow: var(--ru-sombra); min-width: 0; }
+.ru-grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; margin-bottom: 2px; }
+.ru-grafico { position: relative; height: 240px; }
+.ru-rolagem { overflow-x: auto; }
+
+/* ---------- filtros e formularios ---------- */
+.ru-filtros { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; }
+.ru-filtros select, .ru-filtros input { min-height: 38px; padding: 6px 10px; border: 1px solid var(--ru-linha); border-radius: 9px; background: var(--ru-branco); color: var(--ru-tinta); font-size: .9rem; }
+
+/* ---------- tabelas ---------- */
+.ru-tabela { width: 100%; border-collapse: collapse; font-size: .86rem; }
+.ru-tabela th { text-align: left; font-size: .68rem; font-weight: 500; letter-spacing: .07em; text-transform: uppercase; color: var(--ru-tinta2); padding: 8px; border-bottom: 2px solid var(--ru-azul-esc); white-space: nowrap; }
+.ru-tabela td { padding: 9px 8px; border-bottom: 1px solid var(--ru-linha); white-space: nowrap; vertical-align: middle; }
+.ru-tabela td.quebra { white-space: normal; min-width: 160px; font-weight: 500; }
+.ru-tabela .n { text-align: right; font-variant-numeric: tabular-nums; }
+.ru-tabela td.n { font-weight: 500; }
+.ru-tabela tbody tr:hover { background: #FBFAF6; }
+.ru-tabela tr.clicavel { cursor: pointer; }
+.ru-tabela tr.destaque { background: var(--ru-verde-cl); }
+.ru-tabela tr.apagado td { opacity: .55; }
+
+/* ---------- etiquetas ---------- */
+.ru-tag { display: inline-block; font-size: .72rem; font-weight: 600; padding: 2px 9px; border-radius: 20px; background: #EEECE6; color: var(--ru-tinta2); white-space: nowrap; }
+.ru-tag.ok { background: var(--ru-verde-cl); color: var(--ru-verde); }
+.ru-tag.atencao { background: var(--ru-amarelo-cl); color: var(--ru-amarelo-txt); }
+.ru-tag.alerta { background: var(--ru-vermelho-cl); color: var(--ru-vermelho); }
+.ru-tag.info { background: var(--ru-azul-cl); color: var(--ru-azul); }
+
+/* ---------- barra de progresso ---------- */
+.ru-barra { background: #ECEAE3; border-radius: 6px; height: 7px; overflow: hidden; min-width: 90px; }
+.ru-barra > div { height: 100%; background: var(--ru-verde); border-radius: 6px; }
+
+/* ---------- janelas ---------- */
+.ru-fundo { position: fixed; inset: 0; z-index: 2147482000; background: rgba(31, 42, 55, .45); display: flex; align-items: center; justify-content: center; padding: 16px; overflow: auto; }
+.ru-janela { width: 100%; max-width: 520px; max-height: 100%; overflow: auto; background: var(--ru-branco); color: var(--ru-tinta); border-radius: 14px; padding: 20px 22px; font-family: var(--ru-fonte); box-shadow: 0 20px 60px rgba(0, 0, 0, .25); }
+.ru-janela h2 { margin: 0 0 12px; font-size: 1.15rem; font-weight: 600; color: var(--ru-azul-esc); }
+.ru-janela label { display: block; font-size: .8rem; font-weight: 500; color: var(--ru-tinta2); margin: 10px 0 4px; }
+.ru-janela input, .ru-janela select, .ru-janela textarea { width: 100%; min-height: 42px; padding: 8px 10px; font-size: 16px; border: 1px solid var(--ru-linha); border-radius: 9px; background: var(--ru-branco); color: var(--ru-tinta); }
+.ru-janela .ru-bts { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.ru-janela .ru-erro { font-size: .86rem; min-height: 20px; margin-top: 8px; }
+.ru-janela .ru-tabela { font-size: .8rem; }
+
+/* ---------- telas pequenas e impressao ---------- */
+@media (max-width: 600px) {
+  .ru-topo h1 { font-size: 1.3rem; }
+  .ru-topo-marca img { height: 38px; }
+  .ru-kpi .v { font-size: 1.25rem; }
+}
+@media print {
+  body { background: #fff; }
+  .ru-topo-acoes, .ru-filtros, .ru-btn { display: none !important; }
+  .ru-card, .ru-kpi { box-shadow: none; break-inside: avoid; }
+}
