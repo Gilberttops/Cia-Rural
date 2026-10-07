@@ -1320,7 +1320,28 @@ async function refreshLiveData(isManual) {
     // allSettled: se uma busca falhar (ex.: FUTURAS estourando o tempo), as outras
     // continuam valendo. E só troca o dado embutido se o da planilha for MAIS NOVO —
     // antes, uma planilha sem colar do dia sobrescrevia o HTML recém-gerado.
-    const results = await Promise.allSettled([fetchAppsScript('F2'), fetchAppsScript('F5'), fetchAppsScript('FUTURAS'), fetchAppsScript('CONFIG')]);
+    // Cada bloco e aplicado assim que chega (a filial da tela aparece primeiro); o resto completa depois.
+    const t0 = performance.now(), tempos = {};
+    const medir = (k, p) => p.then(v => { tempos[k] = Math.round(performance.now() - t0) + ' ms'; return v; },
+                                   e => { tempos[k] = 'falhou em ' + Math.round(performance.now() - t0) + ' ms'; throw e; });
+    const pF2 = medir('F2', fetchAppsScript('F2')), pF5 = medir('F5', fetchAppsScript('F5'));
+    const pFUT = medir('FUTURAS', fetchAppsScript('FUTURAS')), pCFG = medir('CONFIG', fetchAppsScript('CONFIG'));
+    const cedo = (p, f) => p.then(v => {
+      if (!v || !v.data) return;
+      DATASETS[f] = v.data;
+      if (f !== currentFilial) return;
+      DATA = DATASETS[f]; rebuildProductList();
+      if (v.atualizadoEm) FALLBACK_TIMESTAMP = new Date(v.atualizadoEm).toLocaleString('pt-BR');
+      document.getElementById('dataStatusLine').textContent =
+        `Base: ${PRODUCT_LIST.length} matérias-primas · ${FILIAL_LABELS[currentFilial]} · dados atualizados em ${FALLBACK_TIMESTAMP} · completando contratos e cotações…`;
+      redesenharViewAtual();
+    }).catch(() => {});
+    cedo(pF2, 'F2'); cedo(pF5, 'F5');
+    pFUT.then(v => { if (v && Array.isArray(v.data)) { COMPRAS_FUTURAS = v.data; redesenharViewAtual(); } }).catch(() => {});
+    const results = await Promise.allSettled([pF2, pF5, pFUT, pCFG]);
+    tempos.total = Math.round(performance.now() - t0) + ' ms';
+    window.__DEBUG_INFO__.tempos = tempos;
+    if (window.console) console.info('[compras] tempo de cada bloco', tempos);
     const [payloadF2, payloadF5, payloadFUT, payloadCFG] = results.map(r => r.status === 'fulfilled' ? r.value : null);
     const isNewer = p => p && p.atualizadoEm && new Date(p.atualizadoEm) > GENERATED_AT;
     const pMeta = [payloadF2, payloadF5, payloadCFG].find(p => p && p.atualizadoEm);
@@ -3045,6 +3066,17 @@ function atualizarComparativoForm() {
     [pctHtml(difPct(preco, ref.ult), `vs última compra (${fmtPreco(ref.ult)} em ${fmtDataIso(ref.ultData)})`), pctHtml(difPct(preco, ref.media), 'vs média 12m')].filter(Boolean).join(' · ');
 }
 ['cfProduto', 'cfValorTon', 'cfValorFrete'].forEach(id => { const el = document.getElementById(id); if (el) { el.addEventListener('input', atualizarComparativoForm); el.addEventListener('change', atualizarComparativoForm); } });
+
+// redesenha so a aba aberta (usado na carga progressiva)
+function redesenharViewAtual() {
+  try {
+    if (currentView === 'alertas') renderAlertas();
+    else if (currentView === 'previsao') renderPrevisao();
+    else if (currentView === 'fornecedores') renderFornecedoresAba();
+    else if (currentView === 'overview') renderOverviewTable();
+    else if (currentView === 'futuras') renderFuturas();
+  } catch (e) { if (window.console) console.warn('[compras] redesenho parcial', e); }
+}
 
 // barra de filtro de filial (mesmo visual da aba Alertas)
 function barraFilial(idBarra, atual, aoMudar) {
