@@ -80,8 +80,10 @@
     var custo = soma(comCusto, 'saldo') ? soma(comCusto, function (l) { return l.saldo * l.custo_am; }) / soma(comCusto, 'saldo') : null;
     var debitos = (dados.debitos || []).map(function (d) {
       var dias = d.vencimento ? diasAte(hoje, d.vencimento) : null;
-      return Object.assign({}, d, { dias: dias, vencido: dias !== null && dias < 0 });
+      var contestado = CONTESTADO.test(d.tipo || '');  // ja pago, aguardando baixa na Receita: nao e divida
+      return Object.assign({}, d, { dias: dias, contestado: contestado, vencido: !contestado && dias !== null && dias < 0 });
     });
+    var devidos = debitos.filter(function (d) { return !d.contestado; });
     var porEmpresa = {};
     ativos.forEach(function (l) { var e = porEmpresa[l.empresa] = porEmpresa[l.empresa] || { saldo: 0, n: 0, parcela: 0 }; e.saldo += l.saldo; e.n++; e.parcela += l.proximo ? l.proximo.valor : 0; });
     var extratos = linhas.map(function (l) { return l.extrato_de; }).filter(Boolean).sort();
@@ -93,8 +95,9 @@
         mes_valor: soma(doMes, 'valor'), mes_n: doMes.length, vencidas_n: vencidas.length, vencidas_valor: soma(vencidas, 'valor'),
         custo_am: custo, custo_aa: custo === null ? null : Math.pow(1 + custo, 12) - 1,
         multa: soma(ativos, 'multa'), juros_consolidacao: soma(ativos, 'juros'), custo_total: ct, alivio_12: soma(ativos.filter(function (l) { return l.termina_12; }), function (l) { return l.proximo ? l.proximo.valor : 0; }),
-        debitos_valor: soma(debitos.filter(function (d) { return d.valor; }), 'valor'), debitos_vencidos: debitos.filter(function (d) { return d.vencido; }).length,
-        pendencias: debitos.filter(function (d) { return !d.valor; }).length,
+        debitos_valor: soma(devidos.filter(function (d) { return d.valor; }), 'valor'), debitos_vencidos: devidos.filter(function (d) { return d.vencido; }).length,
+        pendencias: devidos.filter(function (d) { return !d.valor; }).length, debitos_n: devidos.filter(function (d) { return d.valor; }).length,
+        contestados_n: debitos.length - devidos.length, contestados_valor: soma(debitos.filter(function (d) { return d.contestado; }), 'valor'),
         extrato_mais_antigo: extratos[0] || null, extrato_dias: extratos[0] ? diasAte(extratos[0], hoje) : null
       }
     };
@@ -141,6 +144,7 @@
   function add(pai) { for (var i = 1; i < arguments.length; i++) if (arguments[i]) pai.appendChild(arguments[i]); return pai; }
   function td(t, cls) { return el('td', cls ? { 'class': cls } : {}, t); }
   // Nomes curtos so na tabela (o nome completo fica no detalhe e no "title")
+  var CONTESTADO = /contesta|j[aá] pago|baixa/i;  // Tipo do debito na aba Débitos
   var TRIB_CURTO = [[/IRRF sal[aá]rios/i, 'IRRF sal.'], [/IRRF servi[cç]os/i, 'IRRF serv.'], [/INSS[^,]*/i, 'INSS'], [/Reten[cç][oõ]es PIS\/COFINS\/CSLL/i, 'CSRF']];
   function tributosCurto(t) { var s = String(t || ''); TRIB_CURTO.forEach(function (r) { s = s.replace(r[0], r[1]); }); return s; }
   function modalidadeCurta(m) { return String(m || '').replace(/^Parcelamento simplificado$/i, 'Simplificado').replace(/^Parcelamento de processo$/i, 'Processo'); }
@@ -230,7 +234,7 @@
       ['Saldo devedor', moeda(k.saldo), k.parcelamentos + ' parcelamentos' + resumoEmpresas(c.porEmpresa), 'neutro'],
       ['Parcelas de ' + mesBR(E.op.hoje.slice(0, 7)), moeda(k.mes_valor), k.mes_n + ' parcela(s) a vencer no mês', ''],
       ['Vencidas sem DARF lançado', moeda(k.vencidas_valor), k.vencidas_n ? k.vencidas_n + ' parcela(s): conferir pagamento' : 'nenhuma', k.vencidas_n ? 'alerta' : 'bom'],
-      ['Não parcelados', moeda(k.debitos_valor), k.pendencias ? k.pendencias + ' pendência(s) sem valor' : 'impostos fora de parcelamento', k.debitos_valor || k.pendencias ? 'alerta' : 'bom']
+      ['Não parcelados', moeda(k.debitos_valor), k.pendencias ? k.pendencias + ' pendência(s) sem valor' : k.contestados_n ? k.contestados_n + ' já pago(s), aguardando baixa' : 'impostos fora de parcelamento', k.debitos_valor || k.pendencias ? 'alerta' : 'bom']
     ]);
     ['parcelamentos', 'calendario', 'calendario', 'debitos'].forEach(function (aba, i) {
       var cartao = P.painel.querySelectorAll('#pc-kpis .ru-kpi')[i];
@@ -243,6 +247,7 @@
     if (k.extrato_dias !== null && k.extrato_dias > EXTRATO_VELHO) avisos.push('Extratos de ' + dataBR(k.extrato_mais_antigo) + ' (' + k.extrato_dias + ' dias): baixe os novos no e-CAC para atualizar a planilha.');
     if (k.vencidas_n) avisos.push(k.vencidas_n + ' parcela(s) venceram depois do extrato e não têm DARF lançado aqui: lance o pagamento ou confira no e-CAC.');
     if (k.debitos_vencidos) avisos.push(k.debitos_vencidos + ' débito(s) fora de parcelamento com vencimento passado: confirmar se foram pagos.');
+    if (k.contestados_n) avisos.push(k.contestados_n + ' débito(s) já pago(s) com pedido de baixa na Receita (' + moeda(k.contestados_valor) + '): acompanhar o processo até sair do Cadin.');
     if (k.pendencias) avisos.push(k.pendencias + ' pendência(s) no relatório de situação fiscal sem valor: ver aba Não parcelados.');
     if (avisos.length) { var av = el('div', { 'class': 'ru-card', id: 'pc-avisos' }); add(av, el('h2', {}, 'Atenção')); avisos.forEach(function (t) { av.appendChild(el('p', { 'class': 'ru-nota' }, '• ' + t)); }); P.painel.appendChild(av); }
 
@@ -333,7 +338,7 @@
     var c = E.calc, k = c.kpis;
     secao(pai, 'Débitos fora de parcelamento', '#B4462E', moeda(k.debitos_valor));
     kpis(pai, 'pc-kpis-deb', [
-      ['Total não parcelado', moeda(k.debitos_valor), c.debitos.filter(function (d) { return d.valor; }).length + ' débito(s)', k.debitos_valor ? 'alerta' : 'bom'],
+      ['Total não parcelado', moeda(k.debitos_valor), k.debitos_n + ' débito(s)' + (k.contestados_n ? ' · ' + k.contestados_n + ' já pago(s) fora do total' : ''), k.debitos_valor ? 'alerta' : 'bom'],
       ['Com vencimento passado', String(k.debitos_vencidos), 'confirmar se o DARF foi pago', k.debitos_vencidos ? 'alerta' : 'bom'],
       ['Pendências sem valor', String(k.pendencias), 'processos no relatório da Receita', k.pendencias ? 'atencao' : 'bom']
     ]);
@@ -341,7 +346,7 @@
     add(cc, el('h2', {}, 'Débitos e pendências'), el('div', { 'class': 'ru-nota' }, 'Do relatório de situação fiscal da Receita (e-CAC). Débito não pago e não parcelado pode virar dívida ativa e impedir a certidão negativa.'));
     var t = tabela('pc-tab-deb', ['Empresa', 'Tipo', 'Receita', 'Período', 'Vencimento', { t: 'Valor', cls: 'n' }, 'Situação na Receita', 'O que fazer']);
     c.debitos.forEach(function (d) {
-      var v = el('td'); v.appendChild(document.createTextNode(dataBR(d.vencimento) + ' ')); if (d.vencido) v.appendChild(tag('passou', 'alerta'));
+      var v = el('td'); v.appendChild(document.createTextNode(dataBR(d.vencimento) + ' ')); if (d.vencido) v.appendChild(tag('passou', 'alerta')); else if (d.contestado) v.appendChild(tag('já pago', 'ok'));
       add(t.querySelector('tbody'), add(el('tr'), td(d.empresa), td(d.tipo), td(d.receita), td(d.periodo || '—'), v, td(d.valor ? moeda(d.valor) : '—', 'n'), td(d.situacao), td(d.acao)));
     });
     add(pai, add(cc, add(el('div', { 'class': 'ru-rolagem' }), t)));
