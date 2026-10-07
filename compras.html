@@ -1377,7 +1377,7 @@ async function refreshLiveData(isManual) {
       `Base: ${PRODUCT_LIST.length} matérias-primas cadastradas (${comCompra} com compra nos últimos 12 meses) · ${FILIAL_LABELS[currentFilial]} · ` +
       `dados atualizados em ${FALLBACK_TIMESTAMP}`;
     if (falhas.length === results.length) throw new Error(falhas[0]);
-    const avisoVelho = textoDadosVelhos(pMeta && pMeta.atualizadoEm);
+    const avisoVelho = [textoDadosVelhos(pMeta && pMeta.atualizadoEm), textoAvisoBaixas(payloadCFG && payloadCFG.avisos)].filter(Boolean).join('<br>');
     if (avisoVelho) setStatusBanner('error', avisoVelho);
     else if (isManual) {
       setStatusBanner('ok', `✓ Dados carregados (planilha atualizada em ${FALLBACK_TIMESTAMP}).`);
@@ -3004,15 +3004,15 @@ window.addEventListener('resize', () => {
 // depois tenta buscar os dados ao vivo da planilha em segundo plano.
 
 // ===================== Melhorias 07/10/2026 =====================
-// (8) dados velhos: o envio roda seg a sab as 9h; no domingo e na segunda antes das 11h vale o de sabado.
+// (8) dados velhos: o envio roda seg a sab as 11h30; no domingo e na segunda antes das 13h vale o de sabado.
 function textoDadosVelhos(iso) {
   if (!iso) return '⚠ Não encontrei a data da última atualização da planilha. Confira antes de decidir compras.';
   const d = new Date(iso), agora = new Date();
   if (isNaN(d)) return '';
   const horas = (agora - d) / 3600000, dow = agora.getDay();
-  const limite = (dow === 0 || (dow === 1 && agora.getHours() < 11)) ? 54 : 30;
+  const limite = (dow === 0 || (dow === 1 && agora.getHours() < 13)) ? 54 : 30;
   if (horas <= limite) return '';
-  return `⚠ Atenção: os dados são de ${esc(d.toLocaleString('pt-BR'))}. O envio diário (seg a sáb, 9h) pode ter falhado — confira antes de decidir compras.`;
+  return `⚠ Atenção: os dados são de ${esc(d.toLocaleString('pt-BR'))}. O envio diário (seg a sáb, 11h30) pode ter falhado — confira antes de decidir compras.`;
 }
 
 // (5) cotacao x compras: ultimo preco pago e media ponderada de 12 meses do item (mesma unidade da cotacao)
@@ -3066,6 +3066,18 @@ function atualizarComparativoForm() {
     [pctHtml(difPct(preco, ref.ult), `vs última compra (${fmtPreco(ref.ult)} em ${fmtDataIso(ref.ultData)})`), pctHtml(difPct(preco, ref.media), 'vs média 12m')].filter(Boolean).join(' · ');
 }
 ['cfProduto', 'cfValorTon', 'cfValorFrete'].forEach(id => { const el = document.getElementById(id); if (el) { el.addEventListener('input', atualizarComparativoForm); el.addEventListener('change', atualizarComparativoForm); } });
+
+// Baixas de producao (501) do ultimo dia de producao, conferidas pelo pipeline (checar_baixas.py).
+function textoAvisoBaixas(av) {
+  const b = av && av.baixas;
+  if (!b || !b.filiais) return '';
+  const nomes = { F2: 'F2 (Eldorado)', F5: 'F5 (Ivinhema)' };
+  const dia = fmtDataIso(b.dia);
+  const faltam = Object.entries(b.filiais).filter(([, x]) => x && x.ok === false);
+  if (!faltam.length) return '';
+  const det = faltam.map(([f, x]) => `${nomes[f] || esc(f)}${x.ultima ? ' — última baixa em ' + fmtDataIso(x.ultima) : ''}`).join('; ');
+  return `⚠ Baixas de produção (501) de ${dia} ainda não lançadas: ${det}. O estoque pode estar maior que o real — "Vai faltar" e a previsão podem estar otimistas (pode ser feriado ou dia sem produção).`;
+}
 
 // redesenha so a aba aberta (usado na carga progressiva)
 function redesenharViewAtual() {
