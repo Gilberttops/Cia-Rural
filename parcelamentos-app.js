@@ -140,6 +140,11 @@
   }
   function add(pai) { for (var i = 1; i < arguments.length; i++) if (arguments[i]) pai.appendChild(arguments[i]); return pai; }
   function td(t, cls) { return el('td', cls ? { 'class': cls } : {}, t); }
+  // Nomes curtos so na tabela (o nome completo fica no detalhe e no "title")
+  var TRIB_CURTO = [[/IRRF sal[aá]rios/i, 'IRRF sal.'], [/IRRF servi[cç]os/i, 'IRRF serv.'], [/INSS[^,]*/i, 'INSS'], [/Reten[cç][oõ]es PIS\/COFINS\/CSLL/i, 'CSRF']];
+  function tributosCurto(t) { var s = String(t || ''); TRIB_CURTO.forEach(function (r) { s = s.replace(r[0], r[1]); }); return s; }
+  function modalidadeCurta(m) { return String(m || '').replace(/^Parcelamento simplificado$/i, 'Simplificado').replace(/^Parcelamento de processo$/i, 'Processo'); }
+  function tdTitulo(curto, completo) { var c = td(curto); if (curto !== completo) c.setAttribute('title', completo); return c; }
   function tabela(id, titulos) {
     var t = el('table', { id: id, 'class': 'ru-tabela' }), tr = el('tr');
     titulos.forEach(function (x) { tr.appendChild(el('th', typeof x === 'object' ? { 'class': x.cls } : {}, typeof x === 'object' ? x.t : x)); });
@@ -280,7 +285,7 @@
     cart.push(['Terminam em 12 meses', String(c.terminam.length), c.terminam.map(function (l) { return mesBR(l.fim.slice(0, 7)); }).join(', ') || 'nenhum', 'neutro']);
     kpis(pai, 'pc-kpis-parc', cart);
     var cc = el('div', { 'class': 'ru-card' });
-    add(cc, el('h2', {}, 'Todos os parcelamentos'), el('div', { 'class': 'ru-nota' }, 'Clique num parcelamento para ver as parcelas e a composição da dívida. Parcela = valor do extrato; o DARF do mês sai um pouco maior (Selic do mês).'));
+    add(cc, el('h2', {}, 'Todos os parcelamentos'), el('div', { 'class': 'ru-nota' }, 'Clique num parcelamento para ver as parcelas e a composição da dívida. Parcela = valor do extrato; o DARF do mês sai um pouco maior (Selic do mês). CSRF = retenções PIS/COFINS/CSLL.'));
     var t = tabela('pc-tab-parc', ['Empresa', 'Parcelamento', 'Modalidade', 'Tributos', { t: 'Saldo', cls: 'n' }, { t: 'Parcela', cls: 'n' }, 'Pagas', 'Próxima', 'Termina', { t: 'Só Selic a.m.', cls: 'n' }, { t: 'Com multa a.m.', cls: 'n' }]);
     c.linhas.slice().sort(function (a, b) { return b.saldo - a.saldo; }).forEach(function (l) {
       var tr = el('tr', { 'data-parc': l.parcelamento, 'class': 'clicavel' + (l.saldo <= 0.01 ? ' apagado' : '') });
@@ -288,7 +293,8 @@
       if (l.proximo) { prox.appendChild(document.createTextNode(dataBR(l.proximo.vencimento) + ' ')); prox.appendChild(tagParcela(l.proximo)); }
       else prox.appendChild(tag('quitado', 'info'));
       var fim = el('td'); fim.appendChild(document.createTextNode(dataBR(l.fim))); if (l.termina_12) { fim.appendChild(document.createTextNode(' ')); fim.appendChild(tag('< 12 meses', 'ok')); }
-      add(tr, td(l.empresa), td(curto(l.parcelamento)), td(l.modalidade), td(l.tributos), td(moeda(l.saldo), 'n'), td(l.proximo ? moeda(l.proximo.valor) : '—', 'n'),
+      var tdTrib = tdTitulo(tributosCurto(l.tributos), l.tributos); tdTrib.style.whiteSpace = 'normal'; tdTrib.style.minWidth = '130px';
+      add(tr, td(l.empresa), td(curto(l.parcelamento)), tdTitulo(modalidadeCurta(l.modalidade), l.modalidade), tdTrib, td(moeda(l.saldo), 'n'), td(l.proximo ? moeda(l.proximo.valor) : '—', 'n'),
         td(l.pagas_total + ' de ' + l.todas.length), prox, fim, td(pct(l.custo_am), 'n'));
       var ct = l.custo_total;
       add(tr, td(ct && ct.efetivo_am !== null ? pct(ct.efetivo_am) : '—', 'n'));
