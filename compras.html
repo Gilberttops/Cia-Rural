@@ -2306,7 +2306,7 @@ function renderAlertas() {
   bar.innerHTML = '<span class="lbl">Filial:</span>' +
     [['todas', 'Ambas'], ['F2', 'Filial 2'], ['F5', 'Filial 5']].map(([k, l]) =>
       `<button type="button" class="group-tab${alertasFilial === k ? ' active' : ''}" data-af="${k}">${l}</button>`).join('');
-  bar.querySelectorAll('button[data-af]').forEach(b => b.addEventListener('click', () => { alertasFilial = b.dataset.af; renderAlertas(); }));
+  bar.querySelectorAll('button[data-af]').forEach(b => b.addEventListener('click', () => { alertasFilial = b.dataset.af; renderAlertas(); sincronizarSeletor(b.dataset.af); }));
 
   const totalParado = parado.reduce((a, p) => a + p.valor, 0);
   const kpi = (alvo, label, value, sub, cls) =>
@@ -3095,7 +3095,7 @@ function barraFilial(idBarra, atual, aoMudar) {
   const bar = document.getElementById(idBarra);
   bar.innerHTML = '<span class="lbl">Filial:</span>' + [['todas', 'Ambas'], ['F2', 'Filial 2'], ['F5', 'Filial 5']].map(([k, l]) =>
     `<button type="button" class="group-tab${atual === k ? ' active' : ''}" data-k="${k}">${l}</button>`).join('');
-  bar.querySelectorAll('button[data-k]').forEach(b => b.addEventListener('click', () => aoMudar(b.dataset.k)));
+  bar.querySelectorAll('button[data-k]').forEach(b => b.addEventListener('click', () => { aoMudar(b.dataset.k); sincronizarSeletor(b.dataset.k); }));
 }
 function ligarLinhasProduto(raiz) {
   raiz.querySelectorAll('tr.alerta-row').forEach(tr => tr.addEventListener('click', () => abrirProduto(tr.dataset.f, tr.dataset.code)));
@@ -3233,6 +3233,16 @@ function montarTopo(ctx) {
   t.sub.replaceWith(document.getElementById('dataStatusLine'));   // a linha de status fica logo abaixo do titulo
 }
 // Ao entrar, a pessoa escolhe a filial: nada de abrir numa filial "padrao" e lancar cotacao na errada.
+// Seletor do topo -> filtros das abas; botoes das abas (F2/F5) -> seletor do topo ("Ambas" nao mexe no seletor).
+function sincronizarSeletor(k) {
+  const sel = document.getElementById('filialSelect');
+  if (k === 'F2' || k === 'F5') { if (sel.value !== k) { sel.value = k; sel.dispatchEvent(new Event('change')); } }
+}
+document.getElementById('filialSelect').addEventListener('change', () => {
+  const v = document.getElementById('filialSelect').value;
+  alertasFilial = previsaoFilial = fornFilial = v;
+  redesenharViewAtual();
+});
 function escolherFilial() {
   return new Promise(resolve => {
     const ov = document.createElement('div');
@@ -3264,6 +3274,7 @@ RuralAuth.iniciar({ app: 'compras', aoEntrar: async function (ctx) {
   alertasFilial = previsaoFilial = fornFilial = ambas ? 'todas' : fBase;
   sel.value = fBase;
   sel.dispatchEvent(new Event('change'));
+  alertasFilial = previsaoFilial = fornFilial = ambas ? 'todas' : fBase;   // depois do change (que alinha os filtros ao seletor)
   switchView('alertas');
   await refreshLiveData(true);
   const initCode = location.hash.replace('#', '');
