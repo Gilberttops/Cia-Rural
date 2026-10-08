@@ -3232,8 +3232,38 @@ function montarTopo(ctx) {
     aoSair: () => RuralAuth.sair() });
   t.sub.replaceWith(document.getElementById('dataStatusLine'));   // a linha de status fica logo abaixo do titulo
 }
+// Ao entrar, a pessoa escolhe a filial: nada de abrir numa filial "padrao" e lancar cotacao na errada.
+function escolherFilial() {
+  return new Promise(resolve => {
+    const ov = document.createElement('div');
+    ov.id = 'filialGate';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(20,30,25,.55);display:flex;align-items:center;justify-content:center;padding:16px;';
+    const cx = document.createElement('div');
+    cx.style.cssText = 'background:#fff;border-radius:14px;padding:26px 22px;max-width:420px;width:100%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.3);font-family:inherit;';
+    cx.innerHTML = '<h2 style="margin:0 0 6px;font-size:1.25rem;">Qual filial você vai ver?</h2>' +
+      '<p style="margin:0 0 18px;color:#555;font-size:.92rem;">Escolha com atenção: cotações e alterações valem para a filial escolhida. Dá para trocar depois no topo da tela.</p>';
+    [['F2', 'Filial 2 — Rural Nutrição', 'Eldorado', '#1F5FA8'], ['F5', 'Filial 5 — RNA Ivinhema', 'Ivinhema', '#2E8B57'], ['AMBAS', 'Ver as duas filiais', 'Alertas, previsão e fornecedores juntos', '#4A5A52']].forEach(([f, nome, cid, cor]) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.style.cssText = 'display:block;width:100%;margin:8px 0;padding:14px;border:0;border-radius:10px;color:#fff;font-size:1rem;font-weight:600;cursor:pointer;background:' + cor + ';';
+      b.textContent = nome;
+      if (f === 'AMBAS') b.style.cssText += 'background:#fff;color:#33413a;border:2px solid #4A5A52;';
+      b.addEventListener('click', () => { ov.remove(); resolve(f); });
+      cx.appendChild(b);
+    });
+    ov.appendChild(cx);
+    document.body.appendChild(ov);
+  });
+}
 RuralAuth.iniciar({ app: 'compras', aoEntrar: async function (ctx) {
   montarTopo(ctx);
+  const sel = document.getElementById('filialSelect');
+  const fEscolhida = await escolherFilial();
+  const ambas = fEscolhida === 'AMBAS';
+  const fBase = ambas ? 'F2' : fEscolhida;
+  alertasFilial = previsaoFilial = fornFilial = ambas ? 'todas' : fBase;
+  sel.value = fBase;
+  sel.dispatchEvent(new Event('change'));
   switchView('alertas');
   await refreshLiveData(true);
   const initCode = location.hash.replace('#', '');
