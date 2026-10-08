@@ -204,6 +204,11 @@ header.ru-topo{border-bottom:0;padding-bottom:14px;margin-bottom:0;}   /* a regr
         <div class="pick" id="pick-cat"></div>
       </div>
       <div class="f-row">
+        <span class="f-lab">Grupos</span>
+        <div class="chips" id="chips-grupos"></div>
+        <span class="hint" style="padding-top:5px">atalhos: só preenchem Categoria e Vendedor; o valor continua bruto</span>
+      </div>
+      <div class="f-row">
         <span class="f-lab">Busca</span>
         <div class="pick" id="pick-cli"></div>
         <div class="pick" id="pick-prod"></div>
@@ -223,6 +228,7 @@ header.ru-topo{border-bottom:0;padding-bottom:14px;margin-bottom:0;}   /* a regr
         <button class="tab" data-t="fil">Filiais</button>
         <button class="tab" data-t="ytd">Mesmo período</button>
         <button class="tab" data-t="risco">Carteira em risco</button>
+        <button class="tab" data-t="dev">Devoluções</button>
       </div>
     </div>
     <div class="grupo-abas">
@@ -255,6 +261,7 @@ function iniciarPainel(D) {
 const ANOS=D.anos, MESES=D.meses, NY=ANOS.length;
 const VEND=D.vend, CLI=D.cli, PROD=D.prod, FIL=D.fil;
 const CO=D.cols, MES=D.mes, N=CO.a.length;
+const QMES=(D.qmes&&D.qmes.length===12&&D.qmes[0].length===N)?D.qmes:null;   // quantidade exata por mes (base antiga: estima pelo valor)
 // subnome do cliente (fazenda da Jatoba, vindo do endereco da propriedade):
 // entra no nome exibido em listas/busca; a ficha mostra separado.
 CLI.forEach(c=>{if(c.sub&&!c.nomeBase){c.nomeBase=c.nome;c.nome=c.nome+' · '+c.sub;}});
@@ -319,6 +326,7 @@ function mv(i){
   if(F.meses.size>0&&F.meses.size<12){
     const val=[...F.meses].reduce((s,j)=>s+(MES[j][i]||0),0);
     if(M===0) return val;
+    if(QMES){const q=[...F.meses].reduce((s,j)=>s+(QMES[j][i]||0),0); return M===1?q:q*PESO[CO.p[i]];}
     const frac=CO.val[i]>0?val/CO.val[i]:0;
     if(M===1) return CO.qtd[i]*frac;
     return CO.qtd[i]*PESO[CO.p[i]]*frac;
@@ -333,6 +341,7 @@ function valKg(i,meses){
   const kgAno=CO.qtd[i]*PESO[CO.p[i]];
   if(ms.size>0&&ms.size<12){
     let v=0; for(const j of ms) v+=MES[j][i]||0;
+    if(QMES){let q=0; for(const j of ms) q+=QMES[j][i]||0; return [v,q*PESO[CO.p[i]]];}
     return [v, CO.val[i]>0?kgAno*v/CO.val[i]:0];
   }
   return [CO.val[i],kgAno];
@@ -1507,8 +1516,80 @@ function viewYtd(){
 }
 
 /* ---------- render ---------- */
+
+/* ---------- grupos: atalhos que preenchem os filtros Categoria / Vendedor ---------- */
+// Por codigo da categoria no Agrotis (parte antes do " - "). Categoria nova que nao esteja aqui cai em "Outros".
+const GRUPOS_CAT=[
+  {n:'Produto acabado',cods:['14','15','16','17','20','30','31','41','42','43']},
+  {n:'Viacampus',cods:['1801','1802','1803','1804']},
+  {n:'Matéria-prima e grãos',cods:['13','09']},
+  {n:'Industrialização e serviços',cods:['35','36','37','26','08']},
+  {n:'Terceiros e diversos',cods:['27','0411','0403','0302','21','19','07','32','34']}];
+const codCat=c=>String(c).split(' - ')[0].trim();
+const ehExport=vi=>/^exporta/i.test((VEND[vi]&&VEND[vi].nome||'').trim());
+function gruposDef_(){
+  const usados=new Set(GRUPOS_CAT.flatMap(g=>g.cods));
+  const defs=GRUPOS_CAT.map(g=>({n:g.n,k:'cat',set:new Set(CATS.map((c,i)=>g.cods.includes(codCat(c))?i:-1).filter(i=>i>=0))}));
+  const outros=new Set(CATS.map((c,i)=>usados.has(codCat(c))?-1:i).filter(i=>i>=0));
+  if(outros.size) defs.push({n:'Outros',k:'cat',set:outros});
+  const exp=new Set(VEND.map((_,i)=>i).filter(ehExport)), resto=new Set(VEND.map((_,i)=>i).filter(i=>!ehExport(i)));
+  if(exp.size){defs.push({n:'Só exportação',k:'vend',set:exp}); defs.push({n:'Sem exportação',k:'vend',set:resto});}
+  return defs.filter(d=>d.set.size);
+}
+const mesmoSet=(a,b)=>a.size===b.size&&[...a].every(x=>b.has(x));
+function chipsGrupos(){
+  const c=document.getElementById('chips-grupos'); if(!c) return;
+  const defs=gruposDef_();
+  c.innerHTML=defs.map((d,i)=>`<button class="chip ${mesmoSet(F[d.k],d.set)?'on':''}" data-g="${i}">${d.n}</button>`).join('')
+    +`<button class="linkbtn" data-g="x" style="margin-left:6px">limpar grupos</button>`;
+  c.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{
+    if(b.dataset.g==='x'){F.cat.clear();F.vend.clear();}
+    else{const d=defs[+b.dataset.g]; if(mesmoSet(F[d.k],d.set)) F[d.k].clear(); else F[d.k]=new Set(d.set);}
+    montaPicks();render();});
+}
+
+/* ---------- devolucoes de venda (lista a parte; o painel principal segue em valor BRUTO) ---------- */
+// Vem do Agrotis: notas de entrada das naturezas "Devolucao de venda ..." (valor = qtd x unitario - ICMS diferido).
+// Respeita os filtros de anos, meses, vendedor, filial, categoria, cliente e produto.
+function viewDev(){
+  const view=document.getElementById('view'), DV=D.dev||[];
+  if(!DV.length){view.innerHTML='<div class="card vazio">Nenhuma devolução de venda registrada'+(D.dev?' para esta carteira':' (a base ainda não traz devoluções)')+'.</div>';return;}
+  const vi=new Map(VEND.map((v,i)=>[v.cod,i])), fi=new Map(FIL.map((f,i)=>[f,i]));
+  const L=DV.filter(x=>{
+    const y=ANOS.indexOf(+x.d.slice(0,4)); if(y<0||!F.anos.has(y)) return false;
+    const m=+x.d.slice(5,7)-1; if(F.meses.size>0&&F.meses.size<12&&!F.meses.has(m)) return false;
+    if(F.vend.size&&!(vi.has(x.v)&&F.vend.has(vi.get(x.v)))) return false;
+    if(F.fil.size&&!(fi.has(x.f)&&F.fil.has(fi.get(x.f)))) return false;
+    if(F.cli.size&&!(CLI_POR_COD.has(x.c)&&F.cli.has(CLI_POR_COD.get(x.c)))) return false;
+    if(F.prod.size&&!(PROD_IDX.has(x.p)&&F.prod.has(PROD_IDX.get(x.p)))) return false;
+    if(F.cat.size&&!(PROD_IDX.has(x.p)&&F.cat.has(CATI[PROD_IDX.get(x.p)]))) return false;
+    return true;});
+  const bruto=new Array(NY).fill(0), dev=new Array(NY).fill(0); let brutoTot=0;
+  for(const i of IDX){const v=valKg(i)[0]; bruto[CO.a[i]]+=v; brutoTot+=v;}
+  L.forEach(x=>{const y=ANOS.indexOf(+x.d.slice(0,4)); if(y>=0) dev[y]+=x.val;});
+  const devTot=L.reduce((s,x)=>s+x.val,0), rs=v=>'R$ '+nf(v,2);
+  const nomeV=c=>vi.has(c)?VEND[vi.get(c)].nome:(c?c:'(sem vendedor)');
+  view.innerHTML=avisoParcial()+`
+  <div class="alerta">As devoluções <b>não</b> são descontadas dos números das outras abas (valor bruto). Aqui elas ficam à parte,
+    para você ver o tamanho e decidir depois se quer o líquido. Fonte: notas de entrada de natureza "Devolução de venda" do Agrotis.</div>
+  <div class="kpis">
+    <div class="kpi"><div class="lab">Devoluções no recorte</div><div class="val down">${rs(devTot)}</div><div class="sub">${L.length} lançamento(s)</div></div>
+    <div class="kpi"><div class="lab">Vendas brutas no recorte</div><div class="val">${rs(brutoTot)}</div><div class="sub">mesmos filtros</div></div>
+    <div class="kpi"><div class="lab">% devolvido</div><div class="val">${brutoTot>0?nf(devTot/brutoTot*100,2)+'%':'—'}</div><div class="sub">devoluções ÷ vendas brutas</div></div>
+    <div class="kpi"><div class="lab">Líquido (informativo)</div><div class="val">${rs(brutoTot-devTot)}</div><div class="sub">bruto − devoluções</div></div>
+  </div>
+  <div class="card"><h3>Por ano</h3><div id="dv1"></div></div>
+  <div class="card"><h3>Lançamentos</h3><p class="csub">Clique para abrir a ficha do cliente.</p><div id="dv2"></div></div>`;
+  tabela(document.getElementById('dv1'),[{t:'Ano',l:1},{t:'Vendas brutas'},{t:'Devoluções'},{t:'%'}],
+    anosSel().map(y=>{const a=ANOS.indexOf(y); return [y,rs(bruto[a]),rs(dev[a]),bruto[a]>0?nf(dev[a]/bruto[a]*100,2)+'%':'—'];}));
+  tabela(document.getElementById('dv2'),
+    [{t:'Data',l:1},{t:'Filial',l:1},{t:'Cliente',l:1},{t:'Vendedor',l:1},{t:'Produto',l:1},{t:'Qtd.'},{t:'Valor'},{t:'Natureza',l:1}],
+    L.map(x=>[new Date(x.d+'T00:00:00').toLocaleDateString('pt-BR'),x.f,x.cn,nomeV(x.v),x.pn,nf(x.q,2),rs(x.val),x.n]),
+    ri=>{const c=CLI_POR_COD.get(L[ri].c); if(c!=null){ENT.cli=c;TAB='fcli';marcaAba();render();}});
+}
 function render(){
   aplica();
+  chipsGrupos();
   const S=anosSel();
   document.getElementById('hdr-scope').textContent =
     S.length===0?'nenhum ano':S.length===NY?'todos os anos':
@@ -1530,6 +1611,7 @@ function render(){
   else if(TAB==='fil')viewFil();
   else if(TAB==='risco')viewRisco();
   else if(TAB==='ytd')viewYtd();
+  else if(TAB==='dev')viewDev();
   else if(TAB==='fvend')fichaVendedor(ENT.vend);
   else if(TAB==='fcli')fichaCliente(ENT.cli);
   else if(TAB==='fprod')fichaProduto(ENT.prod);
