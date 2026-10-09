@@ -229,6 +229,7 @@ header.ru-topo{border-bottom:0;padding-bottom:14px;margin-bottom:0;}   /* a regr
         <button class="tab" data-t="ytd">Mesmo período</button>
         <button class="tab" data-t="risco">Carteira em risco</button>
         <button class="tab" data-t="dev">Devoluções</button>
+        <button class="tab" data-t="mg" id="tab-mg" style="display:none">Margem</button>
       </div>
     </div>
     <div class="grupo-abas">
@@ -261,7 +262,22 @@ function iniciarPainel(D) {
 const ANOS=D.anos, MESES=D.meses, NY=ANOS.length;
 const VEND=D.vend, CLI=D.cli, PROD=D.prod, FIL=D.fil;
 const CO=D.cols, MES=D.mes, N=CO.a.length;
-const QMES=(D.qmes&&D.qmes.length===12&&D.qmes[0].length===N)?D.qmes:null;   // quantidade exata por mes (base antiga: estima pelo valor)
+const QMES=(D.qmes&&D.qmes.length===12&&D.qmes[0].length===N)?D.qmes:null;
+// margem (so administrador recebe): CMV por mes, linha com custo, perfil de taxas
+const CMES=(D.cmes&&D.cmes.length===12&&D.cmes[0].length===N&&D.mgok&&D.rp&&D.rates)?D.cmes:null;
+const RX=(D.rx&&D.rx.length===12&&D.rx[0].length===N)?D.rx:null; /* receita extra so da margem: milho baixado (5116S) somado a racao */
+const ICM=(D.icm&&D.icm.length===12&&D.icm[0].length===N)?D.icm:null; /* ICMS 4,8% das vendas fora do estado (R$ por mes) */
+const MGOK=D.mgok||null, RP=D.rp||null, RATES=D.rates||[], ALL12=[0,1,2,3,4,5,6,7,8,9,10,11];
+// [receita, margem de contribuicao, lucro liquido estimado] da linha nos meses escolhidos; null = linha sem custo
+function mgLinha(i,ms){
+  if(!CMES||!MGOK[i]) return null;
+  ms=ms||((F.meses.size>0&&F.meses.size<12)?[...F.meses]:ALL12);
+  const r=RATES[RP[i]]; let rec=0,cmv=0,icm=0;
+  for(const j of ms){rec+=(MES[j][i]||0)+(RX?(RX[j][i]||0):0); cmv+=CMES[j][i]||0; icm+=ICM?(ICM[j][i]||0):0;}
+  const mc=rec*(1-r.pis-r.com)-cmv-icm;
+  return [rec,mc,mc-rec*(r.fr+r.fix+r.ir)];
+}
+const mgCols_=a=>a&&a[0]>0?[pct(a[1]/a[0]*100),pct(a[2]/a[0]*100)]:['—','—'];   // quantidade exata por mes (base antiga: estima pelo valor)
 // subnome do cliente (fazenda da Jatoba, vindo do endereco da propriedade):
 // entra no nome exibido em listas/busca; a ficha mostra separado.
 CLI.forEach(c=>{if(c.sub&&!c.nomeBase){c.nomeBase=c.nome;c.nome=c.nome+' · '+c.sub;}});
@@ -281,6 +297,12 @@ const METRICS=[
  {nome:'Valor',fmt:v=>'R$ '+nf(v,2),curto:v=>'R$ '+abbr(v)},
  {nome:'Quantidade',fmt:v=>nf(v,0)+' un',curto:v=>abbr(v)},
  {nome:'Peso',fmt:v=>nf(v/1000,1)+' t',curto:v=>abbr(v/1000)+' t'}];
+if(CMES){
+  METRICS.push({nome:'Margem de contribuição',fmt:v=>'R$ '+nf(v,2),curto:v=>'R$ '+abbr(v)},
+               {nome:'Lucro líquido estimado',fmt:v=>'R$ '+nf(v,2),curto:v=>'R$ '+abbr(v)});
+  const seg=document.getElementById('seg-metric');
+  [['3','Margem (R$)'],['4','Lucro líq. est. (R$)']].forEach(([m,t])=>{const b=document.createElement('button');b.dataset.m=m;b.textContent=t;seg.appendChild(b);});
+}
 let M=0, TAB='geral';
 let PEDIDO_ATUAL=null; // rascunho do gerador de pedido (fc6, ficha do cliente)
 const ENT={vend:null,cli:null,prod:null};
@@ -323,6 +345,7 @@ function casa(txt,cod,q){const t=(q||'').toLowerCase().trim(); if(!t) return tru
   return false;}
 /* valor da linha i na métrica atual */
 function mv(i){
+  if(M>=3){const g=mgLinha(i); return g?(M===3?g[1]:g[2]):0;}
   if(F.meses.size>0&&F.meses.size<12){
     const val=[...F.meses].reduce((s,j)=>s+(MES[j][i]||0),0);
     if(M===0) return val;
@@ -551,6 +574,9 @@ document.addEventListener('click',()=>{document.querySelectorAll('.pick-pop,.sel
 /* ---------- KPIs base ---------- */
 function kpisGerais(){
   const a=porAno(),S=anosSel(),tot=totalFiltrado();
+  let gr=0,gm=0,gl=0,semC=0;
+  if(CMES) for(const i of IDX){const g=mgLinha(i); if(g){gr+=g[0];gm+=g[1];gl+=g[2];} else if(ANOS[CO.a[i]]>=2025) semC+=valKg(i)[0];}
+  const avisoMg=(CMES&&M>=3)?`<div class="alerta">Margem calculada só para <b>2025 em diante</b> (custo do lote de produção do Agrotis). Anos anteriores e linhas sem custo conhecido ficam de fora.</div>`:'';
   const ativos=S.filter(y=>a[ANOS.indexOf(y)]>0);
   const melhorI=a.map((v,i)=>[v,i]).filter(x=>F.anos.has(x[1])).sort((x,y)=>y[0]-x[0])[0];
   const prim=S[0],ult=S[S.length-1];
@@ -562,7 +588,7 @@ function kpisGerais(){
   let rsPeso=0,kg=0;
   for(const i of IDX){const p=PESO[CO.p[i]]; if(!p) continue; const [v,k]=valKg(i); rsPeso+=v; kg+=k;}
   const rsT=kg>0?rsPeso/(kg/1000):null;
-  return `<div class="kpis">
+  return avisoMg+`<div class="kpis">
     <div class="kpi"><div class="lab">${mm().nome} filtrado</div><div class="val">${mm().fmt(tot)}</div>
       <div class="sub">${IDX.length.toLocaleString('pt-BR')} lançamentos</div></div>
     <div class="kpi"><div class="lab">Média por ano</div><div class="val">${mm().fmt(tot/Math.max(ativos.length,1))}</div>
@@ -576,6 +602,10 @@ function kpisGerais(){
       <div class="sub">distintos no recorte</div></div>
     <div class="kpi"><div class="lab">Preço médio (R$/t)</div><div class="val">${rsT==null?'—':'R$ '+nf(rsT,0)}</div>
       <div class="sub">${nf(kg/1000,0)} t · só produtos com peso</div></div>
+    ${CMES?`<div class="kpi"><div class="lab">Margem de contribuição</div><div class="val ${gm>=0?'up':'down'}">${gr>0?pct(gm/gr*100):'—'}</div>
+      <div class="sub">R$ ${abbr(gm)} sobre R$ ${abbr(gr)} com custo</div></div>
+    <div class="kpi"><div class="lab">Lucro líquido estimado</div><div class="val ${gl>=0?'up':'down'}">${gr>0?pct(gl/gr*100):'—'}</div>
+      <div class="sub">R$ ${abbr(gl)} · estimativa pelo DRE${semC>0?' · sem custo: R$ '+abbr(semC):''}</div></div>`:''}
   </div>`;
 }
 const avisoParcial=()=>{
@@ -635,6 +665,8 @@ function viewRank(dimKey,titulo,nomes,onOpen,cods,opc){
   // ~19 milhoes de iteracoes na aba Clientes; item 2.2)
   const porK=new Map();
   for(const i of IDX){const k=dimKey(i),v=mv(i); let a=porK.get(k); if(!a){a=new Array(NY).fill(0);a.tot=0;porK.set(k,a);} a[CO.a[i]]+=v; a.tot+=v;}
+  const mgK=new Map();
+  if(CMES) for(const i of IDX){const g=mgLinha(i); if(!g) continue; const k=dimKey(i); let a=mgK.get(k); if(!a){a=[0,0,0];mgK.set(k,a);} a[0]+=g[0];a[1]+=g[1];a[2]+=g[2];}
   const tot=[...porK.values()].reduce((s,a)=>s+a.tot,0);
   const R=[...porK.entries()].map(([k,a])=>({k,lab:nomes(k),v:a.tot})).filter(d=>d.v>0).sort((x,y)=>y.v-x.v);
   const {top,nResto}=topN(R,5);
@@ -674,10 +706,10 @@ function viewRank(dimKey,titulo,nomes,onOpen,cods,opc){
     cores:()=>'#8D2661',labW:250,onClick:onOpen?d=>onOpen(d.k):null});
   tabela(document.getElementById('tr'),
     [{t:'Código',l:1},{t:titulo,l:1}].concat(opc.canais?[{t:'Tipo',l:1}]:[]).concat(abc?[{t:'ABC'}]:[])
-      .concat([{t:mm().nome},{t:'%'}]).concat(S.map(y=>({t:String(y)}))),
+      .concat([{t:mm().nome},{t:'%'}]).concat(CMES?[{t:'MC %'},{t:'LL est. %'}]:[]).concat(S.map(y=>({t:String(y)}))),
     R.map(d=>{const porA=porK.get(d.k);
       return [cods?codTag(cods(d.k)):'',d.lab].concat(opc.canais?[ehCanal(d.k)?'canal':'equipe']:[]).concat(abc?[abc.get(d.k)]:[])
-        .concat([mm().fmt(d.v),pct(d.v/tot*100)]).concat(S.map(y=>mm().fmt(porA[ANOS.indexOf(y)])));}),
+        .concat([mm().fmt(d.v),pct(d.v/tot*100)]).concat(CMES?mgCols_(mgK.get(d.k)):[]).concat(S.map(y=>mm().fmt(porA[ANOS.indexOf(y)])));}),
     onOpen?ri=>onOpen(R[ri].k):null);
   const serie=k=>porK.get(k).slice(0,NY);
   const cams=top.map((d,i)=>({nome:d.lab,cor:SER[i],vals:serie(d.k)}));
@@ -1587,6 +1619,63 @@ function viewDev(){
     L.map(x=>[new Date(x.d+'T00:00:00').toLocaleDateString('pt-BR'),x.f,x.cn,nomeV(x.v),x.pn,nf(x.q,2),rs(x.val),x.n]),
     ri=>{const c=CLI_POR_COD.get(L[ri].c); if(c!=null){ENT.cli=c;TAB='fcli';marcaAba();render();}});
 }
+
+/* ---------- aba Margem (so administrador) ---------- */
+if(CMES) document.getElementById('tab-mg').style.display='';
+function viewMargem(){
+  const view=document.getElementById('view'); if(!CMES){view.innerHTML='<div class="card vazio">Sem acesso à margem.</div>';return;}
+  const por=keyFn=>{const m=new Map(); for(const i of IDX){const g=mgLinha(i); if(!g) continue; const k=keyFn(i); let a=m.get(k); if(!a){a=[0,0,0];m.set(k,a);} a[0]+=g[0];a[1]+=g[1];a[2]+=g[2];} return m;};
+  const tot=[0,0,0]; let semC=0, recAll=0;
+  for(const i of IDX){const g=mgLinha(i); const v=valKg(i)[0]; recAll+=v; if(g){tot[0]+=g[0];tot[1]+=g[1];tot[2]+=g[2];} else if(ANOS[CO.a[i]]>=2025) semC+=v;}
+  const rs=v=>'R$ '+nf(v,2), pc=(a,b)=>b>0?pct(a/b*100):'—';
+  const linhaMg=(nome,a)=>[nome,rs(a[0]),rs(a[1]),pc(a[1],a[0]),rs(a[2]),pc(a[2],a[0])];
+  const colsMg=t=>[{t:t,l:1},{t:'Receita com custo'},{t:'Margem de contribuição'},{t:'MC %'},{t:'Lucro líq. estimado'},{t:'LL %'}];
+  view.innerHTML=avisoParcial()+`
+  <div class="alerta"><b>Margem de contribuição</b> = receita − custo do lote de produção (Agrotis) − PIS/COFINS − comissão.
+    <b>Lucro líquido estimado</b> = margem de contribuição − fretes − despesas fixas − IRPJ/CSLL, com os percentuais de cada unidade tirados do DRE
+    (é uma <b>estimativa</b>: despesa fixa não pertence a uma nota). Industrialização/serviço tem custo zero. Valor continua <b>bruto</b>, sem devoluções.
+    <br><b>Regras:</b> matéria-prima e grãos vendidos não têm comissão; despesas industriais só entram em produto fabricado; Copacol com comissão de 3%;
+    ICMS de 4,8% nas vendas fora do estado (CFOP 6101V e 6922V, valor bruto, sem crédito de compras); a matéria-prima que o cliente entrega
+    (Moreira, Edison, Valdecir) é descontada do custo do lote; devolução em dinheiro de milho emprestado (Klein) fica fora da margem.
+    Só 2025 em diante tem custo calculado. Respeita todos os filtros.</div>
+  <div class="kpis">
+    <div class="kpi"><div class="lab">Receita com custo conhecido</div><div class="val">${rs(tot[0])}</div><div class="sub">${recAll>0?pct(tot[0]/recAll*100):'—'} da receita do recorte</div></div>
+    <div class="kpi"><div class="lab">Margem de contribuição</div><div class="val ${tot[1]>=0?'up':'down'}">${pc(tot[1],tot[0])}</div><div class="sub">${rs(tot[1])}</div></div>
+    <div class="kpi"><div class="lab">Lucro líquido estimado</div><div class="val ${tot[2]>=0?'up':'down'}">${pc(tot[2],tot[0])}</div><div class="sub">${rs(tot[2])}</div></div>
+    <div class="kpi"><div class="lab">Sem custo (2025+)</div><div class="val">${rs(semC)}</div><div class="sub">fora da margem</div></div>
+  </div>
+  <div class="card"><h3>Por ano</h3><div id="mg1"></div></div>
+  <div class="card"><h3>Por filial</h3><div id="mg2"></div></div>
+  <div class="card"><h3>Exportação x mercado interno</h3><div id="mg3"></div></div>
+  <div class="card"><h3>Por categoria</h3><div id="mg4"></div></div>
+  <div class="card"><h3>Premissas usadas (percentuais da receita)</h3>
+    <p class="csub">Vêm do DRE Jan–Ago/2026 de cada unidade. O custo (CMV) é o do lote produzido, linha a linha.</p><div id="mg5"></div></div>`;
+  const AVM=window.AVISOS_MARGEM;
+  if(AVM && ((AVM.preco_fora_padrao||[]).length || (AVM.abaixo_do_custo||[]).length)){
+    const box=document.createElement('div'); box.className='card';
+    box.innerHTML='<h3>Alertas de margem (só administrador)</h3><div id="mgav1"></div><div id="mgav2"></div>';
+    view.insertBefore(box, view.querySelector('.alerta'));
+    const dBR=s=>String(s||'').split('-').reverse().join('/');
+    const pp=AVM.preco_fora_padrao||[];
+    if(pp.length) document.getElementById('mgav1').innerHTML='<p class="csub"><b>Preço fora do padrão</b> — valor unitário menor que 20% da mediana do produto (últimos '+(AVM.janela_preco_dias||120)+' dias). Pode ser erro de lançamento (ex.: R$ 0,01/kg) ou unidade trocada (kg × saco).</p><div id="mgav1t"></div>';
+    if(pp.length) tabela(document.getElementById('mgav1t'),[{t:'Data'},{t:'Natureza'},{t:'Transação'},{t:'Cliente',l:1},{t:'Produto',l:1},{t:'Quantidade'},{t:'Valor unit.'},{t:'Mediana'}],
+      pp.map(x=>[esc(dBR(x.d)),esc(x.nat),esc(x.tr),esc(x.cli),esc(x.prod),nf(x.qtd,0),'R$ '+nf(x.un,4),'R$ '+nf(x.med,2)]));
+    const ab=AVM.abaixo_do_custo||[];
+    if(ab.length) document.getElementById('mgav2').innerHTML='<p class="csub"><b>Vendas abaixo do custo</b> — mês atual e anterior: linha cliente × produto com receita menor que o custo do lote (receita ≥ R$ 200).</p><div id="mgav2t"></div>';
+    if(ab.length) tabela(document.getElementById('mgav2t'),[{t:'Mês'},{t:'Vendedor',l:1},{t:'Cliente',l:1},{t:'Produto',l:1},{t:'Receita'},{t:'Custo'},{t:'Perda'},{t:'Preço/un'},{t:'Custo/un'}],
+      ab.map(x=>[esc(dBR(x.mes+'-01').slice(3)),esc(x.vend),esc(x.cli),esc(x.prod),'R$ '+nf(x.rec,0),'R$ '+nf(x.cmv,0),'R$ '+nf(x.perda,0),x.un_preco==null?'—':'R$ '+nf(x.un_preco,2),x.un_custo==null?'—':'R$ '+nf(x.un_custo,2)]));
+  }
+  const anoM=por(i=>CO.a[i]);
+  tabela(document.getElementById('mg1'),colsMg('Ano'),[...anoM.entries()].sort((a,b)=>a[0]-b[0]).map(([k,a])=>linhaMg(String(ANOS[k]),a)));
+  const filM=por(i=>CO.f[i]);
+  tabela(document.getElementById('mg2'),colsMg('Filial'),[...filM.entries()].map(([k,a])=>linhaMg(FIL[k],a)));
+  const grpM=por(i=>ehExport(CO.v[i])?'Exportação':'Mercado interno e demais');
+  tabela(document.getElementById('mg3'),colsMg('Grupo'),[...grpM.entries()].map(([k,a])=>linhaMg(k,a)));
+  const catM=por(i=>CATI[CO.p[i]]);
+  tabela(document.getElementById('mg4'),colsMg('Categoria'),[...catM.entries()].sort((a,b)=>b[1][0]-a[1][0]).map(([k,a])=>linhaMg(CATS[k],a)));
+  tabela(document.getElementById('mg5'),[{t:'Perfil',l:1},{t:'PIS+COFINS'},{t:'Comissão'},{t:'Fretes'},{t:'Desp. fixas'},{t:'IRPJ+CSLL'}],
+    RATES.map(r=>[r.n,pct(r.pis*100),pct(r.com*100),pct(r.fr*100),pct(r.fix*100),pct(r.ir*100)]));
+}
 function render(){
   aplica();
   chipsGrupos();
@@ -1612,6 +1701,7 @@ function render(){
   else if(TAB==='risco')viewRisco();
   else if(TAB==='ytd')viewYtd();
   else if(TAB==='dev')viewDev();
+  else if(TAB==='mg')viewMargem();
   else if(TAB==='fvend')fichaVendedor(ENT.vend);
   else if(TAB==='fcli')fichaCliente(ENT.cli);
   else if(TAB==='fprod')fichaProduto(ENT.prod);
@@ -1765,7 +1855,17 @@ function avisosDoPainel_(info) {
   }
   const av = info.admin && info.avisos;
   if (av) {
-    const n = (av.linhas_sem_vendedor || 0) + (av.linhas_sem_destino || 0);
+    window.AVISOS_MARGEM = av.margem || null;   // alertas de margem: so administrador recebe (o servidor nao manda para vendedor)
+    const mg = av.margem;
+    if (mg && (mg.preco_fora_padrao || []).length) {
+      add('velho', 'Preço fora do padrão: ' + mg.preco_fora_padrao.length + ' lançamento(s) com valor unitário muito abaixo do normal (últimos ' +
+        (mg.janela_preco_dias || 120) + ' dias). Veja a aba Margem.');
+    }
+    if (mg && (mg.abaixo_do_custo || []).length) {
+      const perda = mg.abaixo_do_custo.reduce((s, x) => s + x.perda, 0);
+      add('pipe', 'Vendas abaixo do custo (mês atual e anterior): ' + mg.abaixo_do_custo.length + ' linha(s), perda de R$ ' +
+        Math.round(perda).toLocaleString('pt-BR') + '. Veja a aba Margem.');
+    }    const n = (av.linhas_sem_vendedor || 0) + (av.linhas_sem_destino || 0);
     if (n > 0) {
       const quem = (av.vendedores_nao_mapeados || []).concat(av.clientes_sem_destino || []).slice(0, 5).join('; ');
       add('pipe', 'Pipeline: ' + n + ' linha(s) de venda ficaram FORA do painel (vendedor ou cliente sem destino definido)' +
