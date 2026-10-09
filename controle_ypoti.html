@@ -3,27 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vendas &amp; Baixas — Ypoti &amp; Chacobras</title>
+<title>Controle de vendas PY</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="rural-ui.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
 :root{
-  --pasture:#24513B; --pasture-mid:#3E7A5B; --pasture-soft:#DCE8DF;
-  --gold:#E0A430; --gold-soft:#F5E4BE;
-  --ink:#1C2620; --muted:#6E7B72; --line:#E4E2D6;
-  --paper:#F6F4EC; --card:#FFFFFF; --chac:#B4632A;
-  --ok:#2E7D52; --part:#C98A16; --open:#B04A3A;
+  color-scheme:light;
+  --pasture:var(--ru-azul); --pasture-mid:#3F7CBC; --pasture-soft:var(--ru-azul-cl);
+  --gold:var(--ru-amarelo); --gold-soft:var(--ru-amarelo-cl);
+  --ink:var(--ru-tinta); --muted:var(--ru-tinta2); --line:var(--ru-linha);
+  --paper:var(--ru-papel); --card:#FFFFFF; --chac:var(--ru-amarelo-txt);
+  --ok:var(--ru-verde); --part:var(--ru-amarelo-txt); --open:var(--ru-vermelho);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%}
-body{font-family:'Inter',system-ui,sans-serif;background:var(--paper);color:var(--ink);
+body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var(--ink);
   font-feature-settings:"tnum" 1;line-height:1.45}
 .wrap{max-width:1180px;margin:0 auto;padding:28px 22px 64px}
 header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:18px}
-.brand h1{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(26px,4.2vw,42px);letter-spacing:-.02em;line-height:1}
+.brand h1{font-family:'Outfit',sans-serif;font-weight:800;font-size:clamp(26px,4.2vw,42px);letter-spacing:-.02em;line-height:1}
 .brand .sub{color:var(--muted);font-size:14px;margin-top:8px;font-weight:500}
 .brand .sub b{color:var(--pasture)}
 .legend{display:flex;gap:16px;font-size:12.5px;color:var(--muted);font-weight:600;align-items:center}
@@ -32,7 +33,7 @@ header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:spac
 .dot.y{background:var(--pasture-mid)} .dot.c{background:var(--chac)}
 
 /* tabs */
-.tabs{display:inline-flex;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px;margin-bottom:22px;flex-wrap:wrap}
+.tabs{display:inline-flex;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px;margin-bottom:22px;flex-wrap:wrap}
 .tabs button{border:0;background:transparent;font:inherit;font-weight:700;font-size:14px;color:var(--muted);
   padding:9px 18px;border-radius:999px;cursor:pointer;transition:.15s;position:relative}
 .tabs button.on{background:var(--pasture);color:#fff}
@@ -52,23 +53,23 @@ header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:spac
 .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:26px}
 .kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;position:relative}
 .kpi .lbl{font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
-.kpi .val{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:clamp(19px,2.2vw,26px);letter-spacing:-.02em;margin-top:8px;line-height:1}
+.kpi .val{font-family:'Outfit',sans-serif;font-weight:700;font-size:clamp(19px,2.2vw,26px);letter-spacing:-.02em;margin-top:8px;line-height:1}
 .kpi .note{font-size:11.5px;color:var(--muted);margin-top:6px;font-weight:500}
-.kpi.accent{background:linear-gradient(160deg,#2c5c44,#1f4735);border-color:#1f4735}
-.kpi.accent .lbl{color:#bcd6c6} .kpi.accent .val{color:#fff} .kpi.accent .note{color:#9fc2ac}
-.kpi.warn{background:linear-gradient(160deg,#7a3e2c,#5c2a1f);border-color:#5c2a1f}
-.kpi.warn .lbl{color:#e6bdae} .kpi.warn .val{color:#fff} .kpi.warn .note{color:#dba392}
+.kpi.accent{background:linear-gradient(160deg,#2A4A6E,#1F3550);border-color:#1F3550}
+.kpi.accent .lbl{color:#C9D7E8} .kpi.accent .val{color:#fff} .kpi.accent .note{color:#A9BFD9}
+.kpi.warn{background:linear-gradient(160deg,#B4462E,#8E3523);border-color:#8E3523}
+.kpi.warn .lbl{color:#F3D3C9} .kpi.warn .val{color:#fff} .kpi.warn .note{color:#EDB8A8}
 .kpi .bar{position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:3px;background:var(--gold)}
 
 .grid{display:grid;grid-template-columns:1.35fr 1fr;gap:18px;margin-bottom:18px}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px 12px}
-.panel h3{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:16px;letter-spacing:-.01em;margin-bottom:2px}
+.panel h3{font-family:'Outfit',sans-serif;font-weight:700;font-size:16px;letter-spacing:-.01em;margin-bottom:2px}
 .panel .cap{font-size:12px;color:var(--muted);margin-bottom:14px;font-weight:500}
 .chartbox{position:relative;height:260px} .chartbox.tall{height:320px}
 
 .tablewrap{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px 8px;margin-top:18px}
 .tablewrap .head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;flex-wrap:wrap;gap:8px}
-.tablewrap h3{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:16px}
+.tablewrap h3{font-family:'Outfit',sans-serif;font-weight:700;font-size:16px}
 .tablewrap .count{font-size:12.5px;color:var(--muted);font-weight:600}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th{text-align:left;font-weight:700;color:var(--muted);font-size:11.5px;letter-spacing:.03em;text-transform:uppercase;padding:9px 10px;border-bottom:2px solid var(--line);cursor:pointer;user-select:none;white-space:nowrap}
@@ -79,9 +80,9 @@ td{padding:9px 10px;border-bottom:1px solid var(--line)}
 tbody tr:hover{background:var(--pasture-soft)}
 .tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px}
 .tag.y{background:var(--pasture-soft);color:var(--pasture)}
-.tag.c{background:#f3e0d2;color:var(--chac)}
-.cod{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:12px;color:var(--pasture);background:var(--pasture-soft);padding:2px 7px;border-radius:6px;letter-spacing:.02em;white-space:nowrap}
-.cod.b{color:var(--chac);background:#f3e0d2}
+.tag.c{background:var(--ru-amarelo-cl);color:var(--chac)}
+.cod{font-family:'Outfit',sans-serif;font-weight:700;font-size:12px;color:var(--pasture);background:var(--pasture-soft);padding:2px 7px;border-radius:6px;letter-spacing:.02em;white-space:nowrap}
+.cod.b{color:var(--chac);background:var(--ru-amarelo-cl)}
 .pager{display:flex;justify-content:center;align-items:center;gap:14px;padding:14px 0 6px;font-size:13px;font-weight:600;color:var(--muted)}
 .pager button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 12px;font:inherit;font-weight:600;cursor:pointer}
 .pager button:disabled{opacity:.4;cursor:default}
@@ -111,12 +112,12 @@ tbody tr:hover{background:var(--pasture-soft)}
 .imain .t2{font-size:12px;color:var(--muted);font-weight:500;margin-top:2px}
 .prog{height:7px;background:#eeede3;border-radius:99px;overflow:hidden;margin-top:7px}
 .prog i{display:block;height:100%;border-radius:99px;background:var(--pasture-mid);transition:width .3s}
-.money{text-align:right;font-weight:700;font-size:14px;font-family:'Bricolage Grotesque',sans-serif}
-.money small{display:block;font-family:'Inter';font-weight:500;font-size:11px;color:var(--muted);margin-top:2px}
+.money{text-align:right;font-weight:700;font-size:14px;font-family:'Outfit',sans-serif}
+.money small{display:block;font-family:'Outfit';font-weight:500;font-size:11px;color:var(--muted);margin-top:2px}
 .caret{color:var(--muted);transition:transform .2s;text-align:center;font-size:13px}
 .item.exp .caret{transform:rotate(90deg)}
 .badge{font-size:10.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;padding:3px 9px;border-radius:999px;white-space:nowrap}
-.badge.ok{background:#dcefe3;color:var(--ok)} .badge.part{background:#f7ecc9;color:var(--part)} .badge.open{background:#f4dcd6;color:var(--open)}
+.badge.ok{background:var(--ru-verde-cl);color:var(--ok)} .badge.part{background:var(--ru-amarelo-cl);color:var(--part)} .badge.open{background:var(--ru-vermelho-cl);color:var(--open)}
 .ibody{display:none;padding:2px 16px 16px;border-top:1px solid var(--line);background:#fbfbf6}
 .item.exp .ibody{display:block}
 .alloc{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0}
@@ -152,7 +153,7 @@ tfoot td{padding:11px 10px;border-top:2px solid var(--line);font-weight:700;font
 tr.overdue td{background:#fbeee9}
 tr.overdue:hover td{background:#f6e2da}
 .sit{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}
-.due{font-size:10.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;padding:2px 7px;border-radius:999px;background:#f4dcd6;color:var(--open)}
+.due{font-size:10.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;padding:2px 7px;border-radius:999px;background:var(--ru-vermelho-cl);color:var(--open)}
 .prods{max-width:280px;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media print{
   @page{margin:16mm}
@@ -162,7 +163,7 @@ tr.overdue:hover td{background:#f6e2da}
   .toolbar{display:none!important}
   header.top{margin-bottom:6px}
   .printhead{display:block;margin:0 0 14px}
-  .printhead h2{font-family:'Bricolage Grotesque',sans-serif;font-size:20px}
+  .printhead h2{font-family:'Outfit',sans-serif;font-size:20px}
   .printhead .meta{font-size:12px;color:#555;margin-top:4px}
   .kpis{grid-template-columns:repeat(4,1fr);margin-bottom:14px}
   .kpi{break-inside:avoid}
@@ -174,8 +175,8 @@ tr.overdue:hover td{background:#f6e2da}
 /* config / sync */
 .cfgstatus{border-radius:12px;padding:12px 16px;font-size:13px;font-weight:600;margin-bottom:18px;border:1px solid var(--line)}
 .cfgstatus.embutida{background:var(--gold-soft);border-color:#e7d29a;color:#6a5314}
-.cfgstatus.nuvem{background:#dcefe3;border-color:#bfe0cc;color:#1f5c3c}
-.cfgstatus.erro{background:#f4dcd6;border-color:#e3b7ab;color:var(--open)}
+.cfgstatus.nuvem{background:var(--ru-verde-cl);border-color:#bfe0cc;color:#1f5c3c}
+.cfgstatus.erro{background:var(--ru-vermelho-cl);border-color:#e3b7ab;color:var(--open)}
 .cfgrow{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
 .cfgrow label{font-size:12.5px;font-weight:700;color:var(--ink)}
 .cfgrow label small{font-weight:500;color:var(--muted)}
@@ -192,7 +193,7 @@ tr.overdue:hover td{background:#f6e2da}
 .itemrow input{font:inherit;font-size:13px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;min-width:0}
 .itemrow .itot{text-align:right;font-weight:700;font-size:13px;font-variant-numeric:tabular-nums}
 .itemrow .rm{border:0;background:transparent;color:var(--open);cursor:pointer;font-weight:700;font-size:17px;line-height:1}
-.lantotal{margin-top:12px;padding-top:10px;border-top:2px solid var(--line);font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:16px}
+.lantotal{margin-top:12px;padding-top:10px;border-top:2px solid var(--line);font-family:'Outfit',sans-serif;font-weight:700;font-size:16px}
 .flist{max-height:380px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;margin-top:10px}
 .fitem{display:grid;grid-template-columns:22px 1fr 130px;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}
 .fitem:last-child{border-bottom:0}
@@ -206,30 +207,53 @@ tr.overdue:hover td{background:#f6e2da}
 /* extrato */
 .tipopill{font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;text-transform:uppercase;letter-spacing:.03em}
 .tipopill.v{background:var(--pasture-soft);color:var(--pasture)}
-.tipopill.b{background:#f3e0d2;color:var(--chac)}
+.tipopill.b{background:var(--ru-amarelo-cl);color:var(--chac)}
 /* sugestao */
 .sugbox{background:#eef5f0;border:1px dashed var(--pasture-mid);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:12.5px;color:var(--pasture);display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
 .sugbox b{color:var(--ink)}
+/* kit Rural: logos, topo e acesso */
+body.locked .wrap{display:none}
+.ru-topo{display:block;padding-bottom:0}
+.ru-logos{display:flex;justify-content:space-between;align-items:center;gap:16px;width:100%;margin-bottom:14px}
+.ru-logos img{height:52px;width:auto;display:block}
+.ru-topo-linha{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px 20px;margin-bottom:18px}
+.ru-topo-acoes{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.ru-topo-acoes .ru-btn{text-decoration:none}
 </style>
 </head>
-<body>
+<body class="locked">
+<script src="rural-auth.js"></script>
+<script src="rural-ui.js"></script>
 <div class="wrap">
-  <header class="top">
-    <div class="brand">
-      <h1>Ypoti &amp; Chacobras</h1>
-      <div class="sub" id="periodo"></div>
+  <header class="ru-topo no-print" id="topoKit">
+    <div class="ru-logos">
+      <img src="logo_rural.png" alt="Rural Nutrição Animal 25 anos">
+      <img class="brand-chaco" src="logo_chacobras.png" alt="Chacobras">
     </div>
-    <div class="legend"><span><i class="dot y"></i>Ypoti</span><span><i class="dot c"></i>Chacobras</span>
-      <a id="sheetLink" class="btn" style="display:none;text-decoration:none" target="_blank" rel="noopener">Abrir planilha ↗</a></div>
+    <div class="ru-topo-linha">
+      <div class="brand">
+        <h1>Controle de vendas PY</h1>
+        <div class="sub" id="periodo"></div>
+      </div>
+      <div class="ru-topo-acoes">
+        <a id="sheetLink" class="ru-btn" style="display:none" target="_blank" rel="noopener">Abrir planilha ↗</a>
+        <span class="ru-usuario" id="usuarioAtual"></span>
+        <button class="ru-btn" type="button" id="btnLogout">Sair</button>
+      </div>
+    </div>
   </header>
+  <div class="ru-faixa no-print" aria-hidden="true"><span></span><span></span><span></span></div>
 
   <div class="tabs" id="tabs">
     <button data-tab="resumo" class="on">Resumo</button>
     <button data-tab="pendencias">Pendências <span class="cnt" id="cntPend" style="display:none"></span></button>
     <button data-tab="conciliar">Conciliar <span class="cnt" id="cntConc" style="display:none"></span></button>
     <button data-tab="extrato">Extrato</button>
-    <button data-tab="lancar-venda">Lançar entrada</button>
+    <button data-tab="lancar-venda">Lançar venda</button>
     <button data-tab="lancar-baixa">Lançar baixa</button>
+    <button data-tab="gerencial">Gerencial</button>
+    <button data-tab="clientes">Clientes</button>
+    <button data-tab="manutencao">Editar / estornar</button>
     <button data-tab="config">Dados / sincronização</button>
   </div>
 
@@ -237,10 +261,9 @@ tr.overdue:hover td{background:#f6e2da}
   <section class="view on" id="v-resumo">
     <div class="filters">
       <div class="seg" id="empSeg">
-        <button data-emp="Todas" class="on">Todas</button>
-        <button data-emp="Ypoti">Ypoti</button>
-        <button data-emp="Chacobras">Chacobras</button>
+        <button data-emp="Todas" class="on">Todos</button>
       </div>
+      <label class="ctrl">Estância <select id="estSel"></select></label>
       <label class="ctrl">Ano <select id="anoDe"></select></label>
       <label class="ctrl">até <select id="anoAte"></select></label>
       <label class="ctrl">Produto <input id="busca" type="search" placeholder="filtrar produto…" autocomplete="off"></label>
@@ -248,12 +271,12 @@ tr.overdue:hover td{background:#f6e2da}
     </div>
     <div class="kpis" id="kpis"></div>
     <div class="grid">
-      <div class="panel"><h3>Faturamento por ano</h3><div class="cap">Total vendido em dólares, empilhado por empresa</div><div class="chartbox"><canvas id="cAno"></canvas></div></div>
-      <div class="panel"><h3>Participação por empresa</h3><div class="cap">Fatia do faturamento no período filtrado</div><div class="chartbox"><canvas id="cEmp"></canvas></div></div>
+      <div class="panel"><h3>Faturamento por ano</h3><div class="cap">Total vendido em dólares, empilhado por cliente</div><div class="chartbox"><canvas id="cAno"></canvas></div></div>
+      <div class="panel"><h3>Participação por cliente</h3><div class="cap">Fatia do faturamento no período filtrado</div><div class="chartbox"><canvas id="cEmp"></canvas></div></div>
     </div>
     <div class="grid">
       <div class="panel"><h3>Top produtos</h3><div class="cap">Maiores faturamentos por produto (US$)</div><div class="chartbox tall"><canvas id="cProd"></canvas></div></div>
-      <div class="panel"><h3>Vendido × Recebido — Ypoti</h3><div class="cap">Acumulado de vendas e de pagamentos recebidos</div><div class="chartbox tall"><canvas id="cFlow"></canvas></div></div>
+      <div class="panel"><h3 id="tCFlow">Vendido × Recebido — todos os clientes</h3><div class="cap">Acumulado de vendas e de pagamentos recebidos</div><div class="chartbox tall"><canvas id="cFlow"></canvas></div></div>
     </div>
   </section>
 
@@ -266,6 +289,7 @@ tr.overdue:hover td{background:#f6e2da}
         <button data-base="emissao" class="on">Por emissão</button>
         <button data-base="venc">Por vencimento</button>
       </div>
+      <label class="ctrl">Cliente <select id="fCli"></select></label>
       <label class="ctrl">de <input id="fde" type="date"></label>
       <label class="ctrl">até <input id="fate" type="date"></label>
       <label class="ctrl"><input id="fbusca" type="search" placeholder="produto ou código…" autocomplete="off"></label>
@@ -278,11 +302,12 @@ tr.overdue:hover td{background:#f6e2da}
       </div>
     </div>
     <div class="tablewrap">
-      <div class="head"><h3>Faturas em aberto — Ypoti</h3><span class="count" id="fcount"></span></div>
+      <div class="head"><h3 id="tFat">Faturas em aberto — todos os clientes</h3><span class="count" id="fcount"></span></div>
       <div style="overflow-x:auto"><table id="ftable">
         <thead><tr>
           <th data-fsort="data">Emissão <span class="arw">↕</span></th>
           <th data-fsort="venc">Vencimento <span class="arw">↕</span></th>
+          <th>Cliente</th>
           <th>Códigos</th>
           <th>Produtos</th>
           <th class="num" data-fsort="total">Total US$ <span class="arw">↕</span></th>
@@ -300,7 +325,7 @@ tr.overdue:hover td{background:#f6e2da}
   <section class="view" id="v-conciliar">
     <div class="banner">
       <span>💾</span>
-      <div><b>Suas ligações ficam salvas na própria planilha</b> (aba "Conciliacao"), quando a API está configurada — assim qualquer computador que abrir esta ferramenta já vê as mesmas ligações, sem precisar carregar arquivo. Sem a API, elas ficam só neste navegador; use <b>Exportar/Importar</b> como backup ou para migrar de computador.</div>
+      <div><b>Suas ligações ficam salvas na própria planilha</b> (aba "Conciliacao"). Qualquer pessoa liberada que abrir esta ferramenta vê as mesmas ligações. <b>Exportar/Importar</b> servem como backup.</div>
     </div>
     <div class="cfgstatus" id="reconstatus"></div>
     <div class="kpis" id="rkpis"></div>
@@ -309,12 +334,12 @@ tr.overdue:hover td{background:#f6e2da}
         <button data-view="baixa" class="on">Por baixa</button>
         <button data-view="venda">Por venda</button>
       </div>
+      <label class="ctrl">Cliente <select id="rCli"></select></label>
       <label class="ctrl"><input id="rbusca" type="search" placeholder="buscar código, produto, valor…" autocomplete="off"></label>
       <label class="chk"><input type="checkbox" id="onlyOpen"> mostrar só com saldo</label>
       <div style="margin-left:auto;display:flex;gap:8px">
         <button class="btn" id="expBtn">Exportar</button>
         <button class="btn" id="impBtn">Importar</button>
-        <button class="btn" id="clrBtn">Limpar ligações</button>
         <input type="file" id="impFile" accept="application/json" hidden>
       </div>
     </div>
@@ -329,6 +354,7 @@ tr.overdue:hover td{background:#f6e2da}
         <button data-etipo="Venda">Vendas</button>
         <button data-etipo="Baixa">Baixas</button>
       </div>
+      <label class="ctrl">Cliente <select id="eCli"></select></label>
       <label class="ctrl"><input id="ebusca" type="search" placeholder="código, produto…" autocomplete="off"></label>
       <button class="btn" id="ecsvBtn" style="margin-left:auto">Exportar CSV</button>
     </div>
@@ -339,7 +365,7 @@ tr.overdue:hover td{background:#f6e2da}
           <th data-esort="codigo">Código <span class="arw">↕</span></th>
           <th data-esort="tipo">Tipo <span class="arw">↕</span></th>
           <th data-esort="data">Data <span class="arw">↕</span></th>
-          <th data-esort="who">Empresa</th>
+          <th data-esort="who">Cliente</th>
           <th>Descrição</th>
           <th class="num" data-esort="valor">Valor US$ <span class="arw">↕</span></th>
           <th data-esort="status">Situação <span class="arw">↕</span></th>
@@ -354,25 +380,24 @@ tr.overdue:hover td{background:#f6e2da}
     <div class="cfgstatus" id="lanstatusV"></div>
     <div class="panel">
       <h3>Nova venda</h3>
-      <div class="cap">Grava na aba Cargas (Ypoti) ou Chacobras, no mesmo formato das faturas existentes. O código sequencial (V0001…) é gerado automaticamente pela planilha.</div>
+      <div class="cap">Grava na aba Cargas, com o cliente informado, no mesmo formato das faturas existentes. O código sequencial (Y0001…) é gerado automaticamente.</div>
       <div class="lanrow2">
-        <div class="cfgrow"><label>Empresa</label>
-          <select id="lvEmp"><option value="Ypoti">Ypoti</option><option value="Chacobras">Chacobras</option></select></div>
         <div class="cfgrow"><label>Data de emissão</label><input type="date" id="lvData"></div>
         <div class="cfgrow"><label>Vencimento</label><input type="date" id="lvVenc"></div>
       </div>
       <div class="lanrow2">
-        <div class="cfgrow"><label>Cliente <small>(pra fatura impressa)</small></label><input type="text" id="lvCliente"></div>
-        <div class="cfgrow"><label>Estância / referência <small>(pra fatura impressa)</small></label><input type="text" id="lvEstancia"></div>
+        <div class="cfgrow"><label>Cliente <small>(vai para a planilha e a fatura; escolha um já usado ou digite outro)</small></label><input type="text" id="lvCliente" list="dlClientes" autocomplete="off"><datalist id="dlClientes"></datalist></div>
+        <div class="cfgrow"><label>Estância / referência <small>(vai para a planilha e a fatura)</small></label><input type="text" id="lvEstancia" list="dlEstancias" autocomplete="off"><datalist id="dlEstancias"></datalist></div>
       </div>
       <div class="itemshead"><span>Produto</span><span>Unidade</span><span>Qtd</span><span>Unit US$</span><span>Total</span><span></span></div>
       <div id="lvItens"></div>
       <datalist id="prodList"></datalist>
       <button class="btn" id="lvAddItem" style="margin-top:8px">+ adicionar item</button>
       <div class="lantotal" id="lvTotal">Total da fatura: US$ 0</div>
+      <div id="lvAlertas"></div>
       <button class="btn solid" id="lvEnviar" style="margin-top:12px">Lançar venda na planilha</button>
       <button class="btn" id="lvFatura" style="margin-top:12px">Gerar fatura para impressão</button>
-      <div class="cfgrow" style="margin-top:18px"><label>Chave de lançamento <small>(a mesma definida no script)</small></label><input type="password" id="lanChaveV" autocomplete="off"></div>
+
     </div>
     <div id="lanLogV" class="cfglog" style="margin-top:14px"></div>
   </section>
@@ -382,20 +407,19 @@ tr.overdue:hover td{background:#f6e2da}
     <div class="cfgstatus" id="lanstatusB"></div>
     <div class="panel">
       <h3>Nova baixa</h3>
-      <div class="cap">Grava na aba Baixas (pagamentos recebidos da Ypoti). O código (B0001…) é gerado automaticamente.</div>
+      <div class="cap">Grava na aba Baixas (pagamentos recebidos). Escolha o cliente para ver só as faturas dele. O código (B0001…) é gerado automaticamente.</div>
       <div class="lanrow2">
+        <div class="cfgrow"><label>Cliente</label><input type="text" id="lbCliente" list="dlClientes" autocomplete="off"></div>
         <div class="cfgrow"><label>Data do recebimento</label><input type="date" id="lbData"></div>
         <div class="cfgrow"><label>Valor em dólares (US$)</label><input type="number" step="0.01" min="0" id="lbUsd" placeholder="0,00"></div>
-        <div class="cfgrow"><label>Valor em reais <small>(opcional)</small></label><input type="number" step="0.01" min="0" id="lbBrl"></div>
-        <div class="cfgrow"><label>Cotação <small>(opcional)</small></label><input type="number" step="0.0001" min="0" id="lbCot"></div>
       </div>
       <div class="lanrow2">
         <div class="cfgrow"><label>Desconto concedido <small>(opcional, US$)</small></label><input type="number" step="0.01" min="0" id="lbDesc" placeholder="0,00"></div>
-        <div class="cfgrow"><label>Acréscimo / arredondamento <small>(opcional, US$)</small></label><input type="number" step="0.01" min="0" id="lbAcr" placeholder="0,00"></div>
+        <div class="cfgrow"><label>Acréscimo (cliente pagou a mais) <small>(opcional, US$)</small></label><input type="number" step="0.01" min="0" id="lbAcr" placeholder="0,00"></div>
       </div>
-      <div class="cap" style="margin-top:-4px">Desconto e acréscimo ajustam a capacidade desta baixa para fechar as faturas escolhidas abaixo, sem alterar o valor em dólares realmente recebido. Use pra absorver diferenças pequenas de arredondamento ou descontos combinados com o cliente.</div>
+      <div class="cap" style="margin-top:-4px">Desconto aumenta e acréscimo diminui a parte da baixa que vai para as faturas escolhidas abaixo, sem alterar o valor em dólares realmente recebido. Use o desconto para diferenças pequenas ou descontos combinados com o cliente, e o acréscimo quando o cliente pagou a mais.</div>
       <div class="cfgrow"><label>Observação <small>(opcional)</small></label><input type="text" id="lbObs" placeholder="ex.: referente às cargas de junho"></div>
-      <div class="cfgrow" style="margin-top:6px"><label>Chave de lançamento <small>(a mesma definida no script)</small></label><input type="password" id="lanChaveB" autocomplete="off"></div>
+
     </div>
     <div class="panel" style="margin-top:18px">
       <h3>Faturas a baixar</h3>
@@ -408,54 +432,114 @@ tr.overdue:hover td{background:#f6e2da}
     <div id="lanLogB" class="cfglog" style="margin-top:14px"></div>
   </section>
 
+  <!-- ============ PAINEL GERENCIAL ============ -->
+  <section class="view" id="v-gerencial">
+    <div class="kpis" id="gKpis"></div>
+    <div class="tablewrap">
+      <div class="head"><h3>Por cliente</h3><span class="count" id="gcount"></span></div>
+      <div style="overflow-x:auto"><table>
+        <thead><tr>
+          <th>Cliente</th>
+          <th class="num">Vendido US$</th>
+          <th class="num">Recebido US$</th>
+          <th class="num">Em aberto US$</th>
+          <th class="num">Vencido US$</th>
+          <th class="num">Limite US$</th>
+          <th class="num">Uso do limite</th>
+          <th class="num">Faturas em aberto</th>
+        </tr></thead>
+        <tbody id="gTbody"></tbody>
+      </table></div>
+    </div>
+    <div class="grid">
+      <div class="tablewrap">
+        <div class="head"><h3>Vencido por tempo de atraso (US$)</h3></div>
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>Cliente</th><th class="num">1–30 dias</th><th class="num">31–60</th><th class="num">61–90</th><th class="num">Mais de 90</th></tr></thead>
+          <tbody id="gAging"></tbody>
+        </table></div>
+      </div>
+      <div class="panel"><h3>Posição com a Chacobras</h3>
+        <div class="cap">Lado de cá: vendas, baixas e saldo por cliente. O lado da Rural Nutrição (faturas de exportação à Chacobras) vem do app de Exportação e ainda não está nesta tela.</div>
+        <div id="gChac"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CLIENTES ============ -->
+  <section class="view" id="v-clientes">
+    <div class="panel">
+      <h3>Cadastro de clientes</h3>
+      <div class="cap">Todos os clientes são do Paraguai (PY) por padrão. Para alterar um cliente, clique nele na lista abaixo ou digite o nome igual ao cadastrado.</div>
+      <div class="lanrow2">
+        <div class="cfgrow"><label>Nome</label><input type="text" id="clNome" list="dlClientes" autocomplete="off"></div>
+        <div class="cfgrow"><label>País</label><input type="text" id="clPais" value="PY"></div>
+        <div class="cfgrow"><label>Documento <small>(RUC / CI)</small></label><input type="text" id="clDoc"></div>
+      </div>
+      <div class="lanrow2">
+        <div class="cfgrow"><label>Condição de pagamento <small>(dias)</small></label><input type="number" id="clCond" min="0" step="1"></div>
+        <div class="cfgrow"><label>Limite de crédito <small>(US$)</small></label><input type="number" id="clLimite" min="0" step="0.01"></div>
+        <div class="cfgrow"><label>Ativo</label><select id="clAtivo"><option value="SIM">Sim</option><option value="NAO">Não</option></select></div>
+      </div>
+      <div class="cfgrow"><label>Observação</label><input type="text" id="clObs"></div>
+
+      <button class="btn solid" id="clSalvar">Salvar cliente</button>
+      <div id="clLog" class="cfglog" style="margin-top:14px"></div>
+    </div>
+    <div class="tablewrap" style="margin-top:18px">
+      <div class="head"><h3>Clientes</h3><span class="count" id="clcount"></span></div>
+      <div style="overflow-x:auto"><table>
+        <thead><tr><th>Nome</th><th>País</th><th>Documento</th><th class="num">Condição (dias)</th><th class="num">Limite US$</th><th>Ativo</th></tr></thead>
+        <tbody id="clTbody"></tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <!-- ============ EDITAR / ESTORNAR ============ -->
+  <section class="view" id="v-manutencao">
+    <div class="panel">
+      <h3>Editar ou estornar lançamento</h3>
+      <div class="cap">Digite o código (Y0001, C0003 ou B0010). Cada alteração fica registrada na aba Auditoria da planilha. Estorno não apaga a linha. Não é possível alterar lançamento que esteja ligado na conciliação: remova a ligação antes.</div>
+      <div class="cfgrow"><label>Código</label><input type="text" id="mnCodigo" placeholder="ex.: Y0001 ou B0010" autocomplete="off"></div>
+      <button class="btn" id="mnBuscar">Buscar</button>
+      <div id="mnResultado" style="margin-top:14px"></div>
+      <div id="mnLog" class="cfglog" style="margin-top:14px"></div>
+    </div>
+  </section>
+
   <!-- ============ CONFIG / SYNC ============ -->
   <section class="view" id="v-config">
     <div class="cfgstatus" id="cfgstatus"></div>
     <div class="panel" style="margin-bottom:18px">
-      <h3>Sincronizar com o Google Sheets</h3>
-      <div class="cap">O dashboard busca os dados toda vez que você abre ou clica em atualizar.</div>
-      <div class="seg" style="margin-bottom:14px" id="modeSeg">
-        <button data-mode="api" class="on">API JSON (Apps Script)</button>
-        <button data-mode="csv">CSV publicado</button>
-      </div>
-      <div id="apiBlock">
-        <div class="cfgrow"><label>URL da API <small>(implantação do Apps Script, termina em /exec)</small></label><input type="url" id="urlApi" placeholder="https://script.google.com/macros/s/…/exec"></div>
-      </div>
-      <div id="csvBlock" style="display:none">
-        <div class="cfgrow"><label>Cargas <small>(vendas Ypoti)</small></label><input type="url" id="urlCargas" placeholder="https://docs.google.com/…&output=csv"></div>
-        <div class="cfgrow"><label>Baixas <small>(pagamentos)</small></label><input type="url" id="urlBaixas" placeholder="https://docs.google.com/…&output=csv"></div>
-        <div class="cfgrow"><label>Chacobras <small>(vendas)</small></label><input type="url" id="urlChac" placeholder="https://docs.google.com/…&output=csv"></div>
-      </div>
-      <label class="chk" style="margin:6px 0 14px"><input type="checkbox" id="autoRefresh"> atualizar automaticamente ao abrir o dashboard</label>
-      <div class="cfgrow"><label>Link da planilha <small>(opcional — para o botão "Abrir planilha"; com a API atualizada ele é detectado sozinho)</small></label><input type="url" id="urlSheet" placeholder="https://docs.google.com/spreadsheets/d/…"></div>
+      <h3>Atualizar dados</h3>
+      <div class="cap">Os dados vêm da planilha e são atualizados ao abrir a ferramenta ou ao clicar abaixo. Para abrir a planilha, use o botão no topo.</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn solid" id="cfgSave">Salvar e atualizar agora</button>
-        <button class="btn" id="cfgRefresh">Atualizar agora</button>
-        <button class="btn" id="cfgEmbedded">Voltar aos dados embutidos</button>
+        <button class="btn solid" id="cfgRefresh">Atualizar agora</button>
       </div>
       <div id="cfgLog" class="cfglog"></div>
     </div>
     <div class="panel">
       <h3>Código do Apps Script</h3>
       <div class="cap" style="margin:0">
-        O código do Apps Script (com geração automática dos códigos V0001…/B0001… e a função de preenchimento das linhas antigas) está no arquivo <b>apps_script_ypoti.gs.txt</b>, enviado junto com este dashboard. Cole o conteúdo dele em <b>Extensões → Apps Script</b> na planilha, depois <b>Implantar → Gerenciar implantações → editar (✎) → Nova versão</b> (ou <b>Nova implantação → App da web</b> se for a primeira vez).
+        O código fica na própria planilha: <b>Extensões → Apps Script</b>, em dois arquivos: o principal (Code_ypoti_v3.gs) e rural_validacao (rural_validacao.gs). Para atualizar, cole a versão nova e depois <b>Implantar → Gerenciar implantações → editar (✎) → Nova versão</b>.
       </div>
     </div>
   </section>
 
   <footer>
-    Abas da planilha: Cargas e Chacobras para as vendas, Baixas para os pagamentos, Conciliacao para as ligações entre eles.
-    Valores em dólares (US$). Cada venda e cada baixa tem um código sequencial (V0001…, B0001…) gravado na própria planilha — veja o arquivo apps_script_ypoti.gs.txt para o código e o passo a passo.<br>
-    As ligações entre baixas e vendas são feitas por você na aba Conciliar. Com a API configurada (e o script atualizado), elas ficam gravadas na aba "Conciliacao" da própria planilha; sem a API, ficam salvas apenas neste navegador.
+    Abas da planilha: Cargas para as vendas, Baixas para os pagamentos, Conciliacao para as ligações entre eles.
+    Valores em dólares (US$). Cada venda (Y0001…) e cada baixa (B0001…) tem um código sequencial gravado na própria planilha.<br>
+    As ligações entre baixas e vendas são feitas por você na aba Conciliar e ficam gravadas na aba "Conciliacao" da própria planilha.
   </footer>
 </div>
 <div id="toast"></div>
 <script>
-const EMBEDDED = {"sales":[{"data":"2023-07-22","ano":2023,"mes":"2023-07","produto":"Rural Nucleo Confinamento Ypoti J2 - Azul","empresa":"Ypoti","fonte":"Cargas","qtd":10020.0,"unit":1.18,"total_usd":11823.599999999999,"venc":"2023-09-05","inv":"I1","id":"v0"},{"data":"2023-07-22","ano":2023,"mes":"2023-07","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":20010.0,"unit":1.25,"total_usd":25012.5,"venc":"2023-09-05","inv":"I1","id":"v1"},{"data":"2023-12-08","ano":2023,"mes":"2023-12","produto":"Rural Engorda Plus Ypoti","empresa":"Ypoti","fonte":"Cargas","qtd":15000.0,"unit":0.85,"total_usd":12750.0,"venc":"2024-01-22","inv":"I2","id":"v2"},{"data":"2023-12-08","ano":2023,"mes":"2023-12","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":15000.0,"unit":1.25,"total_usd":18750.0,"venc":"2024-01-22","inv":"I2","id":"v3"},{"data":"2023-12-08","ano":2023,"mes":"2023-12","produto":"Graos de Aveia para Ração","empresa":"Ypoti","fonte":"Cargas","qtd":1000.0,"unit":0.25,"total_usd":250.0,"venc":"2024-01-22","inv":"I2","id":"v4"},{"data":"2023-12-18","ano":2023,"mes":"2023-12","produto":"Rural Nucleo Crescimento Bezerros - Azul","empresa":"Ypoti","fonte":"Cargas","qtd":15000.0,"unit":0.735,"total_usd":11025.0,"venc":"2024-02-01","inv":"I3","id":"v5"},{"data":"2024-01-04","ano":2024,"mes":"2024-01","produto":"Rural Engorda Plus Ypoti","empresa":"Ypoti","fonte":"Cargas","qtd":15000.0,"unit":0.85,"total_usd":12750.0,"venc":"2024-02-18","inv":"I4","id":"v6"},{"data":"2024-01-04","ano":2024,"mes":"2024-01","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":15000.0,"unit":1.25,"total_usd":18750.0,"venc":"2024-02-18","inv":"I4","id":"v7"},{"data":"2024-01-08","ano":2024,"mes":"2024-01","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":15000.0,"unit":1.25,"total_usd":18750.0,"venc":"2024-02-22","inv":"I5","id":"v8"},{"data":"2024-01-08","ano":2024,"mes":"2024-01","produto":"Rural Nucleo Crescimento Bezerros - Azul","empresa":"Ypoti","fonte":"Cargas","qtd":15000.0,"unit":0.735,"total_usd":11025.0,"venc":"2024-02-22","inv":"I5","id":"v9"},{"data":"2024-01-08","ano":2024,"mes":"2024-01","produto":"Enxofre Agropecuario 99%","empresa":"Ypoti","fonte":"Cargas","qtd":150.0,"unit":0.6,"total_usd":90.0,"venc":"2024-02-22","inv":"I5","id":"v10"},{"data":"2024-01-09","ano":2024,"mes":"2024-01","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":9990.0,"unit":1.25,"total_usd":12487.5,"venc":"2024-02-23","inv":"I6","id":"v11"},{"data":"2024-01-09","ano":2024,"mes":"2024-01","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":20010.0,"unit":1.18,"total_usd":23611.8,"venc":"2024-02-23","inv":"I6","id":"v12"},{"data":"2024-01-17","ano":2024,"mes":"2024-01","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":15000.0,"unit":1.18,"total_usd":17700.0,"venc":"2024-03-02","inv":"I7","id":"v13"},{"data":"2024-01-25","ano":2024,"mes":"2024-01","produto":"Rural Engorda Plus Ypoti","empresa":"Ypoti","fonte":"Cargas","qtd":15000.0,"unit":0.85,"total_usd":12750.0,"venc":"2024-03-10","inv":"I8","id":"v14"},{"data":"2024-01-25","ano":2024,"mes":"2024-01","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":15000.0,"unit":1.18,"total_usd":17700.0,"venc":"2024-03-10","inv":"I8","id":"v15"},{"data":"2024-01-31","ano":2024,"mes":"2024-01","produto":"Rural Engorda Plus Ypoti","empresa":"Ypoti","fonte":"Cargas","qtd":15000.0,"unit":0.85,"total_usd":12750.0,"venc":"2024-03-16","inv":"I9","id":"v16"},{"data":"2024-01-31","ano":2024,"mes":"2024-01","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":15000.0,"unit":1.18,"total_usd":17700.0,"venc":"2024-03-16","inv":"I9","id":"v17"},{"data":"2024-02-07","ano":2024,"mes":"2024-02","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":17490.0,"unit":1.18,"total_usd":20638.2,"venc":"2024-03-23","inv":"I10","id":"v18"},{"data":"2024-02-15","ano":2024,"mes":"2024-02","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":15990.0,"unit":1.25,"total_usd":19987.5,"venc":"2024-03-31","inv":"I11","id":"v19"},{"data":"2024-02-15","ano":2024,"mes":"2024-02","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":16500.0,"unit":1.18,"total_usd":19470.0,"venc":"2024-03-31","inv":"I11","id":"v20"},{"data":"2024-02-24","ano":2024,"mes":"2024-02","produto":"Rural Equinos","empresa":"Ypoti","fonte":"Cargas","qtd":3000.0,"unit":0.74,"total_usd":2220.0,"venc":"2024-04-09","inv":"I12","id":"v21"},{"data":"2024-02-24","ano":2024,"mes":"2024-02","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":12000.0,"unit":1.18,"total_usd":14160.0,"venc":"2024-04-09","inv":"I12","id":"v22"},{"data":"2024-02-26","ano":2024,"mes":"2024-02","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":15000.0,"unit":1.25,"total_usd":18750.0,"venc":"2024-04-11","inv":"I13","id":"v23"},{"data":"2024-02-26","ano":2024,"mes":"2024-02","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":15000.0,"unit":1.18,"total_usd":17700.0,"venc":"2024-04-11","inv":"I13","id":"v24"},{"data":"2024-02-29","ano":2024,"mes":"2024-02","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":9990.0,"unit":1.25,"total_usd":12487.5,"venc":"2024-04-14","inv":"I14","id":"v25"},{"data":"2024-02-29","ano":2024,"mes":"2024-02","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":20000.0,"unit":1.18,"total_usd":23600.0,"venc":"2024-04-14","inv":"I14","id":"v26"},{"data":"2024-02-29","ano":2024,"mes":"2024-02","produto":"Rural Equinos","empresa":"Ypoti","fonte":"Cargas","qtd":990.0,"unit":0.74,"total_usd":732.6,"venc":"2024-04-14","inv":"I14","id":"v27"},{"data":"2024-03-11","ano":2024,"mes":"2024-03","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":30000.0,"unit":1.18,"total_usd":35400.0,"venc":"2024-04-25","inv":"I15","id":"v28"},{"data":"2024-03-18","ano":2024,"mes":"2024-03","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":16000.0,"unit":1.25,"total_usd":20000.0,"venc":"2024-05-02","inv":"I16","id":"v29"},{"data":"2024-03-18","ano":2024,"mes":"2024-03","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":15000.0,"unit":1.18,"total_usd":17700.0,"venc":"2024-05-02","inv":"I16","id":"v30"},{"data":"2024-03-22","ano":2024,"mes":"2024-03","produto":"Rural Engorda Plus Ypoti","empresa":"Ypoti","fonte":"Cargas","qtd":6000.0,"unit":0.85,"total_usd":5100.0,"venc":"2024-05-06","inv":"I17","id":"v31"},{"data":"2024-03-22","ano":2024,"mes":"2024-03","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":25000.0,"unit":1.18,"total_usd":29500.0,"venc":"2024-05-06","inv":"I17","id":"v32"},{"data":"2024-03-25","ano":2024,"mes":"2024-03","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":30000.0,"unit":1.18,"total_usd":35400.0,"venc":"2024-05-09","inv":"I18","id":"v33"},{"data":"2024-03-27","ano":2024,"mes":"2024-03","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":11000.0,"unit":1.25,"total_usd":13750.0,"venc":"2024-05-11","inv":"I19","id":"v34"},{"data":"2024-03-27","ano":2024,"mes":"2024-03","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":20000.0,"unit":1.18,"total_usd":23600.0,"venc":"2024-05-11","inv":"I19","id":"v35"},{"data":"2024-04-03","ano":2024,"mes":"2024-04","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":9990.0,"unit":1.25,"total_usd":12487.5,"venc":"2024-05-18","inv":"I20","id":"v36"},{"data":"2024-04-03","ano":2024,"mes":"2024-04","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":22500.0,"unit":1.18,"total_usd":26550.0,"venc":"2024-05-18","inv":"I20","id":"v37"},{"data":"2024-04-04","ano":2024,"mes":"2024-04","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":30000.0,"unit":1.18,"total_usd":35400.0,"venc":"2024-05-19","inv":"I21","id":"v38"},{"data":"2024-04-04","ano":2024,"mes":"2024-04","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":30000.0,"unit":1.18,"total_usd":35400.0,"venc":"2024-05-19","inv":"I22","id":"v39"},{"data":"2024-04-13","ano":2024,"mes":"2024-04","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":21000.0,"unit":1.25,"total_usd":26250.0,"venc":"2024-05-28","inv":"I23","id":"v40"},{"data":"2024-04-13","ano":2024,"mes":"2024-04","produto":"Rural Engorda Plus Ypoti","empresa":"Ypoti","fonte":"Cargas","qtd":9990.0,"unit":0.85,"total_usd":8491.5,"venc":"2024-05-28","inv":"I23","id":"v41"},{"data":"2024-04-18","ano":2024,"mes":"2024-04","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":30000.0,"unit":1.18,"total_usd":35400.0,"venc":"2024-06-02","inv":"I24","id":"v42"},{"data":"2024-04-19","ano":2024,"mes":"2024-04","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":30000.0,"unit":1.18,"total_usd":35400.0,"venc":"2024-06-03","inv":"I25","id":"v43"},{"data":"2024-04-22","ano":2024,"mes":"2024-04","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":15000.0,"unit":1.25,"total_usd":18750.0,"venc":"2024-06-06","inv":"I26","id":"v44"},{"data":"2024-04-22","ano":2024,"mes":"2024-04","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":15000.0,"unit":1.18,"total_usd":17700.0,"venc":"2024-06-06","inv":"I26","id":"v45"},{"data":"2024-04-30","ano":2024,"mes":"2024-04","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":12000.0,"unit":1.25,"total_usd":15000.0,"venc":"2024-06-14","inv":"I27","id":"v46"},{"data":"2024-04-30","ano":2024,"mes":"2024-04","produto":"Rural Engorda Plus Ypoti","empresa":"Ypoti","fonte":"Cargas","qtd":9000.0,"unit":0.85,"total_usd":7650.0,"venc":"2024-06-14","inv":"I27","id":"v47"},{"data":"2024-05-06","ano":2024,"mes":"2024-05","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":30000.0,"unit":1.18,"total_usd":35400.0,"venc":"2024-06-20","inv":"I28","id":"v48"},{"data":"2024-05-09","ano":2024,"mes":"2024-05","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":30000.0,"unit":1.18,"total_usd":35400.0,"venc":"2024-06-23","inv":"I29","id":"v49"},{"data":"2024-05-11","ano":2024,"mes":"2024-05","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":25000.0,"unit":1.25,"total_usd":31250.0,"venc":"2024-06-25","inv":"I30","id":"v50"},{"data":"2024-05-11","ano":2024,"mes":"2024-05","produto":"Rural Engorda Plus Ypoti","empresa":"Ypoti","fonte":"Cargas","qtd":3000.0,"unit":0.85,"total_usd":2550.0,"venc":"2024-06-25","inv":"I30","id":"v51"},{"data":"2024-05-17","ano":2024,"mes":"2024-05","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":30000.0,"unit":1.18,"total_usd":35400.0,"venc":"2024-07-01","inv":"I31","id":"v52"},{"data":"2024-05-20","ano":2024,"mes":"2024-05","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":30000.0,"unit":1.18,"total_usd":35400.0,"venc":"2024-07-04","inv":"I32","id":"v53"},{"data":"2024-05-23","ano":2024,"mes":"2024-05","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":5010.0,"unit":1.25,"total_usd":6262.5,"venc":"2024-07-07","inv":"I33","id":"v54"},{"data":"2024-05-23","ano":2024,"mes":"2024-05","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":27510.0,"unit":1.18,"total_usd":32461.8,"venc":"2024-07-07","inv":"I33","id":"v55"},{"data":"2024-06-03","ano":2024,"mes":"2024-06","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":27000.0,"unit":1.18,"total_usd":31860.0,"venc":"2024-07-18","inv":"I34","id":"v56"},{"data":"2024-06-07","ano":2024,"mes":"2024-06","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32520.0,"unit":1.18,"total_usd":38373.6,"venc":"2024-07-22","inv":"I35","id":"v57"},{"data":"2024-06-12","ano":2024,"mes":"2024-06","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":25020.0,"unit":1.25,"total_usd":31275.0,"venc":"2024-07-27","inv":"I36","id":"v58"},{"data":"2024-06-12","ano":2024,"mes":"2024-06","produto":"Rural Equinos","empresa":"Ypoti","fonte":"Cargas","qtd":6000.0,"unit":0.74,"total_usd":4440.0,"venc":"2024-07-27","inv":"I36","id":"v59"},{"data":"2024-06-19","ano":2024,"mes":"2024-06","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32520.0,"unit":1.18,"total_usd":38373.6,"venc":"2024-08-03","inv":"I37","id":"v60"},{"data":"2024-06-25","ano":2024,"mes":"2024-06","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":30000.0,"unit":1.18,"total_usd":35400.0,"venc":"2024-08-09","inv":"I38","id":"v61"},{"data":"2024-07-03","ano":2024,"mes":"2024-07","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32520.0,"unit":1.18,"total_usd":38373.6,"venc":"2024-08-17","inv":"I39","id":"v62"},{"data":"2024-07-11","ano":2024,"mes":"2024-07","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32520.0,"unit":1.18,"total_usd":38373.6,"venc":"2024-08-25","inv":"I40","id":"v63"},{"data":"2024-07-19","ano":2024,"mes":"2024-07","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":10000.0,"unit":1.25,"total_usd":12500.0,"venc":"2024-09-02","inv":"I41","id":"v64"},{"data":"2024-07-19","ano":2024,"mes":"2024-07","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":22000.0,"unit":1.18,"total_usd":25960.0,"venc":"2024-09-02","inv":"I41","id":"v65"},{"data":"2024-07-22","ano":2024,"mes":"2024-07","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":10000.0,"unit":1.25,"total_usd":12500.0,"venc":"2024-09-05","inv":"I42","id":"v66"},{"data":"2024-07-22","ano":2024,"mes":"2024-07","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":22000.0,"unit":1.18,"total_usd":25960.0,"venc":"2024-09-05","inv":"I42","id":"v67"},{"data":"2024-07-24","ano":2024,"mes":"2024-07","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.18,"total_usd":37760.0,"venc":"2024-09-07","inv":"I43","id":"v68"},{"data":"2024-07-26","ano":2024,"mes":"2024-07","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":16000.0,"unit":1.25,"total_usd":20000.0,"venc":"2024-09-09","inv":"I44","id":"v69"},{"data":"2024-07-26","ano":2024,"mes":"2024-07","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":16000.0,"unit":1.18,"total_usd":18880.0,"venc":"2024-09-09","inv":"I44","id":"v70"},{"data":"2024-07-27","ano":2024,"mes":"2024-07","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":16000.0,"unit":1.25,"total_usd":20000.0,"venc":"2024-09-10","inv":"I45","id":"v71"},{"data":"2024-07-27","ano":2024,"mes":"2024-07","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":16000.0,"unit":1.18,"total_usd":18880.0,"venc":"2024-09-10","inv":"I45","id":"v72"},{"data":"2024-07-30","ano":2024,"mes":"2024-07","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":9990.0,"unit":1.25,"total_usd":12487.5,"venc":"2024-09-13","inv":"I46","id":"v73"},{"data":"2024-07-30","ano":2024,"mes":"2024-07","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":22000.0,"unit":1.18,"total_usd":25960.0,"venc":"2024-09-13","inv":"I46","id":"v74"},{"data":"2024-08-06","ano":2024,"mes":"2024-08","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":22000.0,"unit":1.25,"total_usd":27500.0,"venc":"2024-09-20","inv":"I47","id":"v75"},{"data":"2024-08-06","ano":2024,"mes":"2024-08","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":10000.0,"unit":1.18,"total_usd":11800.0,"venc":"2024-09-20","inv":"I47","id":"v76"},{"data":"2024-08-08","ano":2024,"mes":"2024-08","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":10000.0,"unit":1.25,"total_usd":12500.0,"venc":"2024-09-22","inv":"I48","id":"v77"},{"data":"2024-08-08","ano":2024,"mes":"2024-08","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":22000.0,"unit":1.18,"total_usd":25960.0,"venc":"2024-09-22","inv":"I48","id":"v78"},{"data":"2024-08-10","ano":2024,"mes":"2024-08","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":10000.0,"unit":1.25,"total_usd":12500.0,"venc":"2024-09-24","inv":"I49","id":"v79"},{"data":"2024-08-10","ano":2024,"mes":"2024-08","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":22000.0,"unit":1.18,"total_usd":25960.0,"venc":"2024-09-24","inv":"I49","id":"v80"},{"data":"2024-08-14","ano":2024,"mes":"2024-08","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":10000.0,"unit":1.25,"total_usd":12500.0,"venc":"2024-09-28","inv":"I50","id":"v81"},{"data":"2024-08-14","ano":2024,"mes":"2024-08","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":22000.0,"unit":1.18,"total_usd":25960.0,"venc":"2024-09-28","inv":"I50","id":"v82"},{"data":"2024-08-19","ano":2024,"mes":"2024-08","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":10000.0,"unit":1.25,"total_usd":12500.0,"venc":"2024-10-03","inv":"I51","id":"v83"},{"data":"2024-08-19","ano":2024,"mes":"2024-08","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":22000.0,"unit":1.18,"total_usd":25960.0,"venc":"2024-10-03","inv":"I51","id":"v84"},{"data":"2024-08-22","ano":2024,"mes":"2024-08","produto":"Rural Nucleo Crescimento - Vermelho - Concentrado","empresa":"Ypoti","fonte":"Cargas","qtd":3000.0,"unit":1.65,"total_usd":4950.0,"venc":"2024-10-06","inv":"I52","id":"v85"},{"data":"2024-08-22","ano":2024,"mes":"2024-08","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo - Concentrado","empresa":"Ypoti","fonte":"Cargas","qtd":29000.0,"unit":1.2,"total_usd":34800.0,"venc":"2024-10-06","inv":"I52","id":"v86"},{"data":"2024-09-05","ano":2024,"mes":"2024-09","produto":"Rural Equinos","empresa":"Ypoti","fonte":"Cargas","qtd":2010.0,"unit":0.733333333333333,"total_usd":1473.9999999999993,"venc":"2024-10-20","inv":"I53","id":"v87"},{"data":"2024-09-05","ano":2024,"mes":"2024-09","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo - Concentrado","empresa":"Ypoti","fonte":"Cargas","qtd":19000.0,"unit":1.2,"total_usd":22800.0,"venc":"2024-10-20","inv":"I53","id":"v88"},{"data":"2024-09-05","ano":2024,"mes":"2024-09","produto":"Graos de Aveia para Ração","empresa":"Ypoti","fonte":"Cargas","qtd":4980.0,"unit":0.25,"total_usd":1245.0,"venc":"2024-10-20","inv":"I53","id":"v89"},{"data":"2024-09-05","ano":2024,"mes":"2024-09","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":5010.0,"unit":1.25,"total_usd":6262.5,"venc":"2024-10-20","inv":"I54","id":"v90"},{"data":"2024-09-11","ano":2024,"mes":"2024-09","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo - Concentrado","empresa":"Ypoti","fonte":"Cargas","qtd":32010.0,"unit":1.2,"total_usd":38412.0,"venc":"2024-10-26","inv":"I55","id":"v91"},{"data":"2024-09-16","ano":2024,"mes":"2024-09","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo - Concentrado","empresa":"Ypoti","fonte":"Cargas","qtd":32010.0,"unit":1.2,"total_usd":38412.0,"venc":"2024-10-31","inv":"I56","id":"v92"},{"data":"2024-09-18","ano":2024,"mes":"2024-09","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo - Concentrado","empresa":"Ypoti","fonte":"Cargas","qtd":7000.0,"unit":1.2,"total_usd":8400.0,"venc":"2024-11-02","inv":"I57","id":"v93"},{"data":"2024-09-23","ano":2024,"mes":"2024-09","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo - Concentrado","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.2,"total_usd":38400.0,"venc":"2024-11-07","inv":"I58","id":"v94"},{"data":"2024-10-02","ano":2024,"mes":"2024-10","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo - Concentrado","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.2,"total_usd":38400.0,"venc":"2024-11-16","inv":"I59","id":"v95"},{"data":"2024-10-10","ano":2024,"mes":"2024-10","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":16020.0,"unit":1.35,"total_usd":21627.0,"venc":"2024-11-24","inv":"I60","id":"v96"},{"data":"2024-10-10","ano":2024,"mes":"2024-10","produto":"Rural Engorda","empresa":"Ypoti","fonte":"Cargas","qtd":15000.0,"unit":0.9,"total_usd":13500.0,"venc":"2024-11-24","inv":"I60","id":"v97"},{"data":"2024-10-16","ano":2024,"mes":"2024-10","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo - Concentrado","empresa":"Ypoti","fonte":"Cargas","qtd":31000.0,"unit":1.2,"total_usd":37200.0,"venc":"2024-11-30","inv":"I61","id":"v98"},{"data":"2024-10-22","ano":2024,"mes":"2024-10","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo - Concentrado","empresa":"Ypoti","fonte":"Cargas","qtd":31000.0,"unit":1.2,"total_usd":37200.0,"venc":"2024-12-06","inv":"I62","id":"v99"},{"data":"2024-11-06","ano":2024,"mes":"2024-11","produto":"Rural Engorda Plus Ypoti","empresa":"Ypoti","fonte":"Cargas","qtd":13500.0,"unit":0.786666666666666,"total_usd":10619.99999999999,"venc":"2024-12-21","inv":"I63","id":"v100"},{"data":"2024-11-06","ano":2024,"mes":"2024-11","produto":"Rural Recria Plus Ypoti","empresa":"Ypoti","fonte":"Cargas","qtd":510.0,"unit":0.738333333333333,"total_usd":376.5499999999998,"venc":"2024-12-21","inv":"I63","id":"v101"},{"data":"2024-11-13","ano":2024,"mes":"2024-11","produto":"Rural Nucleo Crescimento - Vermelho - Concentrado","empresa":"Ypoti","fonte":"Cargas","qtd":10000.0,"unit":1.65,"total_usd":16500.0,"venc":"2024-12-28","inv":"I64","id":"v102"},{"data":"2024-11-13","ano":2024,"mes":"2024-11","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo - Concentrado","empresa":"Ypoti","fonte":"Cargas","qtd":22000.0,"unit":1.2,"total_usd":26400.0,"venc":"2024-12-28","inv":"I64","id":"v103"},{"data":"2024-11-21","ano":2024,"mes":"2024-11","produto":"Rural Nucleo Crescimento - Vermelho - Concentrado","empresa":"Ypoti","fonte":"Cargas","qtd":16000.0,"unit":1.65,"total_usd":26400.0,"venc":"2025-01-05","inv":"I65","id":"v104"},{"data":"2024-11-21","ano":2024,"mes":"2024-11","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":16000.0,"unit":1.2,"total_usd":19200.0,"venc":"2025-01-05","inv":"I65","id":"v105"},{"data":"2024-11-26","ano":2024,"mes":"2024-11","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo - Concentrado","empresa":"Ypoti","fonte":"Cargas","qtd":16020.0,"unit":1.65,"total_usd":26433.0,"venc":"2025-01-10","inv":"I66","id":"v106"},{"data":"2024-11-26","ano":2024,"mes":"2024-11","produto":"Rural Engorda Plus","empresa":"Ypoti","fonte":"Cargas","qtd":16020.0,"unit":0.786666666666667,"total_usd":12602.400000000005,"venc":"2025-01-10","inv":"I66","id":"v107"},{"data":"2024-12-02","ano":2024,"mes":"2024-12","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":16000.0,"unit":1.65,"total_usd":26400.0,"venc":"2025-01-16","inv":"I67","id":"v108"},{"data":"2024-12-02","ano":2024,"mes":"2024-12","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":16000.0,"unit":1.2,"total_usd":19200.0,"venc":"2025-01-16","inv":"I67","id":"v109"},{"data":"2024-12-09","ano":2024,"mes":"2024-12","produto":"Rural Engorda Plus","empresa":"Ypoti","fonte":"Cargas","qtd":30000.0,"unit":0.7866666666667,"total_usd":23600.000000001,"venc":"2025-01-23","inv":"I68","id":"v110"},{"data":"2024-12-14","ano":2024,"mes":"2024-12","produto":"Rural Engorda Plus","empresa":"Ypoti","fonte":"Cargas","qtd":5010.0,"unit":0.786667,"total_usd":3941.20167,"venc":"2025-01-28","inv":"I69","id":"v111"},{"data":"2024-12-14","ano":2024,"mes":"2024-12","produto":"Fosfato Bicalcico 18","empresa":"Ypoti","fonte":"Cargas","qtd":15000.0,"unit":1.2,"total_usd":18000.0,"venc":"2025-01-28","inv":"I69","id":"v112"},{"data":"2025-01-04","ano":2025,"mes":"2025-01","produto":"Rural Engorda Plus Ypoti","empresa":"Ypoti","fonte":"Cargas","qtd":15000.0,"unit":0.85,"total_usd":12750.0,"venc":"2025-02-18","inv":"I70","id":"v113"},{"data":"2025-01-04","ano":2025,"mes":"2025-01","produto":"Rural Nucleo Confinamento Ypoti J3 – Amarelo – Concentrado","empresa":"Ypoti","fonte":"Cargas","qtd":16000.0,"unit":1.2,"total_usd":19200.0,"venc":"2025-02-18","inv":"I70","id":"v114"},{"data":"2025-01-04","ano":2025,"mes":"2025-01","produto":"Rural Equinos","empresa":"Ypoti","fonte":"Cargas","qtd":1000.0,"unit":0.733333333333333,"total_usd":733.3333333333329,"venc":"2025-02-18","inv":"I70","id":"v115"},{"data":"2025-01-09","ano":2025,"mes":"2025-01","produto":"Rural Nucleo Confinamento Ypoti J3 – Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.18,"total_usd":37760.0,"venc":"2025-02-23","inv":"I71","id":"v116"},{"data":"2025-01-11","ano":2025,"mes":"2025-01","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":16000.0,"unit":1.18,"total_usd":18880.0,"venc":"2025-02-25","inv":"I72","id":"v117"},{"data":"2025-01-11","ano":2025,"mes":"2025-01","produto":"Rural Nucleo Crescimento – Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":16000.0,"unit":1.35,"total_usd":21600.0,"venc":"2025-02-25","inv":"I72","id":"v118"},{"data":"2025-01-15","ano":2025,"mes":"2025-01","produto":"Rural Engorda Plus","empresa":"Ypoti","fonte":"Cargas","qtd":20010.0,"unit":0.786666666666667,"total_usd":15741.200000000006,"venc":"2025-03-01","inv":"I73","id":"v119"},{"data":"2025-01-15","ano":2025,"mes":"2025-01","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":10020.0,"unit":1.35,"total_usd":13527.0,"venc":"2025-03-01","inv":"I73","id":"v120"},{"data":"2025-01-24","ano":2025,"mes":"2025-01","produto":"Rural Engorda Plus","empresa":"Ypoti","fonte":"Cargas","qtd":17010.0,"unit":0.7866666666667,"total_usd":13381.200000000568,"venc":"2025-03-10","inv":"I74","id":"v121"},{"data":"2025-01-28","ano":2025,"mes":"2025-01","produto":"Rural Engorda Plus","empresa":"Ypoti","fonte":"Cargas","qtd":20010.0,"unit":0.7866666666667,"total_usd":15741.200000000668,"venc":"2025-03-14","inv":"I75","id":"v122"},{"data":"2025-01-30","ano":2025,"mes":"2025-01","produto":"Rural Nucleo Confinamento Ypoti J3 – Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.18,"total_usd":37760.0,"venc":"2025-03-16","inv":"I76","id":"v123"},{"data":"2025-01-31","ano":2025,"mes":"2025-01","produto":"Rural Nucleo Confinamento Ypoti J3 – Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":14000.0,"unit":1.18,"total_usd":16520.0,"venc":"2025-03-17","inv":"I77","id":"v124"},{"data":"2025-02-04","ano":2025,"mes":"2025-02","produto":"Rural Nucleo Confinamento Ypoti J3 – Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.18,"total_usd":37760.0,"venc":"2025-03-21","inv":"I78","id":"v125"},{"data":"2025-02-06","ano":2025,"mes":"2025-02","produto":"Rural Nucleo Confinamento Ypoti J3 – Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.18,"total_usd":37760.0,"venc":"2025-03-23","inv":"I79","id":"v126"},{"data":"2025-02-08","ano":2025,"mes":"2025-02","produto":"Rural Nucleo Confinamento Ypoti J3 – Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.18,"total_usd":37760.0,"venc":"2025-03-25","inv":"I80","id":"v127"},{"data":"2025-02-11","ano":2025,"mes":"2025-02","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-03-28","inv":"I81","id":"v128"},{"data":"2025-02-13","ano":2025,"mes":"2025-02","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.18,"total_usd":37760.0,"venc":"2025-03-30","inv":"I82","id":"v129"},{"data":"2025-02-15","ano":2025,"mes":"2025-02","produto":"Rural Nucleo Confinamento Ypoti J3 – Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.18,"total_usd":37760.0,"venc":"2025-04-01","inv":"I83","id":"v130"},{"data":"2025-02-24","ano":2025,"mes":"2025-02","produto":"Embalagem Grande Branca","empresa":"Ypoti","fonte":"Cargas","qtd":5000.0,"unit":0.33,"total_usd":1650.0,"venc":"2025-04-10","inv":"I84","id":"v131"},{"data":"2025-02-26","ano":2025,"mes":"2025-02","produto":"Rural Engorda Plus","empresa":"Ypoti","fonte":"Cargas","qtd":32010.0,"unit":0.7866666666667,"total_usd":25181.200000001067,"venc":"2025-04-12","inv":"I85","id":"v132"},{"data":"2025-03-08","ano":2025,"mes":"2025-03","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-04-22","inv":"I86","id":"v133"},{"data":"2025-03-12","ano":2025,"mes":"2025-03","produto":"Rural Nucleo Confinamento Ypoti J3 – Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.18,"total_usd":37760.0,"venc":"2025-04-26","inv":"I87","id":"v134"},{"data":"2025-03-18","ano":2025,"mes":"2025-03","produto":"Rural Engorda Plus","empresa":"Ypoti","fonte":"Cargas","qtd":14010.0,"unit":0.7866666666667,"total_usd":11021.200000000468,"venc":"2025-05-02","inv":"I88","id":"v135"},{"data":"2025-03-20","ano":2025,"mes":"2025-03","produto":"Rural Nucleo Confinamento Ypoti J3 – Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.18,"total_usd":37760.0,"venc":"2025-05-04","inv":"I89","id":"v136"},{"data":"2025-03-26","ano":2025,"mes":"2025-03","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-05-10","inv":"I90","id":"v137"},{"data":"2025-04-04","ano":2025,"mes":"2025-04","produto":"Rural Nucleo Confinamento Ypoti J3 – Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.18,"total_usd":37760.0,"venc":"2025-05-19","inv":"I91","id":"v138"},{"data":"2025-04-23","ano":2025,"mes":"2025-04","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":28000.0,"unit":1.18,"total_usd":33040.0,"venc":"2025-06-07","inv":"I92","id":"v139"},{"data":"2025-04-23","ano":2025,"mes":"2025-04","produto":"Rural Equinos","empresa":"Ypoti","fonte":"Cargas","qtd":990.0,"unit":0.733333333333333,"total_usd":725.9999999999997,"venc":"2025-06-07","inv":"I92","id":"v140"},{"data":"2025-04-24","ano":2025,"mes":"2025-04","produto":"Rural Nucleo Confinamento Ypoti J3 – Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.18,"total_usd":37760.0,"venc":"2025-06-08","inv":"I93","id":"v141"},{"data":"2025-04-26","ano":2025,"mes":"2025-04","produto":"Rural Nucleo Confinamento Ypoti J3 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.18,"total_usd":37760.0,"venc":"2025-06-10","inv":"I94","id":"v142"},{"data":"2025-04-28","ano":2025,"mes":"2025-04","produto":"Rural Engorda Plus","empresa":"Ypoti","fonte":"Cargas","qtd":16020.0,"unit":0.786666666666666,"total_usd":12602.399999999989,"venc":"2025-06-12","inv":"I95","id":"v143"},{"data":"2025-04-28","ano":2025,"mes":"2025-04","produto":"Rural Nucleo Crescimento – Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":16000.0,"unit":1.35,"total_usd":21600.0,"venc":"2025-06-12","inv":"I95","id":"v144"},{"data":"2025-04-29","ano":2025,"mes":"2025-04","produto":"Rural Nucleo Confinamento Ypoti J3 – Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.18,"total_usd":37760.0,"venc":"2025-06-13","inv":"I96","id":"v145"},{"data":"2025-05-06","ano":2025,"mes":"2025-05","produto":"Rural Nucleo Confinamento Ypoti J3 – Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.18,"total_usd":37760.0,"venc":"2025-06-20","inv":"I97","id":"v146"},{"data":"2025-05-08","ano":2025,"mes":"2025-05","produto":"Rural Nucleo Confinamento Ypoti J3 – Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.18,"total_usd":37760.0,"venc":"2025-06-22","inv":"I98","id":"v147"},{"data":"2025-05-14","ano":2025,"mes":"2025-05","produto":"Rural Engorda Plus","empresa":"Ypoti","fonte":"Cargas","qtd":14010.0,"unit":0.87,"total_usd":12188.7,"venc":"2025-06-28","inv":"I99","id":"v148"},{"data":"2025-05-16","ano":2025,"mes":"2025-05","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-06-30","inv":"I100","id":"v149"},{"data":"2025-05-21","ano":2025,"mes":"2025-05","produto":"Rural Engorda Plus","empresa":"Ypoti","fonte":"Cargas","qtd":32010.0,"unit":0.87,"total_usd":27848.7,"venc":"2025-07-05","inv":"I101","id":"v150"},{"data":"2025-05-23","ano":2025,"mes":"2025-05","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-07-07","inv":"I102","id":"v151"},{"data":"2025-05-28","ano":2025,"mes":"2025-05","produto":"Rural Nucleo Confinamento Ypoti J4 – Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-07-12","inv":"I103","id":"v152"},{"data":"2025-05-30","ano":2025,"mes":"2025-05","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-07-14","inv":"I104","id":"v153"},{"data":"2025-06-05","ano":2025,"mes":"2025-06","produto":"Rural Nucleo Confinamento Ypoti J4 – Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-07-20","inv":"I105","id":"v154"},{"data":"2025-06-17","ano":2025,"mes":"2025-06","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":16000.0,"unit":1.33,"total_usd":21280.0,"venc":"2025-08-01","inv":"I106","id":"v155"},{"data":"2025-06-17","ano":2025,"mes":"2025-06","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":16000.0,"unit":1.35,"total_usd":21600.0,"venc":"2025-08-01","inv":"I106","id":"v156"},{"data":"2025-06-20","ano":2025,"mes":"2025-06","produto":"Rural Nucleo Confinamento Ypoti J4 – Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-08-04","inv":"I107","id":"v157"},{"data":"2025-06-25","ano":2025,"mes":"2025-06","produto":"Rural Equinos","empresa":"Ypoti","fonte":"Cargas","qtd":2010.0,"unit":0.733333333333333,"total_usd":1473.9999999999993,"venc":"2025-08-09","inv":"I108","id":"v158"},{"data":"2025-06-25","ano":2025,"mes":"2025-06","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":30000.0,"unit":1.35,"total_usd":40500.0,"venc":"2025-08-09","inv":"I108","id":"v159"},{"data":"2025-06-27","ano":2025,"mes":"2025-06","produto":"Rural Nucleo Confinamento Ypoti J4 – Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-08-11","inv":"I109","id":"v160"},{"data":"2025-07-02","ano":2025,"mes":"2025-07","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-08-16","inv":"I110","id":"v161"},{"data":"2025-07-04","ano":2025,"mes":"2025-07","produto":"Rural Nucleo Confinamento Ypoti J4 – Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-08-18","inv":"I111","id":"v162"},{"data":"2025-07-10","ano":2025,"mes":"2025-07","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":6000.0,"unit":1.33,"total_usd":7980.0,"venc":"2025-08-24","inv":"I112","id":"v163"},{"data":"2025-07-11","ano":2025,"mes":"2025-07","produto":"Rural Nucleo Confinamento Ypoti J4 – Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-08-25","inv":"I113","id":"v164"},{"data":"2025-07-23","ano":2025,"mes":"2025-07","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.33,"total_usd":42560.0,"venc":"2025-09-06","inv":"I114","id":"v165"},{"data":"2025-07-25","ano":2025,"mes":"2025-07","produto":"Rural Nucleo Confinamento Ypoti J4 – Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-09-08","inv":"I115","id":"v166"},{"data":"2025-07-30","ano":2025,"mes":"2025-07","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-09-13","inv":"I116","id":"v167"},{"data":"2025-07-31","ano":2025,"mes":"2025-07","produto":"Rural Nucleo Confinamento Ypoti J4 – Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-09-14","inv":"I117","id":"v168"},{"data":"2025-08-07","ano":2025,"mes":"2025-08","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.33,"total_usd":42560.0,"venc":"2025-09-21","inv":"I118","id":"v169"},{"data":"2025-08-08","ano":2025,"mes":"2025-08","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.33,"total_usd":42560.0,"venc":"2025-09-22","inv":"I119","id":"v170"},{"data":"2025-08-18","ano":2025,"mes":"2025-08","produto":"Rural Equinos","empresa":"Ypoti","fonte":"Cargas","qtd":4020.0,"unit":0.733333333333333,"total_usd":2947.9999999999986,"venc":"2025-10-02","inv":"I120","id":"v171"},{"data":"2025-08-18","ano":2025,"mes":"2025-08","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":9000.0,"unit":1.35,"total_usd":12150.0,"venc":"2025-10-02","inv":"I120","id":"v172"},{"data":"2025-08-25","ano":2025,"mes":"2025-08","produto":"Rural Nucleo Confinamento Ypoti J4 – Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-10-09","inv":"I121","id":"v173"},{"data":"2025-08-28","ano":2025,"mes":"2025-08","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-10-12","inv":"I122","id":"v174"},{"data":"2025-08-29","ano":2025,"mes":"2025-08","produto":"Rural Nucleo Confinamento Ypoti J4 – Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-10-13","inv":"I123","id":"v175"},{"data":"2025-09-02","ano":2025,"mes":"2025-09","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-10-17","inv":"I124","id":"v176"},{"data":"2025-09-04","ano":2025,"mes":"2025-09","produto":"Rural Nucleo Confinamento Ypoti J4 – Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-10-19","inv":"I125","id":"v177"},{"data":"2025-09-10","ano":2025,"mes":"2025-09","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-10-25","inv":"I126","id":"v178"},{"data":"2025-09-12","ano":2025,"mes":"2025-09","produto":"Rural Nucleo Confinamento Ypoti J4 – Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-10-27","inv":"I127","id":"v179"},{"data":"2025-09-17","ano":2025,"mes":"2025-09","produto":"Rural Engorda Plus Up","empresa":"Ypoti","fonte":"Cargas","qtd":32010.0,"unit":1.1,"total_usd":35211.0,"venc":"2025-11-01","inv":"I128","id":"v180"},{"data":"2025-09-19","ano":2025,"mes":"2025-09","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.33,"total_usd":42560.0,"venc":"2025-11-03","inv":"I129","id":"v181"},{"data":"2025-09-24","ano":2025,"mes":"2025-09","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-11-08","inv":"I130","id":"v182"},{"data":"2025-09-26","ano":2025,"mes":"2025-09","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.33,"total_usd":42560.0,"venc":"2025-11-10","inv":"I131","id":"v183"},{"data":"2025-10-02","ano":2025,"mes":"2025-10","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-11-16","inv":"I132","id":"v184"},{"data":"2025-10-03","ano":2025,"mes":"2025-10","produto":"Rural Nucleo Confinamento Ypoti J4 – Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-11-17","inv":"I133","id":"v185"},{"data":"2025-10-08","ano":2025,"mes":"2025-10","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-11-22","inv":"I134","id":"v186"},{"data":"2025-10-09","ano":2025,"mes":"2025-10","produto":"Rural Nucleo Confinamento Ypoti J4 – Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-11-23","inv":"I135","id":"v187"},{"data":"2025-10-15","ano":2025,"mes":"2025-10","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":14000.0,"unit":1.35,"total_usd":18900.0,"venc":"2025-11-29","inv":"I136","id":"v188"},{"data":"2025-10-18","ano":2025,"mes":"2025-10","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.33,"total_usd":42560.0,"venc":"2025-12-02","inv":"I137","id":"v189"},{"data":"2025-10-15","ano":2025,"mes":"2025-10","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-11-29","inv":"I138","id":"v190"},{"data":"2025-10-31","ano":2025,"mes":"2025-10","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-12-15","inv":"I139","id":"v191"},{"data":"2025-11-10","ano":2025,"mes":"2025-11","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":14000.0,"unit":1.33,"total_usd":18620.0,"venc":"2025-12-25","inv":"I140","id":"v192"},{"data":"2025-11-14","ano":2025,"mes":"2025-11","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2025-12-29","inv":"I141","id":"v193"},{"data":"2025-11-26","ano":2025,"mes":"2025-11","produto":"Rural Engorda Plus Ypoti","empresa":"Ypoti","fonte":"Cargas","qtd":32010.0,"unit":0.87,"total_usd":27848.7,"venc":"2026-01-10","inv":"I142","id":"v194"},{"data":"2025-11-27","ano":2025,"mes":"2025-11","produto":"Rural Engorda Plus Ypoti","empresa":"Ypoti","fonte":"Cargas","qtd":32010.0,"unit":0.87,"total_usd":27848.7,"venc":"2026-01-11","inv":"I143","id":"v195"},{"data":"2025-11-28","ano":2025,"mes":"2025-11","produto":"Rural Engorda Plus Ypoti","empresa":"Ypoti","fonte":"Cargas","qtd":32010.0,"unit":0.87,"total_usd":27848.7,"venc":"2026-01-12","inv":"I144","id":"v196"},{"data":"2025-12-03","ano":2025,"mes":"2025-12","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2026-01-17","inv":"I145","id":"v197"},{"data":"2025-12-03","ano":2025,"mes":"2025-12","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":23000.0,"unit":1.33,"total_usd":30590.0,"venc":"2026-01-17","inv":"I146","id":"v198"},{"data":"2025-12-10","ano":2025,"mes":"2025-12","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2026-01-24","inv":"I147","id":"v199"},{"data":"2025-12-20","ano":2025,"mes":"2025-12","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2026-02-03","inv":"I148","id":"v200"},{"data":"2025-12-23","ano":2025,"mes":"2025-12","produto":"Rural Nucleo Crescimetno - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.33,"total_usd":42560.0,"venc":"2026-02-06","inv":"I149","id":"v201"},{"data":"2026-01-06","ano":2026,"mes":"2026-01","produto":"Rural Engorda Plus Ypoti","empresa":"Ypoti","fonte":"Cargas","qtd":32010.0,"unit":0.87,"total_usd":27848.7,"venc":"2026-02-20","inv":"I150","id":"v202"},{"data":"2026-01-08","ano":2026,"mes":"2026-01","produto":"Rural Engorda Plus Lusipar","empresa":"Ypoti","fonte":"Cargas","qtd":32010.0,"unit":0.87,"total_usd":27848.7,"venc":"2026-02-22","inv":"I151","id":"v203"},{"data":"2026-01-12","ano":2026,"mes":"2026-01","produto":"Rural Equinos","empresa":"Ypoti","fonte":"Cargas","qtd":3000.0,"unit":0.733333333333333,"total_usd":2199.9999999999986,"venc":"2026-02-26","inv":"I152","id":"v204"},{"data":"2026-01-12","ano":2026,"mes":"2026-01","produto":"Rural Engorda Plus Ypoti","empresa":"Ypoti","fonte":"Cargas","qtd":29010.0,"unit":0.87,"total_usd":25238.7,"venc":"2026-02-26","inv":"I152","id":"v205"},{"data":"2026-01-14","ano":2026,"mes":"2026-01","produto":"Rural Equinos","empresa":"Ypoti","fonte":"Cargas","qtd":3000.0,"unit":0.733333333333333,"total_usd":2199.9999999999986,"venc":"2026-02-28","inv":"I153","id":"v206"},{"data":"2026-01-17","ano":2026,"mes":"2026-01","produto":"Rural Engorda Plus Lusipar","empresa":"Ypoti","fonte":"Cargas","qtd":32010.0,"unit":0.87,"total_usd":27848.7,"venc":"2026-03-03","inv":"I154","id":"v207"},{"data":"2026-01-20","ano":2026,"mes":"2026-01","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.33,"total_usd":42560.0,"venc":"2026-03-06","inv":"I155","id":"v208"},{"data":"2026-01-23","ano":2026,"mes":"2026-01","produto":"Rural Engorda Plus Ypoti","empresa":"Ypoti","fonte":"Cargas","qtd":32010.0,"unit":0.87,"total_usd":27848.7,"venc":"2026-03-09","inv":"I156","id":"v209"},{"data":"2026-01-27","ano":2026,"mes":"2026-01","produto":"Rural Engorda Plus Ypoti","empresa":"Ypoti","fonte":"Cargas","qtd":14010.0,"unit":0.87,"total_usd":12188.7,"venc":"2026-03-13","inv":"I157","id":"v210"},{"data":"2026-01-30","ano":2026,"mes":"2026-01","produto":"Rural Engorda Plus Ypoti","empresa":"Ypoti","fonte":"Cargas","qtd":32010.0,"unit":0.87,"total_usd":27848.7,"venc":"2026-03-16","inv":"I158","id":"v211"},{"data":"2026-02-10","ano":2026,"mes":"2026-02","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.33,"total_usd":42560.0,"venc":"2026-03-27","inv":"I159","id":"v212"},{"data":"2026-02-27","ano":2026,"mes":"2026-02","produto":"Rural Engorda Plus Lusipar","empresa":"Ypoti","fonte":"Cargas","qtd":32010.0,"unit":0.95,"total_usd":30409.5,"venc":"2026-04-13","inv":"I160","id":"v213"},{"data":"2026-03-06","ano":2026,"mes":"2026-03","produto":"Rural Engorda Plus Lusipar","empresa":"Ypoti","fonte":"Cargas","qtd":32010.0,"unit":0.95,"total_usd":30409.5,"venc":"2026-04-20","inv":"I161","id":"v214"},{"data":"2026-03-09","ano":2026,"mes":"2026-03","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.33,"total_usd":42560.0,"venc":"2026-04-23","inv":"I162","id":"v215"},{"data":"2026-03-13","ano":2026,"mes":"2026-03","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2026-04-27","inv":"I163","id":"v216"},{"data":"2026-03-19","ano":2026,"mes":"2026-03","produto":"Rural Engorda Plus Lusipar","empresa":"Ypoti","fonte":"Cargas","qtd":32010.0,"unit":0.95,"total_usd":30409.5,"venc":"2026-05-03","inv":"I164","id":"v217"},{"data":"2026-03-21","ano":2026,"mes":"2026-03","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2026-05-05","inv":"I165","id":"v218"},{"data":"2026-03-27","ano":2026,"mes":"2026-03","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2026-05-11","inv":"I166","id":"v219"},{"data":"2026-04-02","ano":2026,"mes":"2026-04","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.33,"total_usd":42560.0,"venc":"2026-05-17","inv":"I167","id":"v220"},{"data":"2026-04-08","ano":2026,"mes":"2026-04","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.35,"total_usd":43200.0,"venc":"2026-05-23","inv":"I168","id":"v221"},{"data":"2026-04-18","ano":2026,"mes":"2026-04","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.49,"total_usd":47680.0,"venc":"2026-06-02","inv":"I169","id":"v222"},{"data":"2026-04-24","ano":2026,"mes":"2026-04","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.45,"total_usd":46400.0,"venc":"2026-06-08","inv":"I170","id":"v223"},{"data":"2026-04-24","ano":2026,"mes":"2026-04","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.49,"total_usd":47680.0,"venc":"2026-06-08","inv":"I171","id":"v224"},{"data":"2026-04-29","ano":2026,"mes":"2026-04","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.45,"total_usd":46400.0,"venc":"2026-06-13","inv":"I172","id":"v225"},{"data":"2026-05-06","ano":2026,"mes":"2026-05","produto":"Rural Engorda Plus Ypoti","empresa":"Ypoti","fonte":"Cargas","qtd":32010.0,"unit":0.95,"total_usd":30409.5,"venc":"2026-06-20","inv":"I173","id":"v226"},{"data":"2026-06-01","ano":2026,"mes":"2026-06","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":31000.0,"unit":1.45,"total_usd":44950.0,"venc":"2026-07-16","inv":"I174","id":"v227"},{"data":"2026-06-03","ano":2026,"mes":"2026-06","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.49,"total_usd":47680.0,"venc":"2026-07-18","inv":"I175","id":"v228"},{"data":"2026-06-06","ano":2026,"mes":"2026-06","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.45,"total_usd":46400.0,"venc":"2026-07-21","inv":"I176","id":"v229"},{"data":"2026-06-09","ano":2026,"mes":"2026-06","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.49,"total_usd":47680.0,"venc":"2026-07-24","inv":"I177","id":"v230"},{"data":"2026-06-09","ano":2026,"mes":"2026-06","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.45,"total_usd":46400.0,"venc":"2026-07-24","inv":"I178","id":"v231"},{"data":"2026-06-10","ano":2026,"mes":"2026-06","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.45,"total_usd":46400.0,"venc":"2026-07-25","inv":"I179","id":"v232"},{"data":"2026-06-17","ano":2026,"mes":"2026-06","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.49,"total_usd":47680.0,"venc":"2026-08-01","inv":"I180","id":"v233"},{"data":"2026-06-18","ano":2026,"mes":"2026-06","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.45,"total_usd":46400.0,"venc":"2026-08-02","inv":"I181","id":"v234"},{"data":"2026-06-22","ano":2026,"mes":"2026-06","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.45,"total_usd":46400.0,"venc":"2026-08-06","inv":"I182","id":"v235"},{"data":"2026-06-24","ano":2026,"mes":"2026-06","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.45,"total_usd":46400.0,"venc":"2026-08-08","inv":"I183","id":"v236"},{"data":"2026-06-25","ano":2026,"mes":"2026-06","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.45,"total_usd":46400.0,"venc":"2026-08-09","inv":"I184","id":"v237"},{"data":"2026-06-26","ano":2026,"mes":"2026-06","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.49,"total_usd":47680.0,"venc":"2026-08-10","inv":"I185","id":"v238"},{"data":"2026-06-26","ano":2026,"mes":"2026-06","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":32000.0,"unit":1.45,"total_usd":46400.0,"venc":"2026-08-10","inv":"I186","id":"v239"},{"data":"2026-07-09","ano":2026,"mes":"2026-07","produto":"Rural Equinos","empresa":"Ypoti","fonte":"Cargas","qtd":1890.0,"unit":1.067,"total_usd":2016.6299999999999,"venc":"2026-08-23","inv":"I187","id":"v240"},{"data":"2026-07-09","ano":2026,"mes":"2026-07","produto":"Rural Nucleo Confinamento Ypoti J4 - Amarelo","empresa":"Ypoti","fonte":"Cargas","qtd":30000.0,"unit":1.45,"total_usd":43500.0,"venc":"2026-08-23","inv":"I187","id":"v241"},{"data":"2025-02-19","ano":2025,"mes":"2025-02","produto":"Rural Engorda Plus","empresa":"Chacobras","fonte":"Chacobras","qtd":16020.0,"unit":0.786666666666667,"total_usd":12602.400000000005,"venc":"2025-04-05","inv":"I188","id":"v242"},{"data":"2025-02-19","ano":2025,"mes":"2025-02","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Chacobras","fonte":"Chacobras","qtd":16020.0,"unit":1.35,"total_usd":21627.0,"venc":"2025-04-05","inv":"I188","id":"v243"},{"data":"2025-04-12","ano":2025,"mes":"2025-04","produto":"Rural Engorda Plus","empresa":"Chacobras","fonte":"Chacobras","qtd":17010.0,"unit":0.786667,"total_usd":13381.20567,"venc":"2025-05-27","inv":"I189","id":"v244"},{"data":"2025-06-04","ano":2025,"mes":"2025-06","produto":"Rural Engorda Plus","empresa":"Chacobras","fonte":"Chacobras","qtd":9990.0,"unit":0.786666666666667,"total_usd":7858.800000000003,"venc":"2025-07-19","inv":"I190","id":"v245"},{"data":"2025-06-04","ano":2025,"mes":"2025-06","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Chacobras","fonte":"Chacobras","qtd":22020.0,"unit":1.33,"total_usd":29286.600000000002,"venc":"2025-07-19","inv":"I190","id":"v246"},{"data":"2025-08-21","ano":2025,"mes":"2025-08","produto":"Rural Engorda Plus","empresa":"Chacobras","fonte":"Chacobras","qtd":8010.0,"unit":0.786666666666667,"total_usd":6301.200000000003,"venc":"2025-10-05","inv":"I191","id":"v247"},{"data":"2025-08-21","ano":2025,"mes":"2025-08","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Chacobras","fonte":"Chacobras","qtd":24000.0,"unit":1.33,"total_usd":31920.0,"venc":"2025-10-05","inv":"I191","id":"v248"},{"data":"2025-10-28","ano":2025,"mes":"2025-10","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Chacobras","fonte":"Chacobras","qtd":32010.0,"unit":1.33,"total_usd":42573.3,"venc":"2025-12-12","inv":"I192","id":"v249"},{"data":"2025-11-26","ano":2025,"mes":"2025-11","produto":"Rural Engorda Plus","empresa":"Chacobras","fonte":"Chacobras","qtd":16020.0,"unit":0.87,"total_usd":13937.4,"venc":"2026-01-10","inv":"I193","id":"v250"},{"data":"2025-11-26","ano":2025,"mes":"2025-11","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Chacobras","fonte":"Chacobras","qtd":16020.0,"unit":1.33,"total_usd":21306.600000000002,"venc":"2026-01-10","inv":"I193","id":"v251"},{"data":"2026-01-14","ano":2026,"mes":"2026-01","produto":"Rural Engorda Plus","empresa":"Chacobras","fonte":"Chacobras","qtd":14010.0,"unit":0.87,"total_usd":12188.7,"venc":"2026-02-28","inv":"I194","id":"v252"},{"data":"2026-02-19","ano":2026,"mes":"2026-02","produto":"Rural Engorda Plus","empresa":"Chacobras","fonte":"Chacobras","qtd":15000.0,"unit":0.87,"total_usd":13050.0,"venc":"2026-04-05","inv":"I195","id":"v253"},{"data":"2026-02-19","ano":2026,"mes":"2026-02","produto":"Promove","empresa":"Chacobras","fonte":"Chacobras","qtd":28.8,"unit":4.16,"total_usd":119.808,"venc":"2026-04-05","inv":"I195","id":"v254"},{"data":"2026-03-30","ano":2026,"mes":"2026-03","produto":"Rural Engorda Plus","empresa":"Chacobras","fonte":"Chacobras","qtd":15990.0,"unit":0.95,"total_usd":15190.5,"venc":"2026-05-14","inv":"I196","id":"v255"},{"data":"2026-04-02","ano":2026,"mes":"2026-04","produto":"Rural Engorda Plus","empresa":"Chacobras","fonte":"Chacobras","qtd":15990.0,"unit":0.95,"total_usd":15190.5,"venc":"2026-05-17","inv":"I197","id":"v256"},{"data":"2026-06-19","ano":2026,"mes":"2026-06","produto":"Rural Nucleo Confinamento J4 - All Tech","empresa":"Chacobras","fonte":"Chacobras","qtd":6990.0,"unit":1.45,"total_usd":10135.5,"venc":"2026-08-03","inv":"I198","id":"v257"},{"data":"2026-06-19","ano":2026,"mes":"2026-06","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Chacobras","fonte":"Chacobras","qtd":7020.0,"unit":1.49,"total_usd":10459.8,"venc":"2026-08-03","inv":"I198","id":"v258"},{"data":"2026-07-08","ano":2026,"mes":"2026-07","produto":"Rural Nucleo Confinamento J4 - All Tech","empresa":"Chacobras","fonte":"Chacobras","qtd":15990.0,"unit":1.45,"total_usd":23185.5,"venc":"2026-08-22","inv":"I199","id":"v259"},{"data":"2026-07-08","ano":2026,"mes":"2026-07","produto":"Rural Nucleo Crescimento - Vermelho","empresa":"Chacobras","fonte":"Chacobras","qtd":16020.0,"unit":1.49,"total_usd":23869.8,"venc":"2026-08-22","inv":"I199","id":"v260"}],"pays":[{"data":"2024-02-06","ano":2024,"mes":"2024-02","valor_usd":36836.0,"valor_brl":null,"fonte":"Baixas","id":"b0"},{"data":"2024-02-12","ano":2024,"mes":"2024-02","valor_usd":78364.27,"valor_brl":null,"fonte":"Baixas","id":"b1"},{"data":"2024-04-17","ano":2024,"mes":"2024-04","valor_usd":79443.2,"valor_brl":null,"fonte":"Baixas","id":"b2"},{"data":"2024-05-21","ano":2024,"mes":"2024-05","valor_usd":20000.0,"valor_brl":null,"fonte":"Baixas","id":"b3"},{"data":"2024-05-21","ano":2024,"mes":"2024-05","valor_usd":10470.0,"valor_brl":null,"fonte":"Baixas","id":"b4"},{"data":"2024-06-13","ano":2024,"mes":"2024-06","valor_usd":444307.5,"valor_brl":null,"fonte":"Baixas","id":"b5"},{"data":"2024-06-13","ano":2024,"mes":"2024-06","valor_usd":25844.0,"valor_brl":null,"fonte":"Baixas","id":"b6"},{"data":"2024-06-27","ano":2024,"mes":"2024-06","valor_usd":34741.0,"valor_brl":null,"fonte":"Baixas","id":"b7"},{"data":"2024-07-03","ano":2024,"mes":"2024-07","valor_usd":35400.0,"valor_brl":null,"fonte":"Baixas","id":"b8"},{"data":"2024-07-09","ano":2024,"mes":"2024-07","valor_usd":71850.0,"valor_brl":null,"fonte":"Baixas","id":"b9"},{"data":"2024-07-17","ano":2024,"mes":"2024-07","valor_usd":58050.0,"valor_brl":null,"fonte":"Baixas","id":"b10"},{"data":"2024-07-18","ano":2024,"mes":"2024-07","valor_usd":69200.0,"valor_brl":null,"fonte":"Baixas","id":"b11"},{"data":"2024-07-22","ano":2024,"mes":"2024-07","valor_usd":35400.0,"valor_brl":null,"fonte":"Baixas","id":"b12"},{"data":"2024-07-23","ano":2024,"mes":"2024-07","valor_usd":35400.0,"valor_brl":null,"fonte":"Baixas","id":"b13"},{"data":"2024-07-24","ano":2024,"mes":"2024-07","valor_usd":58921.38,"valor_brl":null,"fonte":"Baixas","id":"b14"},{"data":"2024-07-24","ano":2024,"mes":"2024-07","valor_usd":11663.0,"valor_brl":null,"fonte":"Baixas","id":"b15"},{"data":"2024-08-06","ano":2024,"mes":"2024-08","valor_usd":38373.92,"valor_brl":null,"fonte":"Baixas","id":"b16"},{"data":"2024-08-12","ano":2024,"mes":"2024-08","valor_usd":23573.68,"valor_brl":null,"fonte":"Baixas","id":"b17"},{"data":"2024-08-12","ano":2024,"mes":"2024-08","valor_usd":12149.24,"valor_brl":null,"fonte":"Baixas","id":"b18"},{"data":"2024-08-13","ano":2024,"mes":"2024-08","valor_usd":38374.0,"valor_brl":null,"fonte":"Baixas","id":"b19"},{"data":"2024-08-14","ano":2024,"mes":"2024-08","valor_usd":35400.0,"valor_brl":null,"fonte":"Baixas","id":"b20"},{"data":"2024-09-10","ano":2024,"mes":"2024-09","valor_usd":38373.39,"valor_brl":null,"fonte":"Baixas","id":"b21"},{"data":"2024-09-16","ano":2024,"mes":"2024-09","valor_usd":38373.6,"valor_brl":null,"fonte":"Baixas","id":"b22"},{"data":"2024-09-19","ano":2024,"mes":"2024-09","valor_usd":38460.0,"valor_brl":null,"fonte":"Baixas","id":"b23"},{"data":"2024-09-19","ano":2024,"mes":"2024-09","valor_usd":25493.0,"valor_brl":null,"fonte":"Baixas","id":"b24"},{"data":"2024-09-19","ano":2024,"mes":"2024-09","valor_usd":12517.0,"valor_brl":null,"fonte":"Baixas","id":"b25"},{"data":"2024-10-22","ano":2024,"mes":"2024-10","valor_usd":38880.0,"valor_brl":null,"fonte":"Baixas","id":"b26"},{"data":"2024-10-22","ano":2024,"mes":"2024-10","valor_usd":21949.5,"valor_brl":null,"fonte":"Baixas","id":"b27"},{"data":"2024-10-22","ano":2024,"mes":"2024-10","valor_usd":16932.0,"valor_brl":null,"fonte":"Baixas","id":"b28"},{"data":"2024-10-28","ano":2024,"mes":"2024-10","valor_usd":38447.2,"valor_brl":null,"fonte":"Baixas","id":"b29"},{"data":"2024-11-07","ano":2024,"mes":"2024-11","valor_usd":120960.0,"valor_brl":null,"fonte":"Baixas","id":"b30"},{"data":"2024-11-22","ano":2024,"mes":"2024-11","valor_usd":37760.0,"valor_brl":null,"fonte":"Baixas","id":"b31"},{"data":"2024-12-30","ano":2024,"mes":"2024-12","valor_usd":4760.0,"valor_brl":null,"fonte":"Baixas","id":"b32"},{"data":"2024-12-30","ano":2024,"mes":"2024-12","valor_usd":32684.35,"valor_brl":null,"fonte":"Baixas","id":"b33"},{"data":"2024-12-30","ano":2024,"mes":"2024-12","valor_usd":1036.0,"valor_brl":null,"fonte":"Baixas","id":"b34"},{"data":"2025-01-07","ano":2025,"mes":"2025-01","valor_usd":38460.0,"valor_brl":null,"fonte":"Baixas","id":"b35"},{"data":"2025-01-14","ano":2025,"mes":"2025-01","valor_usd":39750.0,"valor_brl":null,"fonte":"Baixas","id":"b36"},{"data":"2025-01-21","ano":2025,"mes":"2025-01","valor_usd":39782.0,"valor_brl":null,"fonte":"Baixas","id":"b37"},{"data":"2025-01-22","ano":2025,"mes":"2025-01","valor_usd":30412.0,"valor_brl":null,"fonte":"Baixas","id":"b38"},{"data":"2025-02-04","ano":2025,"mes":"2025-02","valor_usd":123612.0,"valor_brl":null,"fonte":"Baixas","id":"b39"},{"data":"2025-02-07","ano":2025,"mes":"2025-02","valor_usd":35127.0,"valor_brl":null,"fonte":"Baixas","id":"b40"},{"data":"2025-03-06","ano":2025,"mes":"2025-03","valor_usd":35128.0,"valor_brl":null,"fonte":"Baixas","id":"b41"},{"data":"2025-03-06","ano":2025,"mes":"2025-03","valor_usd":2072.0,"valor_brl":null,"fonte":"Baixas","id":"b42"},{"data":"2025-03-11","ano":2025,"mes":"2025-03","valor_usd":100276.2,"valor_brl":null,"fonte":"Baixas","id":"b43"},{"data":"2025-03-24","ano":2025,"mes":"2025-03","valor_usd":36420.0,"valor_brl":null,"fonte":"Baixas","id":"b44"},{"data":"2025-03-26","ano":2025,"mes":"2025-03","valor_usd":39036.0,"valor_brl":null,"fonte":"Baixas","id":"b45"},{"data":"2025-03-26","ano":2025,"mes":"2025-03","valor_usd":45600.0,"valor_brl":null,"fonte":"Baixas","id":"b46"},{"data":"2025-03-26","ano":2025,"mes":"2025-03","valor_usd":22000.0,"valor_brl":null,"fonte":"Baixas","id":"b47"},{"data":"2025-03-26","ano":2025,"mes":"2025-03","valor_usd":23600.0,"valor_brl":null,"fonte":"Baixas","id":"b48"},{"data":"2025-04-01","ano":2025,"mes":"2025-04","valor_usd":32684.0,"valor_brl":null,"fonte":"Baixas","id":"b49"},{"data":"2025-04-02","ano":2025,"mes":"2025-04","valor_usd":37760.0,"valor_brl":null,"fonte":"Baixas","id":"b50"},{"data":"2025-04-03","ano":2025,"mes":"2025-04","valor_usd":40480.0,"valor_brl":null,"fonte":"Baixas","id":"b51"},{"data":"2025-04-16","ano":2025,"mes":"2025-04","valor_usd":29270.0,"valor_brl":null,"fonte":"Baixas","id":"b52"},{"data":"2025-04-22","ano":2025,"mes":"2025-04","valor_usd":30000.0,"valor_brl":null,"fonte":"Baixas","id":"b53"},{"data":"2025-05-02","ano":2025,"mes":"2025-05","valor_usd":13382.0,"valor_brl":null,"fonte":"Baixas","id":"b54"},{"data":"2025-05-02","ano":2025,"mes":"2025-05","valor_usd":15742.0,"valor_brl":null,"fonte":"Baixas","id":"b55"},{"data":"2025-05-02","ano":2025,"mes":"2025-05","valor_usd":37760.0,"valor_brl":null,"fonte":"Baixas","id":"b56"},{"data":"2025-05-13","ano":2025,"mes":"2025-05","valor_usd":37760.0,"valor_brl":null,"fonte":"Baixas","id":"b57"},{"data":"2025-05-13","ano":2025,"mes":"2025-05","valor_usd":16520.0,"valor_brl":null,"fonte":"Baixas","id":"b58"},{"data":"2025-05-13","ano":2025,"mes":"2025-05","valor_usd":37760.0,"valor_brl":null,"fonte":"Baixas","id":"b59"},{"data":"2025-06-02","ano":2025,"mes":"2025-06","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b60"},{"data":"2025-06-04","ano":2025,"mes":"2025-06","valor_usd":37760.0,"valor_brl":null,"fonte":"Baixas","id":"b61"},{"data":"2025-06-04","ano":2025,"mes":"2025-06","valor_usd":37760.0,"valor_brl":null,"fonte":"Baixas","id":"b62"},{"data":"2025-06-04","ano":2025,"mes":"2025-06","valor_usd":25182.0,"valor_brl":null,"fonte":"Baixas","id":"b63"},{"data":"2025-06-24","ano":2025,"mes":"2025-06","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b64"},{"data":"2025-06-24","ano":2025,"mes":"2025-06","valor_usd":37600.0,"valor_brl":null,"fonte":"Baixas","id":"b65"},{"data":"2025-06-25","ano":2025,"mes":"2025-06","valor_usd":11022.0,"valor_brl":null,"fonte":"Baixas","id":"b66"},{"data":"2025-06-25","ano":2025,"mes":"2025-06","valor_usd":37760.0,"valor_brl":null,"fonte":"Baixas","id":"b67"},{"data":"2025-06-25","ano":2025,"mes":"2025-06","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b68"},{"data":"2025-07-03","ano":2025,"mes":"2025-07","valor_usd":37760.0,"valor_brl":null,"fonte":"Baixas","id":"b69"},{"data":"2025-07-11","ano":2025,"mes":"2025-07","valor_usd":37760.0,"valor_brl":null,"fonte":"Baixas","id":"b70"},{"data":"2025-07-11","ano":2025,"mes":"2025-07","valor_usd":34202.0,"valor_brl":null,"fonte":"Baixas","id":"b71"},{"data":"2025-07-11","ano":2025,"mes":"2025-07","valor_usd":37760.0,"valor_brl":null,"fonte":"Baixas","id":"b72"},{"data":"2025-08-08","ano":2025,"mes":"2025-08","valor_usd":37760.0,"valor_brl":null,"fonte":"Baixas","id":"b73"},{"data":"2025-08-22","ano":2025,"mes":"2025-08","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b74"},{"data":"2025-08-22","ano":2025,"mes":"2025-08","valor_usd":12198.84,"valor_brl":null,"fonte":"Baixas","id":"b75"},{"data":"2025-08-22","ano":2025,"mes":"2025-08","valor_usd":37760.0,"valor_brl":null,"fonte":"Baixas","id":"b76"},{"data":"2025-09-02","ano":2025,"mes":"2025-09","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b77"},{"data":"2025-09-02","ano":2025,"mes":"2025-09","valor_usd":28848.0,"valor_brl":null,"fonte":"Baixas","id":"b78"},{"data":"2025-09-02","ano":2025,"mes":"2025-09","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b79"},{"data":"2025-09-04","ano":2025,"mes":"2025-09","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b80"},{"data":"2025-09-16","ano":2025,"mes":"2025-09","valor_usd":42200.0,"valor_brl":null,"fonte":"Baixas","id":"b81"},{"data":"2025-09-16","ano":2025,"mes":"2025-09","valor_usd":1000.0,"valor_brl":null,"fonte":"Baixas","id":"b82"},{"data":"2025-09-16","ano":2025,"mes":"2025-09","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b83"},{"data":"2025-09-17","ano":2025,"mes":"2025-09","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b84"},{"data":"2025-10-02","ano":2025,"mes":"2025-10","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b85"},{"data":"2025-10-09","ano":2025,"mes":"2025-10","valor_usd":63964.56,"valor_brl":null,"fonte":"Baixas","id":"b86"},{"data":"2025-10-10","ano":2025,"mes":"2025-10","valor_usd":21209.44,"valor_brl":null,"fonte":"Baixas","id":"b87"},{"data":"2025-10-10","ano":2025,"mes":"2025-10","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b88"},{"data":"2025-10-16","ano":2025,"mes":"2025-10","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b89"},{"data":"2025-10-16","ano":2025,"mes":"2025-10","valor_usd":42560.0,"valor_brl":null,"fonte":"Baixas","id":"b90"},{"data":"2025-10-17","ano":2025,"mes":"2025-10","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b91"},{"data":"2025-10-17","ano":2025,"mes":"2025-10","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b92"},{"data":"2025-10-20","ano":2025,"mes":"2025-10","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b93"},{"data":"2025-10-23","ano":2025,"mes":"2025-10","valor_usd":7980.0,"valor_brl":null,"fonte":"Baixas","id":"b94"},{"data":"2025-10-27","ano":2025,"mes":"2025-10","valor_usd":42560.0,"valor_brl":null,"fonte":"Baixas","id":"b95"},{"data":"2025-10-27","ano":2025,"mes":"2025-10","valor_usd":42560.0,"valor_brl":null,"fonte":"Baixas","id":"b96"},{"data":"2025-11-06","ano":2025,"mes":"2025-11","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b97"},{"data":"2025-11-06","ano":2025,"mes":"2025-11","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b98"},{"data":"2025-11-06","ano":2025,"mes":"2025-11","valor_usd":15098.0,"valor_brl":null,"fonte":"Baixas","id":"b99"},{"data":"2025-11-11","ano":2025,"mes":"2025-11","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b100"},{"data":"2025-11-11","ano":2025,"mes":"2025-11","valor_usd":217141.99,"valor_brl":null,"fonte":"Baixas","id":"b101"},{"data":"2025-11-21","ano":2025,"mes":"2025-11","valor_usd":31188.0,"valor_brl":null,"fonte":"Baixas","id":"b102"},{"data":"2025-11-26","ano":2025,"mes":"2025-11","valor_usd":37760.0,"valor_brl":null,"fonte":"Baixas","id":"b103"},{"data":"2025-11-27","ano":2025,"mes":"2025-11","valor_usd":27849.15,"valor_brl":null,"fonte":"Baixas","id":"b104"},{"data":"2025-11-27","ano":2025,"mes":"2025-11","valor_usd":42560.1,"valor_brl":null,"fonte":"Baixas","id":"b105"},{"data":"2025-11-27","ano":2025,"mes":"2025-11","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b106"},{"data":"2025-12-01","ano":2025,"mes":"2025-12","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b107"},{"data":"2025-12-01","ano":2025,"mes":"2025-12","valor_usd":42560.0,"valor_brl":null,"fonte":"Baixas","id":"b108"},{"data":"2025-12-09","ano":2025,"mes":"2025-12","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b109"},{"data":"2025-12-09","ano":2025,"mes":"2025-12","valor_usd":18900.0,"valor_brl":null,"fonte":"Baixas","id":"b110"},{"data":"2025-12-15","ano":2025,"mes":"2025-12","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b140"},{"data":"2025-12-15","ano":2025,"mes":"2025-12","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b141"},{"data":"2026-01-12","ano":2026,"mes":"2026-01","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b111"},{"data":"2026-01-12","ano":2026,"mes":"2026-01","valor_usd":42560.0,"valor_brl":null,"fonte":"Baixas","id":"b112"},{"data":"2026-01-12","ano":2026,"mes":"2026-01","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b113"},{"data":"2026-01-12","ano":2026,"mes":"2026-01","valor_usd":18620.0,"valor_brl":null,"fonte":"Baixas","id":"b114"},{"data":"2026-01-26","ano":2026,"mes":"2026-01","valor_usd":119740.63,"valor_brl":null,"fonte":"Baixas","id":"b115"},{"data":"2026-01-26","ano":2026,"mes":"2026-01","valor_usd":73585.56,"valor_brl":null,"fonte":"Baixas","id":"b116"},{"data":"2026-01-28","ano":2026,"mes":"2026-01","valor_usd":35060.0,"valor_brl":null,"fonte":"Baixas","id":"b117"},{"data":"2026-02-17","ano":2026,"mes":"2026-02","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b118"},{"data":"2026-02-17","ano":2026,"mes":"2026-02","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b142"},{"data":"2026-02-17","ano":2026,"mes":"2026-02","valor_usd":42560.0,"valor_brl":null,"fonte":"Baixas","id":"b119"},{"data":"2026-02-24","ano":2026,"mes":"2026-02","valor_usd":27900.06,"valor_brl":null,"fonte":"Baixas","id":"b120"},{"data":"2026-02-26","ano":2026,"mes":"2026-02","valor_usd":27439.0,"valor_brl":null,"fonte":"Baixas","id":"b121"},{"data":"2026-03-03","ano":2026,"mes":"2026-03","valor_usd":2200.0,"valor_brl":null,"fonte":"Baixas","id":"b122"},{"data":"2026-03-11","ano":2026,"mes":"2026-03","valor_usd":27985.5,"valor_brl":null,"fonte":"Baixas","id":"b123"},{"data":"2026-03-17","ano":2026,"mes":"2026-03","valor_usd":42560.0,"valor_brl":null,"fonte":"Baixas","id":"b124"},{"data":"2026-03-17","ano":2026,"mes":"2026-03","valor_usd":27848.7,"valor_brl":null,"fonte":"Baixas","id":"b125"},{"data":"2026-03-17","ano":2026,"mes":"2026-03","valor_usd":12189.0,"valor_brl":null,"fonte":"Baixas","id":"b143"},{"data":"2026-03-31","ano":2026,"mes":"2026-03","valor_usd":27849.15,"valor_brl":null,"fonte":"Baixas","id":"b126"},{"data":"2026-04-13","ano":2026,"mes":"2026-04","valor_usd":30000.0,"valor_brl":null,"fonte":"Baixas","id":"b127"},{"data":"2026-04-22","ano":2026,"mes":"2026-04","valor_usd":42560.0,"valor_brl":null,"fonte":"Baixas","id":"b128"},{"data":"2026-05-22","ano":2026,"mes":"2026-05","valor_usd":30409.5,"valor_brl":null,"fonte":"Baixas","id":"b129"},{"data":"2026-05-27","ano":2026,"mes":"2026-05","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b130"},{"data":"2026-05-28","ano":2026,"mes":"2026-05","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b131"},{"data":"2026-06-19","ano":2026,"mes":"2026-06","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b132"},{"data":"2026-06-29","ano":2026,"mes":"2026-06","valor_usd":30409.5,"valor_brl":null,"fonte":"Baixas","id":"b133"},{"data":"2026-07-06","ano":2026,"mes":"2026-07","valor_usd":42560.0,"valor_brl":null,"fonte":"Baixas","id":"b134"},{"data":"2026-07-07","ano":2026,"mes":"2026-07","valor_usd":42560.0,"valor_brl":null,"fonte":"Baixas","id":"b135"},{"data":"2026-07-07","ano":2026,"mes":"2026-07","valor_usd":47680.0,"valor_brl":null,"fonte":"Baixas","id":"b136"},{"data":"2026-07-08","ano":2026,"mes":"2026-07","valor_usd":46400.0,"valor_brl":null,"fonte":"Baixas","id":"b137"},{"data":"2026-07-09","ano":2026,"mes":"2026-07","valor_usd":43200.0,"valor_brl":null,"fonte":"Baixas","id":"b138"},{"data":"2026-07-10","ano":2026,"mes":"2026-07","valor_usd":30409.5,"valor_brl":null,"fonte":"Baixas","id":"b139"}]};
 
 let SALES=[], PAYS=[], salesById={}, paysById={}, codeToSaleId={}, codeToPayId={}, INVMAP={}, INVOICES=[], years=[];
 let dataSource='embutida', lastSync=null;
-const CO = {Ypoti:cssv('--pasture-mid'), Chacobras:cssv('--chac')};
+/* cliente dono; Ypoti é uma das estâncias dele (ver estancia) */
+const CLI_YP='Mauricio Moller';
+const CO = {[CLI_YP]:cssv('--pasture-mid'), Chacobras:cssv('--chac')};
 function cssv(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
 const fmtUSD = n => 'US$ ' + Math.round(n||0).toLocaleString('pt-BR');
 const fmtUSD2 = n => 'US$ ' + (n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -472,7 +556,7 @@ const TOL = 0.01;
 function displayCode(rec,kind){
   if(rec.codigo)return rec.codigo;
   const n=+String(rec.id).slice(1)+1;
-  if(kind==='v')return (rec.empresa==='Chacobras'?'C':'Y')+String(n).padStart(4,'0');
+  if(kind==='v')return ({Chacobras:'C',Outros:'O'}[rec.fonte]||'Y')+String(n).padStart(4,'0');
   return kind.toUpperCase()+String(n).padStart(4,'0');
 }
 
@@ -488,62 +572,91 @@ document.getElementById('tabs').addEventListener('click',e=>{
   if(b.dataset.tab==='lancar-venda') renderLancarVenda();
   if(b.dataset.tab==='lancar-baixa') renderLancarBaixa();
   if(b.dataset.tab==='config') renderCfgStatus();
+  if(b.dataset.tab==='gerencial') renderGerencial();
+  if(b.dataset.tab==='clientes') renderClientes();
 });
 function updateTabCounts(){
-  const abertas=SALES.filter(s=>s.empresa==='Ypoti'&&vendaRem(s)>TOL).length;
+  const abertas=SALES.filter(s=>doSale(s)&&vendaRem(s)>TOL).length;
   const cP=document.getElementById('cntPend'),cC=document.getElementById('cntConc');
-  const livres=PAYS.filter(p=>baixaRem(p)>TOL).length;
+  const livres=PAYS.filter(p=>doCli(p.cliente)&&baixaRem(p)>TOL).length;
   if(abertas){cP.textContent=abertas;cP.style.display='';}else cP.style.display='none';
   if(livres){cC.textContent=livres;cC.style.display='';}else cC.style.display='none';
 }
 
 /* ========================================================= RESUMO (home) ==== */
-const st={emp:'Todas',de:0,ate:9999,q:'',sort:'data',dir:-1,page:1};
+const st={emp:CLI_YP,est:'',de:0,ate:9999,q:'',sort:'data',dir:-1,page:1};
 const selDe=document.getElementById('anoDe'),selAte=document.getElementById('anoAte');
 
-const filtered=()=>SALES.filter(s=>(st.emp==='Todas'||s.empresa===st.emp)&&s.ano>=st.de&&s.ano<=st.ate&&(!st.q||s.produto.toLowerCase().includes(st.q)));
+const doCli=c=>st.emp==='Todas'||c===st.emp;
+/* estância (propriedade) é filtro à parte do cliente; baixas não têm estância */
+const doSale=s=>doCli(s.empresa)&&(!st.est||s.estancia===st.est);
+const filtered=()=>SALES.filter(s=>doSale(s)&&s.ano>=st.de&&s.ano<=st.ate&&(!st.q||s.produto.toLowerCase().includes(st.q)));
 let charts={};
-function render(){const r=filtered();kpis(r);cAno(r);cEmp(r);cProd(r);cFlow();updateTabCounts()}
+function render(){const r=filtered();kpis(r);cAno(r);cEmp(r);cProd(r);cFlow();updateTabCounts();rotulosCliente()}
+/* troca o cliente do topo: vale para o resumo e para as abas Pendências, Conciliar e Extrato */
+function setCliente(v){
+  st.emp=v; const c=v==='Todas'?'':v;
+  fst.cli=c; est.cli=c; rst.cli=c;
+  ['fCli','eCli','rCli'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=c});
+  [...document.getElementById('empSeg').children].forEach(x=>x.classList.toggle('on',x.dataset.emp===v));
+  render();
+  refrescarAba();
+}
+/* redesenha a aba que está aberta com os filtros atuais */
+function refrescarAba(){
+  const ativa=document.querySelector('#tabs button.on');
+  const aba=ativa?ativa.dataset.tab:'';
+  if(aba==='pendencias')renderFaturas();
+  if(aba==='conciliar')renderRecon();
+  if(aba==='extrato')renderExtrato();
+}
+document.getElementById('estSel').onchange=e=>{st.est=e.target.value;render();refrescarAba()};
+/* títulos dos gráficos e tabelas mostram o cliente escolhido */
+function rotulosCliente(){
+  const n=st.emp==='Todas'?'todos os clientes':st.emp;
+  document.getElementById('tCFlow').textContent='Vendido × Recebido — '+n;
+  document.getElementById('tFat').textContent='Faturas em aberto — '+n;
+}
 function kpis(rows){
   const tot=rows.reduce((a,s)=>a+(s.total_usd||0),0),ny=st.ate-st.de+1;
-  const paid=PAYS.filter(p=>p.ano>=st.de&&p.ano<=st.ate).reduce((a,p)=>a+(p.valor_usd||0),0);
-  const soldYp=rows.filter(s=>s.empresa==='Ypoti').reduce((a,s)=>a+(s.total_usd||0),0);
-  const abertoYp=SALES.filter(s=>s.empresa==='Ypoti').reduce((a,s)=>a+Math.max(0,vendaRem(s)),0);
+  const paid=PAYS.filter(p=>p.ano>=st.de&&p.ano<=st.ate&&(st.emp==='Todas'||p.cliente===st.emp)).reduce((a,p)=>a+(p.valor_usd||0),0);
+  const soldYp=rows.reduce((a,s)=>a+(s.total_usd||0),0);
+  const abertoYp=(st.emp==='Todas'?SALES:SALES.filter(s=>s.empresa===st.emp)).reduce((a,s)=>a+Math.max(0,vendaRem(s)),0);
   const k=[
     {lbl:'Total vendido',val:fmtUSD(tot),note:rows.length+' lançamentos',accent:1},
-    {lbl:'Recebido (Ypoti)',val:fmtUSD(paid),note:'pagamentos no período'},
-    {lbl:'Saldo a receber',val:fmtUSD(soldYp-paid),note:'Ypoti: vendido − recebido'},
-    {lbl:'Em aberto (Ypoti)',val:fmtUSD(abertoYp),note:'saldo ainda não conciliado',warn:abertoYp>0?1:0},
+    {lbl:'Recebido',val:fmtUSD(paid),note:'pagamentos no período'},
+    {lbl:'Saldo a receber',val:fmtUSD(soldYp-paid),note:'vendido − recebido'},
+    {lbl:'Em aberto',val:fmtUSD(abertoYp),note:'saldo ainda não conciliado',warn:abertoYp>0?1:0},
     {lbl:'Média anual',val:fmtUSD(ny?tot/ny:0),note:ny+' ano(s) no filtro'}
   ];
   document.getElementById('kpis').innerHTML=k.map(c=>`<div class="kpi${c.accent?' accent':c.warn?' warn':''}">${(c.accent||c.warn)?'':'<span class="bar"></span>'}<div class="lbl">${c.lbl}</div><div class="val">${c.val}</div><div class="note">${c.note}</div></div>`).join('');
 }
-const bo=(x={})=>({responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1C2620',padding:10,cornerRadius:8,titleFont:{family:'Inter',weight:'700'},bodyFont:{family:'Inter'},callbacks:x.cb||{}}},...x.o});
+const bo=(x={})=>({responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1F2A37',padding:10,cornerRadius:8,titleFont:{family:'Outfit',weight:'700'},bodyFont:{family:'Outfit'},callbacks:x.cb||{}}},...x.o});
 function draw(id,type,data,options){if(charts[id])charts[id].destroy();charts[id]=new Chart(document.getElementById(id),{type,data,options})}
 function cAno(rows){const yl=[];for(let y=st.de;y<=st.ate;y++)yl.push(y);
-  const emps=st.emp==='Todas'?['Ypoti','Chacobras']:[st.emp];
-  const ds=emps.map(e=>({label:e,backgroundColor:CO[e],borderRadius:5,maxBarThickness:46,data:yl.map(y=>rows.filter(s=>s.ano===y&&s.empresa===e).reduce((a,s)=>a+(s.total_usd||0),0))}));
-  draw('cAno','bar',{labels:yl,datasets:ds},bo({cb:{label:c=>c.dataset.label+': '+fmtUSD(c.parsed.y)},o:{scales:{x:{stacked:true,grid:{display:false},ticks:{font:{family:'Inter',weight:'600'}}},y:{stacked:true,grid:{color:'#EEEDE3'},ticks:{callback:v=>fmtUSDk(v),font:{family:'Inter'}}}}}}));}
-function cEmp(rows){const emps=['Ypoti','Chacobras'];const vals=emps.map(e=>rows.filter(s=>s.empresa===e).reduce((a,s)=>a+(s.total_usd||0),0));
-  draw('cEmp','doughnut',{labels:emps,datasets:[{data:vals,backgroundColor:emps.map(e=>CO[e]),borderColor:'#fff',borderWidth:3}]},bo({cb:{label:c=>{const t=vals.reduce((a,b)=>a+b,0);return c.label+': '+fmtUSD(c.parsed)+' ('+(t?Math.round(c.parsed/t*100):0)+'%)'}},o:{cutout:'62%',plugins:{legend:{display:true,position:'bottom',labels:{font:{family:'Inter',weight:'600'},usePointStyle:true,pointStyle:'circle',padding:16}}}}}));}
+  const emps=st.emp==='Todas'?clientesDisponiveis():[st.emp];
+  const ds=emps.map(e=>({label:e,backgroundColor:corEmp(e),borderRadius:5,maxBarThickness:46,data:yl.map(y=>rows.filter(s=>s.ano===y&&s.empresa===e).reduce((a,s)=>a+(s.total_usd||0),0))}));
+  draw('cAno','bar',{labels:yl,datasets:ds},bo({cb:{label:c=>c.dataset.label+': '+fmtUSD(c.parsed.y)},o:{scales:{x:{stacked:true,grid:{display:false},ticks:{font:{family:'Outfit',weight:'600'}}},y:{stacked:true,grid:{color:'#EEEDE3'},ticks:{callback:v=>fmtUSDk(v),font:{family:'Outfit'}}}}}}));}
+function cEmp(rows){const emps=clientesDisponiveis();const vals=emps.map(e=>rows.filter(s=>s.empresa===e).reduce((a,s)=>a+(s.total_usd||0),0));
+  draw('cEmp','doughnut',{labels:emps,datasets:[{data:vals,backgroundColor:emps.map(corEmp),borderColor:'#fff',borderWidth:3}]},bo({cb:{label:c=>{const t=vals.reduce((a,b)=>a+b,0);return c.label+': '+fmtUSD(c.parsed)+' ('+(t?Math.round(c.parsed/t*100):0)+'%)'}},o:{cutout:'62%',plugins:{legend:{display:true,position:'bottom',labels:{font:{family:'Outfit',weight:'600'},usePointStyle:true,pointStyle:'circle',padding:16}}}}}));}
 function cProd(rows){const m={};rows.forEach(s=>m[s.produto]=(m[s.produto]||0)+(s.total_usd||0));
   const top=Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,10).reverse();
-  draw('cProd','bar',{labels:top.map(t=>t[0].length>34?t[0].slice(0,32)+'…':t[0]),datasets:[{data:top.map(t=>t[1]),backgroundColor:cssv('--pasture'),borderRadius:5,maxBarThickness:22}]},bo({cb:{title:c=>top[c[0].dataIndex][0],label:c=>fmtUSD(c.parsed.x)},o:{indexAxis:'y',scales:{x:{grid:{color:'#EEEDE3'},ticks:{callback:v=>fmtUSDk(v),font:{family:'Inter'}}},y:{grid:{display:false},ticks:{font:{family:'Inter',weight:'600',size:11}}}}}}));}
+  draw('cProd','bar',{labels:top.map(t=>t[0].length>34?t[0].slice(0,32)+'…':t[0]),datasets:[{data:top.map(t=>t[1]),backgroundColor:cssv('--pasture'),borderRadius:5,maxBarThickness:22}]},bo({cb:{title:c=>top[c[0].dataIndex][0],label:c=>fmtUSD(c.parsed.x)},o:{indexAxis:'y',scales:{x:{grid:{color:'#EEEDE3'},ticks:{callback:v=>fmtUSDk(v),font:{family:'Outfit'}}},y:{grid:{display:false},ticks:{font:{family:'Outfit',weight:'600',size:11}}}}}}));}
 function cFlow(){const yl=[];for(let y=st.de;y<=st.ate;y++)yl.push(y);let cs=0,cp=0;
-  const sold=yl.map(y=>{cs+=SALES.filter(s=>s.empresa==='Ypoti'&&s.ano===y).reduce((a,s)=>a+(s.total_usd||0),0);return cs});
-  const paid=yl.map(y=>{cp+=PAYS.filter(p=>p.ano===y).reduce((a,p)=>a+(p.valor_usd||0),0);return cp});
-  draw('cFlow','line',{labels:yl,datasets:[{label:'Vendido (acum.)',data:sold,borderColor:cssv('--pasture'),backgroundColor:'rgba(36,81,59,.08)',fill:true,tension:.3,pointRadius:3,pointBackgroundColor:cssv('--pasture'),borderWidth:2.5},{label:'Recebido (acum.)',data:paid,borderColor:cssv('--gold'),backgroundColor:'rgba(224,164,48,.08)',fill:true,tension:.3,pointRadius:3,pointBackgroundColor:cssv('--gold'),borderWidth:2.5}]},bo({cb:{label:c=>c.dataset.label+': '+fmtUSD(c.parsed.y)},o:{plugins:{legend:{display:true,position:'bottom',labels:{font:{family:'Inter',weight:'600'},usePointStyle:true,pointStyle:'line',padding:16}}},scales:{x:{grid:{display:false},ticks:{font:{family:'Inter',weight:'600'}}},y:{grid:{color:'#EEEDE3'},ticks:{callback:v=>fmtUSDk(v),font:{family:'Inter'}}}}}}));}
-document.getElementById('empSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;[...e.currentTarget.children].forEach(x=>x.classList.remove('on'));b.classList.add('on');st.emp=b.dataset.emp;render()});
+  const sold=yl.map(y=>{cs+=SALES.filter(s=>s.ano===y&&doSale(s)).reduce((a,s)=>a+(s.total_usd||0),0);return cs});
+  const paid=yl.map(y=>{cp+=PAYS.filter(p=>p.ano===y&&doCli(p.cliente)).reduce((a,p)=>a+(p.valor_usd||0),0);return cp});
+  draw('cFlow','line',{labels:yl,datasets:[{label:'Vendido (acum.)',data:sold,borderColor:cssv('--pasture'),backgroundColor:'rgba(32,96,168,.08)',fill:true,tension:.3,pointRadius:3,pointBackgroundColor:cssv('--pasture'),borderWidth:2.5},{label:'Recebido (acum.)',data:paid,borderColor:cssv('--gold'),backgroundColor:'rgba(248,200,56,.12)',fill:true,tension:.3,pointRadius:3,pointBackgroundColor:cssv('--gold'),borderWidth:2.5}]},bo({cb:{label:c=>c.dataset.label+': '+fmtUSD(c.parsed.y)},o:{plugins:{legend:{display:true,position:'bottom',labels:{font:{family:'Outfit',weight:'600'},usePointStyle:true,pointStyle:'line',padding:16}}},scales:{x:{grid:{display:false},ticks:{font:{family:'Outfit',weight:'600'}}},y:{grid:{color:'#EEEDE3'},ticks:{callback:v=>fmtUSDk(v),font:{family:'Outfit'}}}}}}));}
+document.getElementById('empSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;setCliente(b.dataset.emp)});
 selDe.onchange=()=>{st.de=+selDe.value;if(st.de>st.ate){st.ate=st.de;selAte.value=st.ate}render()};
 selAte.onchange=()=>{st.ate=+selAte.value;if(st.ate<st.de){st.de=st.ate;selDe.value=st.de}render()};
 let dt;document.getElementById('busca').oninput=e=>{clearTimeout(dt);dt=setTimeout(()=>{st.q=e.target.value.toLowerCase().trim();render()},200)};
-document.getElementById('reset').onclick=()=>{st.emp='Todas';st.de=years[0];st.ate=years[years.length-1];st.q='';selDe.value=st.de;selAte.value=st.ate;document.getElementById('busca').value='';[...document.getElementById('empSeg').children].forEach((x,i)=>x.classList.toggle('on',i===0));render()};
+document.getElementById('reset').onclick=()=>{st.est='';document.getElementById('estSel').value='';st.de=years[0];st.ate=years[years.length-1];st.q='';selDe.value=st.de;selAte.value=st.ate;document.getElementById('busca').value='';setCliente(CLI_YP)};
 
 /* ========================================================= RECONCILIACAO === */
 const KEY='concil_baixas_v1';
 let allocs=loadAllocs();
 let cloudAllocOk=false;
-const rst={view:'baixa',q:'',onlyOpen:false,open:new Set()};
+const rst={view:'baixa',q:'',onlyOpen:false,open:new Set(),cli:''};
 
 function loadAllocs(){try{return JSON.parse(localStorage.getItem(KEY))||[]}catch{return[]}}
 function saveAllocs(silent){try{localStorage.setItem(KEY,JSON.stringify(allocs))}catch{}if(!silent)toast('Salvo')}
@@ -578,15 +691,8 @@ function resolveAllocKeys(pairs){
 }
 let allocSyncTimer=null;
 async function syncAllocsToCloud(){
-  const c=lanApiCfg();
-  if(!c)return;
-  const chave=localStorage.getItem(LKEY)||'';
   try{
-    const r=await fetch(c.api,{method:'POST',body:JSON.stringify({tipo:'conciliacao',chave,allocs:allocsToCloudRows()})});
-    const t=await r.text();
-    if(/^\s*(<!doctype html|<html)/i.test(t))throw new Error('a API respondeu uma página HTML — reimplante o script com o código atualizado (painel em Dados / sincronização)');
-    let j;try{j=JSON.parse(t)}catch{throw new Error('resposta inesperada da API')}
-    if(!j.ok)throw new Error(j.erro||'erro desconhecido no script');
+    await enviarApp({tipo:'conciliacao',allocs:allocsToCloudRows()});
     cloudAllocOk=true;
   }catch(err){
     toast('✗ Não sincronizei com a planilha: '+err.message);
@@ -602,16 +708,14 @@ function persistAllocs(showToast){
 }
 function reconStatus(){
   const el=document.getElementById('reconstatus');if(!el)return;
-  const c=lanApiCfg();
-  if(c&&cloudAllocOk){el.className='cfgstatus nuvem';el.textContent='✓ Ligações sincronizadas com a aba "Conciliacao" da planilha.';}
-  else if(c){el.className='cfgstatus erro';el.textContent='⚠ API configurada, mas as ligações ainda não foram sincronizadas com a planilha — atualize o Apps Script (aba Dados / sincronização) e tente alocar ou remover uma ligação de novo.';}
-  else{el.className='cfgstatus embutida';el.textContent='Ligações salvas apenas neste navegador. Configure a API (aba Dados / sincronização) para gravá-las também na planilha.';}
+  if(cloudAllocOk){el.className='cfgstatus nuvem';el.textContent='✓ Ligações sincronizadas com a aba "Conciliacao" da planilha.';}
+  else{el.className='cfgstatus embutida';el.textContent='Ligações ainda não confirmadas na planilha nesta sessão. Ao alocar ou remover uma ligação, elas são gravadas na aba "Conciliacao".';}
 }
 function baixaAlloc(bid){return allocs.filter(a=>a.b===bid).reduce((s,a)=>s+a.val,0)}
 function vendaAlloc(vid){return allocs.filter(a=>a.v===vid).reduce((s,a)=>s+a.val,0)}
 /* capacidade da baixa = dinheiro recebido + desconto concedido + acréscimo/arredondamento —
    permite fechar faturas mesmo quando o valor em caixa não bate centavo a centavo */
-function baixaCapacidade(p){return (p.valor_usd||0)+(p.desconto||0)+(p.acrescimo||0)}
+function baixaCapacidade(p){return (p.valor_usd||0)+(p.desconto||0)-(p.acrescimo||0)}
 function baixaRem(p){return baixaCapacidade(p)-baixaAlloc(p.id)}
 function vendaRem(s){return (s.total_usd||0)-vendaAlloc(s.id)}
 function vendaStatus(s){const r=vendaRem(s);if(r<=TOL)return'ok';if(r>=(s.total_usd||0)-TOL)return'open';return'part'}
@@ -621,11 +725,11 @@ function toast(m){const t=document.getElementById('toast');t.textContent=m;t.cla
 
 function renderRecon(){rkpis();racc();reconStatus();updateTabCounts()}
 function rkpis(){
-  const totB=PAYS.reduce((a,p)=>a+(p.valor_usd||0),0);
-  const alloc=allocs.reduce((a,x)=>a+x.val,0);
-  const livre=PAYS.reduce((a,p)=>a+Math.max(0,baixaRem(p)),0);
+  const totB=PAYS.filter(p=>doCli(p.cliente)).reduce((a,p)=>a+(p.valor_usd||0),0);
+  const alloc=allocs.filter(x=>doSale(salesById[x.v]||{})).reduce((a,x)=>a+x.val,0);
+  const livre=PAYS.filter(p=>doCli(p.cliente)).reduce((a,p)=>a+Math.max(0,baixaRem(p)),0);
   let ok=0,part=0,open=0,openVal=0;
-  const YP=SALES.filter(s=>s.empresa==='Ypoti');
+  const YP=SALES.filter(s=>doSale(s));
   YP.forEach(s=>{const stt=vendaStatus(s);if(stt==='ok')ok++;else if(stt==='part')part++;else open++;openVal+=Math.max(0,vendaRem(s))});
   const k=[
     {lbl:'Total em baixas',val:fmtUSD(totB),note:PAYS.length+' pagamentos',accent:1},
@@ -645,6 +749,7 @@ function racc(){
 
 function baixaCards(){
   let list=[...PAYS].sort((a,b)=>a.data<b.data?-1:1);
+  if(rst.cli)list=list.filter(p=>p.cliente===rst.cli);
   if(rst.onlyOpen)list=list.filter(p=>baixaRem(p)>TOL);
   if(rst.q){const q=rst.q.toLowerCase();list=list.filter(p=>displayCode(p,'b').toLowerCase().includes(q)||fmtDate(p.data).includes(rst.q)||String(Math.round(p.valor_usd||0)).includes(rst.q.replace(/\D/g,'')))}
   if(!list.length)return `<div class="empty">Nenhuma baixa para o filtro.</div>`;
@@ -668,7 +773,9 @@ function baixaCards(){
 }
 
 function vendaCards(){
-  let list=SALES.filter(s=>s.empresa==='Ypoti').sort((a,b)=>a.data<b.data?-1:1);
+  let list=[...SALES].sort((a,b)=>a.data<b.data?-1:1);
+  if(rst.cli)list=list.filter(s=>s.empresa===rst.cli);
+  if(st.est)list=list.filter(s=>s.estancia===st.est);
   if(rst.onlyOpen)list=list.filter(s=>vendaRem(s)>TOL);
   if(rst.q){const q=rst.q.toLowerCase();list=list.filter(s=>displayCode(s,'v').toLowerCase().includes(q)||s.produto.toLowerCase().includes(q)||fmtDate(s.data).includes(rst.q))}
   if(!list.length)return `<div class="empty">Nenhuma venda para o filtro.</div>`;
@@ -680,7 +787,7 @@ function vendaCards(){
     return `<div class="item ${stt==='ok'?'done':stt==='part'?'part':''} ${exp?'exp':''}" data-id="${s.id}" data-kind="v">
       <div class="ihead">
         <div class="idate">${fmtDate(s.data)}</div>
-        <div class="imain"><div class="t1"><span class="cod">${displayCode(s,'v')}</span> ${s.produto} <span class="tag ${s.empresa==='Ypoti'?'y':'c'}">${s.empresa}</span> ${badge}</div><div class="t2">Venda de ${fmtUSD(tot)} · ${my.length} baixa(s) ligada(s)</div><div class="prog"><i style="width:${tot?Math.min(100,pd/tot*100):0}%"></i></div></div>
+        <div class="imain"><div class="t1"><span class="cod">${displayCode(s,'v')}</span> ${s.produto} <span class="tag ${s.empresa===CLI_YP?'y':'c'}">${s.empresa}</span> ${badge}</div><div class="t2">Venda de ${fmtUSD(tot)} · ${my.length} baixa(s) ligada(s)</div><div class="prog"><i style="width:${tot?Math.min(100,pd/tot*100):0}%"></i></div></div>
         <div class="money">${fmtUSD(pd)}<small>pago</small></div>
         <div class="money second">${fmtUSD(rem)}<small>em aberto</small></div>
         <div class="caret">▸</div>
@@ -695,7 +802,7 @@ function allocTable(my,kind){
   const rows=my.map((a)=>{
     const s=salesById[a.v],p=paysById[a.b];
     const desc = kind==='b'
-      ? `<span class="cod">${displayCode(s,'v')}</span> ${fmtDate(s.data)} · ${s.produto} <span class="tag ${s.empresa==='Ypoti'?'y':'c'}">${s.empresa}</span>`
+      ? `<span class="cod">${displayCode(s,'v')}</span> ${fmtDate(s.data)} · ${s.produto} <span class="tag ${s.empresa===CLI_YP?'y':'c'}">${s.empresa}</span>`
       : `<span class="cod b">${displayCode(p,'b')}</span> Baixa de ${fmtDate(p.data)} (${fmtUSD(p.valor_usd)})`;
     return `<tr><td>${desc}</td><td class="num">${fmtUSD2(a.val)}</td><td class="num">${kind==='b'?`<button class="rm" data-rm="${a.b}|${a.v}" title="remover">×</button>`:''}</td></tr>`;
   }).join('');
@@ -705,7 +812,7 @@ function allocTable(my,kind){
 /* ---------- sugestão automática de conciliação ---------- */
 function sugerirParaBaixa(p){
   const rem=baixaRem(p);
-  const abertas=SALES.filter(s=>s.empresa==='Ypoti'&&vendaRem(s)>TOL).sort((a,b)=>a.data<b.data?-1:1);
+  const abertas=SALES.filter(s=>s.empresa===p.cliente&&vendaRem(s)>TOL).sort((a,b)=>a.data<b.data?-1:1);
   if(!abertas.length)return null;
   const exata=abertas.find(s=>Math.abs(vendaRem(s)-rem)<=TOL);
   if(exata)return {itens:[exata],desc:`venda ${displayCode(exata,'v')} (${fmtDate(exata.data)}) bate exatamente com o saldo desta baixa`};
@@ -742,7 +849,7 @@ function aplicarSugestao(bid){
 
 function addForm(p){
   const rem=baixaRem(p);
-  const opts=SALES.filter(s=>s.empresa==='Ypoti'&&vendaRem(s)>TOL).sort((a,b)=>a.data<b.data?-1:1)
+  const opts=SALES.filter(s=>s.empresa===p.cliente&&vendaRem(s)>TOL).sort((a,b)=>a.data<b.data?-1:1)
     .map(s=>`<option value="${s.id}" data-rem="${vendaRem(s)}">${displayCode(s,'v')} · ${fmtDate(s.data)} · ${s.produto} · saldo ${fmtUSD(vendaRem(s))}</option>`).join('');
   return `<div class="addrow" data-bid="${p.id}">
     <div class="flt"><select class="vsel">${opts?'<option value="">selecione a venda…</option>'+opts:'<option value="">todas as vendas quitadas</option>'}</select></div>
@@ -752,6 +859,7 @@ function addForm(p){
   </div>`;
 }
 
+document.getElementById('rCli').onchange=e=>{rst.cli=e.target.value;racc()};
 function bindAcc(){
   const box=document.getElementById('racc');
   box.querySelectorAll('.ihead').forEach(h=>h.onclick=(e)=>{
@@ -794,22 +902,23 @@ document.getElementById('impFile').onchange=(e)=>{
   r.onload=()=>{try{const arr=JSON.parse(r.result);if(Array.isArray(arr)){allocs=arr;persistAllocs(false);racc();rkpis();toast('Importado');}}catch{toast('Arquivo inválido')}};
   r.readAsText(f);e.target.value='';
 };
-document.getElementById('clrBtn').onclick=()=>{if(confirm('Remover todas as ligações?')){allocs=[];persistAllocs(false);racc();rkpis();}};
 
 /* ========================================================= EXTRATO ========= */
-const est={q:'',tipo:'Todos',sort:'data',dir:-1,page:1};
+const est={q:'',tipo:'Todos',sort:'data',dir:-1,page:1,cli:''};
 const EPER=25;
 function extratoRows(){
-  const v=SALES.map(s=>({tipo:'Venda',data:s.data,codigo:displayCode(s,'v'),who:s.empresa,desc:s.produto,valor:s.total_usd||0,status:vendaStatus(s)==='ok'?'quitada':vendaStatus(s)==='part'?'parcial':'aberta'}));
+  const v=SALES.map(s=>({tipo:'Venda',data:s.data,codigo:displayCode(s,'v'),who:s.empresa,est:s.estancia,desc:s.produto,valor:s.total_usd||0,status:vendaStatus(s)==='ok'?'quitada':vendaStatus(s)==='part'?'parcial':'aberta'}));
   const b=PAYS.map(p=>{
     const ajuste=(p.desconto||p.acrescimo)?(' · '+(p.desconto?'desconto '+fmtUSD2(p.desconto):'')+(p.desconto&&p.acrescimo?' + ':'')+(p.acrescimo?'acréscimo '+fmtUSD2(p.acrescimo):'')):'';
-    return {tipo:'Baixa',data:p.data,codigo:displayCode(p,'b'),who:'—',desc:(p.valor_brl?('R$ '+fmtN(p.valor_brl)):'Pagamento recebido')+ajuste,valor:p.valor_usd||0,status:baixaStatus(p)==='ok'?'alocada':baixaStatus(p)==='part'?'parcial':'livre'};
+    return {tipo:'Baixa',data:p.data,codigo:displayCode(p,'b'),who:p.cliente,desc:'Pagamento recebido'+ajuste,valor:p.valor_usd||0,status:baixaStatus(p)==='ok'?'alocada':baixaStatus(p)==='part'?'parcial':'livre'};
   });
   return [...v,...b];
 }
 function extratoFiltered(){
   let r=extratoRows();
   if(est.tipo!=='Todos')r=r.filter(x=>x.tipo===est.tipo);
+  if(est.cli)r=r.filter(x=>x.who===est.cli);
+  if(st.est)r=r.filter(x=>x.tipo==='Venda'&&x.est===st.est);
   if(est.q){const q=est.q.toLowerCase();r=r.filter(x=>x.codigo.toLowerCase().includes(q)||x.desc.toLowerCase().includes(q)||fmtDate(x.data).includes(est.q))}
   return r;
 }
@@ -822,7 +931,7 @@ function renderExtrato(){
       <td><span class="cod ${x.tipo==='Baixa'?'b':''}">${x.codigo}</span></td>
       <td><span class="tipopill ${x.tipo==='Venda'?'v':'b'}">${x.tipo}</span></td>
       <td>${fmtDate(x.data)}</td>
-      <td>${x.who==='—'?'—':`<span class="tag ${x.who==='Ypoti'?'y':'c'}">${x.who}</span>`}</td>
+      <td>${x.who==='—'?'—':`<span class="tag ${x.who===CLI_YP?'y':'c'}">${x.who}</span>`}</td>
       <td>${x.desc}</td>
       <td class="num"><b>${fmtN(x.valor)}</b></td>
       <td><span class="badge ${badgeCls(x.status)}">${x.status}</span></td>
@@ -836,9 +945,10 @@ function renderExtrato(){
 document.getElementById('etipoSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;[...e.currentTarget.children].forEach(x=>x.classList.remove('on'));b.classList.add('on');est.tipo=b.dataset.etipo;est.page=1;renderExtrato()});
 let edt;document.getElementById('ebusca').oninput=e=>{clearTimeout(edt);edt=setTimeout(()=>{est.q=e.target.value.trim();est.page=1;renderExtrato()},200)};
 document.querySelectorAll('#v-extrato th[data-esort]').forEach(th=>th.onclick=()=>{const k=th.dataset.esort;if(est.sort===k)est.dir*=-1;else{est.sort=k;est.dir=(k==='data')?-1:1}renderExtrato()});
+document.getElementById('eCli').onchange=e=>{est.cli=e.target.value;est.page=1;renderExtrato()};
 document.getElementById('ecsvBtn').onclick=()=>{
   const rows=extratoFiltered();
-  const lines=['Código;Tipo;Data;Empresa;Descrição;Valor US$;Situação',...rows.map(x=>[x.codigo,x.tipo,fmtDate(x.data),x.who,x.desc,String(x.valor||0).replace('.',','),x.status].join(';'))];
+  const lines=['Código;Tipo;Data;Cliente;Descrição;Valor US$;Situação',...rows.map(x=>[x.codigo,x.tipo,fmtDate(x.data),x.who,x.desc,String(x.valor||0).replace('.',','),x.status].join(';'))];
   const blob=new Blob(['﻿'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='extrato_ypoti.csv';a.click();URL.revokeObjectURL(a.href);toast('CSV exportado');
 };
@@ -848,19 +958,21 @@ const TODAY=new Date().toISOString().slice(0,10);
 function buildInvoices(){
   INVMAP={};INVOICES=[];
   const byInv={};
-  SALES.filter(s=>s.empresa==='Ypoti').forEach(s=>{(byInv[s.inv]=byInv[s.inv]||[]).push(s)});
+  SALES.forEach(s=>{(byInv[s.inv]=byInv[s.inv]||[]).push(s)});
   Object.entries(byInv).forEach(([inv,itens])=>{
     itens.sort((a,b)=>a.data<b.data?-1:1);
     const total=itens.reduce((a,s)=>a+(s.total_usd||0),0);
-    const iv={inv,data:itens[0].data,venc:itens.find(s=>s.venc)?.venc||null,itens,total,lines:itens.map(s=>s.id)};
+    const iv={inv,cliente:itens[0].empresa,data:itens[0].data,venc:itens.find(s=>s.venc)?.venc||null,itens,total,lines:itens.map(s=>s.id)};
     INVOICES.push(iv);INVMAP[inv]=iv;
   });
   INVOICES.sort((a,b)=>a.data<b.data?-1:1);
 }
 function invPaid(iv){return iv.lines.reduce((a,id)=>a+vendaAlloc(id),0)}
 function invRem(iv){return iv.total-invPaid(iv)}
-const fst={base:'emissao',q:'',soVenc:false,incQuit:false,de:'',ate:'',sort:'data',dir:-1};
+const fst={base:'emissao',q:'',soVenc:false,incQuit:false,de:'',ate:'',sort:'data',dir:-1,cli:''};
 function fmatch(iv){
+  if(fst.cli&&iv.cliente!==fst.cli)return false;
+  if(st.est&&!iv.itens.some(s=>s.estancia===st.est))return false;
   const dt=fst.base==='venc'?(iv.venc||''):iv.data;
   if(fst.de&&dt&&dt<fst.de)return false;
   if(fst.ate&&dt&&dt>fst.ate)return false;
@@ -884,7 +996,7 @@ function fkpis(){
     {lbl:'Em aberto',val:fmtUSD(rem),note:rows.length+' fatura(s)',accent:1},
     {lbl:'Vencidas',val:venc.length,note:fmtUSD(vencVal)+' em atraso',warn:venc.length?1:0},
     {lbl:'Próxima a vencer',val:prox?fmtDate(prox.venc):'—',note:prox?fmtUSD(invRem(prox)):'nenhuma pendente'},
-    {lbl:'Total de faturas',val:INVOICES.length,note:'emitidas para Ypoti'}
+    {lbl:'Total de faturas',val:INVOICES.filter(iv=>!fst.cli||iv.cliente===fst.cli).length,note:fst.cli?'emitidas de '+fst.cli:'emitidas (todos os clientes)'}
   ];
   document.getElementById('fkpis').innerHTML=k.map(c=>`<div class="kpi${c.accent?' accent':c.warn?' warn':''}">${(c.accent||c.warn)?'':'<span class="bar"></span>'}<div class="lbl">${c.lbl}</div><div class="val">${c.val}</div><div class="note">${c.note}</div></div>`).join('');
 }
@@ -909,6 +1021,7 @@ function ftable(){
     return `<tr class="${overdue?'overdue':''}">
       <td>${fmtDate(iv.data)}</td>
       <td>${iv.venc?fmtDate(iv.venc):'—'}</td>
+      <td>${iv.cliente}</td>
       <td><span class="cod">${codigos}</span></td>
       <td class="prods" title="${prods}">${prods}</td>
       <td class="num">${fmtN(iv.total)}</td>
@@ -916,7 +1029,7 @@ function ftable(){
       <td class="num"><b>${fmtN(rem)}</b></td>
       <td><span class="sit">${sit}${overdue?'<span class="due">vencida</span>':''}</span></td>
     </tr>`;
-  }).join(''):`<tr><td colspan="8"><div class="empty">Nenhuma fatura para os filtros atuais.</div></td></tr>`;
+  }).join(''):`<tr><td colspan="9"><div class="empty">Nenhuma fatura para os filtros atuais.</div></td></tr>`;
   document.getElementById('fcount').textContent=rows.length+' fatura(s) · '+fmtUSD(rows.reduce((a,iv)=>a+Math.max(0,invRem(iv)),0))+' em aberto';
   const totRem=rows.reduce((a,iv)=>a+Math.max(0,invRem(iv)),0),totPago=rows.reduce((a,iv)=>a+invPaid(iv),0),totGeral=rows.reduce((a,iv)=>a+iv.total,0);
   document.getElementById('ftfoot').innerHTML=rows.length?`<tr><td colspan="4">Total</td><td class="num">${fmtN(totGeral)}</td><td class="num">${fmtN(totPago)}</td><td class="num">${fmtN(totRem)}</td><td></td></tr>`:'';
@@ -927,7 +1040,8 @@ document.getElementById('soVenc').onchange=e=>{fst.soVenc=e.target.checked;ftabl
 document.getElementById('incQuit').onchange=e=>{fst.incQuit=e.target.checked;ftable();fkpis()};
 document.getElementById('fde').onchange=e=>{fst.de=e.target.value;ftable();fkpis()};
 document.getElementById('fate').onchange=e=>{fst.ate=e.target.value;ftable();fkpis()};
-document.getElementById('fclear').onclick=()=>{fst.q='';fst.soVenc=false;fst.incQuit=false;fst.de='';fst.ate='';document.getElementById('fbusca').value='';document.getElementById('soVenc').checked=false;document.getElementById('incQuit').checked=false;document.getElementById('fde').value='';document.getElementById('fate').value='';ftable();fkpis()};
+document.getElementById('fclear').onclick=()=>{fst.q='';fst.cli='';document.getElementById('fCli').value='';fst.soVenc=false;fst.incQuit=false;fst.de='';fst.ate='';document.getElementById('fbusca').value='';document.getElementById('soVenc').checked=false;document.getElementById('incQuit').checked=false;document.getElementById('fde').value='';document.getElementById('fate').value='';ftable();fkpis()};
+document.getElementById('fCli').onchange=e=>{fst.cli=e.target.value;ftable();fkpis();updateTabCounts()};
 document.querySelectorAll('#v-pendencias th[data-fsort]').forEach(th=>th.onclick=()=>{const k=th.dataset.fsort;if(fst.sort===k)fst.dir*=-1;else{fst.sort=k;fst.dir=(k==='venc')?1:-1}ftable()});
 document.getElementById('csvBtn').onclick=()=>{
   const rows=frows();
@@ -939,7 +1053,7 @@ document.getElementById('printBtn').onclick=()=>{
   const rows=frows(),rm=rows.reduce((a,iv)=>a+Math.max(0,invRem(iv)),0);
   const base=fst.base==='venc'?'vencimento':'emissão';
   const per=(fst.de||fst.ate)?(' · '+base+' de '+(fst.de?fmtDate(fst.de):'início')+' até '+(fst.ate?fmtDate(fst.ate):'hoje')):'';
-  document.getElementById('printhead').innerHTML=`<h2>Relatório de faturas em aberto — Ypoti</h2><div class="meta">Emitido em ${fmtDate(TODAY)}${per} · Total em aberto: ${fmtUSD(rm)}</div>`;
+  document.getElementById('printhead').innerHTML=`<h2>Relatório de faturas em aberto</h2><div class="meta">Emitido em ${fmtDate(TODAY)}${per} · Total em aberto: ${fmtUSD(rm)}</div>`;
   window.print();
 };
 
@@ -954,8 +1068,6 @@ const keyB=r=>r.data+'|'+((r.valor_usd||0).toFixed(2));
 function seedRegistry(){
   if(REG)return;
   REG={v:{keys:{},next:0},b:{keys:{},next:0}};
-  EMBEDDED.sales.forEach(s=>{const k=keyV(s);(REG.v.keys[k]=REG.v.keys[k]||[]).push(s.id);const n=+s.id.slice(1)+1;if(n>REG.v.next)REG.v.next=n});
-  EMBEDDED.pays.forEach(p=>{const k=keyB(p);(REG.b.keys[k]=REG.b.keys[k]||[]).push(p.id);const n=+p.id.slice(1)+1;if(n>REG.b.next)REG.b.next=n});
   saveReg();
 }
 function assignIds(records,kind){
@@ -989,21 +1101,23 @@ function parseDate(v){
   if(m){let y=m[3];if(y.length===2)y='20'+y;return y+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');}
   return null;
 }
-function csvRows(text){return Papa.parse(text,{skipEmptyLines:false}).data;}
-function parseSalesRows(rows,empresa,invPrefix){
+function parseSalesRows(rows,empresaPadrao,invPrefix){
   const out=[];let seq=0,curInv=null,curVenc=null;
   rows.forEach(row=>{
     if(!Array.isArray(row))return;
     const d=parseDate(row[0]),p=(row[1]!=null?String(row[1]).trim():'');
     if(!d||!p)return;
+    const cliente=row[8]!=null?String(row[8]).trim():'';
     let total=parseNum(row[4]);const qtd=parseNum(row[2]),unit=parseNum(row[3]);
     if(total==null&&qtd!=null&&unit!=null)total=qtd*unit;
     const subtotal=parseNum(row[5]),venc=parseDate(row[6]);
     const codigoRaw=row[7]!=null?String(row[7]).trim():'';
     if(subtotal!=null){seq++;curInv=invPrefix+seq;curVenc=venc;}
     else if(curInv==null){seq++;curInv=invPrefix+seq;curVenc=null;}
-    out.push({data:d,ano:+d.slice(0,4),mes:d.slice(0,7),produto:p,empresa,fonte:empresa==='Ypoti'?'Cargas':'Chacobras',
-              qtd,unit,total_usd:total,venc:curVenc,inv:curInv,codigo:codigoRaw||null});
+    if(String(row[10]||'').trim().toUpperCase().indexOf('ESTORNAD')===0)return; // estornada: fora do painel
+    out.push({data:d,ano:+d.slice(0,4),mes:d.slice(0,7),produto:p,empresa:cliente||empresaPadrao,fonte:empresaPadrao===CLI_YP?'Cargas':(empresaPadrao==='Chacobras'?'Chacobras':'Outros'),
+              qtd,unit,total_usd:total,venc:curVenc,inv:curInv,codigo:codigoRaw||null,
+              cliente,estancia:(row[9]!=null?String(row[9]).trim():'')||(empresaPadrao===CLI_YP?'Ypoti':'')});
   });
   return out;
 }
@@ -1016,12 +1130,12 @@ function parseBaixasRows(rows){
     if(usd==null&&brl==null)return;
     const codigoRaw=row[5]!=null?String(row[5]).trim():'';
     const desconto=parseNum(row[6])||0,acrescimo=parseNum(row[7])||0;
-    out.push({data:d,ano:+d.slice(0,4),mes:d.slice(0,7),valor_usd:usd,valor_brl:brl,fonte:'Baixas',codigo:codigoRaw||null,desconto,acrescimo});
+    const cliente=row[8]!=null&&String(row[8]).trim()?String(row[8]).trim():CLI_YP; // baixas antigas sem cliente = Mauricio Moller
+    if(String(row[9]||'').trim().toUpperCase().indexOf('ESTORNAD')===0)return; // estornada: fora do painel
+    out.push({data:d,ano:+d.slice(0,4),mes:d.slice(0,7),valor_usd:usd,valor_brl:brl,fonte:'Baixas',codigo:codigoRaw||null,desconto,acrescimo,cliente});
   });
   return out;
 }
-const parseSalesCSV=(text,empresa,invPrefix)=>parseSalesRows(csvRows(text),empresa,invPrefix);
-const parseBaixasCSV=(text)=>parseBaixasRows(csvRows(text));
 
 /* ----- hydrate: rebuild everything from a sales+pays dataset ----- */
 function hydrate(sales,pays,source,conciliacaoRows){
@@ -1036,6 +1150,8 @@ function hydrate(sales,pays,source,conciliacaoRows){
   }
   salesById=Object.fromEntries(SALES.map(s=>[s.id,s]));
   paysById=Object.fromEntries(PAYS.map(p=>[p.id,p]));
+  preencherListasCliente();
+  buildHistorico();
   buildInvoices();
   years=[...new Set(SALES.map(s=>s.ano))].sort();
   selDe.innerHTML='';selAte.innerHTML='';
@@ -1044,63 +1160,81 @@ function hydrate(sales,pays,source,conciliacaoRows){
   if(st.ate>years[years.length-1]||st.ate<years[0])st.ate=years[years.length-1];
   selDe.value=st.de;selAte.value=st.ate;
   dataSource=source;
-  document.getElementById('periodo').textContent='Fonte: '+(source==='embutida'?'dados embutidos':source==='api'?'Google Sheets (API)':'Google Sheets (CSV)')+(lastSync?' · atualizado em '+lastSync.toLocaleString('pt-BR'):'');
+  document.getElementById('periodo').textContent='Fonte: Google Sheets'+(lastSync?' · atualizado em '+lastSync.toLocaleString('pt-BR'):'');
   render();renderRecon();renderFaturas();renderExtrato();
   refreshProdList();
+  renderGerencial();
+  renderClientes();
 }
-function loadEmbedded(){hydrate(JSON.parse(JSON.stringify(EMBEDDED.sales)),JSON.parse(JSON.stringify(EMBEDDED.pays)),'embutida');}
+/* sugestões para os campos Cliente e Estância no lançamento de vendas */
+function preencherListasCliente(){
+  const opts=lista=>[...new Set(lista.filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'))
+    .map(v=>`<option value="${v.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}">`).join('');
+  document.getElementById('dlClientes').innerHTML=opts([...SALES.map(s=>s.cliente),...CLIENTES_CAD.map(c=>c.nome)]);
+  document.getElementById('dlEstancias').innerHTML=opts(SALES.map(s=>s.estancia));
+  /* botões de filtro por cliente (Empresa = Cliente) */
+  const seg=document.getElementById('empSeg');
+  if(st.emp!=='Todas'&&!clientesDisponiveis().includes(st.emp))st.emp=clientesDisponiveis().includes(CLI_YP)?CLI_YP:'Todas';
+  seg.innerHTML='<button data-emp="Todas">Todos</button>'+clientesDisponiveis()
+    .map(c=>`<button data-emp="${c.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}">${c}</button>`).join('');
+  [...seg.children].forEach(b=>b.classList.toggle('on',b.dataset.emp===st.emp));
+  const ests=[...new Set(SALES.map(s=>s.estancia).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  if(st.est&&!ests.includes(st.est))st.est='';
+  document.getElementById('estSel').innerHTML='<option value="">Todas as estâncias</option>'+ests.map(e=>`<option value="${escH(e)}">${escH(e)}</option>`).join('');
+  document.getElementById('estSel').value=st.est;
+  preencherFiltrosCliente();
+}
+function preencherFiltroCliente(sel,valor){
+  if(!sel)return;
+  sel.innerHTML='<option value="">Todos os clientes</option>'+clientesDisponiveis()
+    .map(c=>`<option value="${c.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}">${c}</option>`).join('');
+  sel.value=valor||'';
+}
+function preencherFiltrosCliente(){
+  preencherFiltroCliente(document.getElementById('fCli'),fst.cli);
+  preencherFiltroCliente(document.getElementById('eCli'),est.cli);
+  preencherFiltroCliente(document.getElementById('rCli'),rst.cli);
+}
+const CORES_CLIENTES=['#2060A8','#8A6414','#289048','#B4462E','#1F3550','#D9A21B','#6B7280'];
+/* clientes = valores da coluna Empresa/Cliente das vendas; Ypoti primeiro */
+function clientesDisponiveis(){
+  const v=[...new Set(SALES.map(s=>s.empresa).filter(Boolean))];
+  return v.sort((a,b)=>a===CLI_YP?-1:b===CLI_YP?1:a.localeCompare(b,'pt-BR'));
+}
+function corEmp(e){
+  if(CO[e])return CO[e];
+  const h=[...e].reduce((a,c)=>a+c.charCodeAt(0),0);
+  return CORES_CLIENTES[h%CORES_CLIENTES.length];
+}
 seedRegistry();
 
 /* ----- config / sync ----- */
-const CFGKEY='cfg_sync_v1';
-/* config padrão embutida no arquivo — usada quando a pessoa abre o dashboard
-   pela primeira vez neste navegador e ainda não salvou nenhuma configuração.
-   Assim todo mundo que abrir já vê os dados reais da planilha, sem precisar
-   colar link nenhum. */
+/* endereços padrão do app: API do Apps Script (login central) e planilha */
 const CFG_PADRAO={
-  mode:'api',
   api:'https://script.google.com/macros/s/AKfycbz_Zhb1Sj-WtZk5oyhiKiHgjs91aKexzG7n5HQaKNMHu3D2crHYZULTzB30QKvNxOdKXw/exec',
-  sheet:'https://docs.google.com/spreadsheets/d/1t40MGWjfA8d6oXZoVWG4MmssYxXYPeIUDgq_njY5bOo/edit',
-  auto:true
+  sheet:'https://docs.google.com/spreadsheets/d/1t40MGWjfA8d6oXZoVWG4MmssYxXYPeIUDgq_njY5bOo/edit'
 };
-let cfgMode='api';
-function loadCfg(){
-  try{
-    const saved=JSON.parse(localStorage.getItem(CFGKEY));
-    if(saved&&Object.keys(saved).length)return saved;
-  }catch{}
-  return {...CFG_PADRAO};
-}
-function saveCfg(c){try{localStorage.setItem(CFGKEY,JSON.stringify(c))}catch{}}
+function loadCfg(){return {...CFG_PADRAO};}
 function clog(m){document.getElementById('cfgLog').textContent=m;}
-async function fetchText(url,what){
-  const r=await fetch(url,{cache:'no-store'});
-  if(!r.ok)throw new Error('não consegui buscar '+what+' (HTTP '+r.status+')');
-  return r.text();
-}
+
 function pickSheets(obj){
-  return {cargas:obj['Cargas']||[],baixas:obj['Baixas']||obj['Baixas ']||[],chac:obj['Chacobras']||[],conc:obj['Conciliacao']};
+  return {cargas:obj['Ypoti']||obj['Cargas']||[],baixas:obj['Baixas']||obj['Baixas ']||[],chac:obj['Chacobras']||[],outros:obj['Outros clientes']||[],conc:obj['Conciliacao']};
 }
 async function loadCloudApi(cfg){
-  const t=await fetchText(cfg.api,'a API');
-  if(/^\s*(<!doctype html|<html)/i.test(t))throw new Error('a URL respondeu uma página HTML, não JSON — confira se é a URL /exec da implantação');
-  let j;try{j=JSON.parse(t)}catch{throw new Error('resposta da API não é um JSON válido')}
-  const {cargas,baixas,chac,conc}=pickSheets(j);
-  if(j._url&&!document.getElementById('urlSheet').value)document.getElementById('urlSheet').value=j._url;
-  return {sales:[...parseSalesRows(cargas,'Ypoti','FY-'),...parseSalesRows(chac,'Chacobras','FC-')],pays:parseBaixasRows(baixas),conciliacao:conc};
-}
-async function loadCloudCsv(cfg){
-  const [cargasT,baixasT,chacT]=await Promise.all([fetchText(cfg.cargas,'Cargas'),fetchText(cfg.baixas,'Baixas'),fetchText(cfg.chac,'Chacobras')]);
-  return {sales:[...parseSalesCSV(cargasT,'Ypoti','FY-'),...parseSalesCSV(chacT,'Chacobras','FC-')],pays:parseBaixasCSV(baixasT)};
+  const j=await enviarApp({tipo:'dados'});
+  const {cargas,baixas,chac,outros,conc}=pickSheets(j);
+  if(j._url){SHEET_URL=j._url;updateSheetLink();}
+  CLIENTES_CAD=parseClientesRows(j.Clientes);
+  return {sales:[...parseSalesRows(cargas,CLI_YP,'FY-'),...parseSalesRows(chac,'Chacobras','FC-'),...parseSalesRows(outros,'Outros','FO-')],pays:parseBaixasRows(baixas),conciliacao:conc};
 }
 async function loadCloud(cfg){
   try{
     clog('Buscando dados…');
-    const {sales,pays,conciliacao}=cfg.mode==='csv'?await loadCloudCsv(cfg):await loadCloudApi(cfg);
+    const {sales,pays,conciliacao}=await loadCloudApi(cfg);
     if(!sales.length&&!pays.length)throw new Error('nenhum dado reconhecido — confira os links/URL e os nomes das abas');
     lastSync=new Date();
-    hydrate(sales,pays,cfg.mode==='csv'?'csv':'api',conciliacao);
-    clog('✓ Atualizado do Google Sheets ('+(cfg.mode==='csv'?'CSV':'API')+'): '+sales.length+' vendas, '+pays.length+' baixas.\nÚltima sincronização: '+lastSync.toLocaleString('pt-BR')+'.');
+    hydrate(sales,pays,'api',conciliacao);
+    clog('✓ Atualizado do Google Sheets (API): '+sales.length+' vendas, '+pays.length+' baixas.\nÚltima sincronização: '+lastSync.toLocaleString('pt-BR')+'.');
     renderCfgStatus();
   }catch(err){
     clog('✗ '+err.message);
@@ -1109,65 +1243,29 @@ async function loadCloud(cfg){
 }
 function renderCfgStatus(err){
   const el=document.getElementById('cfgstatus');
-  const c=loadCfg();
-  if(err){el.className='cfgstatus erro';el.textContent='⚠ Erro ao sincronizar: '+err;return;}
-  if(cfgReady(c)){el.className='cfgstatus nuvem';el.textContent='✓ Conectado ao Google Sheets ('+(c.mode==='csv'?'CSV publicado':'API')+'). Fonte atual: '+(dataSource==='embutida'?'dados embutidos (clique em Atualizar agora)':dataSource)+'.';}
-  else{el.className='cfgstatus embutida';el.textContent='Usando dados embutidos no arquivo. Configure a sincronização abaixo para puxar direto do Google Sheets.';}
+  if(err){el.className='cfgstatus erro';el.textContent='⚠ Erro ao atualizar: '+err;return;}
+  el.className='cfgstatus nuvem';el.textContent='✓ Conectado à planilha (Google Sheets)'+(lastSync?'. Última atualização: '+lastSync.toLocaleString('pt-BR'):'')+'.';
 }
-function setMode(m){
-  cfgMode=m;
-  [...document.getElementById('modeSeg').children].forEach(x=>x.classList.toggle('on',x.dataset.mode===m));
-  document.getElementById('apiBlock').style.display=m==='api'?'':'none';
-  document.getElementById('csvBlock').style.display=m==='csv'?'':'none';
-}
-document.getElementById('modeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;setMode(b.dataset.mode)});
+let SHEET_URL=CFG_PADRAO.sheet;
 function updateSheetLink(){
-  const url=document.getElementById('urlSheet').value.trim();
+  const url=SHEET_URL;
   const a=document.getElementById('sheetLink');
   if(url){a.href=url;a.style.display='';}else{a.style.display='none';}
 }
-function currentCfg(){return{mode:cfgMode,api:document.getElementById('urlApi').value.trim(),
-  cargas:document.getElementById('urlCargas').value.trim(),baixas:document.getElementById('urlBaixas').value.trim(),chac:document.getElementById('urlChac').value.trim(),
-  sheet:document.getElementById('urlSheet').value.trim(),auto:document.getElementById('autoRefresh').checked};}
-function cfgReady(c){return c.mode==='csv'?(c.cargas&&c.baixas&&c.chac):!!c.api;}
-document.getElementById('cfgSave').onclick=()=>{const c=currentCfg();if(!cfgReady(c)){clog(c.mode==='csv'?'Preencha os três links antes de salvar.':'Preencha a URL da API antes de salvar.');return;}saveCfg(c);updateSheetLink();loadCloud(c);};
-document.getElementById('cfgRefresh').onclick=()=>{const c=loadCfg();if(!cfgReady(c)){clog('Configure e salve a sincronização primeiro.');return;}loadCloud(c);};
-document.getElementById('cfgEmbedded').onclick=()=>{lastSync=null;loadEmbedded();clog('Voltou aos dados embutidos no arquivo.');renderCfgStatus();};
+function cfgReady(c){return !!c.api;}
+document.getElementById('cfgRefresh').onclick=()=>loadCloud(loadCfg());
 
 /* ----- lançar (venda/baixa) ----- */
-const LKEY='lan_chave_v1';
-function lanApiCfg(){const c=loadCfg();return (c.mode!=='csv'&&c.api)?c:null;}
+function lanApiCfg(){const c=loadCfg();return c.api?c:null;}
 function lanlog(m,which){document.getElementById(which==='b'?'lanLogB':'lanLogV').textContent=m;}
-function lanChaveEl(which){return document.getElementById(which==='b'?'lanChaveB':'lanChaveV');}
-/* nome do cliente e estância padrão de cada empresa, usados na fatura impressa —
-   fixos por empresa, mas o campo continua editável a qualquer momento */
-const CLIENTES_PADRAO={
-  Ypoti:{nome:'MAURICIO MOLLER',estancia:'Estancia Ypoti'},
-  Chacobras:{nome:'',estancia:''}
-};
-function lvAplicarClientePadrao(force){
-  const emp=document.getElementById('lvEmp').value,def=CLIENTES_PADRAO[emp]||{nome:'',estancia:''};
-  const cli=document.getElementById('lvCliente'),est=document.getElementById('lvEstancia');
-  if(force||!cli.value)cli.value=def.nome;
-  if(force||!est.value)est.value=def.estancia;
-}
-document.getElementById('lvEmp').addEventListener('change',()=>lvAplicarClientePadrao(true));
+
 function renderLancarVenda(){
-  const c=lanApiCfg();
-  const el=document.getElementById('lanstatusV');
-  if(c){el.className='cfgstatus nuvem';el.textContent='✓ API configurada — lançamentos vão direto para a planilha, já com o código sequencial.';}
-  else{el.className='cfgstatus erro';el.textContent='⚠ Configure a API (aba Dados / sincronização) para conseguir lançar vendas na planilha.';}
-  const ch=localStorage.getItem(LKEY);if(ch)lanChaveEl('v').value=ch;
+  const el=document.getElementById('lanstatusV');el.className='cfgstatus nuvem';el.textContent='✓ Conectado ao login central. Os lançamentos vão direto para a planilha, com o código sequencial.';
   if(!document.getElementById('lvData').value)document.getElementById('lvData').value=TODAY;
   if(!lvItems().length)addItemRow();
-  lvAplicarClientePadrao(false);
 }
 function renderLancarBaixa(){
-  const c=lanApiCfg();
-  const el=document.getElementById('lanstatusB');
-  if(c){el.className='cfgstatus nuvem';el.textContent='✓ API configurada — lançamentos vão direto para a planilha, já com o código sequencial.';}
-  else{el.className='cfgstatus erro';el.textContent='⚠ Configure a API (aba Dados / sincronização) para conseguir lançar baixas na planilha.';}
-  const ch=localStorage.getItem(LKEY);if(ch)lanChaveEl('b').value=ch;
+  const el=document.getElementById('lanstatusB');el.className='cfgstatus nuvem';el.textContent='✓ Conectado ao login central. Os lançamentos vão direto para a planilha, com o código sequencial.';
   if(!document.getElementById('lbData').value)document.getElementById('lbData').value=TODAY;
   renderLbFaturas();
 }
@@ -1175,7 +1273,9 @@ function renderLancarBaixa(){
 /* ----- faturas a baixar (selecionar no ato do lançamento da baixa) ----- */
 function lbFaturasList(){
   const q=(document.getElementById('lbBusca').value||'').toLowerCase().trim();
+  const cli=(document.getElementById('lbCliente').value||'').trim();
   return INVOICES.filter(iv=>invRem(iv)>TOL).filter(iv=>{
+    if(cli&&iv.cliente!==cli)return false;
     if(!q)return true;
     return iv.itens.some(s=>displayCode(s,'v').toLowerCase().includes(q)||s.produto.toLowerCase().includes(q))||fmtDate(iv.data).includes(q);
   }).sort((a,b)=>a.data<b.data?-1:1);
@@ -1205,6 +1305,7 @@ function lbBindFaturas(){
     amt.oninput=lbResumo;
   });
 }
+document.getElementById('lbCliente').addEventListener('input',renderLbFaturas);
 function lbSelecionadas(){
   const out=[];
   document.querySelectorAll('#lbFaturas .fitem').forEach(row=>{
@@ -1220,7 +1321,7 @@ function lbCapacidadeForm(){
   const usd=parseFloat(document.getElementById('lbUsd').value)||0;
   const desc=parseFloat(document.getElementById('lbDesc').value)||0;
   const acr=parseFloat(document.getElementById('lbAcr').value)||0;
-  return {usd,desc,acr,cap:usd+desc+acr};
+  return {usd,desc,acr,cap:usd+desc-acr};
 }
 function lbResumo(){
   const el=document.getElementById('lbResumo');if(!el)return;
@@ -1273,22 +1374,43 @@ function lvItems(){
   })).filter(i=>i.produto&&i.qtd>0&&i.unit>0);
 }
 function lvRecalc(){
-  const t=lvItems().reduce((a,i)=>a+i.qtd*i.unit,0);
+  const itens=lvItems();
+  const t=itens.reduce((a,i)=>a+i.qtd*i.unit,0);
   document.getElementById('lvTotal').textContent='Total da fatura: '+fmtUSD2(t);
+  document.getElementById('lvAlertas').innerHTML=lvAlertas(itens,t).map(m=>`<div class="banner" style="margin:6px 0">⚠ ${m}</div>`).join('');
+}
+/* histórico de preços por produto (faixa mínima e máxima de unitário já vendido) */
+document.getElementById('lvData').addEventListener('input',lvRecalc);
+document.getElementById('lvVenc').addEventListener('input',lvRecalc);
+let HIST={};
+const LIMITE_FATURA=100000; // US$ — acima disso, pede confirmação
+function buildHistorico(){
+  HIST={};
+  SALES.forEach(s=>{
+    if(!(s.unit>0))return;
+    const k=s.produto.trim().toLowerCase();
+    const h=HIST[k]||(HIST[k]={min:Infinity,max:0});
+    h.min=Math.min(h.min,s.unit);h.max=Math.max(h.max,s.unit);
+  });
+}
+/* alertas do lançamento: vencimento antes da emissão (bloqueia), preço fora do histórico e total alto (pedem confirmação) */
+function lvAlertas(itens,total){
+  const msgs=[];
+  const emis=document.getElementById('lvData').value,venc=document.getElementById('lvVenc').value;
+  if(venc&&emis&&venc<emis)msgs.push('Vencimento anterior à data de emissão.');
+  if(total>LIMITE_FATURA)msgs.push(`Total da fatura acima de ${fmtUSD(LIMITE_FATURA)}. Confira quantidades e preços.`);
+  itens.forEach(i=>{
+    const h=HIST[i.produto.trim().toLowerCase()];
+    if(!h)return;
+    if(i.unit>h.max*1.3||i.unit<h.min/1.3)
+      msgs.push(`${i.produto}: unitário ${fmtU(i.unit)} fora do histórico (vendido entre ${fmtU(h.min)} e ${fmtU(h.max)} US$).`);
+  });
+  return msgs;
 }
 async function postLanc(payload,btn,which){
-  const c=lanApiCfg();
-  if(!c){lanlog('Configure a API antes de lançar.',which);return null;}
-  const chave=lanChaveEl(which).value;
-  localStorage.setItem(LKEY,chave);
   btn.disabled=true;const old=btn.textContent;btn.textContent='Enviando…';
   try{
-    const r=await fetch(c.api,{method:'POST',body:JSON.stringify({...payload,chave})});
-    const t=await r.text();
-    if(/^\s*(<!doctype html|<html)/i.test(t))throw new Error('a API respondeu uma página HTML — reimplante o script com o código atualizado (aba Dados / sincronização)');
-    let j;try{j=JSON.parse(t)}catch{throw new Error('resposta inesperada da API')}
-    if(!j.ok)throw new Error(j.erro||'erro desconhecido no script');
-    return j;
+    return await enviarApp(payload);
   }catch(err){lanlog('✗ '+err.message,which);return null;}
   finally{btn.disabled=false;btn.textContent=old;}
 }
@@ -1297,7 +1419,13 @@ document.getElementById('lvEnviar').onclick=async(e)=>{
   if(!itens.length){lanlog('Adicione ao menos um item válido.','v');return;}
   const data=document.getElementById('lvData').value;
   if(!data){lanlog('Informe a data de emissão.','v');return;}
-  const j=await postLanc({tipo:'venda',empresa:document.getElementById('lvEmp').value,data,venc:document.getElementById('lvVenc').value,itens},e.target,'v');
+  const cliente=document.getElementById('lvCliente').value.trim();
+  if(!cliente){lanlog('Informe o nome do cliente.','v');return;}
+  const estancia=document.getElementById('lvEstancia').value.trim();
+  const alertas=lvAlertas(itens,itens.reduce((a,i)=>a+i.qtd*i.unit,0));
+  if(alertas.some(m=>m.startsWith('Vencimento'))){lanlog('Corrija o vencimento antes de lançar.','v');return;}
+  if(alertas.length&&!confirm('Atenção:\n- '+alertas.join('\n- ')+'\n\nLançar mesmo assim?'))return;
+  const j=await postLanc({tipo:'venda',data,venc:document.getElementById('lvVenc').value,cliente,estancia,itens},e.target,'v');
   if(j){
     lanlog('✓ Venda lançada: '+itens.length+' item(ns)'+(j.codigos?' · códigos '+j.codigos.join(', '):'')+'. Atualizando…','v');
     document.getElementById('lvItens').innerHTML='';addItemRow();lvRecalc();
@@ -1311,10 +1439,12 @@ document.getElementById('lbEnviar').onclick=async(e)=>{
   const sel=lbSelecionadas();
   const totalSel=sel.reduce((a,x)=>a+x.val,0);
   if(totalSel-cap>0.01){lanlog('O valor selecionado nas faturas ('+fmtUSD2(totalSel)+') é maior que a capacidade desta baixa ('+fmtUSD2(cap)+'). Ajuste o desconto/acréscimo ou os valores das faturas.','b');return;}
-  const j=await postLanc({tipo:'baixa',data,valor_usd:usd,valor_brl:parseFloat(document.getElementById('lbBrl').value)||null,cotacao:parseFloat(document.getElementById('lbCot').value)||null,desconto:desc||null,acrescimo:acr||null,obs:document.getElementById('lbObs').value.trim()},e.target,'b');
+  const cliente=(document.getElementById('lbCliente').value||'').trim();
+  if(!cliente){lanlog('Informe o cliente da baixa.','b');return;}
+  const j=await postLanc({tipo:'baixa',cliente,data,valor_usd:usd,desconto:desc||null,acrescimo:acr||null,obs:document.getElementById('lbObs').value.trim()},e.target,'b');
   if(!j)return;
   lanlog('✓ Baixa lançada'+(j.codigo?' · código '+j.codigo:'')+'. Atualizando…','b');
-  document.getElementById('lbUsd').value='';document.getElementById('lbBrl').value='';document.getElementById('lbCot').value='';document.getElementById('lbDesc').value='';document.getElementById('lbAcr').value='';document.getElementById('lbObs').value='';
+  document.getElementById('lbUsd').value='';document.getElementById('lbDesc').value='';document.getElementById('lbAcr').value='';document.getElementById('lbObs').value='';
   const c=loadCfg();
   if(cfgReady(c)){
     await loadCloud(c);
@@ -1340,14 +1470,14 @@ document.getElementById('lvFatura').onclick=()=>{
   const itens=lvItems();
   if(!itens.length){lanlog('Adicione ao menos um item válido para gerar a fatura.','v');return;}
   const win=window.open('','_blank');
-  const emp=document.getElementById('lvEmp').value,data=document.getElementById('lvData').value,venc=document.getElementById('lvVenc').value;
-  const cliente=(document.getElementById('lvCliente').value||'').trim()||(CLIENTES_PADRAO[emp]||{}).nome||emp;
+  const data=document.getElementById('lvData').value,venc=document.getElementById('lvVenc').value;
+  const cliente=(document.getElementById('lvCliente').value||'').trim()||'-';
   const estancia=(document.getElementById('lvEstancia').value||'').trim();
   const codigos=itens.map(()=>'');// código sequencial só existe depois de lançar na planilha
   const total=itens.reduce((a,i)=>a+i.qtd*i.unit,0);
   const rowsHtml=itens.map((i,idx)=>`<tr><td class="c-cod">${codigos[idx]||''}</td><td>${i.produto}</td><td class="c-un">${i.unidade||'KG'}</td><td class="c-num">${fmtN(i.qtd)}</td><td class="c-num">${fmtU(i.unit)}</td><td class="c-num">${fmtN(i.qtd*i.unit)}</td></tr>`).join('');
   const tipoPag=venc?'A PRAZO':'A VISTA';
-  win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Fatura ${emp}</title>
+  win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Fatura ${cliente}</title>
     <style>
       *{box-sizing:border-box}
       body{font-family:Arial,Helvetica,sans-serif;color:#111;padding:26px;max-width:900px;margin:0 auto}
@@ -1395,60 +1525,244 @@ document.getElementById('lvFatura').onclick=()=>{
 };
 
 /* ---------- ISOLAMENTO GITHUB PAGES ---------- */
-// Cria prefixo único para localStorage usando o caminho do arquivo
-// Evita conflito de dados entre diferentes projetos no GitHub Pages
-const STORAGE_PREFIX = 'ypoti_chacobras_' + (location.pathname.split('/').filter(Boolean).slice(-2).join('_') || 'local_') + '_';
 
-// Wrapper para loadCfg com prefix isolado
-const _originalLoadCfg = loadCfg;
-loadCfg = function(){
+
+/* ========================================================= CADASTRO, EDIÇÃO/ESTORNO E GERENCIAL ===== */
+let CLIENTES_CAD=[];
+let MN_ATUAL=null;
+const escH=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+function parseClientesRows(rows){
+  if(!Array.isArray(rows))return [];
+  return rows.filter(r=>Array.isArray(r)&&String(r[0]||'').trim()&&String(r[0]).trim().toLowerCase()!=='nome')
+    .map(r=>({nome:String(r[0]).trim(),pais:(String(r[1]||'').trim()||'PY').toUpperCase(),documento:String(r[2]||'').trim(),
+      condicao:parseNum(r[3])||0,limite:parseNum(r[4])||0,ativo:!/^n(ã|a)o$/i.test(String(r[5]||'').trim()),observacao:String(r[6]||'').trim()}));
+}
+/* chamada ao Apps Script com o token do login central (leitura e gravação) */
+async function enviarApp(payload){
+  const j=await RuralAuth.chamar('ypoti',CFG_PADRAO.api,payload);
+  if(!j||j.ok===false)throw new Error(mensagemErroApp(j));
+  return j;
+}
+function mensagemErroApp(j){
+  if(!j)return 'sem resposta do servidor';
+  if(j.error==='unauthorized')return 'sem acesso ao app Controle de vendas PY: peça ao administrador para liberar';
+  return j.erro||j.message||'erro no servidor';
+}
+/* envia uma ação ao Apps Script e devolve a resposta (ou null, mostrando o erro no log) */
+async function enviarServidor(payload,logId){
+  const logEl=document.getElementById(logId);
+  logEl.textContent='Enviando…';
   try{
-    const stored = localStorage.getItem(STORAGE_PREFIX + 'cfg');
-    return stored ? JSON.parse(stored) : {};
-  }catch(e){
-    console.warn('Erro ao carregar config:', e);
-    return {};
+    return await enviarApp(payload);
+  }catch(err){logEl.textContent='✗ '+err.message;return null;}
+}
+function recarregarDados(){
+  const c={...CFG_PADRAO,...loadCfg()};
+  if(!c.api)c.api=CFG_PADRAO.api;
+  loadCloud(c);
+}
+
+/* ----- editar / estornar ----- */
+function mnRodape(){
+  return `<div class="cfgrow"><label>Motivo <small>(obrigatório)</small></label><input type="text" id="mnMotivo" placeholder="ex.: quantidade digitada errada"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn solid" id="mnSalvar">Salvar alterações</button><button class="btn" id="mnEstornar">Estornar lançamento</button></div>`;
+}
+function mnBuscar(){
+  const cod=(document.getElementById('mnCodigo').value||'').trim().toUpperCase();
+  const box=document.getElementById('mnResultado');
+  document.getElementById('mnLog').textContent='';
+  MN_ATUAL=null;
+  const s=SALES.find(x=>displayCode(x,'v').toUpperCase()===cod);
+  const p=s?null:PAYS.find(x=>displayCode(x,'b').toUpperCase()===cod);
+  if(!s&&!p){box.innerHTML='<div class="empty">Código não encontrado, ou já estornado.</div>';return;}
+  if(s){
+    const ligado=allocs.some(a=>a.v===s.id);
+    MN_ATUAL={alvo:'venda',codigo:displayCode(s,'v'),item:s,ligado};
+    box.innerHTML=`<div class="panel"><h3>Venda ${escH(displayCode(s,'v'))}</h3>
+      ${ligado?'<div class="banner">Esta venda está ligada a baixas na conciliação. Remova as ligações antes de editar ou estornar.</div>':''}
+      <div class="lanrow2">
+        <div class="cfgrow"><label>Data de emissão</label><input type="date" id="meData" value="${escH(s.data)}"></div>
+        <div class="cfgrow"><label>Produto</label><input type="text" id="meProduto" value="${escH(s.produto)}"></div>
+        <div class="cfgrow"><label>Quantidade</label><input type="number" id="meQtd" step="0.01" value="${escH(s.qtd)}"></div>
+        <div class="cfgrow"><label>Unitário US$</label><input type="number" id="meUnit" step="0.0001" value="${escH(s.unit)}"></div>
+      </div>
+      <div class="lanrow2">
+        <div class="cfgrow"><label>Vencimento da fatura</label><input type="date" id="meVenc" value="${escH(s.venc||'')}"></div>
+        <div class="cfgrow"><label>Cliente</label><input type="text" id="meCliente" list="dlClientes" value="${escH(s.empresa)}"></div>
+        <div class="cfgrow"><label>Estância</label><input type="text" id="meEstancia" value="${escH(s.estancia||'')}"></div>
+      </div>
+      ${mnRodape()}</div>`;
+  }else{
+    const ligado=allocs.some(a=>a.b===p.id);
+    MN_ATUAL={alvo:'baixa',codigo:displayCode(p,'b'),item:p,ligado};
+    box.innerHTML=`<div class="panel"><h3>Baixa ${escH(displayCode(p,'b'))}</h3>
+      ${ligado?'<div class="banner">Esta baixa está ligada a faturas na conciliação. Remova as ligações antes de editar ou estornar.</div>':''}
+      <div class="lanrow2">
+        <div class="cfgrow"><label>Data do recebimento</label><input type="date" id="meData" value="${escH(p.data)}"></div>
+        <div class="cfgrow"><label>Valor US$</label><input type="number" id="meValor" step="0.01" value="${escH(p.valor_usd)}"></div>
+        <div class="cfgrow"><label>Desconto US$</label><input type="number" id="meDesc" step="0.01" value="${escH(p.desconto||0)}"></div>
+        <div class="cfgrow"><label>Acréscimo US$</label><input type="number" id="meAcr" step="0.01" value="${escH(p.acrescimo||0)}"></div>
+      </div>
+      <div class="cfgrow"><label>Cliente</label><input type="text" id="meCliente" list="dlClientes" value="${escH(p.cliente)}"></div>
+      ${mnRodape()}</div>`;
   }
+  mnLigar();
+}
+function mnLigar(){
+  const m=MN_ATUAL;if(!m)return;
+  const sv=document.getElementById('mnSalvar'),es=document.getElementById('mnEstornar');
+  sv.onclick=mnSalvar;es.onclick=mnEstornar;
+  if(m.ligado){sv.disabled=true;es.disabled=true;}
+}
+async function mnSalvar(){
+  const m=MN_ATUAL;if(!m)return;
+  const log=document.getElementById('mnLog');
+  const motivo=(document.getElementById('mnMotivo').value||'').trim();
+  const campos={};
+  let novo,orig;
+  if(m.alvo==='venda'){
+    const s=m.item;
+    novo={data:document.getElementById('meData').value,produto:document.getElementById('meProduto').value.trim(),
+      qtd:parseFloat(document.getElementById('meQtd').value),unit:parseFloat(document.getElementById('meUnit').value),
+      venc:document.getElementById('meVenc').value,cliente:document.getElementById('meCliente').value.trim(),
+      estancia:document.getElementById('meEstancia').value.trim()};
+    orig={data:s.data,produto:s.produto,qtd:s.qtd,unit:s.unit,venc:s.venc||'',cliente:s.empresa,estancia:s.estancia||''};
+  }else{
+    const p=m.item;
+    novo={data:document.getElementById('meData').value,valor_usd:parseFloat(document.getElementById('meValor').value),
+      desconto:parseFloat(document.getElementById('meDesc').value)||0,acrescimo:parseFloat(document.getElementById('meAcr').value)||0,
+      cliente:document.getElementById('meCliente').value.trim()};
+    orig={data:p.data,valor_usd:p.valor_usd,desconto:p.desconto||0,acrescimo:p.acrescimo||0,cliente:p.cliente};
+  }
+  Object.keys(novo).forEach(k=>{if(String(novo[k])!==String(orig[k]))campos[k]=novo[k];});
+  if(!Object.keys(campos).length){log.textContent='Nenhuma alteração para salvar.';return;}
+  if(!motivo){log.textContent='Informe o motivo da alteração.';return;}
+  const j=await enviarServidor({tipo:'editar',alvo:m.alvo,codigo:m.codigo,motivo,campos},'mnLog','mn');
+  if(j){log.textContent='✓ Alteração salva em '+m.codigo+'. Atualizando…';MN_ATUAL=null;document.getElementById('mnResultado').innerHTML='';recarregarDados();}
+}
+async function mnEstornar(){
+  const m=MN_ATUAL;if(!m)return;
+  const log=document.getElementById('mnLog');
+  const motivo=(document.getElementById('mnMotivo').value||'').trim();
+  if(!motivo){log.textContent='Informe o motivo do estorno.';return;}
+  if(!confirm(`Estornar ${m.codigo}? A linha fica marcada como estornada e sai do painel. Não é apagada.`))return;
+  const j=await enviarServidor({tipo:'estornar',alvo:m.alvo,codigo:m.codigo,motivo},'mnLog','mn');
+  if(j){log.textContent='✓ '+m.codigo+' estornado. Atualizando…';MN_ATUAL=null;document.getElementById('mnResultado').innerHTML='';recarregarDados();}
+}
+document.getElementById('mnBuscar').onclick=mnBuscar;
+document.getElementById('mnCodigo').addEventListener('keydown',e=>{if(e.key==='Enter')mnBuscar();});
+
+/* ----- cadastro de clientes ----- */
+function renderClientes(){
+  const nomesCad=new Set(CLIENTES_CAD.map(c=>c.nome.toLowerCase()));
+  const extras=[...new Set(SALES.map(s=>s.empresa).concat(PAYS.map(p=>p.cliente)).filter(Boolean))]
+    .filter(n=>!nomesCad.has(n.toLowerCase()))
+    .map(n=>({nome:n,pais:'',documento:'',condicao:0,limite:0,ativo:true,observacao:'(sem cadastro)'}));
+  const linhas=[...CLIENTES_CAD,...extras].sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
+  document.getElementById('clcount').textContent=linhas.length+' cliente(s)';
+  document.getElementById('clTbody').innerHTML=linhas.length?linhas.map(c=>`<tr data-nome="${escH(c.nome)}" style="cursor:pointer">
+      <td>${escH(c.nome)}${c.observacao==='(sem cadastro)'?' <small style="color:var(--muted)">sem cadastro</small>':''}</td>
+      <td>${escH(c.pais)||'—'}</td><td>${escH(c.documento)||'—'}</td>
+      <td class="num">${c.condicao||'—'}</td><td class="num">${c.limite?fmtN(c.limite):'—'}</td><td>${c.ativo?'Sim':'Não'}</td></tr>`).join('')
+    :'<tr><td colspan="6"><div class="empty">Nenhum cliente.</div></td></tr>';
+  document.getElementById('clTbody').onclick=e=>{
+    const tr=e.target.closest('tr[data-nome]');if(!tr)return;
+    const c=linhas.find(x=>x.nome===tr.dataset.nome);if(!c)return;
+    document.getElementById('clNome').value=c.nome;
+    document.getElementById('clPais').value=c.pais||'PY';
+    document.getElementById('clDoc').value=c.documento||'';
+    document.getElementById('clCond').value=c.condicao||'';
+    document.getElementById('clLimite').value=c.limite||'';
+    document.getElementById('clAtivo').value=c.ativo?'SIM':'NAO';
+    document.getElementById('clObs').value=c.observacao==='(sem cadastro)'?'':c.observacao;
+  };
+}
+document.getElementById('clSalvar').onclick=async()=>{
+  const nome=document.getElementById('clNome').value.trim();
+  if(!nome){document.getElementById('clLog').textContent='Informe o nome do cliente.';return;}
+  const j=await enviarServidor({tipo:'cliente',nome,
+    pais:document.getElementById('clPais').value.trim()||'PY',
+    documento:document.getElementById('clDoc').value.trim(),
+    condicao:parseFloat(document.getElementById('clCond').value)||0,
+    limite:parseFloat(document.getElementById('clLimite').value)||0,
+    ativo:document.getElementById('clAtivo').value==='SIM',
+    observacao:document.getElementById('clObs').value.trim()},'clLog','cl');
+  if(j){document.getElementById('clLog').textContent='✓ Cliente salvo: '+nome+'. Atualizando…';recarregarDados();}
 };
 
-// Wrapper para saveCfg com prefix isolado
-const _originalSaveCfg = saveCfg;
-saveCfg = function(){
-  const cfg={
-    mode:document.getElementById('tabNav')?.querySelector('button.on')?.textContent.split(' ')[0].toLowerCase() || 'painel',
-    api:document.getElementById('urlApi')?.value || '',
-    cargas:document.getElementById('urlCargas')?.value || '',
-    baixas:document.getElementById('urlBaixas')?.value || '',
-    chac:document.getElementById('urlChac')?.value || '',
-    sheet:document.getElementById('urlSheet')?.value || '',
-    auto:document.getElementById('autoRefresh')?.checked || false
-  };
-  localStorage.setItem(STORAGE_PREFIX + 'cfg', JSON.stringify(cfg));
-  localStorage.setItem(STORAGE_PREFIX + 'timestamp', new Date().toISOString());
-  if(_originalSaveCfg) _originalSaveCfg();
-};
+/* ----- painel gerencial ----- */
+function renderGerencial(){
+  const hoje=TODAY;
+  const nomes=[...new Set(SALES.map(s=>s.empresa).concat(PAYS.map(p=>p.cliente)).filter(Boolean))];
+  const diasAtraso=iv=>Math.floor((new Date(hoje+'T12:00:00')-new Date(iv.venc+'T12:00:00'))/86400000);
+  const linhas=nomes.map(c=>{
+    const vendas=SALES.filter(s=>s.empresa===c);
+    const vendido=vendas.reduce((a,s)=>a+(s.total_usd||0),0);
+    const recebido=PAYS.filter(p=>p.cliente===c).reduce((a,p)=>a+(p.valor_usd||0),0);
+    const abertas=INVOICES.filter(iv=>iv.cliente===c&&invRem(iv)>TOL);
+    const aberto=abertas.reduce((a,iv)=>a+invRem(iv),0);
+    const vencidas=abertas.filter(iv=>iv.venc&&iv.venc<hoje);
+    const vencido=vencidas.reduce((a,iv)=>a+invRem(iv),0);
+    const cad=CLIENTES_CAD.find(x=>x.nome.toLowerCase()===c.toLowerCase());
+    const limite=cad?cad.limite:0;
+    const faixas=[0,0,0,0];
+    vencidas.forEach(iv=>{const d=diasAtraso(iv);const k=d<=30?0:d<=60?1:d<=90?2:3;faixas[k]+=invRem(iv);});
+    return {c,vendido,recebido,aberto,vencido,limite,n:abertas.length,faixas};
+  }).sort((a,b)=>b.aberto-a.aberto);
+  const soma=k=>linhas.reduce((a,l)=>a+l[k],0);
+  const kpis=[
+    {lbl:'Vendido',val:fmtUSD(soma('vendido')),note:linhas.length+' cliente(s)',accent:1},
+    {lbl:'Recebido',val:fmtUSD(soma('recebido'))},
+    {lbl:'Em aberto',val:fmtUSD(soma('aberto')),note:'saldo das faturas'},
+    {lbl:'Vencido',val:fmtUSD(soma('vencido')),note:'já passou do vencimento',warn:soma('vencido')>TOL?1:0}
+  ];
+  document.getElementById('gKpis').innerHTML=kpis.map(c=>`<div class="kpi${c.accent?' accent':c.warn?' warn':''}">${(c.accent||c.warn)?'':'<span class="bar"></span>'}<div class="lbl">${c.lbl}</div><div class="val">${c.val}</div><div class="note">${c.note||''}</div></div>`).join('');
+  document.getElementById('gcount').textContent=linhas.length+' cliente(s)';
+  document.getElementById('gTbody').innerHTML=linhas.length?linhas.map(l=>{
+    const uso=l.limite>0?Math.round(l.aberto/l.limite*100)+'%':'—';
+    const estouro=l.limite>0&&l.aberto>l.limite;
+    return `<tr><td>${escH(l.c)}</td><td class="num">${fmtN(l.vendido)}</td><td class="num">${fmtN(l.recebido)}</td>
+      <td class="num"><b>${fmtN(l.aberto)}</b></td><td class="num">${fmtN(l.vencido)}</td>
+      <td class="num">${l.limite?fmtN(l.limite):'—'}</td><td class="num"${estouro?' style="color:#b03a2e;font-weight:700"':''}>${uso}</td><td class="num">${l.n}</td></tr>`;
+  }).join(''):'<tr><td colspan="8"><div class="empty">Sem lançamentos.</div></td></tr>';
+  const comAtraso=linhas.filter(l=>l.faixas.some(v=>v>TOL));
+  document.getElementById('gAging').innerHTML=comAtraso.length?comAtraso.map(l=>
+    `<tr><td>${escH(l.c)}</td>${l.faixas.map(v=>`<td class="num">${v>TOL?fmtN(v):'—'}</td>`).join('')}</tr>`).join('')
+    :'<tr><td colspan="5"><div class="empty">Nada vencido.</div></td></tr>';
+  const ch=linhas.find(l=>l.c==='Chacobras');
+  document.getElementById('gChac').innerHTML=ch
+    ?`<div class="kpis"><div class="kpi"><div class="lbl">Vendido à Chacobras</div><div class="val">${fmtUSD(ch.vendido)}</div></div>
+       <div class="kpi"><div class="lbl">Recebido da Chacobras</div><div class="val">${fmtUSD(ch.recebido)}</div></div>
+       <div class="kpi"><div class="lbl">Ainda a receber</div><div class="val">${fmtUSD(ch.aberto)}</div></div></div>`
+    :'<div class="empty">Nenhum lançamento com a Chacobras como cliente.</div>';
+}
 
 /* ---------- init ---------- */
-(function init(){
-  // URLs padrão embutidas — usadas quando o localStorage ainda não tem configuração salva
-  const DEFAULT_API  = 'https://script.google.com/macros/s/AKfycbwsOesXUznD708VFWECuul_FLntl_WN08HXqzm9-KwFJVrUZs_hqKlxkG9WhMFGjAGAIA/exec';
-  const DEFAULT_SHEET= 'https://docs.google.com/spreadsheets/d/1t40MGWjfA8d6oXZoVWG4MmssYxXYPeIUDgq_njY5bOo/edit';
-  console.log('🔐 Isolamento GitHub Pages ativado. Prefixo storage:', STORAGE_PREFIX);
-  const c=loadCfg();
-  if(c.mode)setMode(c.mode);
-  document.getElementById('urlApi').value   = c.api   || DEFAULT_API;
-  if(c.cargas)document.getElementById('urlCargas').value=c.cargas;
-  if(c.baixas)document.getElementById('urlBaixas').value=c.baixas;
-  if(c.chac)document.getElementById('urlChac').value=c.chac;
-  document.getElementById('urlSheet').value = c.sheet || DEFAULT_SHEET;
-  if(c.auto)document.getElementById('autoRefresh').checked=true;
-  // CORREÇÃO: Limpar filtros de pesquisa para evitar valores residuais do localStorage antigo
+let appStarted=false;
+function init(){
   document.querySelectorAll('input[type=search]').forEach(el => el.value = '');
   updateSheetLink();
-  loadEmbedded();
   renderCfgStatus();
-  if(c.auto&&cfgReady(c))loadCloud(c);
-})();
+  loadCloud(loadCfg());
+}
+function onLoggedIn_(ctx){
+  document.body.classList.remove('locked');
+  const quem=ctx&&ctx.usuario?(ctx.usuario.nome||ctx.usuario.n||ctx.usuario.u||''):'';
+  document.getElementById('usuarioAtual').textContent=quem;
+  // menu "Apps" do kit, com os apps liberados para a pessoa
+  const acoes=document.querySelector('#topoKit .ru-topo-acoes');
+  if(acoes&&window.RuralUI&&ctx){
+    const velho=acoes.querySelector('.ru-menu');
+    if(velho)velho.remove();
+    const temp=document.createElement('div');
+    RuralUI.topo(temp,{app:'ypoti',apps:ctx.apps||[],admin:!!(ctx.usuario&&ctx.usuario.adm)});
+    const menu=temp.querySelector('.ru-menu');
+    if(menu)acoes.insertBefore(menu,acoes.firstChild);
+  }
+  if(!appStarted){appStarted=true;init();}else{recarregarDados();}
+}
+document.getElementById('btnLogout').addEventListener('click',()=>RuralAuth.sair());
+RuralAuth.iniciar({app:'ypoti',aoEntrar:onLoggedIn_});
 </script>
 </body>
 </html>
