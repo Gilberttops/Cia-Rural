@@ -651,13 +651,10 @@
         <div class="ru-sub">Câmbio de vendas, recebimentos e resultado cambial por fatura</div>
       </div>
       <div class="ru-topo-acoes">
-        <button class="ru-btn prim" type="button" id="btnSyncOnline" title="Buscar os dados mais recentes da planilha online">Sincronizar</button>
-        <button class="ru-btn" type="button" id="btnImportSheets" title="Importar um arquivo .xlsx exportado do Google Sheets">Importar .xlsx</button>
         <button class="ru-btn" type="button" id="btnOpenSheet" title="Abrir a planilha no Google Sheets">Abrir planilha ↗</button>
         <button class="ru-btn" type="button" id="btnBackup" title="Baixar uma cópia dos dados em planilha (.xlsx)">Backup</button>
         <span class="ru-usuario" id="usuarioAtual"></span>
         <button class="ru-btn" type="button" id="btnLogout" title="Encerrar a sessão neste computador">Sair</button>
-        <input type="file" id="importFileInput" accept=".xlsx" style="display:none;">
       </div>
     </div>
   </header>
@@ -6465,15 +6462,6 @@
       capital: [{ from:'capitalDateFrom', to:'capitalDateTo', label:'Período' }]
     };
     document.getElementById('btnOpenSheet').addEventListener('click', openSheetLink);
-    document.getElementById('btnSyncOnline').addEventListener('click', handleSyncOnline);
-    document.getElementById('btnImportSheets').addEventListener('click', function(){
-      document.getElementById('importFileInput').click();
-    });
-    document.getElementById('importFileInput').addEventListener('change', function(e){
-      var file = e.target.files && e.target.files[0];
-      handleImportFile(file);
-      e.target.value = '';
-    });
 
     document.querySelectorAll('[data-print]').forEach(function(btn){
       btn.addEventListener('click', function(){
