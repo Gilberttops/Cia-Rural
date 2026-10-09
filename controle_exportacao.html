@@ -637,6 +637,7 @@
 <body class="locked">
 
 <script src="rural-auth.js"></script>
+<script src="rural-ui.js"></script>
 
 <div class="wrap">
 
@@ -5026,6 +5027,16 @@
     var quem = ctx && ctx.usuario ? (ctx.usuario.nome || ctx.usuario.n || ctx.usuario.u || '') : '';
     var campo = document.getElementById('usuarioAtual');
     if(campo) campo.textContent = quem;
+    // Menu "Apps" do kit (mesmo dos outros apps), com os apps liberados para a pessoa.
+    var acoes = document.querySelector('#topoKit .ru-topo-acoes');
+    if(acoes && window.RuralUI && ctx){
+      var velho = acoes.querySelector('.ru-menu');
+      if(velho) velho.remove();
+      var temp = document.createElement('div');
+      RuralUI.topo(temp, { app: 'exportacao', apps: ctx.apps || [], admin: !!(ctx.usuario && ctx.usuario.adm) });
+      var menu = temp.querySelector('.ru-menu');
+      if(menu) acoes.insertBefore(menu, acoes.firstChild);
+    }
     if(!appStarted){
       appStarted = true;
       init();
