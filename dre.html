@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="robots" content="noindex">
+<title>DRE · Rural</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="rural-ui.css">
+<link rel="icon" href="logo_rural.png">
+<style>
+/* Painel do DRE (gerado de painel_template.html; limitado a #dr-painel) */
+#dr-painel{--green-deep:#1B3A63;--green-mid:#2B914F;--wheat:#FECA39;--wheat-soft:#FCEFC7;--cream:#FAF7F0;--paper:#fff;
+        --ink:#1E2430;--ink-soft:#5B6472;--line:#E2E6EC;--danger:#B4462E;--warn:#C98A00;--real-blue:#2463AA;}
+#dr-painel *{box-sizing:border-box}
+#dr-painel{margin:0;background:var(--cream);color:var(--ink);font-family:'Outfit',sans-serif}
+#dr-painel .wrap{max-width:1400px;margin:0 auto;padding:20px 16px 48px}
+#dr-painel header{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between;margin-bottom:12px}
+#dr-painel h1{font-family:'Outfit',sans-serif;font-weight:700;font-size:1.9rem;margin:0;color:var(--green-deep);letter-spacing:-.5px}
+#dr-painel .sub{color:var(--ink-soft);font-size:.8rem;margin-top:4px}
+#dr-painel .tabs{display:flex;gap:6px;overflow-x:auto;margin:6px 0 14px;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+#dr-painel .tabs button{flex:0 0 auto;border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:8px 16px;font:600 .88rem 'Outfit',sans-serif;color:var(--ink-soft);cursor:pointer}
+#dr-painel .tabs button.on{background:var(--green-deep);border-color:var(--green-deep);color:#fff}
+#dr-painel .ctrls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+#dr-painel .seg{display:flex;background:var(--paper);border:1px solid var(--line);border-radius:10px;overflow:hidden;flex-wrap:wrap}
+#dr-painel .seg button{border:0;background:transparent;padding:7px 12px;font:600 .82rem 'Outfit',sans-serif;color:var(--ink-soft);cursor:pointer}
+#dr-painel .seg button.on{background:var(--green-deep);color:#fff}
+#dr-painel select{border:1px solid var(--line);border-radius:10px;padding:7px 10px;font:600 .82rem 'Outfit',sans-serif;background:var(--paper)}
+#dr-painel .bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;align-items:center}
+#dr-painel .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:14px}
+#dr-painel .kpi{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+#dr-painel .kpi .lbl{font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-soft);font-weight:600}
+#dr-painel .kpi .value{font-family:'Outfit',sans-serif;font-size:1.45rem;font-weight:600;color:var(--green-deep);margin-top:4px}
+#dr-painel .kpi .pct{font-size:.8rem;color:var(--ink-soft);margin-top:2px}
+#dr-painel .kpi .yoy{font-size:.78rem;margin-top:3px;font-weight:600}
+#dr-painel .up{color:var(--green-mid)}
+#dr-painel .down{color:var(--danger)}
+#dr-painel .neg{color:var(--danger)!important}
+#dr-painel .card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+#dr-painel .card h2{font-family:'Outfit',sans-serif;font-size:1.05rem;margin:0 0 4px;color:var(--green-deep)}
+#dr-painel .card .note{font-size:.78rem;color:var(--ink-soft);margin:0 0 10px}
+#dr-painel .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+#dr-painel .chartbox{position:relative;height:300px}
+#dr-painel .alerts{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:8px}
+#dr-painel .alert{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:.84rem;background:#fff}
+#dr-painel .dot{flex:0 0 10px;height:10px;border-radius:50%;margin-top:5px}
+#dr-painel .dot.r{background:var(--danger)}
+#dr-painel .dot.y{background:var(--wheat)}
+#dr-painel .dot.g{background:var(--green-mid)}
+#dr-painel .dot.i{background:var(--real-blue)}
+#dr-painel .alert b{color:var(--green-deep)}
+#dr-painel .alert .crit{font-size:.72rem;color:var(--ink-soft);margin-top:4px;line-height:1.35}
+#dr-painel .tbl{overflow-x:auto;-webkit-overflow-scrolling:touch}
+#dr-painel table{border-collapse:collapse;width:100%;font-size:.82rem;font-variant-numeric:tabular-nums}
+#dr-painel th,#dr-painel td{padding:5px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+#dr-painel th{position:sticky;top:0;background:var(--green-deep);color:#fff;font-weight:600;text-align:right}
+#dr-painel th:first-child,#dr-painel td:first-child{text-align:left;position:sticky;left:0;background:inherit;z-index:1}
+#dr-painel th:first-child{background:var(--green-deep);z-index:2}
+#dr-painel td{text-align:right}
+#dr-painel tr{background:var(--paper)}
+#dr-painel tr.grupo{background:#EEF2F7;font-weight:700}
+#dr-painel tr.total{background:var(--wheat-soft);font-weight:700}
+#dr-painel tr.sub{font-weight:600}
+#dr-painel tr.linha td:first-child{color:var(--ink-soft)}
+#dr-painel tr.memo td{font-style:italic;font-size:.76rem;color:var(--ink-soft)}
+#dr-painel td.acc,#dr-painel th.acc{border-left:2px solid var(--line);font-weight:700}
+#dr-painel .tog{cursor:pointer;user-select:none;display:inline-block;width:14px;color:var(--ink-soft)}
+#dr-painel .foot{color:var(--ink-soft);font-size:.75rem;margin-top:8px}
+#dr-painel .toolbar{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+#dr-painel .toolbar button{border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:5px 10px;font:600 .78rem 'Outfit',sans-serif;cursor:pointer}
+#dr-painel .hide{display:none!important}
+#dr-painel .badge{font:600 .7rem 'Outfit',sans-serif;background:var(--wheat);color:var(--green-deep);border-radius:6px;padding:2px 8px;vertical-align:middle;letter-spacing:0}
+#dr-painel .pr{background:var(--wheat-soft);border-radius:6px;padding:1px 6px;font-size:.7rem;font-weight:700;color:var(--green-deep)}
+#dr-painel .kpis>*,#dr-painel .grid2>*,#dr-painel .alerts>*,#dr-painel .card,#dr-painel section{min-width:0}
+#dr-painel{max-width:100%}
+#dr-painel .chartbox{width:100%;max-width:100%}
+#dr-painel .chartbox canvas{max-width:100%}
+#dr-painel #err{color:var(--danger);font-size:.8rem}
+@media (max-width:760px){#dr-painel .wrap{padding:12px 10px 40px}
+#dr-painel h1{font-size:1.45rem}
+#dr-painel .grid2{grid-template-columns:1fr}
+#dr-painel .chartbox{height:240px}
+#dr-painel .kpis{grid-template-columns:repeat(2,1fr);gap:8px}
+#dr-painel .kpi{padding:10px 11px}
+#dr-painel .kpi .value{font-size:1.15rem}
+#dr-painel .kpi .yoy,#dr-painel .kpi .pct{font-size:.72rem}
+#dr-painel .seg button{padding:6px 9px;font-size:.76rem}
+#dr-painel table{font-size:.76rem}
+#dr-painel th,#dr-painel td{padding:4px 6px}}
+.dr-msg{max-width:1400px;margin:24px auto;padding:0 16px;color:var(--ru-tinta2,#6B7280)}
+.dr-msg.dr-erro{color:var(--ru-vermelho,#B4462E);font-weight:600}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="app"></div>
+<script src="rural-auth.js"></script>
+<script src="rural-ui.js"></script>
+<script src="dre-app.js"></script>
+<script>
+  // Script de dados do DRE (planilha "DRE"). Sem login ele não entrega nada.
+  var DRE_URL = 'https://script.google.com/macros/s/AKfycby_6bXd2_-PzI0GNpD0Zt_07k3Nfa9ttT7P2UnPLBM9hL2tvBrOCWejieBY4psy_ec08Q/exec';
+  RuralAuth.iniciar({
+    app: 'dre',
+    aoEntrar: function (ctx) {
+      DreApp.montar(document.getElementById('app'), {
+        url: DRE_URL, logo: 'logo_rural.png', usuario: ctx.usuario, apps: ctx.apps, aoSair: function () { RuralAuth.sair(); }
+      });
+    }
+  });
+</script>
+</body>
+</html>
