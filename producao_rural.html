@@ -4636,7 +4636,9 @@ function salvarNovaCotacao(){
     status:'pendente'
   });
   var destravar=travarBotao(document.querySelector('[onclick^="salvarNovaCotacao("]'),'Salvando...');
-  apiPost(payload).then(function(){
+  /* _editar so vai no pedido (o servidor so troca a receita de cotacao pendente com essa marca);
+     nao fica guardado, senao um aprovar/recusar depois seria tratado como edicao. */
+  apiPost(editando?Object.assign({},payload,{_editar:true}):payload).then(function(){
     destravar();
     syncGravou();
     cotacoesRemoto[id]=payload;
