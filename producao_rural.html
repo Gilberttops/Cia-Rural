@@ -1120,7 +1120,7 @@ input:focus,select:focus{border-color:var(--ru-azul);box-shadow:0 0 0 3px rgba(3
     </div>
     <div style="padding:12px 16px;border-top:1px solid var(--border);background:var(--s1);display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--t3)">+ Adicionar materia-prima:</span>
-      <select id="op-add-mp-sel" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;min-width:260px"></select>
+      <input type="text" id="op-add-mp-sel" list="dl-mp-ings" autocomplete="off" placeholder="Digite o código ou o nome da MP..." style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;min-width:260px">
       <input type="number" id="op-add-mp-qtd" placeholder="Qtd (kg/batida)" step="0.01" min="0" style="width:150px;padding:6px 8px;border:1px solid var(--border);border-radius:6px">
       <button class="btn btn-primary" onclick="adicionarMPNaOP('op-add-mp-sel','op-add-mp-qtd')">+ Adicionar</button>
     </div>
@@ -1217,7 +1217,7 @@ input:focus,select:focus{border-color:var(--ru-azul);box-shadow:0 0 0 3px rgba(3
     </div>
     <div style="padding:12px 16px;border-top:1px solid var(--border);background:var(--s1);display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--t3)">+ Adicionar materia-prima:</span>
-      <select id="opi-add-mp-sel" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;min-width:260px"></select>
+      <input type="text" id="opi-add-mp-sel" list="dl-mp-ings" autocomplete="off" placeholder="Digite o código ou o nome da MP..." style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;min-width:260px">
       <input type="number" id="opi-add-mp-qtd" placeholder="Qtd (kg/batida)" step="0.01" min="0" style="width:150px;padding:6px 8px;border:1px solid var(--border);border-radius:6px">
       <button class="btn btn-primary" onclick="adicionarMPNaOP('opi-add-mp-sel','opi-add-mp-qtd')">+ Adicionar</button>
     </div>
@@ -1476,9 +1476,10 @@ input:focus,select:focus{border-color:var(--ru-azul);box-shadow:0 0 0 3px rgba(3
     <div class="modal-body">
       <div style="font-size:12px;color:var(--t3);margin-bottom:10px">Criado por <strong id="pc-criador">—</strong> em <span id="pc-data">—</span> · Destino: <strong id="pc-banco-nome">—</strong></div>
       <table class="nf-ings-table" style="margin-bottom:16px">
-        <thead><tr><th>Cód.</th><th>Ingrediente</th><th style="width:100px">Kg/batida</th></tr></thead>
+        <thead><tr><th>Cód.</th><th>Ingrediente</th><th style="width:90px;text-align:right">Kg/batida</th><th style="width:90px;text-align:right">R$/ton</th><th style="width:100px;text-align:right">R$/batida</th><th style="width:170px">Peso no custo MP+Emb</th></tr></thead>
         <tbody id="pc-ings-tbody"></tbody>
       </table>
+      <div style="font-size:11px;color:var(--t3);margin:-10px 0 14px">Ordenado pelo que mais pesa no custo. % = participação de cada item no custo de MP + embalagem da batida.</div>
       <div style="padding:14px 16px;background:var(--blu-lt);border:1px solid var(--blu-bd);border-radius:8px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--blue)">Custos</span><span class="chave-cmv-slot"></span></div>
         <div class="nf-row" style="margin-bottom:10px">
@@ -1516,6 +1517,8 @@ input:focus,select:focus{border-color:var(--ru-azul);box-shadow:0 0 0 3px rgba(3
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="fecharPrecificarCotacao()">Fechar</button>
+      <button class="btn btn-ghost" onclick="pdfCotacaoCliente()" title="Só nome e preço de venda — para mandar ao cliente">📄 PDF cliente</button>
+      <button class="btn btn-ghost" onclick="pdfCotacaoCustos()" title="Custos por MP, encargos, margens e preços — uso interno">📊 PDF custos</button>
       <button class="btn btn-ghost" style="color:var(--red);border-color:var(--red-bd)" onclick="recusarCotacao()">✖ Recusar</button>
       <button class="btn btn-primary" onclick="aprovarCotacao()">✅ Aprovar e criar produto</button>
     </div>
@@ -1755,11 +1758,7 @@ function popularSelectsEmbalagem(){
 }
 function popularSelectsAdicionarMP(){
   var mps=MPitens.filter(function(m){return m.t==='mp'&&!m.inativo;}).sort(function(a,b){return a.d.localeCompare(b.d);});
-  var optsHtml='<option value="">selecione a materia-prima...</option>'+mps.map(function(m){return '<option value="'+m.cod+'">'+m.cod+' — '+m.d+'</option>';}).join('');
-  ['op-add-mp-sel','opi-add-mp-sel'].forEach(function(id){
-    var sel=$(id);
-    if(sel)sel.innerHTML=optsHtml;
-  });
+  mpPreencherDatalist_(mps); /* os campos de adicionar MP na OP agora sao digitaveis (codigo ou nome) */
 }
 
 let mpFiltroTipo='todas';
@@ -2497,6 +2496,7 @@ function renderIngs(){
   let acum=0;
   const balClr=['','#92400e','#1e40af','#065f46'];
   const balBg=['','#fef3c7','#dbeafe','#d1fae5'];
+  mpPreencherDatalist_(mpListaIngs_(ings));
   $('ing-tbody').innerHTML=ings.map((ing,idx)=>{
     acum+=ing.qtd;
     const mp=MPcusto[ing.cod]!==undefined?{d:MPitens.find(m=>m.cod==ing.cod)?.d||'—',c:MPcusto[ing.cod]}:null;
@@ -2507,7 +2507,7 @@ function renderIngs(){
     const bal=ing.bal||balancaDoMP(ing.cod);
     const balStyle=bal>0?'background:'+balBg[bal]+';color:'+balClr[bal]+';font-weight:700':'color:var(--t3)';
     return '<tr>'
-      +'<td><input type="number" value="'+(ing.cod||'')+'" style="width:56px" onchange="updIngCod('+idx+',this.value)" placeholder="cod"></td>'
+      +'<td><input type="text" list="dl-mp-ings" autocomplete="off" value="'+(ing.cod||'')+'" style="width:90px" onchange="updIngCod('+idx+',mpCodDoCampo_(this))" onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}" placeholder="cód. ou nome" title="Digite o código ou o nome da matéria-prima"></td>'
       +'<td style="font-size:12px;max-width:140px;color:var(--t2)">'+nome+'</td>'
       +'<td style="text-align:center;padding:3px 4px"><select style="font-size:11px;padding:2px 3px;border:1px solid var(--border);border-radius:4px;'+balStyle+'" onchange="updIngBal('+idx+',this.value)"><option value="0"'+(bal==0?' selected':'')+'>-</option><option value="1"'+(bal==1?' selected':'')+'>B1</option><option value="2"'+(bal==2?' selected':'')+'>B2</option><option value="3"'+(bal==3?' selected':'')+'>B3</option></select></td>'
       +'<td class="r"><input type="number" class="r" value="'+ing.qtd.toFixed(2)+'" step="0.01" min="0" style="width:80px" oninput="updIngQtd('+idx+',this.value,true)" onchange="updIngQtd('+idx+',this.value)"></td>'
@@ -2524,7 +2524,7 @@ function renderIngs(){
   if(totAcumEl){const cor=Math.abs(totalKg-(gv('batida')||1000))<0.01?'var(--green)':totalKg>(gv('batida')||1000)?'var(--red)':'var(--blue)';totAcumEl.textContent=fd2(totalKg)+' kg';totAcumEl.style.color=cor;}
   recalc();
 }
-function updIngCod(i,v){ings[i].cod=parseInt(v)||null;renderIngs();}
+function updIngCod(i,v){if(v===''&&ings[i].cod){renderIngs();return;}ings[i].cod=parseInt(v)||null;renderIngs();}
 /* Enquanto digita (parcial=true) so recalcula: re-renderizar a tabela a cada tecla tirava o foco do campo. */
 function updIngQtd(i,v,parcial){ings[i].qtd=parseFloat(v)||0;if(parcial){recalc();return;}renderIngs();}
 function updIngBal(i,v){ings[i].bal=parseInt(v)||0;renderIngs();}
@@ -2955,9 +2955,10 @@ function desfazerRemocaoMP(cod){
 }
 function adicionarMPNaOP(selectId,qtdId){
   var sel=$(selectId),qtdInp=$(qtdId);
-  var cod=parseInt(sel.value);
+  var mAdd=mpResolverTexto_(sel.value,MPitens.filter(function(m){return m.t==='mp'&&!m.inativo;}));
+  var cod=mAdd?mAdd.cod:0;
   var qtd=parseFloat(qtdInp.value);
-  if(!cod){alert('Escolha uma materia-prima.');return;}
+  if(!cod){alert(sel.value.trim()?'Matéria-prima não encontrada (ou o nome bate com mais de uma). Digite o código ou escolha na lista.':'Escolha uma materia-prima.');return;}
   if(isNaN(qtd)||qtd<=0){alert('Informe uma quantidade maior que zero.');return;}
   if(ings.some(function(i){return i.cod===cod;})||opNovos.some(function(i){return i.cod===cod;})){
     alert('Esta materia-prima ja esta na formula.');return;
@@ -3045,8 +3046,10 @@ function salvarEdicoesOPIvi(){salvarEdicoesOP('rna');}
 function descartarEdicoesOPIvi(){descartarEdicoesOP();}
 function opMpSelectHtml(codAtual,onchangeExpr){
   var mps=MPitens.filter(function(m){return m.t==='mp'&&(!m.inativo||m.cod==codAtual);}).sort(function(a,b){return a.d.localeCompare(b.d);});
-  var opts=mps.map(function(m){return '<option value="'+m.cod+'"'+(m.cod==codAtual?' selected':'')+'>'+m.cod+' — '+m.d+'</option>';}).join('');
-  return '<select style="font-size:15px;font-weight:600;padding:4px 6px;border:1px solid var(--border);border-radius:5px;max-width:260px" onchange="'+onchangeExpr+'">'+opts+'</select>';
+  mpPreencherDatalist_(mps);
+  var atual=mps.find(function(m){return m.cod==codAtual;});
+  var val=atual?mpRotulo_(atual).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'):'';
+  return '<input type="text" list="dl-mp-ings" autocomplete="off" value="'+val+'" title="Digite o código ou o nome para trocar a matéria-prima" onfocus="this.select()" onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}" style="font-size:15px;font-weight:600;padding:4px 6px;border:1px solid var(--border);border-radius:5px;width:260px" onchange="'+onchangeExpr.replace('this.value','mpCodDoCampo_(this)')+'">';
 }
 function atualizarNovoMPCod(idx,val){
   var novoCod=parseInt(val);
@@ -4533,14 +4536,65 @@ function abrirEditarCotacao(id){
 function fecharNovaCotacao(){$('nova-cotacao-modal').style.display='none';cotEditId=null;}
 function cotAddIngLinha(){cotIngRows.push({cod:null,qtd:0});renderCotIngs();}
 function cotRemoveIngLinha(idx){cotIngRows.splice(idx,1);renderCotIngs();}
-function cotUpdateIngCod(idx,val){cotIngRows[idx].cod=val?parseInt(val):null;}
+/* Campo de MP digitavel (codigo ou nome) com sugestoes, no lugar da lista suspensa.
+   Aceita "123", "123 — NOME", o nome exato ou um pedaco do nome que identifique uma unica MP. */
+function mpListaIngs_(rows){
+  return MPitens.filter(function(m){return m.t==='mp'&&(!m.inativo||rows.some(function(r){return r.cod===m.cod;}));}).sort(function(a,b){return a.d.localeCompare(b.d);});
+}
+function mpRotulo_(m){return m.cod+' — '+m.d;}
+function mpPreencherDatalist_(mps){
+  var dl=document.getElementById('dl-mp-ings');
+  if(!dl){dl=document.createElement('datalist');dl.id='dl-mp-ings';document.body.appendChild(dl);}
+  var h=function(v){return String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');};
+  dl.innerHTML=mps.map(function(m){return '<option value="'+h(mpRotulo_(m))+'">';}).join('');
+}
+function mpCampoHtml_(row,mps,fnNome,idx){
+  var m=row.cod?mps.find(function(x){return x.cod===row.cod;}):null;
+  var val=m?mpRotulo_(m).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'):'';
+  return '<input type="text" list="dl-mp-ings" autocomplete="off" placeholder="Digite o código ou o nome..." value="'+val+'"'
+    +' onchange="'+fnNome+'('+idx+',this)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}">';
+}
+function mpResolverTexto_(txt,mps){
+  txt=String(txt||'').trim();
+  if(!txt)return null;
+  var num=txt.match(/^(\d+)(\s*[—-]|$)/);
+  if(num){var c=parseInt(num[1]);return mps.find(function(m){return m.cod===c;})||null;}
+  var t=txt.toLowerCase();
+  var exato=mps.find(function(m){return m.d.toLowerCase()===t;});
+  if(exato)return exato;
+  var parc=mps.filter(function(m){return m.d.toLowerCase().indexOf(t)>=0;});
+  return parc.length===1?parc[0]:null;
+}
+/* Para campos fora das tabelas de linhas (OP, ficha): devolve o codigo da MP digitada ou '' (e avisa). */
+function mpCodDoCampo_(inp){
+  var mps=MPitens.filter(function(m){return m.t==='mp';});
+  var m=mpResolverTexto_(inp.value,mps);
+  if(!m){
+    if(inp.value.trim())toast('MP não encontrada ou o nome bate com mais de uma. Digite o código ou escolha na lista.');
+    inp.value=inp.defaultValue;return '';
+  }
+  inp.value=mpRotulo_(m);return m.cod;
+}
+function mpAplicarCampo_(rows,idx,inp,mps){
+  var m=mpResolverTexto_(inp.value,mps);
+  if(!inp.value.trim()){rows[idx].cod=null;inp.style.borderColor='';return;}
+  if(!m){
+    rows[idx].cod=null;inp.style.borderColor='var(--red)';
+    toast('MP não encontrada ou o nome bate com mais de uma. Digite o código ou escolha na lista.');
+    return;
+  }
+  rows[idx].cod=m.cod;inp.value=mpRotulo_(m);inp.style.borderColor='';
+  var q=inp.closest('tr')&&inp.closest('tr').querySelector('input[type=number]');
+  if(q){q.focus();q.select();}
+}
+function cotUpdateIngCod(idx,inp){mpAplicarCampo_(cotIngRows,idx,inp,mpListaIngs_(cotIngRows));}
 function cotUpdateIngQtd(idx,val){cotIngRows[idx].qtd=parseFloat(val)||0;atualizarCotTotal();}
 function renderCotIngs(){
-  var mps=MPitens.filter(function(m){return m.t==='mp'&&(!m.inativo||cotIngRows.some(function(r){return r.cod===m.cod;}));}).sort(function(a,b){return a.d.localeCompare(b.d);});
+  var mps=mpListaIngs_(cotIngRows);
+  mpPreencherDatalist_(mps);
   $('cot-ings-tbody').innerHTML=cotIngRows.map(function(row,idx){
-    var opts='<option value="">selecione...</option>'+mps.map(function(m){return '<option value="'+m.cod+'"'+(row.cod===m.cod?' selected':'')+'>'+m.cod+' — '+m.d+'</option>';}).join('');
     return '<tr>'
-      +'<td><select onchange="cotUpdateIngCod('+idx+',this.value)">'+opts+'</select></td>'
+      +'<td>'+mpCampoHtml_(row,mps,'cotUpdateIngCod',idx)+'</td>'
       +'<td><input type="number" step="0.01" min="0" value="'+(row.qtd||0)+'" onchange="cotUpdateIngQtd('+idx+',this.value)"></td>'
       +'<td><button type="button" class="nf-del-btn" onclick="cotRemoveIngLinha('+idx+')">×</button></td>'
       +'</tr>';
@@ -4650,11 +4704,6 @@ function abrirPrecificarCotacao(id){
   $('pc-comissao').value=(eC.comis*100).toFixed(2);
   $('pc-fretes').value=((eC.fretes+eC.outrosCom)*100).toFixed(2);
   $('pc-fixas').value=(eC.fixas*100).toFixed(2);
-  var ings=lerIngsJSON(c.ingsJSON);
-  $('pc-ings-tbody').innerHTML=ings.map(function(i){
-    var nome=(MPitens.find(function(m){return m.cod==i.cod;})||{d:'não encontrado'}).d;
-    return '<tr><td class="mono">'+i.cod+'</td><td>'+nome+'</td><td class="r">'+fn(i.qtd,2)+'</td></tr>';
-  }).join('');
   atualizarChavesCMV();
   atualizarPrecificacaoCotacao();
   $('precificar-cotacao-modal').style.display='flex';
@@ -4670,7 +4719,26 @@ function atualizarPrecificacaoCotacao(){
   var embSaco=embCusto*peso/(pesoEmbalagemReal(fC).kg||peso||1); /* D3: rateio pelo peso real */
   var ings=lerIngsJSON(c.ingsJSON);
   var mpBat=0;
-  ings.forEach(function(i){var custo=custoMPBase(i.cod,c.banco)||0;mpBat+=(i.qtd||0)*(custo/1000);});
+  var itens=ings.map(function(i){
+    var custo=custoMPBase(i.cod,c.banco)||0,tot=(i.qtd||0)*(custo/1000);mpBat+=tot;
+    var nome=(MPitens.find(function(m){return m.cod==i.cod;})||{d:'não encontrado'}).d;
+    return {cod:i.cod,nome:nome,qtd:i.qtd||0,ton:custo,bat:tot};
+  });
+  var embBat=embSaco*sacos;
+  if(embBat>0)itens.push({cod:'',nome:'Embalagem'+(c.embDesc?' — '+c.embDesc:''),qtd:null,ton:null,bat:embBat,emb:true});
+  var baseBat=mpBat+embBat;
+  itens.forEach(function(it){it.pct=baseBat>0?it.bat/baseBat*100:0;});
+  itens.sort(function(a,b){return b.bat-a.bat;});
+  var escH=function(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;');};
+  $('pc-ings-tbody').innerHTML=itens.map(function(it){
+    var cor=it.pct>=20?'var(--red)':it.pct>=8?'var(--amber)':'var(--blue)';
+    return '<tr'+(it.emb?' style="font-style:italic"':'')+'><td class="mono">'+escH(it.cod)+'</td><td>'+escH(it.nome)+'</td>'
+      +'<td class="r">'+(it.qtd==null?'—':fn(it.qtd,2))+'</td>'
+      +'<td class="r">'+(it.ton==null?'—':(it.ton>0?fn(it.ton,2):'<span style="color:var(--red)" title="Sem custo cadastrado">sem custo</span>'))+'</td>'
+      +'<td class="r">'+fn(it.bat,2)+'</td>'
+      +'<td><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden"><div style="width:'+Math.min(100,it.pct).toFixed(1)+'%;height:100%;background:'+cor+'"></div></div><b style="min-width:46px;text-align:right">'+fn(it.pct,1)+'%</b></div></td></tr>';
+  }).join('')
+    +'<tr style="font-weight:700;border-top:2px solid var(--bd2)"><td></td><td>Total</td><td class="r">'+fn(ings.reduce(function(s,i){return s+(i.qtd||0);},0),2)+'</td><td></td><td class="r">'+fn(baseBat,2)+'</td><td style="text-align:right">100%</td></tr>';
   var custoSaco=sacos>0?(mpBat/sacos)+embSaco:0;
   var custoKg=peso>0?custoSaco/peso:0;
 
@@ -4701,6 +4769,94 @@ function atualizarPrecificacaoCotacao(){
   $('pc-preco-saco').value='R$ '+(isFinite(precoSaco)&&precoSaco>0?precoSaco.toFixed(2).replace('.',','):'—');
   $('pc-preco-kg-m0').value='R$ '+(isFinite(precoKgM0)&&precoKgM0>0?precoKgM0.toFixed(3).replace('.',','):'—');
   $('pc-preco-saco-m0').value='R$ '+(isFinite(precoSacoM0)&&precoSacoM0>0?precoSacoM0.toFixed(2).replace('.',','):'—');
+  /* Guardado para os PDFs (cliente e custos) sairem iguais ao que esta na tela. */
+  pcCalc={c:c,itens:itens,batida:batida,peso:peso,pesoVenda:pesoVenda,sacos:sacos,mpBat:mpBat,embBat:embBat,baseBat:baseBat,
+    custoKg:custoKg,custoProducaoTon:custoProducaoTon,custoFreteTon:custoFreteTon,custoTotalKg:custoTotalKg,custoTotalSaco:custoTotalSaco,
+    impostos:impostos,comissao:comissao,fretesPct:fretesPct,fixasPct:fixasPct,margem:margem,enc:enc,
+    precoKg:precoKg,precoSaco:precoSaco,precoKgM0:precoKgM0,precoSacoM0:precoSacoM0,cmvReal:baseCMVReal()};
+}
+let pcCalc=null;
+function pcNomeProduto_(){return ($('pc-nome-real').value||'').trim()||(pcCalc&&pcCalc.c.nomeGenerico)||'—';}
+function pcAbrirDoc_(titulo,corpo){
+  var doc='<html><head><meta charset="UTF-8"><title>'+titulo+'</title><style>'
+    +'*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:-apple-system,Segoe UI,sans-serif;font-size:13px;color:#18180f;padding:24px}'
+    +'@media print{@page{margin:12mm;size:A4 portrait}.pbtn{display:none}}'
+    +'.hdr{display:flex;align-items:center;gap:16px;border-bottom:3px solid #1d4ed8;padding-bottom:12px;margin-bottom:18px}'
+    +'.hdr img{height:50px}.hdr-titulo{font-size:19px;font-weight:800;color:#1d4ed8}.hdr-sub{font-size:11px;color:#6b7280}'
+    +'.prod{font-size:22px;font-weight:800;margin-bottom:10px}'
+    +'.info{display:flex;flex-wrap:wrap;gap:6px 22px;margin-bottom:14px;font-size:12px;color:#374151}.info b{color:#18180f}'
+    +'h3{font-size:13px;text-transform:uppercase;color:#1d4ed8;margin:16px 0 8px}'
+    +'table{width:100%;border-collapse:collapse;margin-bottom:10px}'
+    +'th{background:#f0efe9;text-align:left;font-size:10.5px;text-transform:uppercase;padding:6px 7px;border-bottom:2px solid #c8c5bc}'
+    +'td{padding:5px 7px;border-bottom:1px solid #e2dfd7}td.r,th.r{text-align:right}td.c{font-family:monospace;color:#6b7280}'
+    +'tr.tot td{font-weight:800;border-top:2px solid #c8c5bc}tr.dest td{background:#eff6ff;font-weight:800}'
+    +'.bar{height:7px;background:#e5e7eb;border-radius:4px;overflow:hidden}.bar div{height:100%;background:#1d4ed8}'
+    +'.preco{border:2px solid #1d4ed8;border-radius:10px;padding:18px;text-align:center;margin:20px 0}'
+    +'.preco span{display:block;font-size:12px;text-transform:uppercase;color:#6b7280}.preco b{font-size:30px;color:#1d4ed8}'
+    +'.obs{font-size:11px;color:#6b7280;margin-top:10px}'
+    +'.footer{margin-top:28px;border-top:2px solid #1d4ed8;padding-top:10px;text-align:center;font-size:12px;font-weight:700;color:#1d4ed8}'
+    +'.pbtn{position:fixed;top:16px;right:16px;padding:10px 18px;background:#1d4ed8;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer}'
+    +'</style></head><body><button class="pbtn" onclick="window.print()">Imprimir / Salvar PDF</button>'+corpo
+    +'<div class="footer">Rural Nutrição Animal</div></body></html>';
+  var win=window.open('','_blank','width=900,height=900');
+  if(!win){alert('O navegador bloqueou a janela de impressão. Libere pop-ups para este site e tente de novo.');return;}
+  win.document.write(doc);win.document.close();
+}
+function pcH_(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function pcRs_(v,d){return isFinite(v)?'R$ '+fn(v,d==null?2:d):'—';}
+/* PDF para o cliente: so nome do produto e preco de venda (sem custos nem composicao). */
+function pdfCotacaoCliente(){
+  var p=pcCalc;if(!p){toast('Abra uma cotação para precificar primeiro.');return;}
+  if(!(isFinite(p.precoSaco)&&p.precoSaco>0)){alert('O preço de venda não fecha com os % informados (encargos + lucro ≥ 100%).');return;}
+  var nome=pcNomeProduto_(),cod=($('pc-cod-real').value||'').trim();
+  var corpo='<div class="hdr"><img src="'+LOGO_RURAL+'" alt="Rural"><div><div class="hdr-titulo">Proposta de Preço</div><div class="hdr-sub">'+pcH_(new Date().toLocaleDateString('pt-BR'))+'</div></div></div>'
+    +'<div class="prod">'+(cod?pcH_(cod)+' — ':'')+pcH_(nome)+'</div>'
+    +'<div class="info"><div>Embalagem: <b>'+fn(p.pesoVenda,p.pesoVenda%1===0?0:1)+' kg</b></div></div>'
+    +'<div class="preco"><span>Valor de venda por saco ('+fn(p.pesoVenda,p.pesoVenda%1===0?0:1)+' kg)</span><b>'+pcRs_(p.precoSaco)+'</b></div>'
+    +'<table><tr><td>Valor por kg</td><td class="r"><b>'+pcRs_(p.precoKg,3)+'</b></td></tr>'
+    +'<tr><td>Valor por tonelada</td><td class="r"><b>'+pcRs_(p.precoKg*1000)+'</b></td></tr></table>'
+    +'<div class="obs">Valores sujeitos a alteração conforme o mercado das matérias-primas.</div>';
+  pcAbrirDoc_('Proposta — '+pcH_(nome),corpo);
+}
+/* PDF interno: custo de cada MP e quanto pesa, encargos, margens e precos. */
+function pdfCotacaoCustos(){
+  var p=pcCalc;if(!p){toast('Abra uma cotação para precificar primeiro.');return;}
+  var c=p.c,nome=pcNomeProduto_(),cod=($('pc-cod-real').value||'').trim(),pv=p.pesoVenda;
+  var linhas=p.itens.map(function(it){
+    return '<tr><td class="c">'+pcH_(it.cod)+'</td><td>'+pcH_(it.nome)+'</td>'
+      +'<td class="r">'+(it.qtd==null?'—':fn(it.qtd,2))+'</td><td class="r">'+(it.ton==null?'—':fn(it.ton,2))+'</td>'
+      +'<td class="r">'+fn(it.bat,2)+'</td><td class="r">'+pcRs_(p.sacos>0?it.bat/p.sacos:0)+'</td>'
+      +'<td style="width:120px"><div class="bar"><div style="width:'+Math.min(100,it.pct).toFixed(1)+'%"></div></div></td><td class="r"><b>'+fn(it.pct,1)+'%</b></td></tr>';
+  }).join('');
+  var precoS=p.precoSaco,ok=isFinite(precoS)&&precoS>0;
+  function linhaPct(rot,pct){return '<tr><td>'+rot+'</td><td class="r">'+fn(pct*100,2)+'%</td><td class="r">'+(ok?pcRs_(precoS*pct):'—')+'</td><td class="r">'+(ok?pcRs_(p.precoKg*pct,3):'—')+'</td></tr>';}
+  var extrasSaco=(p.custoProducaoTon+p.custoFreteTon)/1000*pv;
+  var corpo='<div class="hdr"><img src="'+LOGO_RURAL+'" alt="Rural"><div><div class="hdr-titulo">Precificação de Cotação — Custos e Margens</div><div class="hdr-sub">Uso interno · emitido em '+pcH_(new Date().toLocaleString('pt-BR'))+' por '+pcH_(getNomeColaborador())+'</div></div></div>'
+    +'<div class="prod">'+(cod?pcH_(cod)+' — ':'')+pcH_(nome)+'</div>'
+    +'<div class="info"><div>Cotação: <b>'+pcH_(c.nomeGenerico)+'</b></div><div>Unidade: <b>'+(c.banco==='rna'?'RNA - Ivinhema':'RURAL - Eldorado')+'</b></div>'
+    +'<div>Criada por: <b>'+pcH_(c.criadoPor||'—')+'</b> em '+pcH_(c.dataHora||'—')+'</div>'
+    +'<div>Batida: <b>'+fn(p.batida,0)+' kg</b></div><div>Saco: <b>'+fn(pv,pv%1===0?0:1)+' kg</b></div><div>Sacos/batida: <b>'+fn(p.sacos,p.sacos%1===0?0:1)+'</b></div>'
+    +'<div>Base de custo: <b>'+(p.cmvReal?'CMV real':'tabela')+'</b></div></div>'
+    +'<h3>Composição e peso de cada item no custo</h3>'
+    +'<table><thead><tr><th>Cód.</th><th>Item</th><th class="r">Kg/batida</th><th class="r">R$/ton</th><th class="r">R$/batida</th><th class="r">R$/saco</th><th></th><th class="r">% custo</th></tr></thead><tbody>'+linhas
+    +'<tr class="tot"><td></td><td>Total MP + embalagem</td><td></td><td></td><td class="r">'+fn(p.baseBat,2)+'</td><td class="r">'+pcRs_(p.sacos>0?p.baseBat/p.sacos:0)+'</td><td></td><td class="r">100%</td></tr></tbody></table>'
+    +'<h3>Custos</h3><table><thead><tr><th>Item</th><th class="r">R$/kg</th><th class="r">R$/saco</th></tr></thead><tbody>'
+    +'<tr><td>MP + embalagem</td><td class="r">'+pcRs_(p.custoKg,3)+'</td><td class="r">'+pcRs_(p.custoKg*pv)+'</td></tr>'
+    +(p.custoProducaoTon?'<tr><td>Custos extras do negócio ('+pcRs_(p.custoProducaoTon,0)+'/ton)</td><td class="r">'+pcRs_(p.custoProducaoTon/1000,3)+'</td><td class="r">'+pcRs_(p.custoProducaoTon/1000*pv)+'</td></tr>':'')
+    +(p.custoFreteTon?'<tr><td>Frete específico ('+pcRs_(p.custoFreteTon,0)+'/ton)</td><td class="r">'+pcRs_(p.custoFreteTon/1000,3)+'</td><td class="r">'+pcRs_(p.custoFreteTon/1000*pv)+'</td></tr>':'')
+    +'<tr class="tot"><td>Custo total</td><td class="r">'+pcRs_(p.custoTotalKg,3)+'</td><td class="r">'+pcRs_(p.custoTotalSaco)+'</td></tr></tbody></table>'
+    +'<h3>Formação do preço (% sobre o preço de venda)</h3><table><thead><tr><th>Item</th><th class="r">%</th><th class="r">R$/saco</th><th class="r">R$/kg</th></tr></thead><tbody>'
+    +'<tr><td>Custo total (CMV + extras)</td><td class="r">'+(ok?fn(p.custoTotalSaco/precoS*100,2)+'%':'—')+'</td><td class="r">'+pcRs_(p.custoTotalSaco)+'</td><td class="r">'+pcRs_(p.custoTotalKg,3)+'</td></tr>'
+    +linhaPct('Tributos',p.impostos)+linhaPct('Comissão',p.comissao)+linhaPct('Fretes / comerciais',p.fretesPct)+linhaPct('Despesas fixas',p.fixasPct)
+    +linhaPct('<b>Lucro líquido</b>',p.margem)
+    +'<tr class="dest"><td>Preço de venda (lucro alvo)</td><td class="r">100%</td><td class="r">'+pcRs_(precoS)+'</td><td class="r">'+pcRs_(p.precoKg,3)+'</td></tr>'
+    +'<tr><td>Preço mínimo (lucro 0)</td><td></td><td class="r">'+pcRs_(p.precoSacoM0)+'</td><td class="r">'+pcRs_(p.precoKgM0,3)+'</td></tr>'
+    +'<tr><td>Margem de contribuição (preço − custo − tributos − comissão − fretes)</td><td class="r">'+(ok?fn((1-p.custoTotalSaco/precoS-p.impostos-p.comissao-p.fretesPct)*100,2)+'%':'—')+'</td><td class="r">'+(ok?pcRs_(precoS*(1-p.impostos-p.comissao-p.fretesPct)-p.custoTotalSaco):'—')+'</td><td></td></tr>'
+    +'<tr><td>Markup sobre o custo total</td><td class="r">'+(ok&&p.custoTotalSaco>0?fn(precoS/p.custoTotalSaco,3)+'×':'—')+'</td><td></td><td></td></tr>'
+    +'</tbody></table>'
+    +'<div class="obs">Preço = custo total ÷ (1 − encargos − lucro). Preço mínimo cobre custo e encargos da unidade, sem lucro.</div>';
+  pcAbrirDoc_('Custos — '+pcH_(nome),corpo);
 }
 function marcarStatusCotacaoRemoto(c,novoStatus){
   var payload=Object.assign({},c,{tipo:'cotacao',status:novoStatus});
@@ -5223,14 +5379,14 @@ function popularSelectEmbNF(){
 }
 function nfAddIngLinha(){nfIngRows.push({cod:null,qtd:0});renderNFIngs();}
 function nfRemoveIngLinha(idx){nfIngRows.splice(idx,1);renderNFIngs();}
-function nfUpdateIngCod(idx,val){nfIngRows[idx].cod=val?parseInt(val):null;atualizarNFTotal();}
+function nfUpdateIngCod(idx,inp){mpAplicarCampo_(nfIngRows,idx,inp,mpListaIngs_(nfIngRows));atualizarNFTotal();}
 function nfUpdateIngQtd(idx,val){nfIngRows[idx].qtd=parseFloat(val)||0;atualizarNFTotal();}
 function renderNFIngs(){
-  var mps=MPitens.filter(function(m){return m.t==='mp'&&(!m.inativo||nfIngRows.some(function(r){return r.cod===m.cod;}));}).sort(function(a,b){return a.d.localeCompare(b.d);});
+  var mps=mpListaIngs_(nfIngRows);
+  mpPreencherDatalist_(mps);
   $('nf-ings-tbody').innerHTML=nfIngRows.map(function(row,idx){
-    var opts='<option value="">selecione...</option>'+mps.map(function(m){return '<option value="'+m.cod+'"'+(row.cod===m.cod?' selected':'')+'>'+m.cod+' — '+m.d+'</option>';}).join('');
     return '<tr>'
-      +'<td><select onchange="nfUpdateIngCod('+idx+',this.value)">'+opts+'</select></td>'
+      +'<td>'+mpCampoHtml_(row,mps,'nfUpdateIngCod',idx)+'</td>'
       +'<td><input type="number" step="0.01" min="0" value="'+(row.qtd||0)+'" onchange="nfUpdateIngQtd('+idx+',this.value)"></td>'
       +'<td><button type="button" class="nf-del-btn" onclick="nfRemoveIngLinha('+idx+')">×</button></td>'
       +'</tr>';
