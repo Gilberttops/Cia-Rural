@@ -143,6 +143,10 @@ header.ru-topo{border-bottom:0;padding-bottom:14px;margin-bottom:0;}   /* a regr
 .vd-aviso{border-radius:9px;padding:10px 14px;font-size:.84rem;margin:0 0 12px;border:1px solid transparent;}
 .vd-aviso.velho{background:var(--ru-vermelho-cl);color:var(--ru-vermelho);border-color:#E9B8AC;font-weight:600;}
 .vd-aviso.pipe{background:var(--ru-amarelo-cl);color:var(--ru-amarelo-txt);border-color:#F0DFA6;}
+.ficha-opc{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;padding:10px;border:1px solid #E2E6EC;border-radius:10px;background:#FAFBFC}
+.ficha-opc .fo-col{display:flex;flex-direction:column;gap:4px;min-width:170px}.ficha-opc label{font-size:.85rem;display:flex;gap:6px;align-items:center}
+.ficha-opc .fo-prods{flex:1;min-width:260px}.ficha-opc .fo-lista{max-height:180px;overflow:auto;border:1px solid #E2E6EC;border-radius:8px;padding:6px;background:#fff}
+.ficha-opc .fo-acoes{display:flex;align-items:center;gap:10px;width:100%}
 </style>
 </head>
 <body>
@@ -1147,6 +1151,147 @@ function produtosParados_(ci,cod,nomeCli){
   });
 }
 
+/* ---------- ficha do cliente em PDF (14/10/2026) ----------
+   Monta a ficha no navegador com os dados que o painel ja tem (mesmo filtro de permissao do servidor):
+   blocos escolhidos, produtos escolhidos e data de inicio; abre uma janela e chama "Imprimir / Salvar como PDF". */
+const FICHA_BLOCOS=[['indicadores','Indicadores'],['grafico','Compras mês a mês'],['produtos','Por produto'],['entrega','Entrega futura'],
+  ['parou','Produtos que parou de comprar'],['titulos','Títulos em aberto'],['margem','Margem estimada']];
+function fichaOpcoes_(ci){
+  const host=document.getElementById('fc-ficha-opc'); if(!host) return;
+  if(host.style.display!=='none'){host.style.display='none';return;}
+  const ano0=new Date().getFullYear()-1, prods=new Map();
+  for(let i=0;i<N;i++){ if(CO.c[i]!==ci||ANOS[CO.a[i]]<ano0-4) continue; prods.set(CO.p[i],(prods.get(CO.p[i])||0)+(CO.val[i]||0)); }
+  const lp=[...prods.entries()].filter(([p,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  const blocos=FICHA_BLOCOS.filter(([k])=>k!=='margem'||CMES);
+  host.innerHTML=`<div class="ficha-opc">
+    <div class="fo-col"><b>O que aparece</b>${blocos.map(([k,t])=>`<label><input type="checkbox" data-bl="${k}" checked> ${t}</label>`).join('')}</div>
+    <div class="fo-col"><b>Desde</b><input type="date" id="fp-ini" value="${ano0}-01-01"><span class="csub">até hoje</span></div>
+    <div class="fo-col fo-prods"><b>Produtos</b><label><input type="checkbox" id="fp-todos" checked> todos</label>
+      <div class="fo-lista">${lp.map(([p])=>`<label><input type="checkbox" data-pp="${p}" checked> ${esc(PROD[p].cod)} · ${esc(PROD[p].nome)}</label>`).join('')}</div></div>
+    <div class="fo-acoes"><button class="btn" id="fp-gerar" type="button">Gerar PDF</button><span class="csub" id="fp-msg"></span></div></div>`;
+  host.style.display='';
+  const todos=host.querySelector('#fp-todos');
+  todos.onchange=()=>host.querySelectorAll('[data-pp]').forEach(x=>x.checked=todos.checked);
+  host.querySelector('#fp-gerar').onclick=()=>{
+    const msg=host.querySelector('#fp-msg'); msg.textContent='';
+    const bl=[...host.querySelectorAll('[data-bl]:checked')].map(x=>x.dataset.bl);
+    const pp=new Set([...host.querySelectorAll('[data-pp]:checked')].map(x=>+x.dataset.pp));
+    const ini=host.querySelector('#fp-ini').value||(ano0+'-01-01');
+    if(!bl.length){msg.textContent='Escolha ao menos um bloco.';return;}
+    if(!pp.size){msg.textContent='Escolha ao menos um produto.';return;}
+    const ok=gerarFichaPdf_(ci,{bl,pp:pp.size===lp.length?null:pp,ini});
+    if(!ok) msg.textContent='O navegador bloqueou a janela da ficha — permita pop-ups para este site.';
+  };
+}
+function gerarFichaPdf_(ci,o){
+  const cli=CLI[ci], hoje=new Date(), MS=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const [iy,im,idia]=o.ini.split('-').map(Number), t0=iy*12+(im-1), tHoje=hoje.getFullYear()*12+hoje.getMonth();
+  const okP=p=>!o.pp||o.pp.has(p), tem=k=>o.bl.includes(k);
+  const R=(v,d)=>'R$ '+nf(v,d==null?2:d), N0=v=>nf(v,0);
+  const mens=new Map(), prod=new Map(), vendM=new Map(), anosV=new Map(); let mg=null, ytd=0, ytdAnt=0;
+  const ac=hoje.getFullYear(), mAte=hoje.getMonth();
+  for(let i=0;i<N;i++){
+    if(CO.c[i]!==ci||!okP(CO.p[i])) continue;
+    const a=ANOS[CO.a[i]];
+    for(let j=0;j<=mAte;j++){ if(a===ac) ytd+=MES[j][i]||0; else if(a===ac-1) ytdAnt+=MES[j][i]||0; }
+    if(a*12+11<t0||a*12>tHoje) continue;
+    const ms=[]; for(let j=0;j<12;j++){const t=a*12+j; if(t>=t0&&t<=tHoje) ms.push(j);}
+    let v=0,q=0;
+    if(a*12>=t0){v=CO.val[i]||0; q=CO.qtd[i]||0;}                       // ano inteiro no período: valor exato da linha
+    else for(const j of ms){v+=MES[j][i]||0; q+=QMES?(QMES[j][i]||0):0;}  // ano de início no meio: mês a mês
+    for(const j of ms){const mv_=MES[j][i]||0; if(mv_) mens.set(a*12+j,(mens.get(a*12+j)||0)+mv_);}
+    if(!v&&!q) continue;
+    let P=prod.get(CO.p[i]); if(!P){P={val:0,qtd:0,ano:new Map()};prod.set(CO.p[i],P);}
+    P.val+=v; P.qtd+=q; P.ano.set(a,(P.ano.get(a)||0)+v);
+    anosV.set(a,(anosV.get(a)||0)+v); vendM.set(CO.v[i],(vendM.get(CO.v[i])||0)+v);
+    if(tem('margem')&&CMES&&MGOK[i]){const g=mgLinha(i,ms); if(g){mg=mg||{rec:0,cmv:0,mc:0,ll:0};
+      mg.rec+=g[0]; mg.mc+=g[1]; mg.ll+=g[2]; for(const j of ms) mg.cmv+=CMES[j][i]||0;}}
+  }
+  const total=[...prod.values()].reduce((s,P)=>s+P.val,0);
+  const ton=[...prod.entries()].reduce((s,[p,P])=>s+P.qtd*(PESO[p]||0),0)/1000;
+  const anos=[...anosV.keys()].sort();
+  const tsC=[...mens.entries()].filter(([t,v])=>v>0).map(([t])=>t), ult=tsC.length?Math.max(...tsC):null;
+  const nMeses=tHoje-t0+1, vp=[...vendM.entries()].sort((a,b)=>b[1]-a[1])[0];
+  const var_=ytdAnt?(ytd-ytdAnt)/ytdAnt*100:null;
+  const dt=s=>s?s.slice(8,10)+'/'+s.slice(5,7)+'/'+s.slice(0,4):'–';
+  const filtroTxt=o.pp?'Produtos: '+[...o.pp].map(p=>PROD[p].cod).join(', ')+' · ':'';
+  // gráfico cronológico
+  const graf=(()=>{const seq=[]; for(let t=t0;t<=tHoje;t++) seq.push(t);
+    const vals=seq.map(t=>mens.get(t)||0), mx=Math.max(1,...vals)*1.08, W=720,H=210,L=46,B=30,TOP=18, bw=(W-L-8)/seq.length;
+    const cor={}; [...new Set(seq.map(t=>Math.floor(t/12)))].forEach((a,k)=>cor[a]=['#1B3A63','#2f6b3a','#9db4cc','#FECA39'][k%4]);
+    let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="Arial" font-size="8.5">`;
+    for(let k=0;k<5;k++){const y=H-B-(H-B-TOP)*k/4; s+=`<line x1="${L}" x2="${W-4}" y1="${y}" y2="${y}" stroke="#e3e7ec"/><text x="${L-4}" y="${y+3}" text-anchor="end" fill="#6b7480">${N0(mx*k/4/1000)} mil</text>`;}
+    seq.forEach((t,j)=>{const v=vals[j], h=(H-B-TOP)*v/mx, x=L+j*bw+bw*.12, w=bw*.76, a=Math.floor(t/12), m=t%12;
+      s+=`<rect x="${x}" y="${H-B-h}" width="${w}" height="${h}" fill="${cor[a]}" rx="1.5"/>`;
+      if(v>0) s+=`<text x="${x+w/2}" y="${H-B-h-3}" text-anchor="middle" fill="#333" font-size="7">${N0(v/1000)}</text>`;
+      s+=`<text x="${x+w/2}" y="${H-B+11}" text-anchor="middle" fill="#6b7480">${MS[m]}</text>`;
+      if(m===0||j===0) s+=`<text x="${x+w/2}" y="${H-B+23}" text-anchor="middle" fill="#1B3A63" font-weight="700">${a}</text>`;});
+    return s+'</svg>';})();
+  // produtos que parou (mesma regra da tela)
+  const parou=(()=>{const pm=new Map();
+    for(let i=0;i<N;i++){ if(CO.c[i]!==ci||!okP(CO.p[i])) continue; const base=ANOS[CO.a[i]]*12;
+      for(let j=0;j<12;j++){const v=MES[j][i]; if(!(v>0)) continue; let m=pm.get(CO.p[i]); if(!m){m=new Map();pm.set(CO.p[i],m);} m.set(base+j,(m.get(base+j)||0)+v);}}
+    const L=[]; pm.forEach((m,p)=>{ if(!PESO[p]) return; const ts=[...m.keys()], u=Math.max(...ts), sem=MES_REF-u;
+      if(sem<6||sem>36) return; const n24=ts.filter(t=>t>u-24).length; if(n24<2) return; L.push({p,u,sem}); });
+    return L.sort((a,b)=>a.sem-b.sem);})();
+  const linhasP=[...prod.entries()].sort((a,b)=>b[1].val-a[1].val);
+  const ef=cli.ef||{}, tit=cli.tit||[];
+  const hojeIso=hoje.toISOString().slice(0,10), dias=v=>Math.round((new Date(hojeIso)-new Date(v))/864e5);
+  const venc=tit.filter(t=>dias(t[2])>0).reduce((s,t)=>s+t[4],0), aVenc=tit.filter(t=>dias(t[2])<=0).reduce((s,t)=>s+t[4],0);
+  const nomeP=c=>{const p=PROD_POR_COD.get(c); return p?p.nome:c;};
+  const logoImg=document.querySelector('.ru-topo-marca img'), logoSrc=logoImg?logoImg.src:'';
+  const B={};
+  B.indicadores=`<div class="kpis">
+    <div class="kpi"><span>Total comprado no período</span><b>${R(total)}</b><i>${anos.map(a=>a+': '+R(anosV.get(a),0)).join(' · ')}</i></div>
+    <div class="kpi"><span>${ac} até ${MS[mAte].toLowerCase()} × mesmo período ${ac-1}</span><b class="${(var_||0)>=0?'up':'neg'}">${var_==null?'–':((var_>=0?'+':'')+pct(var_))}</b><i>${R(ytd,0)} × ${R(ytdAnt,0)}</i></div>
+    <div class="kpi"><span>Toneladas</span><b>${nf(ton,1)} t</b><i>preço médio ${ton?R(total/ton,0):'–'}/t</i></div>
+    <div class="kpi"><span>Frequência</span><b>${tsC.length} de ${nMeses} meses</b><i>última compra: ${ult==null?'–':MS[ult%12]+'/'+Math.floor(ult/12)}</i></div></div>`;
+  B.grafico=`<div class="card"><h2>Compras mês a mês (R$ mil)</h2>${graf}
+    <div class="totano">${anos.map(a=>`<div><span>Total ${a}${a===ac?' (até '+hoje.toLocaleDateString('pt-BR').slice(0,5)+')':''}</span><b>${R(anosV.get(a))}</b></div>`).join('')}<div><span>Total do período</span><b>${R(total)}</b></div></div></div>`;
+  B.produtos=`<div class="card"><h2>Por produto</h2><table><tr><th class="l">Cód.</th><th class="l">Produto</th><th>Un.</th><th>Qtd.</th><th>Ton.</th><th>Preço médio</th>${anos.map(a=>`<th>${a} (R$)</th>`).join('')}<th>Total (R$)</th><th>%</th></tr>
+    ${linhasP.map(([p,P])=>`<tr><td>${esc(PROD[p].cod)}</td><td class="l">${esc(PROD[p].nome)}</td><td>${esc(PROD[p].un||'')}</td><td>${N0(P.qtd)}</td><td>${nf(P.qtd*(PESO[p]||0)/1000,1)}</td><td>${P.qtd?R(P.val/P.qtd):'–'}</td>${anos.map(a=>`<td>${N0(P.ano.get(a)||0)}</td>`).join('')}<td><b>${nf(P.val,2)}</b></td><td>${total?pct(P.val/total*100):'–'}</td></tr>`).join('')}
+    <tr class="tot"><td></td><td class="l">Total</td><td></td><td>${N0(linhasP.reduce((s,[p,P])=>s+P.qtd,0))}</td><td>${nf(ton,1)}</td><td></td>${anos.map(a=>`<td>${N0(anosV.get(a))}</td>`).join('')}<td>${nf(total,2)}</td><td>100%</td></tr></table></div>`;
+  B.entrega=`<div class="card"><h2>Entrega futura: saldo a entregar</h2><div class="mini m2"><div><span>Saldo em R$</span><b>${R(ef.saldo_val||0)}</b></div><div><span>Última entrega</span><b>${dt(ef.ult_entrega)}</b></div></div>
+    <table><tr><th class="l">Produto</th><th>Qtd. a entregar</th></tr>${(ef.itens||[]).map(it=>`<tr><td class="l">${esc(nomeP(it.prod))}</td><td>${N0(it.qtd)}</td></tr>`).join('')||'<tr><td class="l">Sem saldo</td><td></td></tr>'}</table></div>`;
+  B.parou=`<div class="card"><h2>Produtos que comprava e parou</h2><table><tr><th class="l">Produto</th><th>Última compra</th><th>Meses sem comprar</th></tr>
+    ${parou.map(d=>`<tr><td class="l">${esc(PROD[d.p].nome)}</td><td>${MS[d.u%12]}/${String(Math.floor(d.u/12)).slice(2)}</td><td>${d.sem}</td></tr>`).join('')||'<tr><td class="l">Nenhum</td><td></td><td></td></tr>'}</table>
+    <p class="nota">Comprou em pelo menos 2 meses nos 2 anos até a última compra e está há 6 meses ou mais sem comprar.</p></div>`;
+  B.titulos=`<div class="card"><h2>Financeiro: títulos em aberto</h2><div class="mini"><div><span>Em aberto</span><b>${R(venc+aVenc)}</b></div><div><span>A vencer</span><b>${R(aVenc)}</b></div><div><span>Vencidos</span><b class="${venc>0?'neg':''}">${R(venc)}</b></div><div><span>Títulos</span><b>${tit.length}</b></div></div>
+    <table><tr><th class="l">Documento</th><th>Emissão</th><th>Vencimento</th><th>Valor</th><th>Em aberto</th><th>Situação</th></tr>
+    ${tit.map(t=>{const d=dias(t[2]); return `<tr><td class="l">${esc(t[0])}</td><td>${dt(t[1])}</td><td>${dt(t[2])}</td><td>${nf(t[3],2)}</td><td>${nf(t[4],2)}</td><td class="${d>0?'neg':''}">${d>0?'vencido há '+d+' d':'vence em '+(-d)+' d'}</td></tr>`;}).join('')||'<tr><td class="l" colspan="6">Nenhum título em aberto</td></tr>'}</table></div>`;
+  B.margem=mg&&mg.rec?`<div class="card restrito"><h2>Margem estimada <span class="tag">uso interno · só para quem vê custo e margem</span></h2>
+    <div class="mini"><div><span>Receita com custo</span><b>${R(mg.rec,0)}</b></div><div><span>Custo (CMV)</span><b>${R(mg.cmv,0)}</b></div>
+    <div><span>Margem de contribuição</span><b>${R(mg.mc,0)} · ${pct(mg.mc/mg.rec*100)}</b></div><div><span>Lucro líquido estimado</span><b>${R(mg.ll,0)} · ${pct(mg.ll/mg.rec*100)}</b></div></div>
+    <p class="nota">Mesmas regras da aba Margem do painel.</p></div>`:'';
+  const corpo=['indicadores','grafico','produtos'].filter(tem).map(k=>B[k]).join('')
+    +(tem('entrega')||tem('parou')?`<div class="duas">${tem('entrega')?B.entrega:''}${tem('parou')?B.parou:''}</div>`:'')
+    +(tem('titulos')?B.titulos:'')+(tem('margem')?B.margem:'');
+  const css=`@page{size:A4;margin:12mm 11mm 14mm}body{font-family:Arial,sans-serif;color:#1e2430;font-size:9.5pt;margin:0}
+    .hdr{display:flex;align-items:center;gap:14px;border-bottom:3px solid #2f6b3a;padding-bottom:8px;margin-bottom:10px}.hdr img{width:118px}
+    .hdr h1{margin:0;font-size:17pt;color:#1B3A63}.hdr .s{color:#5b6472;font-size:9pt;margin-top:2px}.hdr .cli{font-size:12.5pt;font-weight:700;color:#2f6b3a;margin-top:3px}
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:9px}.kpi{border:1px solid #e2e6ec;border-radius:8px;padding:7px 9px}
+    .kpi span{display:block;font-size:7.5pt;color:#5b6472;text-transform:uppercase}.kpi b{font-size:12.5pt;color:#1B3A63}.kpi i{display:block;font-style:normal;font-size:7.8pt;color:#5b6472}
+    .up{color:#2b914f!important}.neg{color:#b4462e!important}.card{border:1px solid #e2e6ec;border-radius:8px;padding:8px 10px;margin-bottom:9px;page-break-inside:avoid}
+    h2{font-size:10.5pt;color:#1B3A63;margin:0 0 6px}table{width:100%;border-collapse:collapse;font-size:8.3pt}th{background:#1B3A63;color:#fff;font-weight:600;padding:4px 5px;text-align:right}
+    td{padding:3px 5px;border-bottom:1px solid #eef0f3;text-align:right}.l{text-align:left}tr.tot td{font-weight:700;background:#fcefc7}
+    .mini{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:6px}.mini.m2{grid-template-columns:1fr 1fr}.mini span{display:block;font-size:7.5pt;color:#5b6472}.mini b{font-size:10pt}
+    .duas{display:grid;grid-template-columns:1fr 1fr;gap:9px}.restrito{border-color:#FECA39;background:#fffdf5}
+    .tag{font-size:7pt;background:#FECA39;color:#1B3A63;border-radius:5px;padding:1px 6px;font-weight:600;margin-left:6px}
+    .totano{display:flex;gap:10px;border-top:1px solid #e2e6ec;margin-top:6px;padding-top:6px}.totano div{flex:1}.totano span{display:block;font-size:7.5pt;color:#5b6472}.totano b{font-size:11pt;color:#1B3A63}
+    .nota{font-size:7.5pt;color:#5b6472;margin:4px 0 0}.rod{font-size:7.3pt;color:#6b7480;border-top:1px solid #e2e6ec;padding-top:5px;margin-top:4px}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}`;
+  const html=`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Ficha do cliente — ${esc(cli.nome)}</title><style>${css}</style></head><body>
+    <div class="hdr">${logoSrc?`<img src="${esc(logoSrc)}">`:''}<div><h1>Ficha do cliente</h1>
+    <div class="cli">${esc(cli.nomeBase||cli.nome)} <span style="color:#5b6472;font-weight:400;font-size:9pt">· código ${esc(cli.cod)}</span></div>
+    <div class="s">${esc(filtroTxt)}Período: ${dt(o.ini)} a ${hoje.toLocaleDateString('pt-BR')} · Vendedor principal: ${vp?esc(VEND[vp[0]].nome):'–'} · Gerado em ${hoje.toLocaleString('pt-BR')}</div></div></div>
+    ${corpo}
+    <div class="rod">Fonte: Agrotis (filiais 2 e 5), mesmos números do painel de Vendas. Valores líquidos de descontos, inclusive o desconto dado nas entregas de venda futura.
+    A venda para entrega futura conta na data do faturamento; as entregas não somam de novo. Toneladas pelo peso cadastrado de cada produto.</div></body></html>`;
+  const w=window.open('','_blank'); if(!w) return false;
+  w.document.write(html); w.document.close(); setTimeout(()=>w.print(),400);
+  return true;
+}
+
 /* ---------- fichas (drill-down) ---------- */
 function fichaCliente(ci){
   const lista=listaOrdenada(i=>CO.c[i],k=>CLI[k].nome,k=>CLI[k].cod);
@@ -1160,15 +1305,18 @@ function fichaCliente(ci){
   // lugar, independente do filtro de anos selecionado -- é o que o vendedor
   // mais precisa acessar rápido ao entrar num cliente.
   document.getElementById('view').innerHTML=sel.html+`
-  <div class="card"><h3>${CLI[ci].nomeBase||nome}</h3>${CLI[ci].sub?`<p style="margin:2px 0 4px;font-weight:600;color:var(--verde);">${CLI[ci].sub}</p>`:''}<p class="csub">Código do sistema <b>${cod}</b></p></div>
+  <div class="card"><h3>${CLI[ci].nomeBase||nome}</h3>${CLI[ci].sub?`<p style="margin:2px 0 4px;font-weight:600;color:var(--verde);">${CLI[ci].sub}</p>`:''}<p class="csub">Código do sistema <b>${cod}</b></p>
+    <button class="btn" id="fc-ficha-pdf" type="button" style="margin-top:6px">Ficha do cliente (PDF)</button>
+    <div id="fc-ficha-opc" style="display:none"></div></div>
   <div class="card"><h3>Sugestão de novo pedido</h3><div id="fc6"></div></div>
   <div class="card"><h3>Últimos pedidos</h3>
-    <p class="csub">Pedidos mais recentes deste cliente (até 20), com produtos e prazo de pagamento.</p><div id="fc5"></div></div>
+    <p class="csub">Pedidos mais recentes deste cliente (até 30), com produtos e prazo de pagamento.</p><div id="fc5"></div></div>
   <div class="card" id="fc7-card"><h3>Produtos que comprava e parou</h3>
     <p class="csub">Comprou em pelo menos 2 meses nos 2 anos até a última compra do produto, e está há 6 meses ou mais sem comprar.
       Oportunidade de venda direta: use "pôr no pedido" para somar à sugestão acima.</p><div id="fc7"></div></div>
   <div id="fc-analise"></div>`;
   sel.liga();
+  document.getElementById('fc-ficha-pdf').onclick=()=>fichaOpcoes_(ci);
   produtosParados_(ci,cod,nome);
   // pedidos vem do servidor so quando a ficha e aberta (item 2.1); depois
   // ficam guardados na memoria da pagina ate sair do painel.
