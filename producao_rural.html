@@ -1430,7 +1430,7 @@ input:focus,select:focus{border-color:var(--ru-azul);box-shadow:0 0 0 3px rgba(3
 <div id="nova-cotacao-modal" class="modal-overlay" style="display:none">
   <div class="modal-box">
     <div class="modal-header">
-      <span>Nova cotação</span>
+      <span id="cot-modal-titulo">Nova cotação</span>
       <button onclick="fecharNovaCotacao()">&times;</button>
     </div>
     <div class="modal-body">
@@ -4488,7 +4488,10 @@ function atualizarGrupoCot(){
   var banco=$('cot-banco').value;
   $('cot-cat').innerHTML=gruposParaBanco(banco).map(function(g){return '<option>'+g+'</option>';}).join('');
 }
+let cotEditId=null; /* id da cotacao em edicao (null = nova) */
 function abrirNovaCotacao(){
+  cotEditId=null;
+  set('cot-modal-titulo','Nova cotação');
   cotIngRows=[{cod:null,qtd:0}];
   $('cot-nome').value='';
   /* Cotacao nasce na unidade em que a pessoa entrou (em "Todas", escolhe). */
@@ -4502,7 +4505,32 @@ function abrirNovaCotacao(){
   renderCotIngs();
   $('nova-cotacao-modal').style.display='flex';
 }
-function fecharNovaCotacao(){$('nova-cotacao-modal').style.display='none';}
+/* Editar cotacao pendente: mesmo modal, preenchido; ao salvar regrava com o mesmo id. */
+function abrirEditarCotacao(id){
+  var c=cotacoesRemoto[id];
+  if(!c){toast('Cotação não encontrada.');return;}
+  if((c.status||'')!=='pendente'){toast('Só dá para editar cotação pendente.');return;}
+  var ings=[];
+  try{ings=typeof c.ingsJSON==='string'?JSON.parse(c.ingsJSON||'[]'):(c.ingsJSON||[]);}catch(e){ings=[];}
+  cotEditId=id;
+  set('cot-modal-titulo','Editar cotação');
+  cotIngRows=ings.map(function(r){return {cod:parseInt(r.cod)||null,qtd:parseFloat(r.qtd)||0};});
+  if(cotIngRows.length===0)cotIngRows=[{cod:null,qtd:0}];
+  $('cot-nome').value=c.nomeGenerico||'';
+  $('cot-banco').value=c.banco||'banco';
+  $('cot-banco').disabled=true;
+  $('cot-banco').title='O banco não muda na edição';
+  $('cot-batida').value=parseFloat(c.batida)||1000;
+  $('cot-peso').value=parseFloat(c.pesoSaco)||30;
+  atualizarGrupoCot();
+  if(c.cat)$('cot-cat').value=c.cat;
+  popularSelectEmbCot();
+  var emb=c.embDesc?MPitens.find(function(m){return m.t==='emb'&&m.d===c.embDesc;}):null;
+  $('cot-emb').value=emb?String(emb.cod):'';
+  renderCotIngs();
+  $('nova-cotacao-modal').style.display='flex';
+}
+function fecharNovaCotacao(){$('nova-cotacao-modal').style.display='none';cotEditId=null;}
 function cotAddIngLinha(){cotIngRows.push({cod:null,qtd:0});renderCotIngs();}
 function cotRemoveIngLinha(idx){cotIngRows.splice(idx,1);renderCotIngs();}
 function cotUpdateIngCod(idx,val){cotIngRows[idx].cod=val?parseInt(val):null;}
@@ -4536,8 +4564,9 @@ function salvarNovaCotacao(){
   var ingsValidos=cotIngRows.filter(function(r){return r.cod&&r.qtd>0;});
   if(ingsValidos.length===0){alert('Adicione ao menos 1 ingrediente com quantidade maior que zero.');return;}
   var embItem=embVal?MPitens.find(function(m){return m.cod===parseInt(embVal);}):null;
-  var id='cot_'+Date.now();
-  var payload={
+  var editando=cotEditId&&cotacoesRemoto[cotEditId];
+  var id=editando?cotEditId:'cot_'+Date.now();
+  var payload=Object.assign({},editando||{},{
     tipo:'cotacao',
     id:id,
     nomeGenerico:nome,
@@ -4548,10 +4577,10 @@ function salvarNovaCotacao(){
     embCusto:embItem?(custoMPUnid(embItem.cod,$('cot-banco').value)||0):0,
     embDesc:embItem?embItem.d:'',
     ingsJSON:JSON.stringify(ingsValidos.map(function(r){return {cod:r.cod,qtd:r.qtd,bal:0};})),
-    criadoPor:getNomeColaborador(),
-    dataHora:new Date().toLocaleString('pt-BR'),
+    criadoPor:editando?(editando.criadoPor||getNomeColaborador()):getNomeColaborador(),
+    dataHora:editando?(editando.dataHora||new Date().toLocaleString('pt-BR')):new Date().toLocaleString('pt-BR'),
     status:'pendente'
-  };
+  });
   var destravar=travarBotao(document.querySelector('[onclick^="salvarNovaCotacao("]'),'Salvando...');
   apiPost(payload).then(function(){
     destravar();
@@ -4560,7 +4589,7 @@ function salvarNovaCotacao(){
     fecharNovaCotacao();
     renderCotacoes();
     atualizarSelectFormulas();
-    toast('✅ Cotação "'+nome+'" salva! Aguardando precificação.');
+    toast(editando?'✅ Cotação "'+nome+'" atualizada!':'✅ Cotação "'+nome+'" salva! Aguardando precificação.');
   }).catch(function(err){
     destravar();
     syncFalhouGravar('a cotação "'+nome+'"',err);
@@ -4586,7 +4615,8 @@ function renderCotacoes(){
       ?'<span class="badge bdg-neu" style="background:var(--amb-lt);color:var(--amber);border-color:var(--amb-bd)">Pendente</span>'
       :'<span class="badge bdg-neu" style="background:var(--blu-lt);color:var(--blue);border-color:var(--blu-bd)">'+(c.status||'Aprovada')+'</span>';
     var acoes=pendente
-      ?(PODE_CUSTOS?'<button class="action-btn btn-load" onclick="abrirPrecificarCotacao(\''+c.id+'\')">🔒 Precificar</button>':'<span style="font-size:11px;color:var(--t3)">aguardando precificação</span>')
+      ?'<button class="action-btn" onclick="abrirEditarCotacao(\''+c.id+'\')" title="Editar nome, batida e matérias-primas">✏️ Editar</button> '
+       +(PODE_CUSTOS?'<button class="action-btn btn-load" onclick="abrirPrecificarCotacao(\''+c.id+'\')">🔒 Precificar</button>':'<span style="font-size:11px;color:var(--t3)">aguardando precificação</span>')
       :'<span style="font-size:11px;color:var(--t3)">já processada</span>';
     return '<tr>'
       +'<td>'+c.nomeGenerico+'</td>'
