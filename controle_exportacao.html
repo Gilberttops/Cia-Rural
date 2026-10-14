@@ -591,6 +591,29 @@
     .table-scroll{max-height:none;}
   }
   @media print{ .tabs{position:static;} .table-scroll{max-height:none !important;} }
+  /* Relatório PDF só em dólar: colunas e textos de R$ / câmbio somem na impressão */
+  body.so-usd .col-brl { display:none !important; }
+  body.so-usd .note-brl { display:none !important; }
+  /* Relatório de Vendas (saldos em aberto, só US$): padrão Rural, layout do modelo */
+  #printVendas{display:none;font-family:Inter,Outfit,Arial,sans-serif;color:#1f2a37;font-size:11px;}
+  @media print{
+    body.print-vendas > *:not(#printVendas){display:none !important;}
+    body.print-vendas #printVendas{display:block !important;}
+  }
+  #printVendas .pv-top{display:flex;justify-content:space-between;font-size:9px;color:#2f6b3a;letter-spacing:.06em;text-transform:uppercase;border-bottom:2px solid #2f6b3a;padding-bottom:4px;margin-bottom:12px;}
+  #printVendas .pv-head{display:flex;align-items:center;gap:14px;margin-bottom:8px;}
+  #printVendas .pv-head img{width:120px;}
+  #printVendas h1{font-size:20px;margin:0;color:#1F4E8C;}
+  #printVendas .pv-sub{color:#4b5563;font-size:11px;margin-top:2px;}
+  #printVendas .pv-kpis{display:flex;gap:12px;margin:12px 0;}
+  #printVendas .pv-kpi{flex:1;border:1px solid #d1d5db;border-left:4px solid #2f6b3a;padding:8px 10px;border-radius:4px;font-size:9.5px;text-transform:uppercase;color:#4b5563;}
+  #printVendas .pv-kpi b{display:block;font-size:17px;color:#1F4E8C;margin-top:2px;}
+  #printVendas table{width:100%;border-collapse:collapse;}
+  #printVendas th{background:#2f6b3a;color:#fff;text-align:left;padding:5px 6px;font-size:9.5px;text-transform:uppercase;}
+  #printVendas td{padding:4px 6px;border-bottom:1px solid #e5e7eb;}
+  #printVendas .n{text-align:right;}
+  #printVendas tr.sub td{background:#e8f1ea;font-weight:700;border-top:1px solid #2f6b3a;}
+  #printVendas .pv-foot{position:fixed;bottom:0;left:0;right:0;font-size:8.5px;color:#6b7280;text-align:center;border-top:1px solid #d1d5db;padding-top:4px;}
 
   /* ===== conciliação ===== */
   .recon-eq{display:grid;grid-template-columns:1fr;gap:2px;max-width:560px;margin-bottom:6px;}
@@ -815,6 +838,7 @@
         <input type="date" id="salesVencTo">
       </span>
       <button class="btn" data-print="sales"><i class="ti ti-printer" aria-hidden="true"></i> Gerar relatório PDF</button>
+      <button class="btn" id="btnRelImagem"><i class="ti ti-photo" aria-hidden="true"></i> Baixar imagem (PNG)</button>
     </div>
     <div class="toolbar no-print">
       <input type="text" id="salesSearch" placeholder="Buscar fatura, NF, embalagem ou observação">
@@ -5361,6 +5385,15 @@
     var frete = parseNum(document.getElementById('fcFrete').value) || 0;
     var seguro = parseNum(document.getElementById('fcSeguro').value) || 0;
     document.getElementById('fcPreviewTotal').textContent = fmtUSD.format(round2(itensTotal + frete + seguro));
+    atualizarTotaisFcPelosItens();
+  }
+  // Peso líquido, peso bruto e quantidade (sacas/unid.) da fatura são a soma da mercadoria.
+  function atualizarTotaisFcPelosItens(){
+    var soma = function(campo){ return fcItemsDraft.reduce(function(s,it){ return s + (Number(it[campo])||0); }, 0); };
+    var fmt = function(n){ return n ? String(Math.round(n * 1000) / 1000) : ''; };
+    document.getElementById('fcPesoLiquido').value = fmt(soma('pesoLiquido'));
+    document.getElementById('fcPesoBruto').value = fmt(soma('pesoBruto'));
+    document.getElementById('fcQuantidade').value = fmt(soma('volumes'));
   }
 
   function handleFcItemsInput(e){
@@ -5679,6 +5712,101 @@
   function closeFcPrint(){
     document.getElementById('fcPrintOverlay').hidden = true;
   }
+  // Relatório de Vendas em US$ (saldos em aberto), no layout do modelo "Controle de Exportação".
+  function montarRelatorioVendas(){
+    var hoje = todayLocalISO();
+    var limite = addDaysRel_(hoje, 7);
+    var abertas = salesFilteredData().filter(function(r){ return rowStatus(r) !== 'baixada'; })
+      .map(function(r){ return { r: r, saldo: Math.max(0, saldoUSD(r) || 0), st: rowStatus(r) }; })
+      .filter(function(x){ return x.saldo > 0.5; })
+      .sort(function(a,b){ return (a.r.vencimento||'') < (b.r.vencimento||'') ? -1 : 1; });
+    var total = abertas.reduce(function(s,x){ return s + x.saldo; }, 0);
+    var ate = abertas.filter(function(x){ return (x.r.vencimento||'') <= limite; });
+    var demais = abertas.filter(function(x){ return (x.r.vencimento||'') > limite; });
+    var dia = new Date(limite + 'T12:00:00').toLocaleDateString('pt-BR', {weekday:'long'});
+    var data = function(iso){ return iso ? dLabel(iso) : ''; };
+    var linha = function(x){ var r = x.r;
+      return '<tr><td>'+escRel_(r.fatura)+'</td><td>'+escRel_(r.nf)+'</td><td>'+data(r.dataFatura)+'</td><td>'+data(r.vencimento)+'</td><td class="n">'+(r.peso||0).toLocaleString('pt-BR',{maximumFractionDigits:0})+'</td><td class="n">'+fmtUSD.format(r.valorDolarFatura||0)+'</td><td class="n">'+fmtUSD.format(x.saldo)+'</td><td>'+(x.st==='parcial'?'parcial':'em aberto')+'</td></tr>'; };
+    var soma = function(lista){ return lista.reduce(function(s,x){ return s + x.saldo; }, 0); };
+    var bloco = function(titulo, lista){ return '<tr class="sub"><td colspan="6">'+titulo+'</td><td class="n">'+fmtUSD.format(soma(lista))+'</td><td></td></tr>'; };
+    var corpo = ate.map(linha).join('')
+      + (ate.length ? bloco('SUBTOTAL — VENCE ATÉ ' + data(limite).slice(0,5) + ' (' + dia.toUpperCase() + ')', ate) : '')
+      + demais.map(linha).join('')
+      + (demais.length ? bloco('DEMAIS VENCIMENTOS', demais) : '');
+    var venc = abertas.map(function(x){ return x.r.vencimento; }).filter(Boolean).sort();
+    var periodo = venc.length ? data(venc[0]) + ' a ' + data(venc[venc.length-1]) : '—';
+    var agora = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    return '<div class="pv-top"><span>Rural Nutrição Animal · Exportação · Controle a receber</span><span>' + data(hoje) + '</span></div>'
+      + '<div class="pv-head"><img src="logo_rural.png" alt="Rural Nutrição Animal"><div><h1>Controle de Exportação</h1>'
+      + '<div class="pv-sub">Vendas · Saldos em aberto</div><div class="pv-sub">Gerado em ' + data(hoje) + ' às ' + agora + ' · Vencimentos: ' + periodo + '</div></div></div>'
+      + '<div class="pv-kpis"><div class="pv-kpi">Saldo total a receber<b>' + fmtUSD.format(total) + '</b></div><div class="pv-kpi">Faturas em aberto<b>' + abertas.length + '</b></div></div>'
+      + '<table><thead><tr><th>Fatura</th><th>NF</th><th>Data fat.</th><th>Vencimento</th><th class="n">Peso kg</th><th class="n">USD fatura</th><th class="n">Saldo US$</th><th>Situação</th></tr></thead><tbody>' + corpo + '</tbody></table>'
+      + '<div class="pv-foot">Rural Nutrição Animal · Exportação · ' + new Date().getFullYear() + '</div>';
+  }
+  function escRel_(v){
+    return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function addDaysRel_(iso, n){
+    var d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n);
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function mostrarRelatorioVendas(){
+    var el = document.getElementById('printVendas');
+    if(!el){ el = document.createElement('div'); el.id = 'printVendas'; document.body.appendChild(el); }
+    el.innerHTML = montarRelatorioVendas();
+    return el;
+  }
+  // PDF: abre a impressão do navegador; escolha "Salvar como PDF".
+  function imprimirRelatorioVendas(){
+    mostrarRelatorioVendas();
+    document.body.classList.add('print-vendas');
+    try { window.print(); } finally { document.body.classList.remove('print-vendas'); }
+  }
+  function carregarHtml2canvas(){
+    if(window.html2canvas) return Promise.resolve(window.html2canvas);
+    return new Promise(function(resolve, reject){
+      var s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+      s.onload = function(){ resolve(window.html2canvas); };
+      s.onerror = function(){ reject(new Error('não consegui carregar o gerador de imagem')); };
+      document.head.appendChild(s);
+    });
+  }
+  // Imagem PNG do mesmo relatório, para mandar pelo WhatsApp ou e-mail.
+  function baixarRelatorioImagem(){
+    var el = mostrarRelatorioVendas();
+    el.style.cssText = 'display:block;position:fixed;left:0;top:0;width:1100px;background:#ffffff;padding:18px;z-index:-1;';
+    var rodape = el.querySelector('.pv-foot'); if(rodape) rodape.style.position = 'static';
+    carregarHtml2canvas().then(function(h2c){ return h2c(el, {scale: 2, backgroundColor: '#ffffff'}); }).then(function(canvas){
+      canvas.toBlob(function(blob){
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'controle_exportacao_vendas_' + todayLocalISO() + '.png';
+        a.click();
+        setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+      }, 'image/png');
+    }).catch(function(err){ alert('Não consegui gerar a imagem: ' + err.message); })
+      .then(function(){ el.style.cssText = ''; el.innerHTML = ''; });
+  }
+
+  // Marca as colunas de R$ e câmbio e os textos só em R$ para sumirem da impressão (relatório em US$).
+  function marcarSoDolar(){
+    var brl = /R\$|câmbio|cambio|cotação/i;
+    document.querySelectorAll('table').forEach(function(t){
+      t.querySelectorAll('thead th').forEach(function(th, i){
+        if(!brl.test(th.textContent)) return;
+        th.classList.add('col-brl');
+        t.querySelectorAll('tr').forEach(function(tr){ if(tr.children[i]) tr.children[i].classList.add('col-brl'); });
+      });
+    });
+    document.querySelectorAll('div, span, p, small, b, strong').forEach(function(el){
+      if(el.children.length) return;
+      var txt = el.textContent;
+      if(/R\$/.test(txt) && !/US\$/.test(txt)) el.classList.add('note-brl');
+    });
+    document.body.classList.add('so-usd');
+  }
+
   function setPrintPageSize(orientation, marginMm){
     var style = document.getElementById('dynamicPageSize');
     if(!style){
@@ -6524,11 +6652,14 @@
           });
           metaEl.textContent = base;
         }
+        if(view === 'sales'){ setPrintPageSize('landscape', 12); imprimirRelatorioVendas(); return; }
         setPrintPageSize('landscape', 14);
-        window.print();
+        if(view !== 'cambio') marcarSoDolar();
+        try { window.print(); } finally { document.body.classList.remove('so-usd'); }
       });
     });
 
+    document.getElementById('btnRelImagem').addEventListener('click', baixarRelatorioImagem);
     document.getElementById('btnNovaFaturaComercial').addEventListener('click', function(){ openFcForm(null); });
     document.getElementById('btnFcCancel').addEventListener('click', closeFcForm);
     document.getElementById('btnFcClear').addEventListener('click', function(){
