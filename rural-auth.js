@@ -6,6 +6,7 @@
  *   // depois, para falar com o Apps Script de dados:
  *   RuralAuth.chamar('compras', URL_DO_SCRIPT, { acao: 'ler' }).then(function (resp) { ... });
  *
+ * Portal: quem abre um app direto, sem ter passado pelo index.html nesta aba, e levado ao portal antes (RuralAuth.configurar({portal:null}) desliga).
  * O token vai no corpo do POST (text/plain), nunca na URL. A sessao fica em sessionStorage,
  * ou em localStorage se a pessoa marcar "manter conectado". Tudo que vem do servidor e
  * mostrado como TEXTO (nunca como HTML).
@@ -13,8 +14,9 @@
 (function (global) {
   'use strict';
 
-  var CFG = { logo: 'logo_rural.png', url: 'https://script.google.com/macros/s/AKfycbyaCC5we0lDwicDdTapTz3tVdocH2vm282nre7eTI5FR-zGaAnxVLzSSBCBigwQ6xja/exec' };
+  var CFG = { logo: 'logo_rural.png', portal: 'index.html', fundo: 'login_fundo.jpg', url: 'https://script.google.com/macros/s/AKfycbyaCC5we0lDwicDdTapTz3tVdocH2vm282nre7eTI5FR-zGaAnxVLzSSBCBigwQ6xja/exec' };
   var CHAVE = 'rural:sessao';
+  var CHAVE_PORTAL = 'rural:portal';
   var ESCRITAS = ['trocar_senha', 'usuario_criar', 'usuario_editar', 'usuario_desativar', 'usuario_resetar_senha', 'encerrar_sessoes'];
   var MARGEM_TOKEN_MS = 60000;
   var MSG_REGRAS = 'Mínimo de 10 caracteres, com pelo menos uma letra e um número.';
@@ -28,7 +30,13 @@
   var RuralAuth = {
     _agora: function () { return Date.now(); },
     _esperaRepeticaoMs: 800,
-    configurar: function (o) { if (o && o.url) CFG.url = o.url; if (o && o.logo) CFG.logo = o.logo; },
+    configurar: function (o) {
+      if (o && o.url) CFG.url = o.url; if (o && o.logo) CFG.logo = o.logo;
+      if (o && o.portal !== undefined) CFG.portal = o.portal;   // null/'' desliga o desvio pelo portal
+      if (o && o.fundo !== undefined) CFG.fundo = o.fundo;       // null/'' tira a imagem de fundo do login
+    },
+    marcarPortal: marcarPortal,
+    _irPara: function (url) { global.location.replace(url); },
     _reset: function () {
       ['rural-auth-overlay', 'rural-auth-css'].forEach(function (id) { var n = document.getElementById(id); if (n) n.remove(); });
       estado = novoEstado();
@@ -65,13 +73,25 @@
     }
   }
 
+  // Portal (index.html): quem abre um app direto, sem ter passado pelo portal nesta aba, e levado primeiro ao portal.
+  // O portal chama marcarPortal(); sair() desfaz a marca para o proximo login passar de novo pelo portal.
+  function portalVisitado() {
+    try {
+      sessionStorage.setItem('rural:teste', '1'); sessionStorage.removeItem('rural:teste');
+      return sessionStorage.getItem(CHAVE_PORTAL) === '1';
+    } catch (e) { return true; }   // sem armazenamento nao da para lembrar: nao desvia
+  }
+  function marcarPortal() { try { sessionStorage.setItem(CHAVE_PORTAL, '1'); } catch (e) { /* ignora */ } }
+  function desmarcarPortal() { try { sessionStorage.removeItem(CHAVE_PORTAL); } catch (e) { /* ignora */ } }
+
   function limparArmazenamento() {
     try { sessionStorage.removeItem(CHAVE); } catch (e) { /* ignora */ }
     try { localStorage.removeItem(CHAVE); } catch (e) { /* ignora */ }
   }
 
-  function limparSessao() {
+  function limparSessao(manterPortal) {
     limparArmazenamento();
+    if (!manterPortal) desmarcarPortal();
     estado.sessao = null; estado.expira = 0; estado.usuario = null; estado.apps = []; estado.tokens = {}; estado.pendTokens = {};
   }
 
@@ -150,6 +170,10 @@
   }
 
   async function posLogin() {
+    if (estado.appAtual && CFG.portal && !portalVisitado()) {
+      RuralAuth._irPara(CFG.portal);
+      return new Promise(function () { /* a pagina esta indo para o portal */ });
+    }
     if (estado.usuario && estado.usuario.trocar_senha) await trocarSenhaUI(true);
     if (estado.appAtual && !temApp(estado.appAtual)) {
       mostrarSemAcesso();
@@ -169,7 +193,7 @@
   }
 
   async function reautenticar() {
-    limparSessao();
+    limparSessao(true);   // sessao que venceu dentro do app: depois de entrar de novo, continua no app
     await mostrarLogin('Sua sessão expirou. Entre novamente.');
     if (estado.usuario && estado.usuario.trocar_senha) await trocarSenhaUI(true);
   }
@@ -259,10 +283,17 @@
     return inp;
   }
 
+  // Imagem de fundo do login (so nomes simples de arquivo; se faltar, fica o fundo liso de antes).
+  function cssFundo() {
+    if (!CFG.fundo || !/^[A-Za-z0-9_.\/-]+$/.test(CFG.fundo)) return '';
+    return '#rural-auth-overlay{background:linear-gradient(rgba(31,53,80,.22),rgba(31,53,80,.22)),url("' + CFG.fundo + '") 18% center/cover no-repeat var(--ra-papel)}' +
+      '@media (min-width:900px){#rural-auth-overlay{justify-content:flex-end;padding-right:9vw;background-position:left center}}';
+  }
+
   // Monta (ou troca o conteudo de) a sobreposicao e devolve o cartao.
   function cartao(titulo, subtitulo) {
     if (!document.getElementById('rural-auth-css')) {
-      var st = criar('style', { id: 'rural-auth-css' }); st.textContent = CSS; document.head.appendChild(st);
+      var st = criar('style', { id: 'rural-auth-css' }); st.textContent = CSS + cssFundo(); document.head.appendChild(st);
     }
     var ov = document.getElementById('rural-auth-overlay');
     if (!ov) { ov = criar('div', { id: 'rural-auth-overlay' }); document.body.appendChild(ov); }
