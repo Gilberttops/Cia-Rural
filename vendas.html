@@ -852,6 +852,7 @@ function renderPedidosCliente(el,cod){
       +'<summary style="cursor:pointer;font-size:.85rem;display:flex;gap:14px;flex-wrap:wrap;align-items:center;">'
       +'<b>'+dt+'</b><span class="muted">'+p.filial+'</span>'
       +'<span>R$ '+nf(p.valor,2)+'</span>'
+      +(p.usd?'<span><b>US$ '+nf(p.usd,2)+'</b></span><span class="muted">'+(p.fonte==='Ypoti'?'controle Ypoti '+esc(p.ycod||''):'PTAX estimada')+' · câmbio '+nf(p.cambio,4)+'</span>':'')
       +(p.prazo?'<span class="muted">prazo: '+p.prazo+'</span>':'')
       +'<span class="muted">vend.: '+nomeVend(p.vend)+'</span>'
       +'</summary>'
@@ -1151,18 +1152,33 @@ function produtosParados_(ci,cod,nomeCli){
   });
 }
 
+/* ---------- conferência exportação × controle Ypoti (só administrador recebe AVISOS_EXPORT) ---------- */
+function conferenciaYpoti_(cod){
+  const host=document.getElementById('fc-ypoti'), EX=window.AVISOS_EXPORT;
+  if(!host||!EX||!['000231','002890'].includes(cod)) return;
+  const dBR=s=>String(s||'').split('-').reverse().join('/');
+  const ys=EX.ypoti_sem_pedido||[], ps=(EX.pedido_sem_ypoti||[]).filter(x=>x.cli===cod);
+  if(!ys.length&&!ps.length){host.innerHTML='<div class="card"><h3>Conferência com o controle Ypoti</h3><p class="csub">Todas as cargas dos últimos 120 dias casaram com um pedido do Agrotis.</p></div>';return;}
+  host.innerHTML='<div class="card"><h3>Conferência com o controle Ypoti</h3><p class="csub">Últimos 120 dias, Mauricio Moller + Chacobras juntos (a mesma carga pode estar nas duas abas do Ypoti). Leitura do Ypoti em '+esc(EX.lido_em||'—')+'.</p><div id="fcy1"></div><div id="fcy2"></div></div>';
+  if(ys.length) tabela(document.getElementById('fcy1'),[{t:'Data'},{t:'Códigos Ypoti',l:1},{t:'Produtos',l:1},{t:'US$'}],ys.map(x=>[esc(dBR(x.data)),esc(x.codigos),esc(x.produtos),nf(x.usd,2)]));
+  if(ys.length) document.getElementById('fcy1').insertAdjacentHTML('afterbegin','<p class="csub"><b>No Ypoti e sem pedido no Agrotis</b> (lançar no gerencial):</p>');
+  if(ps.length) tabela(document.getElementById('fcy2'),[{t:'Data'},{t:'Valor R$'}],ps.map(x=>[esc(dBR(x.data)),nf(x.valor,2)]));
+  if(ps.length) document.getElementById('fcy2').insertAdjacentHTML('afterbegin','<p class="csub"><b>No Agrotis e sem carga no Ypoti</b>:</p>');
+}
+
 /* ---------- ficha do cliente em PDF (14/10/2026) ----------
    Monta a ficha no navegador com os dados que o painel ja tem (mesmo filtro de permissao do servidor):
    blocos escolhidos, produtos escolhidos e data de inicio; abre uma janela e chama "Imprimir / Salvar como PDF". */
 const FICHA_BLOCOS=[['indicadores','Indicadores'],['grafico','Compras mês a mês'],['produtos','Por produto'],['entrega','Entrega futura'],
-  ['parou','Produtos que parou de comprar'],['titulos','Títulos em aberto'],['margem','Margem estimada']];
+  ['parou','Produtos que parou de comprar'],['titulos','Títulos em aberto'],['dolar','Em dólar (pedidos)'],['margem','Margem estimada']];
 function fichaOpcoes_(ci){
   const host=document.getElementById('fc-ficha-opc'); if(!host) return;
   if(host.style.display!=='none'){host.style.display='none';return;}
   const ano0=new Date().getFullYear()-1, prods=new Map();
   for(let i=0;i<N;i++){ if(CO.c[i]!==ci||ANOS[CO.a[i]]<ano0-4) continue; prods.set(CO.p[i],(prods.get(CO.p[i])||0)+(CO.val[i]||0)); }
   const lp=[...prods.entries()].filter(([p,v])=>v>0).sort((a,b)=>b[1]-a[1]);
-  const blocos=FICHA_BLOCOS.filter(([k])=>k!=='margem'||CMES);
+  const PDc=pedidosDe_(CLI[ci].cod), temUsd=!!(PDc&&PDc.pedidos&&(PDc.pedidos[CLI[ci].cod]||[]).some(p=>p.usd));
+  const blocos=FICHA_BLOCOS.filter(([k])=>(k!=='margem'||CMES)&&(k!=='dolar'||temUsd));
   host.innerHTML=`<div class="ficha-opc">
     <div class="fo-col"><b>O que aparece</b>${blocos.map(([k,t])=>`<label><input type="checkbox" data-bl="${k}" checked> ${t}</label>`).join('')}</div>
     <div class="fo-col"><b>Desde</b><input type="date" id="fp-ini" value="${ano0}-01-01"><span class="csub">até hoje</span></div>
@@ -1259,13 +1275,20 @@ function gerarFichaPdf_(ci,o){
   B.titulos=`<div class="card"><h2>Financeiro: títulos em aberto</h2><div class="mini"><div><span>Em aberto</span><b>${R(venc+aVenc)}</b></div><div><span>A vencer</span><b>${R(aVenc)}</b></div><div><span>Vencidos</span><b class="${venc>0?'neg':''}">${R(venc)}</b></div><div><span>Títulos</span><b>${tit.length}</b></div></div>
     <table><tr><th class="l">Documento</th><th>Emissão</th><th>Vencimento</th><th>Valor</th><th>Em aberto</th><th>Situação</th></tr>
     ${tit.map(t=>{const d=dias(t[2]); return `<tr><td class="l">${esc(t[0])}</td><td>${dt(t[1])}</td><td>${dt(t[2])}</td><td>${nf(t[3],2)}</td><td>${nf(t[4],2)}</td><td class="${d>0?'neg':''}">${d>0?'vencido há '+d+' d':'vence em '+(-d)+' d'}</td></tr>`;}).join('')||'<tr><td class="l" colspan="6">Nenhum título em aberto</td></tr>'}</table></div>`;
+  const pedU=((pedidosDe_(cli.cod)||{}).pedidos||{})[cli.cod]||[];
+  const pU=pedU.filter(p=>p.usd&&p.data>=o.ini).slice().sort((a,b)=>a.data<b.data?-1:1);
+  const uAno=new Map(); pU.forEach(p=>uAno.set(p.data.slice(0,4),(uAno.get(p.data.slice(0,4))||0)+p.usd));
+  B.dolar=pU.length?`<div class="card"><h2>Em dólar (pedidos)</h2><div class="mini">${[...uAno.entries()].map(([a,v])=>`<div><span>Total ${a} (pedidos listados)</span><b>US$ ${nf(v,2)}</b></div>`).join('')}<div><span>Total</span><b>US$ ${nf(pU.reduce((s,p)=>s+p.usd,0),2)}</b></div></div>
+    <table><tr><th class="l">Data</th><th>Valor R$</th><th>Valor US$</th><th>Câmbio</th><th class="l">Fonte</th></tr>
+    ${pU.map(p=>`<tr><td class="l">${dt(p.data)}</td><td>${nf(p.valor,2)}</td><td><b>${nf(p.usd,2)}</b></td><td>${nf(p.cambio,4)}</td><td class="l">${p.fonte==='Ypoti'?'controle Ypoti '+esc(p.ycod||''):'PTAX do dia (estimado)'}</td></tr>`).join('')}</table>
+    <p class="nota">Pedidos do histórico do painel (até 30 mais recentes). Mauricio Moller e Chacobras: valor em dólar do controle Ypoti; demais: PTAX do dia da nota.</p></div>`:'';
   B.margem=mg&&mg.rec?`<div class="card restrito"><h2>Margem estimada <span class="tag">uso interno · só para quem vê custo e margem</span></h2>
     <div class="mini"><div><span>Receita com custo</span><b>${R(mg.rec,0)}</b></div><div><span>Custo (CMV)</span><b>${R(mg.cmv,0)}</b></div>
     <div><span>Margem de contribuição</span><b>${R(mg.mc,0)} · ${pct(mg.mc/mg.rec*100)}</b></div><div><span>Lucro líquido estimado</span><b>${R(mg.ll,0)} · ${pct(mg.ll/mg.rec*100)}</b></div></div>
     <p class="nota">Mesmas regras da aba Margem do painel.</p></div>`:'';
   const corpo=['indicadores','grafico','produtos'].filter(tem).map(k=>B[k]).join('')
     +(tem('entrega')||tem('parou')?`<div class="duas">${tem('entrega')?B.entrega:''}${tem('parou')?B.parou:''}</div>`:'')
-    +(tem('titulos')?B.titulos:'')+(tem('margem')?B.margem:'');
+    +(tem('titulos')?B.titulos:'')+(tem('dolar')?B.dolar:'')+(tem('margem')?B.margem:'');
   const css=`@page{size:A4;margin:12mm 11mm 14mm}body{font-family:Arial,sans-serif;color:#1e2430;font-size:9.5pt;margin:0}
     .hdr{display:flex;align-items:center;gap:14px;border-bottom:3px solid #2f6b3a;padding-bottom:8px;margin-bottom:10px}.hdr img{width:118px}
     .hdr h1{margin:0;font-size:17pt;color:#1B3A63}.hdr .s{color:#5b6472;font-size:9pt;margin-top:2px}.hdr .cli{font-size:12.5pt;font-weight:700;color:#2f6b3a;margin-top:3px}
@@ -1314,8 +1337,10 @@ function fichaCliente(ci){
   <div class="card" id="fc7-card"><h3>Produtos que comprava e parou</h3>
     <p class="csub">Comprou em pelo menos 2 meses nos 2 anos até a última compra do produto, e está há 6 meses ou mais sem comprar.
       Oportunidade de venda direta: use "pôr no pedido" para somar à sugestão acima.</p><div id="fc7"></div></div>
+  <div id="fc-ypoti"></div>
   <div id="fc-analise"></div>`;
   sel.liga();
+  conferenciaYpoti_(cod);
   document.getElementById('fc-ficha-pdf').onclick=()=>fichaOpcoes_(ci);
   produtosParados_(ci,cod,nome);
   // pedidos vem do servidor so quando a ficha e aberta (item 2.1); depois
@@ -2004,6 +2029,15 @@ function avisosDoPainel_(info) {
   const av = info.admin && info.avisos;
   if (av) {
     window.AVISOS_MARGEM = av.margem || null;   // alertas de margem: so administrador recebe (o servidor nao manda para vendedor)
+    const ex = av.exportacao; window.AVISOS_EXPORT = ex || null;   // conferencia exportacao x controle Ypoti (14/10/2026)
+    if (ex && (ex.ypoti_sem_pedido || []).length) {
+      const us = ex.ypoti_sem_pedido.reduce((s, x) => s + (x.usd || 0), 0);
+      add('pipe', 'Exportação: ' + ex.ypoti_sem_pedido.length + ' carga(s) no controle Ypoti sem pedido no Agrotis (US$ ' +
+        Math.round(us).toLocaleString('pt-BR') + '). Veja a ficha do Mauricio Moller.');
+    }
+    if (ex && (ex.pedido_sem_ypoti || []).length) {
+      add('velho', 'Exportação: ' + ex.pedido_sem_ypoti.length + ' pedido(s) do Mauricio/Chacobras sem carga no controle Ypoti (últimos 120 dias). Veja a ficha do cliente.');
+    }
     const mg = av.margem;
     if (mg && (mg.preco_fora_padrao || []).length) {
       add('velho', 'Preço fora do padrão: ' + mg.preco_fora_padrao.length + ' lançamento(s) com valor unitário muito abaixo do normal (últimos ' +
