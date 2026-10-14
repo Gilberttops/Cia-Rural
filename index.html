@@ -110,25 +110,25 @@
 
   // id do app (o mesmo da aba Apps do Rural Auth) -> como o cartão aparece. Ordem = ordem na tela.
   var CATALOGO = [
-    { id: 'vendas', grupo: 'Comercial', nome: 'Painel de Vendas', chip: 'Eldorado & Ivinhema', arq: 'vendas.html', ico: 'barras', c: ['#289048', '#5BBF7B'],
+    { id: 'vendas', grupo: 'Comercial', nome: 'Painel de Vendas', chip: 'Indicadores comerciais', arq: 'vendas.html', ico: 'barras', c: ['#289048', '#5BBF7B'],
       d: 'Vendas por vendedor, cliente e produto, com evolução mensal e indicadores do período.' },
-    { id: 'exportacao', grupo: 'Comercial', nome: 'Controle de Exportação', chip: 'Exportação', arq: 'controle_exportacao.html', ico: 'navio', c: ['#2A7F8E', '#52B1C0'],
+    { id: 'exportacao', grupo: 'Comercial', nome: 'Controle de Exportação', chip: 'Embarques', arq: 'controle_exportacao.html', ico: 'navio', c: ['#2A7F8E', '#52B1C0'],
       d: 'Embarques e processos de exportação, com status, faturas e documentação.' },
-    { id: 'ypoti', grupo: 'Comercial', nome: 'Vendas e Baixas (Ypoti)', chip: 'Ypoti & Chacobras', arq: 'controle_ypoti.html', ico: 'moedas', c: ['#B8860B', '#F2C94C'],
+    { id: 'ypoti', grupo: 'Comercial', nome: 'Vendas e Baixas (Ypoti)', chip: 'Faturas e baixas', arq: 'controle_ypoti.html', ico: 'moedas', c: ['#B8860B', '#F2C94C'],
       d: 'Vendas e baixas de pagamentos de Ypoti e Chacobras, com emissão de faturas.' },
-    { id: 'producao', grupo: 'Operação', nome: 'Custo de Produção', chip: 'Eldorado & Ivinhema', arq: 'producao_rural.html', ico: 'calculadora', c: ['#2060A8', '#5A9BE0'],
+    { id: 'producao', grupo: 'Operação', nome: 'Custo de Produção', chip: 'Fórmulas e custos', arq: 'producao_rural.html', ico: 'calculadora', c: ['#2060A8', '#5A9BE0'],
       d: 'Ficha de custo, formação de preço, banco de matérias-primas, fórmulas e ordens de produção.' },
-    { id: 'compras', grupo: 'Operação', nome: 'Compras e Matéria-Prima', chip: 'Eldorado & Ivinhema', arq: 'compras.html', ico: 'carrinho', c: ['#B4462E', '#E48467'],
+    { id: 'compras', grupo: 'Operação', nome: 'Compras e Matéria-Prima', chip: 'Preços de compra', arq: 'compras.html', ico: 'carrinho', c: ['#B4462E', '#E48467'],
       d: 'Consulta de matérias-primas, preços e informações de fornecedores para as compras.' },
-    { id: 'fluxo', grupo: 'Finanças', nome: 'Fluxo de Caixa', chip: 'Eldorado & Ivinhema', arq: 'fluxo_de_caixa.html', ico: 'grafico', c: ['#1F7A3E', '#4FB574'],
+    { id: 'fluxo', grupo: 'Finanças', nome: 'Fluxo de Caixa', chip: 'Caixa semanal', arq: 'fluxo_de_caixa.html', ico: 'grafico', c: ['#1F7A3E', '#4FB574'],
       d: 'Fluxo semanal e mensal, recebimentos, antecipações, duplicatas a receber e custo financeiro.' },
-    { id: 'financiamentos', grupo: 'Finanças', nome: 'Financiamentos e Empréstimos', chip: 'Bancos', arq: 'financiamentos.html', ico: 'percentual', c: ['#2060A8', '#4C8BD6'],
+    { id: 'financiamentos', grupo: 'Finanças', nome: 'Financiamentos e Empréstimos', chip: 'Dívida bancária', arq: 'financiamentos.html', ico: 'percentual', c: ['#2060A8', '#4C8BD6'],
       d: 'Contratos, desconto de duplicatas e ACC: saldos, parcelas, custo por banco e onde amortizar primeiro.' },
-    { id: 'consorcios', grupo: 'Finanças', nome: 'Controle de Consórcios', chip: 'Eldorado & Ivinhema', arq: 'consorcios.html', ico: 'banco', c: ['#4B5FBF', '#8497EA'],
+    { id: 'consorcios', grupo: 'Finanças', nome: 'Controle de Consórcios', chip: 'Consórcios', arq: 'consorcios.html', ico: 'banco', c: ['#4B5FBF', '#8497EA'],
       d: 'Consórcios ativos, parcelas pagas e a pagar por empresa e por banco.' },
-    { id: 'parcelamentos', grupo: 'Finanças', nome: 'Parcelamentos Fiscais', chip: 'Impostos', arq: 'parcelamentos.html', ico: 'documento', c: ['#B8860B', '#E9B93B'],
+    { id: 'parcelamentos', grupo: 'Finanças', nome: 'Parcelamentos Fiscais', chip: 'Impostos parcelados', arq: 'parcelamentos.html', ico: 'documento', c: ['#B8860B', '#E9B93B'],
       d: 'Parcelamentos fiscais: saldo devedor de cada um e andamento das parcelas.' },
-    { id: 'dre', grupo: 'Finanças', nome: 'DRE', chip: 'Rural & RNA', arq: 'dre.html', ico: 'pizza', c: ['#1F3550', '#4A6C96'],
+    { id: 'dre', grupo: 'Finanças', nome: 'DRE', chip: 'Resultado', arq: 'dre.html', ico: 'pizza', c: ['#1F3550', '#4A6C96'],
       d: 'Resultado da Rural e da RNA desde 2018: margens, projeção do ano, lucro para caixa e capital de giro.' }
   ];
   var ORDEM_GRUPOS = ['Comercial', 'Operação', 'Finanças', 'Outras', 'Administração'];
