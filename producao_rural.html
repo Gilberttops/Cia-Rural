@@ -4807,7 +4807,17 @@ function pcAbrirDoc_(titulo,corpo){
 }
 function pcH_(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function pcRs_(v,d){return isFinite(v)?'R$ '+fn(v,d==null?2:d):'—';}
-/* PDF para o cliente: so nome do produto e preco de venda (sem custos nem composicao). */
+/* Composicao para o cliente: so ingredientes e quantidades (sem preco nem custo), do maior para o menor. */
+function pcComposicaoCliente_(p){
+  var ings=p.itens.filter(function(it){return !it.emb&&it.qtd>0;}).slice().sort(function(a,b){return b.qtd-a.qtd;});
+  if(!ings.length)return '';
+  var tot=ings.reduce(function(s,it){return s+it.qtd;},0);
+  return '<h3>Composição da fórmula</h3>'
+    +'<table><thead><tr><th>Cód.</th><th>Ingrediente</th><th class="r">Kg por batida de '+fn(p.batida,0)+' kg</th><th class="r">%</th></tr></thead><tbody>'
+    +ings.map(function(it){return '<tr><td class="c">'+pcH_(it.cod)+'</td><td>'+pcH_(it.nome)+'</td><td class="r">'+fn(it.qtd,2)+'</td><td class="r">'+fn(tot>0?it.qtd/tot*100:0,2)+'%</td></tr>';}).join('')
+    +'<tr class="tot"><td></td><td>Total</td><td class="r">'+fn(tot,2)+'</td><td class="r">100%</td></tr></tbody></table>';
+}
+/* PDF para o cliente: nome, preco de venda e composicao (sem custos). */
 function pdfCotacaoCliente(){
   var p=pcCalc;if(!p){toast('Abra uma cotação para precificar primeiro.');return;}
   if(!(isFinite(p.precoSaco)&&p.precoSaco>0)){alert('O preço de venda não fecha com os % informados (encargos + lucro ≥ 100%).');return;}
@@ -4818,6 +4828,7 @@ function pdfCotacaoCliente(){
     +'<div class="preco"><span>Valor de venda por saco ('+fn(p.pesoVenda,p.pesoVenda%1===0?0:1)+' kg)</span><b>'+pcRs_(p.precoSaco)+'</b></div>'
     +'<table><tr><td>Valor por kg</td><td class="r"><b>'+pcRs_(p.precoKg,3)+'</b></td></tr>'
     +'<tr><td>Valor por tonelada</td><td class="r"><b>'+pcRs_(p.precoKg*1000)+'</b></td></tr></table>'
+    +pcComposicaoCliente_(p)
     +'<div class="obs">Valores sujeitos a alteração conforme o mercado das matérias-primas.</div>';
   pcAbrirDoc_('Proposta — '+pcH_(nome),corpo);
 }
