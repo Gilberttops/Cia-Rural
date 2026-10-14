@@ -58,6 +58,9 @@
 .cd-ir i svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 .cd:hover .cd-ir i,.cd:focus-visible .cd-ir i{transform:translateX(6px);background:var(--c1);color:#fff}
 .cd:focus-visible{outline:3px solid var(--c1);outline-offset:3px}
+.cd-w{position:relative;display:flex}.cd-w>.cd{flex:1}
+.cd-man{position:absolute;right:20px;bottom:22px;z-index:2;font-size:.8rem;font-weight:600;color:var(--c1);text-decoration:none;padding:5px 11px;border-radius:99px;border:1px solid color-mix(in srgb,var(--c1) 30%,#fff);background:#fff}
+.cd-man:hover,.cd-man:focus-visible{background:var(--c1);color:#fff;outline:none}
 @keyframes ptsobe{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.cd{animation:none}.cd,.cd-ico,.cd-ir i,.cd::after{transition:none}}
 .pt-vazio{margin:40px auto;max-width:520px;text-align:center;padding:28px;border:1px dashed var(--ru-linha);border-radius:18px;background:#fff;color:var(--ru-tinta2)}
@@ -110,7 +113,7 @@
 
   // id do app (o mesmo da aba Apps do Rural Auth) -> como o cartão aparece. Ordem = ordem na tela.
   var CATALOGO = [
-    { id: 'vendas', grupo: 'Comercial', nome: 'Painel de Vendas', chip: 'Indicadores comerciais', arq: 'vendas.html', ico: 'barras', c: ['#289048', '#5BBF7B'],
+    { id: 'vendas', grupo: 'Comercial', nome: 'Painel de Vendas', chip: 'Indicadores comerciais', arq: 'vendas.html', manual: 'manual_vendas.html', ico: 'barras', c: ['#289048', '#5BBF7B'],
       d: 'Vendas por vendedor, cliente e produto, com evolução mensal e indicadores do período.' },
     { id: 'exportacao', grupo: 'Comercial', nome: 'Controle de Exportação', chip: 'Embarques', arq: 'controle_exportacao.html', ico: 'navio', c: ['#2A7F8E', '#52B1C0'],
       d: 'Embarques e processos de exportação, com status, faturas e documentação.' },
@@ -159,7 +162,7 @@
     var lista = [];
     CATALOGO.forEach(function (c) {
       var app = liberados.filter(function (a) { return a.id === c.id; })[0];
-      if (app) lista.push({ grupo: c.grupo, nome: c.nome, chip: c.chip, d: c.d, ico: c.ico, c: c.c, href: ARQUIVO_OK.test(String(app.url || '')) ? app.url : c.arq });
+      if (app) lista.push({ grupo: c.grupo, nome: c.nome, chip: c.chip, d: c.d, ico: c.ico, c: c.c, manual: ARQUIVO_OK.test(c.manual || '') ? c.manual : '', href: ARQUIVO_OK.test(String(app.url || '')) ? app.url : c.arq });
     });
     liberados.forEach(function (a) {   // app novo que ainda nao esta no catalogo: aparece com cartao simples
       if (CATALOGO.some(function (c) { return c.id === a.id; })) return;
@@ -178,7 +181,13 @@
     a.appendChild(el('h3', '', c.nome)); a.appendChild(el('p', '', c.d));
     var ir = el('span', 'cd-ir', 'Abrir'), seta = el('i'); seta.appendChild(svg(SETA)); ir.appendChild(seta); a.appendChild(ir);
     a.setAttribute('data-busca', semAcento(c.nome + ' ' + c.d + ' ' + c.chip + ' ' + c.grupo));
-    return a;
+    if (!c.manual) return a;
+    // manual: link irmão do cartão (link dentro de link não é permitido), no canto de baixo
+    var w = el('div', 'cd-w'); w.appendChild(a);
+    var m = el('a', 'cd-man', 'Manual'); m.href = c.manual; m.target = '_blank'; m.rel = 'noopener';
+    m.title = 'Manual de uso: ' + c.nome; m.style.setProperty('--c1', c.c[0]);
+    w.appendChild(m);
+    return w;
   }
 
   function desenhar(lista) {
@@ -204,6 +213,7 @@
     var q = semAcento($('ptBusca').value).trim(), vistos = 0;
     document.querySelectorAll('#ptMain .cd').forEach(function (a) {
       var ok = !q || a.getAttribute('data-busca').indexOf(q) >= 0; a.style.display = ok ? '' : 'none'; if (ok) vistos++;
+      if (a.parentNode && a.parentNode.classList.contains('cd-w')) a.parentNode.style.display = ok ? '' : 'none';
     });
     document.querySelectorAll('#ptMain section').forEach(function (s) {
       s.style.display = Array.prototype.some.call(s.querySelectorAll('.cd'), function (a) { return a.style.display !== 'none'; }) ? '' : 'none';

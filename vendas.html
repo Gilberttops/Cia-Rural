@@ -147,6 +147,9 @@ header.ru-topo{border-bottom:0;padding-bottom:14px;margin-bottom:0;}   /* a regr
 .ficha-opc .fo-col{display:flex;flex-direction:column;gap:4px;min-width:170px}.ficha-opc label{font-size:.85rem;display:flex;gap:6px;align-items:center}
 .ficha-opc .fo-prods{flex:1;min-width:260px}.ficha-opc .fo-lista{max-height:180px;overflow:auto;border:1px solid #E2E6EC;border-radius:8px;padding:6px;background:#fff}
 .ficha-opc .fo-acoes{display:flex;align-items:center;gap:10px;width:100%}
+.man-q{display:inline-grid;place-items:center;width:22px;height:22px;margin-left:8px;border-radius:50%;background:var(--azul-claro,#EAF2FB);color:var(--azul-esc,#1F3550);font-size:.8rem;font-weight:700;text-decoration:none;vertical-align:middle;border:1px solid #C6D9EE}
+.man-q:hover{background:#2060A8;color:#fff}
+a.ru-btn{text-decoration:none}
 </style>
 </head>
 <body>
@@ -1158,8 +1161,8 @@ function conferenciaYpoti_(cod){
   if(!host||!EX||!['000231','002890'].includes(cod)) return;
   const dBR=s=>String(s||'').split('-').reverse().join('/');
   const ys=EX.ypoti_sem_pedido||[], ps=(EX.pedido_sem_ypoti||[]).filter(x=>x.cli===cod);
-  if(!ys.length&&!ps.length){host.innerHTML='<div class="card"><h3>Conferência com o controle Ypoti</h3><p class="csub">Todas as cargas dos últimos 120 dias casaram com um pedido do Agrotis.</p></div>';return;}
-  host.innerHTML='<div class="card"><h3>Conferência com o controle Ypoti</h3><p class="csub">Últimos 120 dias, Mauricio Moller + Chacobras juntos (a mesma carga pode estar nas duas abas do Ypoti). Leitura do Ypoti em '+esc(EX.lido_em||'—')+'.</p><div id="fcy1"></div><div id="fcy2"></div></div>';
+  if(!ys.length&&!ps.length){host.innerHTML='<div class="card"><h3>Conferência com o controle Ypoti <a class="man-q" href="manual_vendas.html#dolar" target="_blank" rel="noopener" title="Como funciona o dólar dos pedidos">?</a></h3><p class="csub">Todas as cargas dos últimos 120 dias casaram com um pedido do Agrotis.</p></div>';return;}
+  host.innerHTML='<div class="card"><h3>Conferência com o controle Ypoti <a class="man-q" href="manual_vendas.html#dolar" target="_blank" rel="noopener" title="Como funciona o dólar dos pedidos">?</a></h3><p class="csub">Últimos 120 dias, Mauricio Moller + Chacobras juntos (a mesma carga pode estar nas duas abas do Ypoti). Leitura do Ypoti em '+esc(EX.lido_em||'—')+'.</p><div id="fcy1"></div><div id="fcy2"></div></div>';
   if(ys.length) tabela(document.getElementById('fcy1'),[{t:'Data'},{t:'Códigos Ypoti',l:1},{t:'Produtos',l:1},{t:'US$'}],ys.map(x=>[esc(dBR(x.data)),esc(x.codigos),esc(x.produtos),nf(x.usd,2)]));
   if(ys.length) document.getElementById('fcy1').insertAdjacentHTML('afterbegin','<p class="csub"><b>No Ypoti e sem pedido no Agrotis</b> (lançar no gerencial):</p>');
   if(ps.length) tabela(document.getElementById('fcy2'),[{t:'Data'},{t:'Valor R$'}],ps.map(x=>[esc(dBR(x.data)),nf(x.valor,2)]));
@@ -1329,7 +1332,7 @@ function fichaCliente(ci){
   // mais precisa acessar rápido ao entrar num cliente.
   document.getElementById('view').innerHTML=sel.html+`
   <div class="card"><h3>${CLI[ci].nomeBase||nome}</h3>${CLI[ci].sub?`<p style="margin:2px 0 4px;font-weight:600;color:var(--verde);">${CLI[ci].sub}</p>`:''}<p class="csub">Código do sistema <b>${cod}</b></p>
-    <button class="btn" id="fc-ficha-pdf" type="button" style="margin-top:6px">Ficha do cliente (PDF)</button>
+    <button class="btn" id="fc-ficha-pdf" type="button" style="margin-top:6px">Ficha do cliente (PDF)</button><a class="man-q" href="manual_vendas.html#ficha-pdf" target="_blank" rel="noopener" title="Como usar a ficha em PDF">?</a>
     <div id="fc-ficha-opc" style="display:none"></div></div>
   <div class="card"><h3>Sugestão de novo pedido</h3><div id="fc6"></div></div>
   <div class="card"><h3>Últimos pedidos</h3>
@@ -2065,12 +2068,20 @@ function mostrarApp(D, info) {
   iniciarPainel(D);
 }
 
+// link para o manual (arquivo separado no site, abre em outra aba); parte = âncora da seção (ex.: 'ficha-pdf')
+function manualBtn_(parte, texto) {
+  const a = document.createElement('a');
+  a.href = 'manual_vendas.html' + (parte ? '#' + parte : ''); a.target = '_blank'; a.rel = 'noopener';
+  a.className = texto === '?' ? 'man-q' : 'ru-btn'; a.textContent = texto; a.title = 'Abrir o manual do painel';
+  return a;
+}
 function montarTopo(ctx) {
   const alvo = document.getElementById('vdTopo');
   alvo.textContent = '';
   const u = (ctx && ctx.usuario) || {};
   const t = RuralUI.topo(alvo, { app: 'vendas', titulo: 'Painel de Vendas', sub: '',
     usuario: { nome: u.nome || u.n || u.u || '' }, apps: (ctx && ctx.apps) || [], admin: !!(u.admin || u.adm),
+    acoes: [manualBtn_('', 'Manual')],
     aoSair: () => { RuralAuth.sair(); location.reload(); } });   // recarrega: nada da carteira anterior fica na tela
   t.sub.replaceWith(document.getElementById('hdr-linha'));          // a linha de status fica logo abaixo do titulo
 }
