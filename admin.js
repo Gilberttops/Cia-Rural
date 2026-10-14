@@ -192,7 +192,7 @@
     usuarios.forEach(function (u) {
       var tr = h('tr', { 'data-usuario': u.usuario, 'data-ativo': String(u.ativo) });
       [u.usuario, u.nome, u.apps.map(nomeDoApp).join(', ') || '—', u.apps_lancar.map(nomeDoApp).join(', ') || '—', u.vendedor || '—',
-        (u.admin ? 'Administrador' : (u.vendas_margem ? 'Comum + vê tudo e margem no Vendas' : (u.vendas_tudo ? 'Comum + vê tudo no Vendas' : 'Comum'))) + (u.dre_construtor ? ' · DRE: modo construtor' : ''), u.ativo ? 'Ativo' : 'Inativo', u.ultimo_acesso || '—'].forEach(function (t) { tr.appendChild(h('td', {}, t)); });
+        (u.admin ? 'Administrador' : (u.vendas_margem ? 'Comum + vê tudo e margem no Vendas' : (u.vendas_tudo ? 'Comum + vê tudo no Vendas' : 'Comum'))) + (u.dre_construtor ? ' · DRE: modo construtor' : '') + (u.producao_custos ? ' · Produção: vê custos' : ''), u.ativo ? 'Ativo' : 'Inativo', u.ultimo_acesso || '—'].forEach(function (t) { tr.appendChild(h('td', {}, t)); });
       var ac = h('td', { 'class': 'adm-acoes' });
       ac.appendChild(botaoAcao('editar', 'Editar', '', u.usuario));
       ac.appendChild(botaoAcao(u.ativo ? 'desativar' : 'ativar', u.ativo ? 'Desativar' : 'Reativar', u.ativo ? 'adm-perigo' : '', u.usuario));
@@ -265,6 +265,10 @@
     var cDC = h('input', { type: 'checkbox', id: 'adm-f-dre-construtor' }); cDC.checked = !!(u && u.dre_construtor);
     lbDC.appendChild(cDC); lbDC.appendChild(h('span', { 'class': 'adm-nome-app' }, 'DRE: modo construtor (comissões pagas, conferência de exportação e notas; ser administrador não basta)'));
     f.appendChild(lbDC);
+    var lbPC = h('label', { 'class': 'adm-linha-app' });
+    var cPC = h('input', { type: 'checkbox', id: 'adm-f-producao-custos' }); cPC.checked = !!(u && u.producao_custos);
+    lbPC.appendChild(cPC); lbPC.appendChild(h('span', { 'class': 'adm-nome-app' }, 'Produção: vê custos (banco de MP, ficha, formação de preço e precificação; ser administrador não basta)'));
+    f.appendChild(lbPC);
 
     f.appendChild(h('div', { 'class': 'adm-aviso' }, 'Apps que a pessoa vê, e onde ela também pode lançar dados:'));
     (global.RuralAuth.apps() || []).forEach(function (a) {
@@ -285,6 +289,12 @@
       cDC.addEventListener('change', function () { if (cDC.checked) cAppDre.checked = true; });
       cAppDre.addEventListener('change', function () { if (!cAppDre.checked) cDC.checked = false; });
     }
+    // Producao: ve custos so faz sentido com o app Producao liberado (mesma regra do construtor do DRE)
+    var cAppProd = f.querySelector('#adm-app-producao');
+    if (cAppProd) {
+      cPC.addEventListener('change', function () { if (cPC.checked) cAppProd.checked = true; });
+      cAppProd.addEventListener('change', function () { if (!cAppProd.checked) cPC.checked = false; });
+    }
 
     var erro = h('div', { id: 'adm-f-erro', role: 'alert', style: 'color:var(--c-erro,#b3261e);min-height:20px;margin-top:8px;font-size:14px' });
     f.appendChild(erro);
@@ -304,7 +314,7 @@
         if (document.getElementById('adm-app-' + a.id).checked) apps.push(a.id);
         if (document.getElementById('adm-lan-' + a.id).checked) lancar.push(a.id);
       });
-      var corpo = { usuario: iu.value, nome: inome.value, vendedor: iv.value, admin: cAdm.checked, vendas_tudo: cVT.checked, vendas_margem: cVM.checked, dre_construtor: cDC.checked, apps: apps, apps_lancar: lancar };
+      var corpo = { usuario: iu.value, nome: inome.value, vendedor: iv.value, admin: cAdm.checked, vendas_tudo: cVT.checked, vendas_margem: cVM.checked, dre_construtor: cDC.checked, producao_custos: cPC.checked, apps: apps, apps_lancar: lancar };
       enviando = true; salvar.disabled = true; erro.textContent = '';
       var r = await global.RuralAuth.pedirAuth(u ? 'usuario_editar' : 'usuario_criar', corpo);
       enviando = false; salvar.disabled = false;
