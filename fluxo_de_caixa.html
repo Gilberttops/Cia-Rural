@@ -2,12 +2,17 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Fluxo de Caixa - Rural Nutrição</title>
+<title>Fluxo de Caixa · Rural Nutrição Animal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="rural-ui.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="rural-auth.js"></script>
+<script src="rural-ui.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
   :root{
     --green-deep:#1B3A63;
@@ -26,14 +31,14 @@
     --unit-b:#2A7F8E;    /* identidade da Filial (petróleo), distinta das cores de status */
   }
   *{box-sizing:border-box;}
-  body{margin:0;background:var(--cream);color:var(--ink);font-family:'Inter',sans-serif;}
+  body{margin:0;background:var(--cream);color:var(--ink);font-family:var(--ru-fonte);}
   .wrap{max-width:1220px;margin:0 auto;padding:28px 24px 60px;}
 
-  header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid var(--green-deep);padding-bottom:18px;margin-bottom:24px;flex-wrap:wrap;gap:14px;}
-  header .brand{display:flex;align-items:center;gap:14px;}
+  .fx-hdr-antigo{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid var(--green-deep);padding-bottom:18px;margin-bottom:24px;flex-wrap:wrap;gap:14px;}
+  .fx-hdr-antigo .brand{display:flex;align-items:center;gap:14px;}
   .brand-logo{height:52px;width:auto;object-fit:contain;}
-  h1{font-family:'Fraunces',serif;font-weight:700;font-size:2rem;margin:0;color:var(--green-deep);letter-spacing:-0.5px;}
-  header p{margin:2px 0 0;color:var(--ink-soft);font-size:0.92rem;}
+  h1{font-family:var(--ru-fonte);font-weight:700;font-size:2rem;margin:0;color:var(--green-deep);letter-spacing:-0.5px;}
+  .fx-hdr-antigo p{margin:2px 0 0;color:var(--ink-soft);font-size:0.92rem;}
   .save-badge{font-size:0.78rem;color:var(--ink-soft);display:flex;align-items:center;gap:6px;}
   .dot{width:7px;height:7px;border-radius:50%;background:var(--green-mid);}
 
@@ -134,7 +139,7 @@
   .save-float-btn{
     position:fixed; bottom:26px; right:26px; z-index:1000;
     background:var(--green-deep); color:#fff; border:none; border-radius:999px;
-    padding:14px 24px; font-family:'Inter',sans-serif; font-weight:700; font-size:0.95rem;
+    padding:14px 24px; font-family:var(--ru-fonte); font-weight:700; font-size:0.95rem;
     box-shadow:0 6px 18px rgba(0,0,0,0.22); cursor:pointer; transition:transform .12s, background .2s;
   }
   .save-float-btn:hover{ background:var(--green-mid); transform:translateY(-2px); }
@@ -144,7 +149,7 @@
   .save-toast{
     position:fixed; bottom:88px; right:26px; z-index:1000;
     background:var(--green-deep); color:#fff; padding:10px 18px; border-radius:8px;
-    font-family:'Inter',sans-serif; font-size:0.85rem; font-weight:600;
+    font-family:var(--ru-fonte); font-size:0.85rem; font-weight:600;
     box-shadow:0 6px 18px rgba(0,0,0,0.2);
     opacity:0; transform:translateY(8px); pointer-events:none;
     transition:opacity .25s, transform .25s;
@@ -165,7 +170,7 @@
   .grid{display:grid;grid-template-columns:1.15fr 1fr;gap:20px;margin-bottom:28px;}
   @media(max-width:860px){.grid{grid-template-columns:1fr;}}
   .card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:20px;}
-  .card h2{font-family:'Fraunces',serif;font-size:1.05rem;margin:0 0 14px;color:var(--green-deep);}
+  .card h2{font-family:var(--ru-fonte);font-size:1.05rem;margin:0 0 14px;color:var(--green-deep);}
 
   table.catTable{width:100%;border-collapse:collapse;font-size:0.85rem;}
   table.catTable th{text-align:left;font-size:0.75rem;text-transform:uppercase;color:var(--ink-soft);border-bottom:2px solid var(--line);padding:6px 4px;}
@@ -209,12 +214,12 @@
   .branch-card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:20px;border-top:4px solid var(--green-deep);}
   .branch-card.filial{border-top-color:var(--unit-b);}
   .branch-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
-  .branch-head h2{font-family:'Fraunces',serif;font-size:1.1rem;margin:0;color:var(--green-deep);}
+  .branch-head h2{font-family:var(--ru-fonte);font-size:1.1rem;margin:0;color:var(--green-deep);}
   .branch-tag{font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;font-weight:700;color:var(--ink-soft);background:var(--wheat-soft);padding:3px 8px;border-radius:6px;}
   .branch-totals{display:flex;gap:18px;margin-bottom:14px;}
   .branch-totals div{font-size:1.2rem;font-weight:700;color:var(--green-deep);font-variant-numeric:tabular-nums;letter-spacing:-0.3px;}
   .branch-totals .real-t{color:var(--real-blue);}
-  .branch-totals .lbl{display:block;font-family:'Inter';font-size:0.75rem;text-transform:uppercase;color:var(--ink-soft);font-weight:700;}
+  .branch-totals .lbl{display:block;font-family:var(--ru-fonte);font-size:0.75rem;text-transform:uppercase;color:var(--ink-soft);font-weight:700;}
 
   .cat-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:9px;font-size:0.82rem;}
   .cat-bar-row .cname{width:120px;flex-shrink:0;color:var(--ink-soft);font-weight:600;}
@@ -238,7 +243,7 @@
 
   .np-head{display:flex;align-items:center;gap:14px;margin-bottom:16px;padding-bottom:12px;border-bottom:3px solid var(--green-deep);}
   .np-head img{height:44px;width:auto;object-fit:contain;}
-  .np-head h2{font-family:'Fraunces',serif;font-size:1.3rem;margin:0;color:var(--green-deep);}
+  .np-head h2{font-family:var(--ru-fonte);font-size:1.3rem;margin:0;color:var(--green-deep);}
   .np-head .np-sub{font-size:0.82rem;color:var(--ink-soft);margin-top:2px;}
   .np-dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle;}
   #naoPrevistosView .add-row{margin-top:0;}
@@ -281,6 +286,12 @@
   button:focus-visible, select:focus-visible, input:focus-visible{outline:2px solid var(--real-blue);outline-offset:1px;}
 
   footer{text-align:center;color:var(--ink-soft);font-size:0.78rem;margin-top:30px;}
+  /* ===== Kit Rural (14/10/2026): mesmas cores, fonte e topo dos outros apps (rural-ui.css) ===== */
+  :root{--green-deep:var(--ru-azul-esc);--cream:var(--ru-papel);--line:var(--ru-linha);--ink:var(--ru-tinta);--ink-soft:var(--ru-tinta2);--real-blue:var(--ru-azul);--danger:var(--ru-vermelho)}
+  body{font-family:var(--ru-fonte)}
+  .wrap{padding-top:16px}
+  .wrap > .ru-topo{margin-bottom:0}
+  #saveBadge.consulta{display:flex;background:var(--ru-amarelo-cl);color:var(--ru-amarelo-txt);border-radius:9px;padding:8px 12px;font-weight:600;font-size:.85rem}
 </style>
 </head>
 <body>
@@ -289,16 +300,8 @@
 </div>
 <div class="wrap">
 
-  <header>
-    <div class="brand">
-      <img class="brand-logo" src="data:image/jpeg;base64,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" alt="Rural Nutrição Animal — 25 anos">
-      <div>
-        <h1>Fluxo de Caixa - Rural Nutrição</h1>
-        <p>Previsto x Real, por categoria, unidade e dia</p>
-      </div>
-    </div>
-    <div class="save-badge" id="saveBadge"><span class="dot"></span> salvo automaticamente · dados compartilhados com quem tiver este link</div>
-  </header>
+  <div id="fxTopo"></div>
+  <div class="save-badge" id="saveBadge" style="display:none"></div>
 
   <div class="kpi-strip" id="kpiStrip"></div>
 
@@ -872,146 +875,77 @@ let WEEKS = ["Semana 2 - Julho","Semana 3 - Julho","Semana 4 - Julho","Semana 5 
 const UNIT_LABEL = { Rural: "Matriz (Rural)", RNA: "Filial (RNA)", Total: "Total (Matriz + Filial)" };
 
 let SEED = []; // Obrigações vêm sempre da planilha (dados de julho embutidos removidos em 23/09/2026)
-let SEED_ANTECIPACOES = [
-  {id:'antec_1', day:'10/08', unit:'RNA', banco:'Banco Bradesco', bruto:226608.82, juros:6415.89, iof:1689.20, tarifa:379.00, liquido:218124.73},
-];
-
-// Recebimentos previstos de exportação (faturas em USD em aberto), agrupadas por
-// vencimento ate a sexta-feira de cada semana e com previsao de recebimento 7 dias
-// depois. Cambio usado: 5,0911 (cotacao de 11/08/2026 informada no relatorio de
-// exportacao). Cliente descreve o lote agregado; ver relatorio original para o
-// detalhe fatura a fatura.
-let SEED_RECEBIMENTOS_REAIS = [
-  {day:'21/08', week:'Semana 8', unit:'Rural', cliente:'Recebimento de Exportação - vencimentos até 14/08 (US$ 289.808,50 @ 5,0911)', valor:1475444.06, status:'Pendente'},
-  {day:'04/09', week:'Semana 10', unit:'Rural', cliente:'Recebimento de Exportação - vencimentos até 28/08 (US$ 65.608,50 @ 5,0911)', valor:334019.43, status:'Pendente'},
-  {day:'11/09', week:'Semana 11', unit:'Rural', cliente:'Recebimento de Exportação - vencimentos até 04/09 (US$ 73.800,00 @ 5,0911)', valor:375723.18, status:'Pendente'},
-];
-
+let SEED_ANTECIPACOES = [];
+let SEED_RECEBIMENTOS_REAIS = [];
 let SEED_DUPLICATAS = []; // Duplicatas vêm sempre da planilha (removido em 23/09/2026)
 
 let state = { records: [], nextId: 1, bankAccounts: null };
 
-// ---------- Integração com a planilha (Google Sheets + Apps Script) ----------
-// Cole aqui a URL do app da Web publicado no Apps Script (ver Code.gs).
-// Deixe em branco ("") para o dashboard funcionar 100% offline com os dados
-// embutidos acima (SEED, DEFAULT_BANKS, etc.) e salvar só no navegador.
+// ---------- Integração com a planilha (login central) ----------
+// Tudo passa pelo Rural Auth: o app pede um token do app "fluxo" e fala com o script por POST.
+// O script valida o token, só deixa lançar quem tem "pode lançar" e grava o NOME do login.
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxdTMAgzumVlIHS9Gl3AGTENHxr5er8hhZsFkc7wkqmIWcyHm2AbF02nlN1XcogTabe/exec";
-
-// Apps Script Web Apps (o /exec) não têm como devolver o cabeçalho
-// Access-Control-Allow-Origin nas respostas — testado direto (navegando pra URL,
-// que não passa por CORS) e confirmado: o backend funciona perfeitamente e devolve
-// os dados certos, só que fetch()/XHR de outra origem (gilberttops.github.io) é
-// sempre bloqueado pelo navegador antes mesmo de conseguir ler a resposta, tanto
-// em GET quanto em POST (25/08/2026). A solução real pra isso é JSONP: carregar a
-// resposta via uma tag <script>, que não é sujeita a CORS (só fetch/XHR são).
-let __jsonpSeq = 0;
-function jsonpRequest(url, timeoutMs){
-  return new Promise((resolve, reject)=>{
-    const cbName = '__fluxoCaixaCb' + (__jsonpSeq++) + '_' + Date.now();
-    const script = document.createElement('script');
-    // Resposta que chega depois do timeout (o Apps Script às vezes leva mais de 60 s): o navegador ainda executa o
-    // <script> mesmo removido, então deixamos um callback vazio que se apaga sozinho em vez de dar ReferenceError.
-    const timer = setTimeout(()=>{
-      clearTimeout(timer);
-      script.remove();
-      window[cbName] = ()=>{ delete window[cbName]; };
-      reject(new Error('JSONP timeout'));
-    }, timeoutMs || 60000);
-    function cleanup(){
-      clearTimeout(timer);
-      delete window[cbName];
-      script.remove();
-    }
-    window[cbName] = (data)=>{ cleanup(); resolve(data); };
-    script.onerror = ()=>{ cleanup(); reject(new Error('JSONP script load error')); };
-    const sep = url.includes('?') ? '&' : '?';
-    script.src = url + sep + 'callback=' + cbName;
-    document.body.appendChild(script);
+let PODE_LANCAR = false;
+let CURRENT_USER = '';
+function opId_(){ return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now() + '-' + Math.random().toString(16).slice(2)); }
+function comTempo_(promessa, ms){
+  return new Promise((ok, erro)=>{
+    const t = setTimeout(()=>erro(new Error('tempo esgotado')), ms);
+    promessa.then(v=>{ clearTimeout(t); ok(v); }, e=>{ clearTimeout(t); erro(e); });
   });
 }
 
 async function fetchSheetData(){
-  if(!SCRIPT_URL) return null;
   try{
-    // Aba ConciliacaoAgrotis tem 1100+ linhas: doGet() pode demorar, por isso
-    // o timeout generoso (60s, aumentado de 30s em 26/08/2026 -- o doGet estava
-    // estourando os 30s conforme a planilha cresceu, e isso bloqueava
-    // silenciosamente toda gravação -- ver applySheetData/__sheetModeOk).
-    const data = await jsonpRequest(SCRIPT_URL, 60000);
-    if(!data || !data.ok) return null;
+    // Aba ConciliacaoAgrotis tem 1100+ linhas: a primeira leitura pode demorar (o script guarda um cache de 15 min).
+    const data = await comTempo_(RuralAuth.chamar('fluxo', SCRIPT_URL, { acao: 'ler' }), 90000);
+    if(!data || !data.ok){ console.error('Leitura recusada:', data && data.error); return null; }
+    PODE_LANCAR = !!data.podeLancar;
+    if(data.usuario && data.usuario.nome) CURRENT_USER = data.usuario.nome;
     return data;
   }catch(e){
-    console.error('Não foi possível buscar dados da planilha, usando dados locais.', e);
+    console.error('Não foi possível buscar dados da planilha.', e);
     return null;
   }
 }
 
 async function postToSheet(action, payload){
-  if(!SCRIPT_URL) return null;
+  if(!PODE_LANCAR) return null;
   try{
-    // Todo lançamento vai marcado com quem está usando o dashboard nesta sessão
-    // do navegador (ver ensureUsuarioIdentificado()) -- não é senha, só pra saber
-    // quem mexeu no quê. O Apps Script decide em quais abas grava essa coluna.
-    const fullPayload = Object.assign({}, payload, { usuario: CURRENT_USER || '' });
-    const url = SCRIPT_URL + '?action=' + encodeURIComponent(action) +
-      '&payload=' + encodeURIComponent(JSON.stringify(fullPayload));
-    return await jsonpRequest(url, 30000);
+    return await comTempo_(RuralAuth.chamar('fluxo', SCRIPT_URL, { acao: 'gravar', op: action, payload: payload, opId: opId_() }), 40000);
   }catch(e){
     console.error('Falha ao gravar na planilha:', action, e);
     return null;
   }
 }
 
-// ---------- Identificação de quem está usando o dashboard (sem senha) ----------
-// Pedido do João em 02/09/2026: só a Rosangela (financeiro) além do Gilberto
-// mexe direto no dashboard hoje (lançamento de saldo bancário diário) -- isso
-// deixa registrado quem fez cada lançamento sem precisar de login de verdade.
-let CURRENT_USER = localStorage.getItem('fluxoCaixaUsuario') || '';
-function ensureUsuarioIdentificado(){
-  return new Promise(resolve=>{
-    if(CURRENT_USER){ renderUsuarioBadge(); resolve(); return; }
-    const overlay = document.createElement('div');
-    overlay.id = 'usuarioOverlay';
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(20,30,25,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;';
-    overlay.innerHTML = `
-      <div style="background:#fff;border-radius:10px;padding:24px 28px;max-width:340px;width:90%;box-shadow:0 8px 30px rgba(0,0,0,0.3);font-family:Inter,sans-serif;">
-        <h3 style="margin:0 0 8px 0;">Quem está acessando?</h3>
-        <p style="margin:0 0 14px 0;font-size:0.85rem;color:#666;">Sem senha, é só o nome mesmo — pra saber quem lançou cada coisa (ex: saldo bancário do dia).</p>
-        <input id="usuarioInput" type="text" placeholder="Seu nome" style="width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:6px;font-size:1rem;box-sizing:border-box;">
-        <button id="usuarioBtn" class="btn-primary" style="margin-top:12px;width:100%;">Entrar</button>
-      </div>`;
-    document.body.appendChild(overlay);
-    const inp = overlay.querySelector('#usuarioInput');
-    const btn = overlay.querySelector('#usuarioBtn');
-    setTimeout(()=>inp.focus(), 50);
-    function confirmar(){
-      const v = inp.value.trim();
-      if(!v){ inp.focus(); return; }
-      CURRENT_USER = v;
-      localStorage.setItem('fluxoCaixaUsuario', v);
-      document.body.removeChild(overlay);
-      renderUsuarioBadge();
-      resolve();
-    }
-    btn.onclick = confirmar;
-    inp.addEventListener('keydown', e=>{ if(e.key==='Enter') confirmar(); });
-  });
+function pendenteGravar_(){
+  const base = window.__syncBaseline || {};
+  const atual = syncSignatures_();
+  return Object.keys(atual).some(k => !base[k] || base[k].sig !== atual[k].sig);
 }
-function renderUsuarioBadge(){
-  let el = document.getElementById('usuarioBadge');
-  if(!el){
-    el = document.createElement('div');
-    el.id = 'usuarioBadge';
-    el.style.cssText = 'position:fixed;top:8px;right:10px;z-index:500;background:rgba(0,0,0,0.55);color:#fff;font-size:0.72rem;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:Inter,sans-serif;';
-    el.title = 'Clique pra trocar o nome';
-    el.onclick = ()=>{
-      localStorage.removeItem('fluxoCaixaUsuario');
-      CURRENT_USER = '';
-      location.reload();
-    };
-    document.body.appendChild(el);
+function sairFluxo(){
+  if(PODE_LANCAR && window.__sheetModeOk && pendenteGravar_() && !confirm('Há alterações NÃO gravadas. Sair mesmo assim?')) return;
+  try{ localStorage.removeItem('fluxoCaixaUsuario'); }catch(e){}
+  RuralAuth.sair();
+}
+function montarTopo_(ctx){
+  const alvo = document.getElementById('fxTopo');
+  if(!alvo || !window.RuralUI) return;
+  const u = (ctx && ctx.usuario) || {};
+  alvo.textContent = '';
+  RuralUI.topo(alvo, { app: 'fluxo', titulo: 'Fluxo de Caixa', sub: 'Previsto x Real, por categoria, unidade e dia',
+    usuario: { nome: CURRENT_USER || u.nome || '' }, apps: (ctx && ctx.apps) || [], admin: !!(u.admin || u.adm), aoSair: sairFluxo });
+}
+// Quem só consulta (sem "pode lançar") vê tudo, mas o app avisa e não tenta gravar.
+function aplicarModo_(){
+  const btn = document.getElementById('saveFloatBtn');
+  const b = document.getElementById('saveBadge');
+  if(btn) btn.style.display = PODE_LANCAR ? '' : 'none';
+  if(b && window.__sheetModeOk !== false){
+    if(PODE_LANCAR){ b.className = 'save-badge'; b.style.display = 'none'; b.textContent = ''; }
+    else { b.className = 'save-badge consulta'; b.style.display = ''; b.textContent = 'Modo consulta: você pode ver tudo, mas o que mudar aqui não será gravado. Para lançar, peça a liberação ao administrador.'; }
   }
-  el.textContent = '👤 ' + CURRENT_USER;
 }
 
 // Apps Script v8: duplicatas, antecipações e recebimentos reais trazem day_full (dd/mm/aaaa). Com o ano
@@ -1110,7 +1044,7 @@ function syncSignatures_(){
 }
 
 async function syncStateToSheet(){
-  if(!SCRIPT_URL) return;
+  if(!SCRIPT_URL || !PODE_LANCAR) return;
   const base = window.__syncBaseline || {};
   const atual = syncSignatures_();
   const mudou = Object.keys(atual).filter(k => !base[k] || base[k].sig !== atual[k].sig);
@@ -1168,32 +1102,9 @@ function fmtCur(n, currency){
 }
 function num(n){ return (n===null||n===undefined||isNaN(n)) ? 0 : n; }
 
-let DEFAULT_BANKS = {
-  Rural: [
-    {id:'b1', banco:'Banco Sicredi', saldo:21274.73},
-    {id:'b2', banco:'Banco do Brasil', saldo:302556.59},
-    {id:'b3', banco:'Banco Bradesco', saldo:14831.13},
-    {id:'b4', banco:'Banco Cresol', saldo:4567.54},
-  ],
-  RNA: [
-    {id:'b5', banco:'Banco do Brasil', saldo:3027.75},
-    {id:'b6', banco:'Banco Bradesco', saldo:195511.09},
-    {id:'b7', banco:'Banco Sicredi', saldo:27633.06},
-  ],
-};
-
-// Histórico diário de saldos bancários — um registro por (data, unidade, banco).
-// Alimentado manualmente todo dia (ou pelo botão "+ Lançar saldo do dia" na aba de saldos).
-let HISTORICO_SALDOS = [
-  {date:'10/08/2026', unit:'Rural', banco:'Banco Sicredi', saldo:21274.73},
-  {date:'10/08/2026', unit:'Rural', banco:'Banco do Brasil', saldo:302556.59},
-  {date:'10/08/2026', unit:'Rural', banco:'Banco Bradesco', saldo:14831.13},
-  {date:'10/08/2026', unit:'Rural', banco:'Banco Cresol', saldo:4567.54},
-  {date:'10/08/2026', unit:'RNA', banco:'Banco do Brasil', saldo:3027.75},
-  {date:'10/08/2026', unit:'RNA', banco:'Banco Bradesco', saldo:195511.09},
-  {date:'10/08/2026', unit:'RNA', banco:'Banco Sicredi', saldo:27633.06},
-];
-function ensureBankAccounts(){
+let DEFAULT_BANKS = { Rural: [], RNA: [] };
+// Histórico diário de saldos bancários — um registro por (data, unidade, banco). Vem da planilha.
+let HISTORICO_SALDOS = [];function ensureBankAccounts(){
   if(!state.bankAccounts){
     state.bankAccounts = JSON.parse(JSON.stringify(DEFAULT_BANKS));
   }
@@ -1375,7 +1286,7 @@ async function loadState(){
       return;
     }
     window.__sheetModeOk = false;
-    console.warn('Modo planilha configurado mas a busca falhou; abrindo com os dados locais, sem gravar nada até a planilha voltar.');
+    console.warn('A leitura da planilha falhou; abrindo vazio, sem gravar nada até a planilha voltar.');
     showSheetOfflineBanner();
     state.records = SEED.map((r,i)=>({id:i+1, ...r}));
     state.nextId = state.records.length + 1;
@@ -1615,7 +1526,7 @@ function renderKPIs(){
   const necessidade = totalP - totalAbatimento;
   const necCard = document.createElement('div');
   necCard.className = 'kpi necessidade-kpi' + (necessidade<=0 ? ' surplus' : '');
-  necCard.innerHTML = `<div class="label">Necessidade de Caixa (semana)</div><div class="value">${necessidade>=0?'':'+'}R$ ${fmt(Math.abs(necessidade))}${necessidade<=0?' (sobra)':''}</div><div style="font-size:0.7rem;color:var(--ink-soft);margin-top:2px;font-family:'Inter';line-height:1.5">${dupReceb>0?`Duplicatas a receber (bancarizadas, não descontadas): R$ ${fmt(dupReceb)}`:'Nenhuma duplicata bancarizada pendente nessa semana'}${recebExport>0?` · Recebimento de Exportação: R$ ${fmt(recebExport)}`:''}${saldoBanco>0?` · Saldo em conta: R$ ${fmt(saldoBanco)}`:''}</div>`;
+  necCard.innerHTML = `<div class="label">Necessidade de Caixa (semana)</div><div class="value">${necessidade>=0?'':'+'}R$ ${fmt(Math.abs(necessidade))}${necessidade<=0?' (sobra)':''}</div><div style="font-size:0.7rem;color:var(--ink-soft);margin-top:2px;font-family:var(--ru-fonte);line-height:1.5">${dupReceb>0?`Duplicatas a receber (bancarizadas, não descontadas): R$ ${fmt(dupReceb)}`:'Nenhuma duplicata bancarizada pendente nessa semana'}${recebExport>0?` · Recebimento de Exportação: R$ ${fmt(recebExport)}`:''}${saldoBanco>0?` · Saldo em conta: R$ ${fmt(saldoBanco)}`:''}</div>`;
   el.appendChild(necCard);
 
   if(necessidade > 0){
@@ -1632,7 +1543,7 @@ function renderKPIs(){
     const antCard = document.createElement('div');
     antCard.className = 'kpi';
     antCard.style.borderColor = 'var(--wheat)';
-    antCard.innerHTML = `<div class="label">Antecipação sugerida (desconto de duplicatas)</div><div class="value" style="color:var(--green-deep)">R$ ${fmt(ant.bruto)}</div><div style="font-size:0.72rem;color:var(--ink-soft);margin-top:4px;font-family:'Inter';line-height:1.5">Juros R$ ${fmt(ant.juros)} · IOF R$ ${fmt(ant.iof)} · Tarifa R$ ${fmt(ant.tarifa)}<br>Custo total: R$ ${fmt(ant.custoTotal)} → líquido R$ ${fmt(ant.liquido)}</div>`;
+    antCard.innerHTML = `<div class="label">Antecipação sugerida (desconto de duplicatas)</div><div class="value" style="color:var(--green-deep)">R$ ${fmt(ant.bruto)}</div><div style="font-size:0.72rem;color:var(--ink-soft);margin-top:4px;font-family:var(--ru-fonte);line-height:1.5">Juros R$ ${fmt(ant.juros)} · IOF R$ ${fmt(ant.iof)} · Tarifa R$ ${fmt(ant.tarifa)}<br>Custo total: R$ ${fmt(ant.custoTotal)} → líquido R$ ${fmt(ant.liquido)}</div>`;
     el.appendChild(antCard);
   }
 
@@ -1642,7 +1553,7 @@ function renderKPIs(){
     const usdCard = document.createElement('div');
     usdCard.className = 'kpi';
     usdCard.style.borderColor = 'var(--real-blue)';
-    usdCard.innerHTML = `<div class="label">Em dólar (não somado ao total em R$)</div><div class="value">US$ ${fmt(usdP)} <span style="font-size:0.7rem;color:var(--ink-soft);font-family:'Inter'">prev.</span> · US$ ${fmt(usdR)} <span style="font-size:0.7rem;color:var(--ink-soft);font-family:'Inter'">real</span></div>`;
+    usdCard.innerHTML = `<div class="label">Em dólar (não somado ao total em R$)</div><div class="value">US$ ${fmt(usdP)} <span style="font-size:0.7rem;color:var(--ink-soft);font-family:var(--ru-fonte)">prev.</span> · US$ ${fmt(usdR)} <span style="font-size:0.7rem;color:var(--ink-soft);font-family:var(--ru-fonte)">real</span></div>`;
     el.appendChild(usdCard);
   }
 }
@@ -2890,7 +2801,7 @@ function npDados_(){
 }
 
 function renderNaoPrevistosView(){
-  const logo = document.querySelector('.brand-logo');
+  const logo = { src: 'logo_rural.png' };
   if(logo) document.getElementById('npLogo').src = logo.src;
 
   const { itens, totalPagoPorMes } = npDados_();
@@ -3917,7 +3828,7 @@ function resumoDados_(){
 
 function renderResumoView(){
   const d = resumoDados_();
-  const logo = document.querySelector('.brand-logo');
+  const logo = { src: 'logo_rural.png' };
   if(logo) document.getElementById('resumoLogo').src = logo.src;
   const agora = new Date();
   document.getElementById('resumoSub').textContent = `Posição em ${ddmmyyyy(agora)} · Matriz (Rural) e Filial (RNA)`;
@@ -4230,7 +4141,7 @@ function renderMonthKPIs(){
   const necessidade = totalP - (receb + dupReceb + recebExport + saldoBanco);
   const necCard = document.createElement('div');
   necCard.className = 'kpi necessidade-kpi' + (necessidade<=0 ? ' surplus' : '');
-  necCard.innerHTML = `<div class="label">Necessidade de Caixa (mês)</div><div class="value">${necessidade<0?'+':''}R$ ${fmt(Math.abs(necessidade))}${necessidade<=0?' (sobra)':''}</div><div style="font-size:0.7rem;color:var(--ink-soft);margin-top:2px;font-family:'Inter';line-height:1.5">Recebimento estimado: R$ ${fmt(receb)} (${nWeeks} semanas)${dupReceb>0?` · Duplicatas: R$ ${fmt(dupReceb)}`:''}${recebExport>0?` · Recebimento de Exportação: R$ ${fmt(recebExport)}`:''}${saldoBanco>0?` · Saldo em conta: R$ ${fmt(saldoBanco)}`:''}</div>`;
+  necCard.innerHTML = `<div class="label">Necessidade de Caixa (mês)</div><div class="value">${necessidade<0?'+':''}R$ ${fmt(Math.abs(necessidade))}${necessidade<=0?' (sobra)':''}</div><div style="font-size:0.7rem;color:var(--ink-soft);margin-top:2px;font-family:var(--ru-fonte);line-height:1.5">Recebimento estimado: R$ ${fmt(receb)} (${nWeeks} semanas)${dupReceb>0?` · Duplicatas: R$ ${fmt(dupReceb)}`:''}${recebExport>0?` · Recebimento de Exportação: R$ ${fmt(recebExport)}`:''}${saldoBanco>0?` · Saldo em conta: R$ ${fmt(saldoBanco)}`:''}</div>`;
   el.appendChild(necCard);
 
   if(necessidade > 0){
@@ -4247,7 +4158,7 @@ function renderMonthKPIs(){
     const antCard = document.createElement('div');
     antCard.className = 'kpi';
     antCard.style.borderColor = 'var(--wheat)';
-    antCard.innerHTML = `<div class="label">Antecipação sugerida (desconto de duplicatas)</div><div class="value" style="color:var(--green-deep)">R$ ${fmt(ant.bruto)}</div><div style="font-size:0.72rem;color:var(--ink-soft);margin-top:4px;font-family:'Inter';line-height:1.5">Juros R$ ${fmt(ant.juros)} · IOF R$ ${fmt(ant.iof)} · Tarifa R$ ${fmt(ant.tarifa)}<br>Custo total: R$ ${fmt(ant.custoTotal)} → líquido R$ ${fmt(ant.liquido)}</div>`;
+    antCard.innerHTML = `<div class="label">Antecipação sugerida (desconto de duplicatas)</div><div class="value" style="color:var(--green-deep)">R$ ${fmt(ant.bruto)}</div><div style="font-size:0.72rem;color:var(--ink-soft);margin-top:4px;font-family:var(--ru-fonte);line-height:1.5">Juros R$ ${fmt(ant.juros)} · IOF R$ ${fmt(ant.iof)} · Tarifa R$ ${fmt(ant.tarifa)}<br>Custo total: R$ ${fmt(ant.custoTotal)} → líquido R$ ${fmt(ant.liquido)}</div>`;
     el.appendChild(antCard);
   }
 }
@@ -4557,6 +4468,7 @@ document.getElementById('addHistSaldoBtn').addEventListener('click', addHistSald
 document.getElementById('histSaldoUnit').addEventListener('change', renderHistoricoSaldos);
 
 document.getElementById('saveFloatBtn').addEventListener('click', async ()=>{
+  if(!PODE_LANCAR) return;
   const btn = document.getElementById('saveFloatBtn');
   const toast = document.getElementById('saveToast');
   const original = btn.textContent;
@@ -4574,19 +4486,23 @@ document.getElementById('saveFloatBtn').addEventListener('click', async ()=>{
   }, 2200);
 });
 
-(async ()=>{
-  await ensureUsuarioIdentificado();
+async function iniciarFluxo_(ctx){
+  CURRENT_USER = (ctx && ctx.usuario && ctx.usuario.nome) || '';
   await loadState();
   renderAll();
-  // Aviso visível quando a busca na planilha falha (timeout, Apps Script fora
-  // do ar, etc.) -- antes disso o dashboard caía pros dados locais embutidos
-  // (retrato antigo) sem nenhum sinal na tela, só no console (F12).
+  montarTopo_(ctx);
+  aplicarModo_();
+  // Aviso visível quando a leitura da planilha falha (tempo esgotado, script fora do ar, etc.).
   const badge = document.getElementById('saveBadge');
   if(badge && window.__sheetModeOk === false){
-    badge.innerHTML = '<span class="dot" style="background:var(--danger);"></span> não foi possível carregar a planilha agora — mostrando o último retrato salvo neste arquivo (pode estar desatualizado). Recarregue a página em alguns segundos.';
+    badge.className = 'save-badge consulta';
+    badge.style.display = '';
     badge.style.color = 'var(--danger)';
+    badge.textContent = 'Não foi possível carregar a planilha agora. Nada será gravado. Recarregue a página em alguns segundos.';
   }
-})();
+}
+RuralAuth.iniciar({ app: 'fluxo', aoEntrar: function(ctx){ iniciarFluxo_(ctx); } });
+</script>})();
 </script>
 </body>
 </html>
