@@ -438,6 +438,7 @@
   <div class="view-tabs" id="viewTabs" role="tablist">
     <button class="view-tab active" data-view="alertas" type="button">Alertas</button>
     <button class="view-tab" data-view="previsao" type="button">Previsão de compra</button>
+    <button class="view-tab" data-view="projecao" type="button">Projeção de consumo</button>
     <button class="view-tab" data-view="search" type="button">Consultar Produto</button>
     <button class="view-tab" data-view="overview" type="button">Estoque Completo</button>
     <button class="view-tab" data-view="futuras" type="button">Compras Futuras</button>
@@ -632,6 +633,30 @@
       </div>
       <div class="kpi-grid" id="previsaoKpis" style="margin-top:14px;"></div>
       <div id="previsaoBody"></div>
+    </section>
+  </div>
+
+  <div id="projecaoView" style="display:none;">
+    <section class="card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div>
+          <h3 style="margin:0 0 3px;">Projeção de consumo e compras — próximos 6 meses</h3>
+          <p class="card-note" style="margin:0;">Consumo previsto por mês de cada MP, aditivo e embalagem (média de saída dos últimos meses + ajuste) e quanto vai faltar comprar, já descontando o estoque e o saldo dos contratos da filial. Clique numa linha para abrir o produto.</p>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <div class="periodo-bar" id="projecaoFilialBar" style="margin:0;"></div>
+          <button type="button" class="group-tab" onclick="pdfProjecao()" title="Gerar PDF da projeção com os filtros atuais">📄 Gerar PDF</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:.9rem;">
+        <div class="group-tabs" id="projecaoGrupoBar" style="display:flex;gap:6px;"></div>
+        <label>Base: <select id="projecaoBase" style="padding:4px 6px;"><option value="3">média dos últimos 3 meses</option><option value="6">média dos últimos 6 meses</option></select></label>
+        <label>Ajuste: <input id="projecaoAjuste" type="number" value="0" step="5" style="width:70px;padding:4px 6px;"> %</label>
+        <label><input id="projecaoSoCompra" type="checkbox"> só itens que precisam comprar</label>
+        <input id="projecaoBusca" class="search-input" style="max-width:240px;" type="text" placeholder="Filtrar por código ou nome…" autocomplete="off">
+      </div>
+      <div class="kpi-grid" id="projecaoKpis" style="margin-top:14px;"></div>
+      <div id="projecaoBody"></div>
     </section>
   </div>
 
@@ -1972,6 +1997,7 @@ function switchView(view) {
   document.getElementById('cotacoesView').style.display = view === 'cotacoes' ? '' : 'none';
   document.getElementById('conferirView').style.display = view === 'conferir' ? '' : 'none';
   document.getElementById('previsaoView').style.display = view === 'previsao' ? '' : 'none';
+  document.getElementById('projecaoView').style.display = view === 'projecao' ? '' : 'none';
   document.getElementById('fornecedoresView').style.display = view === 'fornecedores' ? '' : 'none';
   document.querySelectorAll('.view-tab').forEach(btn => btn.classList.toggle('active', btn.dataset.view === view));
   if (view === 'alertas') renderAlertas();
@@ -1980,6 +2006,7 @@ function switchView(view) {
   if (view === 'cotacoes') renderCotacoes();
   if (view === 'conferir') renderConferir();
   if (view === 'previsao') renderPrevisao();
+  if (view === 'projecao') renderProjecao();
   if (view === 'fornecedores') renderFornecedoresAba();
   atualizarBadgeConferir();
 }
@@ -3084,6 +3111,7 @@ function redesenharViewAtual() {
   try {
     if (currentView === 'alertas') renderAlertas();
     else if (currentView === 'previsao') renderPrevisao();
+    else if (currentView === 'projecao') renderProjecao();
     else if (currentView === 'fornecedores') renderFornecedoresAba();
     else if (currentView === 'overview') renderOverviewTable();
     else if (currentView === 'futuras') renderFuturas();
@@ -3165,6 +3193,133 @@ function renderPrevisao() {
        <tbody>${html}</tbody></table></div><p class="card-note" style="margin:10px 0 0;">* prazo de entrega provisório (${SUG_PRAZO_PADRAO_DIAS} dias) — preencher na aba "Prazos de entrega" da planilha. Itens inativos e sem consumo não aparecem.</p>`
     : '<p style="color:var(--text-muted);margin:0;">Nenhum item com consumo para prever.</p>';
   ligarLinhasProduto(body);
+}
+
+// (7) Projecao de consumo e compras — proximos 6 meses, por filial
+// consumo previsto/mes = media da saida (consumo + venda + perda + troca) dos ultimos N meses fechados × (1 + ajuste);
+// item sem saida registrada no Agrotis (embalagens, alguns aditivos) usa a saida/dia estimada pelas compras × 30.
+// O mes atual entra so com os dias que faltam. Estoque + saldo de contrato DA FILIAL vao sendo consumidos mes a mes;
+// o que nao cobre vira "comprar" naquele mes, valorizado pelo preco medio.
+let projecaoFilial = 'todas', projecaoGrupo = 'todos';
+const PROJ_MESES = 6, PROJ_GRUPOS = [['todos', 'Todos'], ['MP', 'Matéria-prima'], ['Aditivos', 'Aditivos'], ['Embalagens', 'Embalagens']];
+function saldoContratoDaFilial(filial, codigo) {
+  let saldo = 0;
+  (COMPRAS_FUTURAS || []).forEach(forn => {
+    if ((forn.filial === 5 ? 'F5' : 'F2') !== filial) return;
+    (forn.itens || []).forEach(it => { if (it.codprod === codigo) saldo += it.saldo || 0; });
+  });
+  return saldo;
+}
+function projecaoMeses() {
+  const h = hojeZero(), fimMes = new Date(h.getFullYear(), h.getMonth() + 1, 0).getDate();
+  const meses = [{ rot: mesLabel(h) + ' (resto)', frac: (fimMes - h.getDate() + 1) / fimMes }];
+  for (let i = 1; i <= PROJ_MESES; i++) meses.push({ rot: mesLabel(new Date(h.getFullYear(), h.getMonth() + i, 1)), frac: 1 });
+  return meses;
+}
+function calcularProjecao(filial, nBase, ajuste) {
+  const mesAtual = mesLabel(hojeZero()), meses = projecaoMeses(), lista = [];
+  Object.keys(DATASETS[filial] || {}).forEach(code => {
+    const rec = DATASETS[filial][code], c = rec && rec.cadastro;
+    if (!c || c.producao_propria || CODIGOS_EXCLUIDOS.has(code) || inativoInfo(filial, code)) return;
+    const fechados = (rec.comparativo_mensal || []).filter(m => m.mes !== mesAtual).slice(-nBase);
+    const saida = m => Math.max(0, (m.consumido || 0) + (m.vendido || 0) + (m.perda || 0) + (m.troca || 0));
+    let base = fechados.length ? fechados.reduce((a, m) => a + saida(m), 0) / fechados.length : 0, estimado = false;
+    if (!(base > 0) && (c.consumo_medio_diario_usado || 0) > 0) { base = c.consumo_medio_diario_usado * 30; estimado = true; }
+    if (!(base > 0)) return;
+    const mensal = base * (1 + ajuste);
+    const est = Math.max(c.estoque_atual || 0, 0), contrato = saldoContratoDaFilial(filial, code);
+    let disp = est + contrato, acabaMes = -1;
+    const cols = meses.map((m, i) => {
+      const cons = mensal * m.frac, usa = Math.min(disp, cons), comprar = cons - usa;
+      disp -= usa;
+      if (comprar > 0 && acabaMes < 0) acabaMes = i;
+      return { cons, comprar };
+    });
+    const totalCons = cols.reduce((a, x) => a + x.cons, 0), totalComprar = cols.reduce((a, x) => a + x.comprar, 0);
+    const preco = c.preco_medio || 0;
+    lista.push({ filial, code, produto: c.produto, un: c.unidade || '', grupo: c.grupo || 'MP', base: mensal, estimado, est, contrato,
+                 cols, totalCons, totalComprar, preco, valor: totalComprar * preco, acabaMes });
+  });
+  // primeiro o que acaba antes; os cobertos no fim; empate pelo valor a comprar
+  return lista.sort((a, b) => (a.acabaMes < 0) - (b.acabaMes < 0) || a.acabaMes - b.acabaMes || b.valor - a.valor);
+}
+function projecaoFiltrada() {
+  const nBase = Number(document.getElementById('projecaoBase').value) || 3;
+  const ajuste = (Number(document.getElementById('projecaoAjuste').value) || 0) / 100;
+  const soCompra = document.getElementById('projecaoSoCompra').checked;
+  const q = (document.getElementById('projecaoBusca').value || '').trim().toLowerCase();
+  const filiais = projecaoFilial === 'todas' ? ['F2', 'F5'] : [projecaoFilial];
+  return {
+    nBase, ajuste, meses: projecaoMeses(),
+    porFilial: filiais.map(f => ({ filial: f, lista: calcularProjecao(f, nBase, ajuste).filter(x =>
+      (projecaoGrupo === 'todos' || x.grupo === projecaoGrupo) && (!soCompra || x.totalComprar > 0) &&
+      (!q || (x.produto || '').toLowerCase().includes(q) || x.code.includes(q))) }))
+  };
+}
+function projecaoTabelaHtml(bloco, meses) {
+  const q = v => v >= 100 ? fmtInt(v) : fmtNum(v, 1);
+  const totMes = meses.map((_, i) => bloco.lista.reduce((a, x) => a + x.cols[i].comprar * x.preco, 0));
+  const linhas = bloco.lista.map(x => `<tr class="alerta-row" data-f="${x.filial}" data-code="${x.code}">
+    <td>${esc(x.code)}</td><td>${esc(x.produto)}<div class="alerta-motivo">${esc(x.grupo)}${x.estimado ? ' · ≈ estimado pelas compras' : ''}</div></td>
+    <td class="num">${q(x.est)}</td><td class="num">${x.contrato > 0 ? q(x.contrato) : '—'}</td><td class="num">${q(x.base)} <small>${esc(x.un)}</small></td>
+    ${x.cols.map(cl => `<td class="num"${cl.comprar > 0 ? ' style="background:rgba(220,38,38,.08)"' : ''}>${q(cl.cons)}${cl.comprar > 0 ? `<div style="color:#b91c1c;font-size:.78em;font-weight:600">comprar ${q(cl.comprar)}</div>` : ''}</td>`).join('')}
+    <td class="num"><strong>${x.totalComprar > 0 ? q(x.totalComprar) + ' ' + esc(x.un) : '<span style="color:#15803d">coberto</span>'}</strong></td>
+    <td class="num">${x.valor > 0 ? fmtCurrency(x.valor) : (x.totalComprar > 0 ? '<small>sem preço</small>' : '—')}</td></tr>`).join('');
+  return `<div style="overflow-x:auto;"><table><thead><tr><th>Cód.</th><th style="min-width:190px">Produto</th><th class="num">Estoque</th><th class="num">Contratos</th><th class="num">Consumo/mês</th>
+    ${meses.map(m => `<th class="num">${m.rot}</th>`).join('')}<th class="num">Comprar (total)</th><th class="num">R$ estimado</th></tr></thead>
+    <tbody>${linhas || `<tr><td colspan="${meses.length + 7}" style="color:#666">Nenhum item com os filtros escolhidos.</td></tr>`}</tbody>
+    <tfoot><tr style="font-weight:700"><td></td><td>Compras estimadas por mês (R$)</td><td></td><td></td><td></td>
+    ${totMes.map(v => `<td class="num">${v > 0 ? fmtCurrency(v) : '—'}</td>`).join('')}<td></td><td class="num">${fmtCurrency(totMes.reduce((a, v) => a + v, 0))}</td></tr></tfoot></table></div>`;
+}
+function renderProjecao() {
+  barraFilial('projecaoFilialBar', projecaoFilial, k => { projecaoFilial = k; renderProjecao(); });
+  const gb = document.getElementById('projecaoGrupoBar');
+  gb.innerHTML = PROJ_GRUPOS.map(([k, l]) => `<button type="button" class="group-tab${projecaoGrupo === k ? ' active' : ''}" data-g="${k}">${l}</button>`).join('');
+  gb.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { projecaoGrupo = b.dataset.g; renderProjecao(); }));
+  ['projecaoBase', 'projecaoAjuste', 'projecaoSoCompra', 'projecaoBusca'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el.dataset.ligado) { el.dataset.ligado = '1'; el.addEventListener(id === 'projecaoBusca' || id === 'projecaoAjuste' ? 'input' : 'change', renderProjecao); }
+  });
+  const p = projecaoFiltrada();
+  const todos = p.porFilial.flatMap(b => b.lista);
+  const valor = todos.reduce((a, x) => a + x.valor, 0), comprar = todos.filter(x => x.totalComprar > 0);
+  const logo = todos.filter(x => x.acabaMes === 0 || x.acabaMes === 1).length;
+  document.getElementById('projecaoKpis').innerHTML =
+    kpiSimples('Itens projetados', todos.length, `${comprar.length} precisam de compra em 6 meses`, '') +
+    kpiSimples('Faltam até o próximo mês', logo, 'estoque + contratos não cobrem', logo ? 'status-serious' : 'status-good') +
+    kpiSimples('Compras estimadas (6 meses)', fmtCurrency(valor), 'quantidade a comprar × preço médio', '') +
+    kpiSimples('Base da projeção', `${p.nBase} meses`, p.ajuste ? `ajuste de ${p.ajuste > 0 ? '+' : ''}${fmtNum(p.ajuste * 100, 0)}%` : 'sem ajuste', '');
+  const body = document.getElementById('projecaoBody');
+  body.innerHTML = p.porFilial.map(b => `<h4 style="margin:18px 0 6px;">${esc(FILIAL_LABELS[b.filial] || b.filial)} <small style="font-weight:500;color:#666">(${b.lista.length} itens)</small></h4>` + projecaoTabelaHtml(b, p.meses)).join('')
+    + '<p class="card-note" style="margin:10px 0 0;">Em vermelho: meses em que estoque + contratos da filial não cobrem o consumo previsto. "≈ estimado" = item sem saída registrada no Agrotis; o consumo vem das compras. Itens inativos e de produção própria não aparecem.</p>';
+  ligarLinhasProduto(body);
+}
+function pdfProjecao() {
+  const p = projecaoFiltrada();
+  const grupo = (PROJ_GRUPOS.find(g => g[0] === projecaoGrupo) || [])[1] || 'Todos';
+  const corpo = p.porFilial.map(b => {
+    const valor = b.lista.reduce((a, x) => a + x.valor, 0);
+    return `<h2>${esc(FILIAL_LABELS[b.filial] || b.filial)}</h2><div class="sub">${b.lista.length} itens · compras estimadas em 6 meses: <b>${fmtCurrency(valor)}</b></div>` + projecaoTabelaHtml(b, p.meses);
+  }).join('<div class="quebra"></div>');
+  const doc = `<html><head><meta charset="UTF-8"><title>Projeção de consumo — ${esc(new Date().toLocaleDateString('pt-BR'))}</title><style>
+    *{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,Segoe UI,sans-serif;font-size:10px;color:#18180f;padding:18px}
+    @media print{@page{size:A4 landscape;margin:9mm}.pbtn{display:none}.quebra{page-break-after:always}}
+    .hdr{display:flex;align-items:center;gap:14px;border-bottom:3px solid #1d4ed8;padding-bottom:10px;margin-bottom:12px}.hdr img{height:44px}
+    .hdr-t{font-size:17px;font-weight:800;color:#1d4ed8}.hdr-s{font-size:10px;color:#6b7280}
+    h2{font-size:13px;color:#1d4ed8;margin:12px 0 2px}.sub{font-size:10px;color:#374151;margin-bottom:6px}
+    table{width:100%;border-collapse:collapse}th{background:#f0efe9;font-size:8.5px;text-transform:uppercase;padding:4px;border-bottom:2px solid #c8c5bc;text-align:left}
+    td{padding:3px 4px;border-bottom:1px solid #e2dfd7;vertical-align:top}.num{text-align:right}.alerta-motivo{font-size:8px;color:#6b7280}
+    tfoot td{border-top:2px solid #c8c5bc;font-weight:800}tr{page-break-inside:avoid}
+    .obs{font-size:9px;color:#6b7280;margin-top:8px}.footer{margin-top:14px;border-top:2px solid #1d4ed8;padding-top:6px;text-align:center;font-weight:700;color:#1d4ed8}
+    .pbtn{position:fixed;top:12px;right:12px;padding:9px 16px;background:#1d4ed8;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer}
+    </style></head><body><button class="pbtn" onclick="window.print()">Imprimir / Salvar PDF</button>
+    <div class="hdr"><img src="${new URL('logo_rural.png', location.href).href}" alt="Rural"><div><div class="hdr-t">Projeção de consumo e compras — próximos 6 meses</div>
+    <div class="hdr-s">Emitido em ${esc(new Date().toLocaleString('pt-BR'))} · Grupo: ${esc(grupo)} · Base: média dos últimos ${p.nBase} meses${p.ajuste ? ` · ajuste ${p.ajuste > 0 ? '+' : ''}${fmtNum(p.ajuste * 100, 0)}%` : ''}</div></div></div>
+    ${corpo}<div class="obs">Fundo vermelho: meses em que estoque + contratos da filial não cobrem o consumo previsto. Valores = quantidade a comprar × preço médio.</div>
+    <div class="footer">Rural Nutrição Animal</div></body></html>`;
+  const win = window.open('', '_blank', 'width=1200,height=900');
+  if (!win) { alert('O navegador bloqueou a janela do PDF. Libere pop-ups para este site e tente de novo.'); return; }
+  win.document.write(doc); win.document.close();
 }
 
 // (1+3) Fornecedores: ranking 12 meses, concentracao e itens com fornecedor unico
