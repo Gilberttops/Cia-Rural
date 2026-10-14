@@ -5424,7 +5424,24 @@
     return window.storage.get(FC_TEMPLATE_KEY, false).then(function(res){
       if(res && res.value){ try { return JSON.parse(res.value); } catch(e){ return null; } }
       return null;
-    }).catch(function(){ return null; });
+    }).catch(function(){ return null; }).then(function(tmpl){
+      // Sem modelo salvo neste navegador, copia a fatura mais recente da planilha (exportador, importador, bancos).
+      return limparModeloFc(tmpl || ultimaFaturaComoModelo_());
+    });
+  }
+  // Fatura mais recente da lista (vinda da planilha ou salva), usada como modelo.
+  function ultimaFaturaComoModelo_(){
+    if(!faturasComerciais || !faturasComerciais.length) return null;
+    var ord = faturasComerciais.slice().sort(function(a,b){ return (a.data||'') < (b.data||'') ? 1 : -1; });
+    return ord[0];
+  }
+  // Tira do modelo o que é de cada fatura: número, data, itens, pesos, frete e seguro.
+  function limparModeloFc(fc){
+    if(!fc) return null;
+    var t = JSON.parse(JSON.stringify(fc));
+    t.id = null; t.numero = ''; t.data = ''; t.itens = [];
+    t.frete = 0; t.seguro = 0; t.pesoLiquido = null; t.pesoBruto = null; t.quantidadeTotal = null;
+    return t;
   }
   function saveFcTemplateFromCurrent(fc){
     window.storage.set(FC_TEMPLATE_KEY, JSON.stringify(fc), false).catch(function(){});
@@ -5856,7 +5873,9 @@
     document.getElementById('certLote').value = '';
     document.getElementById('certData').value = todayLocalISO();
     document.getElementById('certValidadeDias').value = '';
-    document.getElementById('certResponsavel').value = '';
+    // Lote e data são de cada lote; o responsável é o mesmo, então vem do certificado mais recente.
+    var ultimo = (certificados||[]).slice().sort(function(a,b){ return (a.dataFabricacao||'') < (b.dataFabricacao||'') ? 1 : -1; })[0];
+    document.getElementById('certResponsavel').value = ultimo ? (ultimo.responsavel || '') : '';
     certItemsDraft = [blankGuaranteeItem()];
     renderItemsDraftGeneric('certItensBody', certItemsDraft, 'cert');
   }
@@ -6046,7 +6065,22 @@
     return window.storage.get(DEC_TEMPLATE_KEY, false).then(function(res){
       if(res && res.value){ try { return JSON.parse(res.value); } catch(e){ return null; } }
       return null;
-    }).catch(function(){ return null; });
+    }).catch(function(){ return null; }).then(function(tmpl){
+      // Sem modelo salvo neste navegador, copia a declaração mais recente da planilha.
+      return limparModeloDec_(tmpl || ultimaDecComoModelo_());
+    });
+  }
+  function ultimaDecComoModelo_(){
+    if(!declaracoes || !declaracoes.length) return null;
+    var ord = declaracoes.slice().sort(function(a,b){ return (a.data||'') < (b.data||'') ? 1 : -1; });
+    return ord[0];
+  }
+  // Tira o que é de cada declaração: número, data, container, fatura e produtos.
+  function limparModeloDec_(dec){
+    if(!dec) return null;
+    var t = JSON.parse(JSON.stringify(dec));
+    t.id = null; t.data = ''; t.numeroFatura = ''; t.numeroContainer = ''; t.produtos = [];
+    return t;
   }
   function saveDecTemplateFromCurrent(dec){
     window.storage.set(DEC_TEMPLATE_KEY, JSON.stringify(dec), false).catch(function(){});
