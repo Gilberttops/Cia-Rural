@@ -1262,7 +1262,16 @@
           <label>Data de emissão</label>
           <input type="date" id="fcData">
         </div>
+        <div class="form-field">
+          <label>Cargas previstas <small>(só controle, não sai no PDF)</small></label>
+          <input type="number" step="1" min="0" id="fcCargas" placeholder="ex: 6">
+        </div>
+        <div class="form-field">
+          <label>Renovações do prazo <small>(+30 dias cada, na aduana)</small></label>
+          <input type="number" step="1" min="0" max="12" id="fcRenov" placeholder="0">
+        </div>
       </div>
+      <datalist id="fcTipoVolList"><option value="SC"><option value="BAG"></datalist>
 
       <div class="fc-section-title">Exportador</div>
       <div class="form-grid">
@@ -1334,8 +1343,15 @@
       </div>
     </div>
 
+    <div id="fcAlertas" class="no-print"></div>
     <div class="toolbar no-print">
       <input type="text" id="fcSearch" placeholder="Buscar número ou importador">
+      <select id="fcFiltroSit" title="Situação da entrega">
+        <option value="todas">Todas as faturas</option>
+        <option value="aberta">Em aberto (falta enviar)</option>
+        <option value="encerrada">Encerradas (tudo enviado)</option>
+        <option value="semprev">Sem previsão informada</option>
+      </select>
     </div>
     <div class="table-scroll">
       <table class="control">
@@ -1346,8 +1362,11 @@
             <th>Data</th>
             <th>Importador</th>
             <th>Total CPT (US$)</th>
-            <th>Cargas vinculadas</th>
+            <th>Cargas (enviadas / previstas)</th>
             <th>US$ nas cargas</th>
+            <th>Prazo (30 dias)</th>
+            <th>Falta enviar</th>
+            <th>Situação</th>
             <th></th>
           </tr>
         </thead>
@@ -1541,6 +1560,13 @@
     <h3>Nova venda</h3>
     <div class="sub">Preencha os dados da venda. O recebimento é lançado depois, na aba Recebimentos. Ao salvar, a Nota Fiscal complementar é gerada automaticamente.</div>
     <div class="form-grid" id="formGrid"></div>
+
+    <div class="form-grid">
+      <div class="form-field span2"><label>Fatura comercial <small>(a carga abate do saldo dela)</small></label>
+        <select id="new_faturaComercialId"></select>
+        <div class="sub" id="new_fcInfo" style="margin-top:6px;"></div>
+      </div>
+    </div>
 
     <div class="fc-section-title">Produtos</div>
     <div class="table-scroll" style="margin-bottom:10px;">
@@ -3017,6 +3043,40 @@
     renderVendaItemsDraft();
   }
 
+  /* fatura comercial no lançamento da carga: em aberto primeiro, com o andamento ao lado */
+  function fillNewVendaFcSelect(){
+    var sel = document.getElementById('new_faturaComercialId');
+    var lista = faturasComerciais.slice().sort(function(a,b){
+      var sa = fcSaldo(a).status === 'aberta', sb = fcSaldo(b).status === 'aberta';
+      if(sa !== sb) return sa ? -1 : 1;
+      return (b.data||'').localeCompare(a.data||'');
+    });
+    sel.innerHTML = '<option value="">— sem fatura —</option>' + lista.map(function(fc){
+      var sd = fcSaldo(fc);
+      var hint = sd.status === 'aberta' ? (' — ' + fcResumoLinha(fc)) : (sd.status === 'encerrada' ? ' — tudo enviado' : '');
+      return '<option value="'+fc.id+'">'+(fc.numero||'s/n')+' · '+(fc.importadorNome||'')+hint+'</option>';
+    }).join('');
+    document.getElementById('new_fcInfo').textContent = '';
+  }
+  function onNewVendaFcChange(){
+    var id = document.getElementById('new_faturaComercialId').value;
+    var info = document.getElementById('new_fcInfo');
+    var fc = id ? findFc(id) : null;
+    if(!fc){ info.textContent = ''; return; }
+    var sd = fcSaldo(fc), pz = fcPrazo(fc);
+    var t = 'Cargas: ' + sd.cargasEnv + (sd.cargasPrev ? ' de ' + sd.cargasPrev : '') + ' enviadas. ' + (sd.status === 'aberta' ? 'Falta: ' + fcFaltaTexto(sd).replace(/<br>/g, ' · ') + '.' : (sd.status === 'encerrada' ? 'Tudo enviado.' : 'Sem previsão informada na fatura.'));
+    if(pz && sd.status === 'aberta') t += ' Prazo: ' + dLabel(pz.vence) + (pz.dias < 0 ? ' (VENCIDO)' : ' (' + pz.dias + ' dias)') + '.';
+    info.textContent = t;
+    /* sugere os produtos que ainda faltam, com o preço da fatura; a quantidade você digita */
+    var vazio = vendaItemsDraft.every(function(it){ return !it.descricao && !it.quantidade && !it.valorUnitario; });
+    if(vazio){
+      var novos = (fc.itens||[]).filter(function(it){
+        var p = sd.prods.filter(function(x){ return x.key === fcNorm_(it.descricao); })[0];
+        return it.descricao && (!p || p.falta > 1);
+      }).map(function(it){ var b = blankVendaItem(); b.descricao = it.descricao; b.valorUnitario = it.precoUnitario != null ? it.precoUnitario : null; return b; });
+      if(novos.length){ vendaItemsDraft = novos; renderVendaItemsDraft(); }
+    }
+  }
   function openModal(){
     var grid = document.getElementById('formGrid');
     grid.innerHTML = FORM_FIELDS.map(function(f){
@@ -3028,6 +3088,7 @@
     }).join('');
     vendaItemsDraft = [blankVendaItem()];
     renderVendaItemsDraft();
+    fillNewVendaFcSelect();
     document.getElementById('new_frete').value = '0';
     document.getElementById('modalOverlay').hidden = false;
   }
@@ -3057,6 +3118,12 @@
     });
     row.produtos = vendaItemsDraft.filter(function(it){ return it.descricao || it.quantidade || it.valorUnitario; });
     row.frete = parseNum(document.getElementById('new_frete').value) || 0;
+    row.faturaComercialId = document.getElementById('new_faturaComercialId').value || null;
+    if(row.faturaComercialId){
+      var fcNova = findFc(row.faturaComercialId);
+      var avisoNova = fcNova ? fcAvisoExcesso(fcNova, [row]) : '';
+      if(avisoNova && !confirm(avisoNova + '\n\nSalvar a venda mesmo assim?')) return;
+    }
     recalcSaleFields(row);
     data.push(row);
     scheduleSave();
@@ -5306,6 +5373,110 @@
   function fcLinkedTotalUSD(fc){
     return fcLinkedVendas(fc).reduce(function(s,r){ return s + (r.valorDolarFatura||0); }, 0);
   }
+  /* ===== controle de entrega da fatura (não aparece no PDF da fatura nem no packing list) ===== */
+  function fcNorm_(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim(); }
+  function fcPrev(fc){
+    var p = (fc && fc.previsao) || {};
+    return { cargas: Number(p.cargas)||0, renovacoes: Array.isArray(p.renovacoes) ? p.renovacoes : [] };
+  }
+  /* prazo de 30 dias a partir da emissão; cada renovação na aduana soma mais 30 */
+  function fcPrazo(fc){
+    if(!fc || !fc.data) return null;
+    var pv = fcPrev(fc);
+    var vence = addDaysISO_(fc.data, 30 * (1 + pv.renovacoes.length));
+    return { vence: vence, dias: daysBetween(todayLocalISO(), vence), renov: pv.renovacoes.length };
+  }
+  function fcTipoLabel_(t){
+    t = String(t||'').trim();
+    if(/^(sc|saco|sacos|sacas?)$/i.test(t)) return 'saco';
+    if(/^(bag|bags|big ?bag)$/i.test(t)) return 'bag';
+    return t;
+  }
+  /* saldo: itens da fatura (kg) menos o que as cargas ligadas já levaram; extraVendas simula uma carga ainda não salva */
+  function fcSaldo(fc, extraVendas){
+    var vendas = fcLinkedVendas(fc).concat(extraVendas || []);
+    var pv = fcPrev(fc);
+    var prods = (fc.itens||[]).filter(function(it){ return it.descricao || it.quantidade; }).map(function(it){
+      return { descricao: it.descricao || '—', tipo: fcTipoLabel_(it.tipoVolume), plan: Number(it.quantidade)||0, env: 0, key: fcNorm_(it.descricao) };
+    });
+    var extras = {};
+    vendas.forEach(function(v){
+      (v.produtos||[]).forEach(function(p){
+        var q = Number(p.quantidade)||0;
+        if(!q) return;
+        var k = fcNorm_(p.descricao);
+        var alvo = prods.filter(function(x){ return x.key === k; })[0]
+          || prods.filter(function(x){ return k && x.key && (x.key.indexOf(k) !== -1 || k.indexOf(x.key) !== -1); })[0];
+        if(alvo) alvo.env += q;
+        else { var nome = p.descricao || 'sem descrição'; extras[nome] = (extras[nome]||0) + q; }
+      });
+    });
+    prods.forEach(function(x){ x.falta = x.plan - x.env; });
+    var cargasFalta = pv.cargas > 0 ? pv.cargas - vendas.length : null;
+    var aberta = (cargasFalta != null && cargasFalta > 0) || prods.some(function(x){ return x.falta > 1; });
+    var temPrev = pv.cargas > 0 || prods.length > 0;
+    return { cargasEnv: vendas.length, cargasPrev: pv.cargas, cargasFalta: cargasFalta, prods: prods, extras: extras,
+             aberta: aberta, status: !temPrev ? 'semprev' : (aberta ? 'aberta' : 'encerrada') };
+  }
+  function fcFaltaTexto(sd){
+    var partes = [];
+    if(sd.cargasFalta != null && sd.cargasFalta > 0) partes.push(sd.cargasFalta + (sd.cargasFalta === 1 ? ' carga' : ' cargas'));
+    sd.prods.forEach(function(p){
+      if(p.falta > 1) partes.push(p.descricao + ': ' + fmtNumPlain(p.falta, 0) + ' kg' + (p.tipo ? ' (' + p.tipo + ')' : ''));
+    });
+    return partes.length ? partes.join('<br>') : '—';
+  }
+  function fcPrazoBadge(fc, sd){
+    var pz = fcPrazo(fc);
+    if(!pz) return '—';
+    var txt = dLabel(pz.vence) + (pz.renov ? ' <small>(renovada ' + pz.renov + '×)</small>' : '');
+    if(sd.status !== 'aberta') return txt;
+    var cls = pz.dias < 0 ? 'late' : (pz.dias <= 7 ? 'soon' : 'ok');
+    var lab = pz.dias < 0 ? ('vencido há ' + (-pz.dias) + ' d') : (pz.dias === 0 ? 'vence hoje' : ('faltam ' + pz.dias + ' d'));
+    return txt + '<br><span class="badge ' + cls + '">' + lab + '</span>';
+  }
+  function fcAvisoExcesso(fc, extraVendas){
+    var s = fcSaldo(fc, extraVendas), m = [], pz = fcPrazo(fc);
+    if(s.cargasFalta != null && s.cargasFalta < 0) m.push('passa do número de cargas previsto (' + s.cargasPrev + ')');
+    s.prods.forEach(function(p){ if(p.falta < -1) m.push(p.descricao + ' passa ' + fmtNumPlain(-p.falta, 0) + ' kg do total da fatura'); });
+    Object.keys(s.extras).forEach(function(k){ m.push('o produto "' + k + '" não está nos itens da fatura'); });
+    if(pz && pz.dias < 0) m.push('o prazo de 30 dias venceu em ' + dLabel(pz.vence) + ' (renove na aduana e registre a renovação)');
+    return m.length ? ('Fatura ' + (fc.numero||'s/n') + ': ' + m.join('; ') + '.') : '';
+  }
+  function fcResumoLinha(fc){
+    var sd = fcSaldo(fc);
+    if(sd.status === 'semprev') return '';
+    if(sd.status === 'encerrada') return 'tudo enviado';
+    return 'faltam ' + fcFaltaTexto(sd).replace(/<br>/g, ' · ');
+  }
+  function renewFc(id){
+    var fc = findFc(id);
+    if(!fc) return;
+    var pz = fcPrazo(fc);
+    if(!pz){ alert('Informe a data de emissão da fatura primeiro.'); return; }
+    var novo = addDaysISO_(pz.vence, 30);
+    if(!confirm('Registrar a renovação de +30 dias na aduana do Paraguai para a fatura ' + (fc.numero||'s/n') + '?\n\nVencimento atual: ' + dLabel(pz.vence) + '\nNovo vencimento: ' + dLabel(novo))) return;
+    var pv = fcPrev(fc);
+    fc.previsao = { cargas: pv.cargas, renovacoes: pv.renovacoes.concat([{ em: todayLocalISO() }]) };
+    scheduleFcSave();
+    pushDocToSheets('faturaComercial', fc);
+    renderFcTable();
+  }
+  function renderFcAlertas(){
+    var el = document.getElementById('fcAlertas');
+    if(!el) return;
+    var linhas = [];
+    faturasComerciais.forEach(function(fc){
+      var sd = fcSaldo(fc), pz = fcPrazo(fc);
+      if(sd.status !== 'aberta' || !pz || pz.dias > 10) return;
+      linhas.push({ dias: pz.dias, html: '<b>Fatura ' + (fc.numero||'s/n') + '</b> — ' + (pz.dias < 0 ? ('prazo venceu há ' + (-pz.dias) + ' dias (' + dLabel(pz.vence) + ')') : (pz.dias === 0 ? 'prazo vence hoje' : ('prazo vence em ' + pz.dias + ' dias (' + dLabel(pz.vence) + ')')))
+        + '. Falta enviar: ' + fcFaltaTexto(sd).replace(/<br>/g, ' · ') + '. Renove na aduana do Paraguai (+30 dias) ou conclua o envio.' });
+    });
+    linhas.sort(function(a,b){ return a.dias - b.dias; });
+    el.innerHTML = linhas.length ? ('<div style="background:var(--gold-soft);border:1px solid var(--border-strong);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;line-height:1.5;"><b>Atenção aos prazos de entrega</b><br>'
+      + linhas.map(function(l){ return l.html; }).join('<br>') + '</div>') : '';
+  }
+
   function fmtNumPlain(v, decimals){
     if(v == null || isNaN(v)) return '—';
     var d = decimals == null ? 2 : decimals;
@@ -5314,38 +5485,60 @@
 
   function fcSelectCell(rowId, currentFcId){
     var options = '<option value="">—</option>' + faturasComerciais.map(function(fc){
-      return '<option value="'+fc.id+'"'+(fc.id===currentFcId?' selected':'')+'>'+(fc.numero||'s/n')+'</option>';
+      var sd = fcSaldo(fc);
+      var hint = sd.cargasPrev ? (' (' + sd.cargasEnv + '/' + sd.cargasPrev + ')') : '';
+      return '<option value="'+fc.id+'"'+(fc.id===currentFcId?' selected':'')+'>'+(fc.numero||'s/n')+hint+'</option>';
     }).join('');
     return '<select data-id="'+rowId+'" data-field="faturaComercialId" style="font-family:Inter,sans-serif;font-size:12.5px;padding:4px;border:1px solid transparent;border-radius:6px;background:transparent;max-width:110px;">'+options+'</select>';
   }
 
   function renderFcTable(){
+    renderFcAlertas();
     var qEl = document.getElementById('fcSearch');
     var q = qEl ? qEl.value.trim().toLowerCase() : '';
+    var sitEl = document.getElementById('fcFiltroSit');
+    var sit = sitEl ? sitEl.value : 'todas';
     var rows = faturasComerciais.filter(function(fc){
+      if(sit !== 'todas' && fcSaldo(fc).status !== sit) return false;
       if(!q) return true;
       var hay = [fc.numero, fc.importadorNome].join(' ').toLowerCase();
       return hay.indexOf(q) !== -1;
-    }).sort(function(a,b){ return (b.data||'').localeCompare(a.data||''); });
+    }).sort(function(a,b){
+      /* em aberto primeiro (prazo mais curto no topo), depois as demais por data */
+      var sa = fcSaldo(a).status === 'aberta', sb = fcSaldo(b).status === 'aberta';
+      if(sa !== sb) return sa ? -1 : 1;
+      if(sa && sb){
+        var pa = fcPrazo(a), pb = fcPrazo(b);
+        var da = pa ? pa.dias : 9999, db = pb ? pb.dias : 9999;
+        if(da !== db) return da - db;
+      }
+      return (b.data||'').localeCompare(a.data||'');
+    });
 
     var body = document.getElementById('fcBody');
     if(rows.length === 0){
-      body.innerHTML = '<tr><td colspan="8" style="padding:20px;color:var(--ink-faint);font-family:Inter,sans-serif;">Nenhuma fatura comercial emitida ainda.</td></tr>';
+      body.innerHTML = '<tr><td colspan="11" style="padding:20px;color:var(--ink-faint);font-family:Inter,sans-serif;">Nenhuma fatura encontrada para o filtro.</td></tr>';
       return;
     }
     body.innerHTML = rows.map(function(fc){
       var linked = fcLinkedVendas(fc);
+      var sd = fcSaldo(fc);
+      var sitBadge = sd.status === 'aberta' ? '<span class="badge soon">Em aberto</span>' : (sd.status === 'encerrada' ? '<span class="badge ok">Encerrada</span>' : '<span class="badge open">Sem previsão</span>');
       return '<tr>'
         + '<td><button class="row-del" data-fc-del="'+fc.id+'" title="Excluir" aria-label="Excluir">×</button></td>'
         + '<td class="fatura-cell">'+ (fc.numero||'—') +'</td>'
         + '<td>'+ dLabel(fc.data) +'</td>'
         + '<td class="fatura-cell">'+ (fc.importadorNome||'—') +'</td>'
         + '<td class="readonly">'+ fmtUSD.format(fcTotalUSD(fc)) +'</td>'
-        + '<td class="readonly">'+ linked.length +'</td>'
+        + '<td class="readonly">'+ linked.length + (sd.cargasPrev ? ' / ' + sd.cargasPrev : '') +'</td>'
         + '<td class="readonly">'+ fmtUSD.format(fcLinkedTotalUSD(fc)) +'</td>'
+        + '<td>'+ fcPrazoBadge(fc, sd) +'</td>'
+        + '<td style="font-size:12.5px;">'+ (sd.status === 'aberta' ? fcFaltaTexto(sd) : '—') + (Object.keys(sd.extras).length ? '<br><span class="badge late">produto fora da fatura</span>' : '') +'</td>'
+        + '<td>'+ sitBadge +'</td>'
         + '<td style="white-space:nowrap;">'
           + '<button class="btn" data-fc-print="'+fc.id+'" style="padding:5px 10px;font-size:12px;">Fatura</button> '
           + '<button class="btn" data-fc-packing="'+fc.id+'" style="padding:5px 10px;font-size:12px;">Packing List</button> '
+          + (sd.status === 'aberta' ? '<button class="btn" data-fc-renew="'+fc.id+'" style="padding:5px 10px;font-size:12px;" title="Registrar renovação de +30 dias na aduana">Renovar +30d</button> ' : '')
           + '<button class="btn" data-fc-edit="'+fc.id+'" style="padding:5px 10px;font-size:12px;">Editar</button>'
         + '</td>'
         + '</tr>';
@@ -5372,7 +5565,7 @@
         + '<td>'+ numF('pesoLiquido', it.pesoLiquido, '0.001') +'</td>'
         + '<td>'+ numF('pesoBruto', it.pesoBruto, '0.001') +'</td>'
         + '<td>'+ numF('volumes', it.volumes, '1') +'</td>'
-        + '<td>'+ txtF('tipoVolume', it.tipoVolume, 'txt') +'</td>'
+        + '<td><input type="text" class="txt" list="fcTipoVolList" data-fc-item-field="tipoVolume" value="'+String(it.tipoVolume==null?'':it.tipoVolume).replace(/"/g,'&quot;')+'"></td>'
         + '<td>'+ txtF('embalagem', it.embalagem, 'txt') +'</td>'
         + '<td><button class="row-del" data-fc-item-del="'+it.id+'" title="Remover item">×</button></td>'
         + '</tr>';
@@ -5472,7 +5665,7 @@
   function limparModeloFc(fc){
     if(!fc) return null;
     var t = JSON.parse(JSON.stringify(fc));
-    t.id = null; t.numero = ''; t.data = ''; t.itens = [];
+    t.id = null; t.numero = ''; t.data = ''; t.itens = []; t.previsao = null;
     t.frete = 0; t.seguro = 0; t.pesoLiquido = null; t.pesoBruto = null; t.quantidadeTotal = null;
     return t;
   }
@@ -5499,6 +5692,9 @@
     });
     // A new invoice always starts dated today, even when the rest comes from a template.
     if(!fcEditingId) document.getElementById('fcData').value = todayLocalISO();
+    var pvf = fcPrev(fc || {});
+    document.getElementById('fcCargas').value = pvf.cargas || '';
+    document.getElementById('fcRenov').value = pvf.renovacoes.length || '';
 
     fcItemsDraft = (fc && keepItems !== false) ? JSON.parse(JSON.stringify(fc.itens||[])) : [];
     if(fcItemsDraft.length === 0) fcItemsDraft.push(blankFcItem());
@@ -5537,6 +5733,13 @@
       fc[prop] = FC_NUMERIC_FIELDS[fieldId] ? (parseNum(raw) || 0) : (raw || '').trim();
     });
     if(fc.data === '') fc.data = null;
+    (function(){
+      var pvAtual = fcPrev(fc);
+      var n = Math.max(0, Math.min(12, parseInt(document.getElementById('fcRenov').value, 10) || 0));
+      var ren = pvAtual.renovacoes.slice(0, n);
+      while(ren.length < n) ren.push({ em: todayLocalISO() });
+      fc.previsao = { cargas: Math.max(0, parseInt(document.getElementById('fcCargas').value, 10) || 0), renovacoes: ren };
+    })();
     fc.itens = fcItemsDraft.filter(function(it){
       return it.descricao || it.quantidade || it.precoUnitario || it.lote || it.pesoLiquido || it.pesoBruto || it.volumes;
     });
@@ -5824,6 +6027,8 @@
   }
 
   function handleFcTableClick(e){
+    var renewBtn = e.target.closest('[data-fc-renew]');
+    if(renewBtn){ renewFc(renewBtn.getAttribute('data-fc-renew')); return; }
     var del = e.target.closest('[data-fc-del]');
     if(del){ deleteFc(del.getAttribute('data-fc-del')); return; }
     var editBtn = e.target.closest('[data-fc-edit]');
@@ -6555,6 +6760,7 @@
     document.getElementById('btnAdd').addEventListener('click', openModal);
     document.getElementById('btnCancel').addEventListener('click', cancelarVenda);
     document.getElementById('btnSave').addEventListener('click', saveNewInvoice);
+    document.getElementById('new_faturaComercialId').addEventListener('change', onNewVendaFcChange);
     document.getElementById('btnVendaAddItem').addEventListener('click', addVendaItem);
     document.getElementById('vendaItensBody').addEventListener('input', handleVendaItemsInput);
     document.getElementById('vendaItensBody').addEventListener('blur', handleVendaItemsBlur, true);
@@ -6566,7 +6772,12 @@
       var t = e.target;
       if(t.tagName === 'SELECT' && t.getAttribute('data-field') === 'faturaComercialId'){
         var row = findRow(t.getAttribute('data-id'));
-        if(row){ row.faturaComercialId = t.value || null; scheduleSave(); enqueue_('update', 'venda', row, ['faturaComercialId']); safe(renderFcTable, 'renderFcTable'); }
+        if(row){
+          row.faturaComercialId = t.value || null; scheduleSave(); enqueue_('update', 'venda', row, ['faturaComercialId']); safe(renderFcTable, 'renderFcTable');
+          var fcSel = row.faturaComercialId ? findFc(row.faturaComercialId) : null;
+          var aviso = fcSel ? fcAvisoExcesso(fcSel) : '';
+          if(aviso) alert(aviso);
+        }
       }
     });
 
@@ -6675,6 +6886,7 @@
     document.getElementById('fcFrete').addEventListener('input', updateFcPreviewTotal);
     document.getElementById('fcSeguro').addEventListener('input', updateFcPreviewTotal);
     document.getElementById('fcSearch').addEventListener('input', function(){ safe(renderFcTable, 'renderFcTable'); });
+    document.getElementById('fcFiltroSit').addEventListener('change', function(){ safe(renderFcTable, 'renderFcTable'); });
     document.getElementById('fcBody').addEventListener('click', handleFcTableClick);
     document.getElementById('btnFcPrintClose').addEventListener('click', closeFcPrint);
     document.getElementById('btnFcPrintNow').addEventListener('click', printFcNow);
