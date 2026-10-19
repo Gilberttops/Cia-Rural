@@ -1272,6 +1272,7 @@
         </div>
       </div>
       <datalist id="fcTipoVolList"><option value="SC"><option value="BAG"></datalist>
+      <datalist id="fcProdList"></datalist>
 
       <div class="fc-section-title">Exportador</div>
       <div class="form-grid">
@@ -5571,7 +5572,7 @@
         return '<input type="number" step="'+(step||'0.01')+'" data-fc-item-field="'+field+'" value="'+(val!=null?val:'')+'">';
       }
       return '<tr data-item="'+it.id+'">'
-        + '<td>'+ txtF('descricao', it.descricao) +'</td>'
+        + '<td><input type="text" class="txt" list="fcProdList" data-fc-item-field="descricao" value="'+String(it.descricao==null?'':it.descricao).replace(/"/g,'&quot;')+'"></td>'
         + '<td>'+ txtF('ncm', it.ncm) +'</td>'
         + '<td>'+ numF('quantidade', it.quantidade) +'</td>'
         + '<td>'+ numF('precoUnitario', it.precoUnitario, '0.0001') +'</td>'
@@ -5614,6 +5615,58 @@
     var numericFields = {quantidade:1, precoUnitario:1, pesoLiquido:1, pesoBruto:1, volumes:1};
     item[field] = numericFields[field] ? parseNum(t.value) : t.value;
     updateFcPreviewTotal();
+  }
+  /* produtos que se repetem: ao escolher a descrição, traz NCM, preço, tipo de volume e embalagem da última fatura;
+     ao digitar a quantidade, sugere peso líquido, peso bruto e volumes (só nos campos vazios). Lote você digita. */
+  function fcUltimoItem_(desc){
+    var k = fcNorm_(desc);
+    if(!k) return null;
+    var ord = faturasComerciais.slice().sort(function(a,b){ return (b.data||'').localeCompare(a.data||''); });
+    for(var i = 0; i < ord.length; i++){
+      var its = ord[i].itens || [];
+      for(var j = 0; j < its.length; j++){ if(fcNorm_(its[j].descricao) === k) return its[j]; }
+    }
+    return null;
+  }
+  function fcRefreshProdList(){
+    var vistos = {}, out = [];
+    faturasComerciais.slice().sort(function(a,b){ return (b.data||'').localeCompare(a.data||''); }).forEach(function(fc){
+      (fc.itens||[]).forEach(function(it){
+        var k = fcNorm_(it.descricao);
+        if(k && !vistos[k]){ vistos[k] = 1; out.push(it.descricao); }
+      });
+    });
+    var dl = document.getElementById('fcProdList');
+    if(dl) dl.innerHTML = out.map(function(d){ return '<option value="' + String(d).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;') + '">'; }).join('');
+  }
+  function handleFcItemsChange(e){
+    var t = e.target;
+    var tr = t.closest('tr[data-item]');
+    if(!tr) return;
+    var item = fcItemsDraft.filter(function(it){ return it.id === tr.getAttribute('data-item'); })[0];
+    if(!item) return;
+    var field = t.getAttribute('data-fc-item-field');
+    if(field === 'descricao'){
+      var ult = fcUltimoItem_(t.value);
+      if(!ult) return;
+      item.descricao = ult.descricao;
+      if(!item.ncm) item.ncm = ult.ncm || '';
+      if(!item.precoUnitario) item.precoUnitario = ult.precoUnitario != null ? ult.precoUnitario : null;
+      if(!item.tipoVolume) item.tipoVolume = ult.tipoVolume || '';
+      if(!item.embalagem) item.embalagem = ult.embalagem || '';
+      renderFcItemsDraft();
+    } else if(field === 'quantidade'){
+      var q = Number(item.quantidade) || 0;
+      if(q <= 0) return;
+      var ref = fcUltimoItem_(item.descricao);
+      if(!item.pesoLiquido) item.pesoLiquido = q;
+      if(!item.pesoBruto && ref && Number(ref.pesoLiquido) > 0 && Number(ref.pesoBruto) > 0)
+        item.pesoBruto = Math.round(q * Number(ref.pesoBruto) / Number(ref.pesoLiquido) * 1000) / 1000;
+      var m = String(item.embalagem || '').replace(',', '.').match(/[\d.]+/);
+      var kgEmb = m ? parseFloat(m[0]) : 0;
+      if(!item.volumes && kgEmb > 0) item.volumes = Math.round(q / kgEmb);
+      renderFcItemsDraft();
+    }
   }
   function handleFcItemsBlur(e){
     if(!e.target.matches('input')) return;
@@ -5694,6 +5747,7 @@
   }
 
   function fillFcForm(fc, keepItems){
+    fcRefreshProdList();
     document.getElementById('fcFormTitle').textContent = fcEditingId ? ('Editar fatura comercial ' + (fc?(fc.numero||''):'')) : 'Nova fatura comercial';
     FC_FIELD_IDS.forEach(function(fieldId){
       var prop = FC_FIELD_TO_PROP[fieldId];
@@ -6898,6 +6952,7 @@
     document.getElementById('btnFcSave').addEventListener('click', saveFc);
     document.getElementById('btnFcAddItem').addEventListener('click', addFcItem);
     document.getElementById('fcItensBody').addEventListener('input', handleFcItemsInput);
+    document.getElementById('fcItensBody').addEventListener('change', handleFcItemsChange);
     document.getElementById('fcItensBody').addEventListener('blur', handleFcItemsBlur, true);
     document.getElementById('fcItensBody').addEventListener('click', handleFcItemsClick);
     document.getElementById('fcFrete').addEventListener('input', updateFcPreviewTotal);
