@@ -412,7 +412,7 @@ body.locked .wrap{display:none}
         <div class="cfgrow"><label>Estância / referência <small>(vai para a planilha e a fatura)</small></label><input type="text" id="lvEstancia" list="dlEstancias" autocomplete="off"><datalist id="dlEstancias"></datalist></div>
       </div>
       <div class="lanrow2" style="margin-top:10px">
-        <div class="cfgrow"><label>Fatura / Invoice nº <small>(ex.: 14-01, 16-02 · aparece no PDF)</small></label><input type="text" id="lvFaturaNum" maxlength="30" autocomplete="off" placeholder="14-01"></div>
+        <div class="cfgrow"><label>Fat. Invoice <small>(ex.: 14-01, 16-02 · aparece no PDF)</small></label><input type="text" id="lvFaturaNum" maxlength="30" autocomplete="off" placeholder="14-01"></div>
       </div>
       <div class="cfgstatus" id="lvCliInfo" style="display:none;margin-top:8px"></div>
       <div class="itemshead"><span>Produto</span><span>Unidade</span><span>Qtd</span><span>Unit US$</span><span>Total</span><span></span></div>
@@ -1718,7 +1718,7 @@ function abrirFatura(f){
   const win=window.open('','_blank');
   if(!win){alert('O navegador bloqueou a janela do PDF. Libere pop-ups para este site e tente de novo.');return;}
   const {data,venc,itens}=f;
-  const cliente=escH(f.cliente||'-'),estancia=escH(f.estancia||'')+(f.numero?(f.estancia?' · ':'')+'Fatura '+escH(f.numero):'')+(f.rascunho?(f.estancia?' · ':'')+'RASCUNHO (ainda não lançado)':'');
+  const cliente=escH(f.cliente||'-'),estancia=escH(f.estancia||'')+(f.numero?(f.estancia?' · ':'')+'Invoice '+escH(f.numero):'')+(f.rascunho?(f.estancia?' · ':'')+'RASCUNHO (ainda não lançado)':'');
   const linhaTot=i=>i.total!=null?i.total:i.qtd*i.unit;
   const total=itens.reduce((a,i)=>a+linhaTot(i),0);
   const rowsHtml=itens.map(i=>`<tr><td class="c-cod">${escH(i.codigo||'')}</td><td>${escH(i.produto)}</td><td class="c-un">${escH(i.unidade||'KG')}</td><td class="c-num">${fmtN(i.qtd)}</td><td class="c-num">${fmtU(i.unit)}</td><td class="c-num">${fmtN(linhaTot(i))}</td></tr>`).join('');
