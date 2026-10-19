@@ -5649,7 +5649,6 @@
     if(field === 'descricao'){
       var ult = fcUltimoItem_(t.value);
       if(!ult) return;
-      item.descricao = ult.descricao;
       if(!item.ncm) item.ncm = ult.ncm || '';
       if(!item.precoUnitario) item.precoUnitario = ult.precoUnitario != null ? ult.precoUnitario : null;
       if(!item.tipoVolume) item.tipoVolume = ult.tipoVolume || '';
