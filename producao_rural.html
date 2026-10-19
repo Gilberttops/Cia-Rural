@@ -6712,7 +6712,7 @@ function ptRenderExport(){
 /* ===== Cotação Especial (edição de custo de MP dentro de um produto) ===== */
 /* Industrialização Prime: preço de venda de cada MP (R$/ton, vale para qualquer fórmula), MPs que a Prime já tem em estoque (custo 0)
    e o valor do serviço por tonelada produzida. Salva no navegador e na planilha junto com a Tabela de Preços. */
-let PT_PRIME={ produtoCod:null, cliente:'Prime', toneladas:1, servicoTon:0, preco:{}, estoque:{} };
+let PT_PRIME={ produtoCod:null, cliente:'Prime', batidas:1, servicoTon:0, preco:{}, estoque:{} };
 let PT_ESPECIAL={ produtoCod:null, mpOverrides:{}, custoProducao:350, frete:60, impostos:7, comissao:7, pvTestadoTon:null };
 function ptEspecialSalvar(){
   try{ localStorage.setItem(PT_KEY_ESPECIAL, JSON.stringify(PT_ESPECIAL));
@@ -6980,7 +6980,9 @@ function ptEspecialGerarPDF(){
   win.document.write(doc);
   win.document.close();
 }
-/* ===== Industrialização Prime ===== */
+/* ===== Industrialização Prime =====
+   Base de cálculo = a batida da fórmula (ex.: 990 kg). Por MP: kg na batida x preço de venda (R$/ton) = valor da batida.
+   MPs marcadas como estoque da Prime têm custo 0 e ficam fora da soma. Serviço informado por tonelada, convertido para a batida. */
 function ptPrimeSalvar(){
   try{
     localStorage.setItem(PT_KEY_PRIME, JSON.stringify(PT_PRIME));
@@ -6996,20 +6998,22 @@ function ptPrimeCalcular(){
   const f=ptPrimeFormula();
   if(!f)return null;
   const batida=parseFloat(f.batida)||0;
-  const ton=Math.max(0,parseFloat(PT_PRIME.toneladas)||0);
-  const servico=Math.max(0,parseFloat(PT_PRIME.servicoTon)||0);
-  let mpTon=0;
+  const nBat=Math.max(0,parseFloat(PT_PRIME.batidas==null?1:PT_PRIME.batidas)||0);
+  const servicoTon=Math.max(0,parseFloat(PT_PRIME.servicoTon)||0);
+  let mpBatida=0;
   const linhas=(f.ings||[]).filter(function(i){return i.qtd>0;}).map(function(ing){
     const item=MPitens.find(function(m){return m.cod===ing.cod;});
-    const kgTon=batida>0?(ing.qtd/batida*1000):0;      /* kg desta MP por tonelada produzida */
-    const estoque=!!(PT_PRIME.estoque||{})[ing.cod];   /* a Prime já tem: custo 0 */
-    const preco=estoque?0:(parseFloat((PT_PRIME.preco||{})[ing.cod])||0);  /* R$/ton da MP */
-    const valorTon=kgTon*preco/1000;                   /* R$ desta MP por tonelada produzida */
-    mpTon+=valorTon;
-    return {cod:ing.cod,nome:item?item.d:('cod '+ing.cod),kgTon:kgTon,estoque:estoque,preco:preco,valorTon:valorTon};
+    const kgBatida=ing.qtd||0;                          /* kg desta MP na batida */
+    const estoque=!!(PT_PRIME.estoque||{})[ing.cod];    /* a Prime já tem: custo 0 */
+    const preco=estoque?0:(parseFloat((PT_PRIME.preco||{})[ing.cod])||0);   /* R$/ton da MP */
+    const valorBatida=kgBatida*preco/1000;              /* R$ desta MP na batida */
+    mpBatida+=valorBatida;
+    return {cod:ing.cod,nome:item?item.d:('cod '+ing.cod),kgBatida:kgBatida,estoque:estoque,preco:preco,valorBatida:valorBatida};
   });
-  return {f:f,batida:batida,ton:ton,servico:servico,linhas:linhas,mpTon:mpTon,totalTon:mpTon+servico,
-    mpTotal:mpTon*ton,servicoTotal:servico*ton,total:(mpTon+servico)*ton};
+  const servicoBatida=servicoTon*batida/1000;
+  const totalBatida=mpBatida+servicoBatida;
+  return {f:f,batida:batida,nBat:nBat,servicoTon:servicoTon,linhas:linhas,mpBatida:mpBatida,servicoBatida:servicoBatida,totalBatida:totalBatida,
+    tonTotal:nBat*batida/1000,mpTotal:mpBatida*nBat,servicoTotal:servicoBatida*nBat,total:totalBatida*nBat};
 }
 function ptPrimeSelecionarProduto(cod){
   PT_PRIME.produtoCod=cod||null;
@@ -7044,56 +7048,67 @@ function ptPrimeAtualizarTotais(){
   const r=ptPrimeCalcular();
   if(!r)return;
   const set=function(id,txt){ const el=$(id); if(el)el.textContent=txt; };
-  r.linhas.forEach(function(l){ set('pt-prime-val-'+l.cod,'R$ '+fn(l.valorTon,2)); });
-  set('pt-prime-mp-ton','R$ '+fn(r.mpTon,2));
-  set('pt-prime-serv-ton','R$ '+fn(r.servico,2));
-  set('pt-prime-total-ton','R$ '+fn(r.totalTon,2));
+  r.linhas.forEach(function(l){ set('pt-prime-val-'+l.cod,'R$ '+fn(l.valorBatida,2)); });
+  set('pt-prime-mp-bat','R$ '+fn(r.mpBatida,2));
+  set('pt-prime-serv-bat','R$ '+fn(r.servicoBatida,2));
+  set('pt-prime-total-bat','R$ '+fn(r.totalBatida,2));
   set('pt-prime-tot-mp','R$ '+fn(r.mpTotal,2));
   set('pt-prime-tot-serv','R$ '+fn(r.servicoTotal,2));
   set('pt-prime-tot-geral','R$ '+fn(r.total,2));
+  set('pt-prime-tot-ton',fn(r.tonTotal,3)+' t');
+}
+function ptPrimeHTMLPDF(r){
+  const esc=function(x){return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};
+  const dataHoje=new Date().toLocaleDateString('pt-BR');
+  const linhas=r.linhas.map(function(l){
+    return '<tr><td>'+esc(l.nome)+'</td><td class="r">'+fn(l.kgBatida,2)+' kg</td>'
+      +(l.estoque
+        ?'<td class="r est" colspan="2">Estoque da Prime — custo R$ 0,00</td>'
+        :'<td class="r">R$ '+fn(l.preco,2)+'</td><td class="r">R$ '+fn(l.valorBatida,2)+'</td>')
+      +'</tr>';
+  }).join('');
+  const kgTotal=r.linhas.reduce(function(a,l){return a+l.kgBatida;},0);
+  /* cabe em uma página A4: com muitas MPs, reduz a escala */
+  const zoom=Math.max(0.55,Math.min(1,28/(r.linhas.length+14))).toFixed(2);
+  return '<html><head><meta charset="UTF-8"><title>Cotação Industrialização</title><style>'
+   +'*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,sans-serif;font-size:11px;color:#18180f;padding:16px;zoom:'+zoom+'}'
+   +'@media print{@page{margin:8mm;size:A4 portrait}body{padding:0}}'
+   +'.hdr{display:flex;align-items:center;gap:14px;border-bottom:3px solid #1d4ed8;padding-bottom:8px;margin-bottom:10px}.hdr img{height:40px}'
+   +'.hdr-titulo{font-size:17px;font-weight:800;color:#1d4ed8}.hdr-sub{font-size:10px;color:#6b7280;margin-top:1px}'
+   +'.info{font-size:11px;color:#374151;margin-bottom:8px;line-height:1.5}.sec-titulo{font-size:12px;font-weight:800;margin:10px 0 4px;color:#1e293b}'
+   +'table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:4px}'
+   +'th{background:#f4f3ef;text-align:left;padding:3px 7px;font-size:9.5px;text-transform:uppercase;color:#6b7280;border-bottom:1px solid #e2dfd7}'
+   +'td{padding:3px 7px;border-bottom:1px solid #eeece5}.r{text-align:right}.est{color:#6b7280;font-style:italic}'
+   +'tr.tot td{font-weight:800;background:#f4f3ef;border-top:2px solid #cbd5e1}'
+   +'tr.dest td{font-weight:800;background:#eff6ff;color:#1d4ed8;font-size:12.5px}'
+   +'.footer{margin-top:12px;border-top:2px solid #1d4ed8;padding-top:6px;text-align:center;font-size:10px;font-weight:700;color:#1d4ed8}'
+   +'.pbtn{position:fixed;top:16px;right:16px;padding:10px 18px;background:#1d4ed8;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer}@media print{.pbtn{display:none}}'
+   +'</style></head><body><button class="pbtn" onclick="window.print()">Imprimir / Salvar PDF</button>'
+   +'<div class="hdr"><img src="'+LOGO_RURAL+'" alt="Rural"><div><div class="hdr-titulo">Cotação — Industrialização</div><div class="hdr-sub">Matérias-primas e serviço de industrialização, por batida</div></div></div>'
+   +'<div class="info"><strong>Cliente:</strong> '+esc(PT_PRIME.cliente||'Prime')+' &nbsp;|&nbsp; <strong>Produto:</strong> '+esc(r.f._cotacao?('Cotação — '+r.f.nome):(r.f.cod+' — '+r.f.nome))+'<br><strong>Batida:</strong> '+fn(r.batida,0)+' kg &nbsp;|&nbsp; <strong>Data:</strong> '+dataHoje+'</div>'
+   +'<div class="sec-titulo">1. Matérias-primas por batida</div>'
+   +'<table><thead><tr><th>Matéria-prima</th><th class="r">Qtd na batida</th><th class="r">Preço de venda (R$/ton)</th><th class="r">Valor na batida</th></tr></thead><tbody>'+linhas
+   +'<tr class="tot"><td>Total de matérias-primas (custo)</td><td class="r">'+fn(kgTotal,2)+' kg</td><td class="r"></td><td class="r">R$ '+fn(r.mpBatida,2)+'</td></tr></tbody></table>'
+   +'<div class="sec-titulo">2. Serviço de industrialização</div>'
+   +'<table><tbody><tr><td>Valor do serviço</td><td class="r">R$ '+fn(r.servicoTon,2)+' por tonelada</td></tr>'
+   +'<tr class="tot"><td>Serviço na batida de '+fn(r.batida,0)+' kg</td><td class="r">R$ '+fn(r.servicoBatida,2)+'</td></tr></tbody></table>'
+   +'<div class="sec-titulo">3. Valor por batida de '+fn(r.batida,0)+' kg</div>'
+   +'<table><tbody><tr><td>Total de matérias-primas</td><td class="r">R$ '+fn(r.mpBatida,2)+'</td></tr>'
+   +'<tr><td>Serviço de industrialização</td><td class="r">R$ '+fn(r.servicoBatida,2)+'</td></tr>'
+   +'<tr class="dest"><td>Valor da batida</td><td class="r">R$ '+fn(r.totalBatida,2)+'</td></tr></tbody></table>'
+   +'<div class="sec-titulo">4. Valor total da produção</div>'
+   +'<table><tbody><tr><td>Batidas a produzir</td><td class="r">'+fn(r.nBat,0)+' ('+fn(r.tonTotal,3)+' t)</td></tr>'
+   +'<tr><td>Matérias-primas</td><td class="r">R$ '+fn(r.mpTotal,2)+'</td></tr>'
+   +'<tr><td>Serviço de industrialização</td><td class="r">R$ '+fn(r.servicoTotal,2)+'</td></tr>'
+   +'<tr class="dest"><td>Valor total da produção</td><td class="r">R$ '+fn(r.total,2)+'</td></tr></tbody></table>'
+   +'<div class="footer">Rural Nutrição Animal — cotação de industrialização</div></body></html>';
 }
 function ptPrimeGerarPDF(){
   const r=ptPrimeCalcular();
   if(!r){alert('Selecione um produto (fórmula) antes de gerar o PDF.');return;}
-  const esc=function(x){return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};
-  const dataHoje=new Date().toLocaleDateString('pt-BR');
-  /* o PDF leva só o preço de venda de cada MP e o serviço por tonelada (sem custos, sem receita) */
-  const linhas=r.linhas.map(function(l){
-    return '<tr><td>'+esc(l.nome)+'</td>'
-      +(l.estoque
-        ?'<td class="r" colspan="2">Estoque da Prime — sem cobrança</td>'
-        :'<td class="r">R$ '+fn(l.preco,2)+'</td><td class="r">R$ '+fn(l.preco/1000,4)+'</td>')
-      +'</tr>';
-  }).join('');
-  const doc='<html><head><meta charset="UTF-8"><title>Cotação Industrialização</title><style>'
-   +'*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,sans-serif;font-size:12.5px;color:#18180f;padding:24px}'
-   +'@media print{@page{margin:14mm;size:A4 portrait}}'
-   +'.hdr{display:flex;align-items:center;gap:16px;border-bottom:3px solid #1d4ed8;padding-bottom:14px;margin-bottom:20px}.hdr img{height:50px}'
-   +'.hdr-titulo{font-size:19px;font-weight:800;color:#1d4ed8}.hdr-sub{font-size:11px;color:#6b7280;margin-top:2px}'
-   +'.info{font-size:12px;color:#374151;margin-bottom:16px;line-height:1.7}.sec-titulo{font-size:13px;font-weight:800;margin:18px 0 8px;color:#1e293b}'
-   +'table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px}'
-   +'th{background:#f4f3ef;text-align:left;padding:6px 8px;font-size:10px;text-transform:uppercase;color:#6b7280;border-bottom:1px solid #e2dfd7}'
-   +'td{padding:6px 8px;border-bottom:1px solid #eeece5}.r{text-align:right}'
-   +'.serv{border:1px solid #bfdbfe;background:#eff6ff;border-radius:8px;padding:12px 16px;margin-top:14px;display:flex;justify-content:space-between;align-items:center}'
-   +'.serv .lbl{font-size:11px;text-transform:uppercase;color:#6b7280;font-weight:700}.serv .val{font-size:20px;font-weight:800;color:#1d4ed8}'
-   +'.footer{margin-top:26px;border-top:2px solid #1d4ed8;padding-top:10px;text-align:center;font-size:11px;font-weight:700;color:#1d4ed8}'
-   +'.pbtn{position:fixed;top:16px;right:16px;padding:10px 18px;background:#1d4ed8;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer}@media print{.pbtn{display:none}}'
-   +'</style></head><body><button class="pbtn" onclick="window.print()">Imprimir / Salvar PDF</button>'
-   +'<div class="hdr"><img src="'+LOGO_RURAL+'" alt="Rural"><div><div class="hdr-titulo">Cotação — Industrialização</div><div class="hdr-sub">Matérias-primas e serviço de industrialização</div></div></div>'
-   +'<div class="info"><strong>Cliente:</strong> '+esc(PT_PRIME.cliente||'Prime')+' &nbsp;|&nbsp; <strong>Produto:</strong> '+esc(r.f._cotacao?('Cotação — '+r.f.nome):(r.f.cod+' — '+r.f.nome))+' &nbsp;|&nbsp; <strong>Data:</strong> '+dataHoje+'</div>'
-   +'<div class="sec-titulo">Matérias-primas — preço de venda</div>'
-   +'<table><thead><tr><th>Matéria-prima</th><th class="r">Preço (R$/ton)</th><th class="r">Preço (R$/kg)</th></tr></thead><tbody>'+linhas+'</tbody></table>'
-   +'<div class="serv"><div><div class="lbl">Serviço de industrialização</div><div style="font-size:11px;color:#6b7280">valor cobrado por tonelada produzida</div></div><div class="val">R$ '+fn(r.servico,2)+' / ton</div></div>'
-   +'<div class="sec-titulo">Valor total da produção</div>'
-   +'<table><thead><tr><th></th><th class="r">Por tonelada produzida</th>'+(r.ton>0?'<th class="r">Lote de '+fn(r.ton,2)+' t</th>':'')+'</tr></thead><tbody>'
-   +'<tr><td>Matérias-primas (sem as do estoque da Prime)</td><td class="r">R$ '+fn(r.mpTon,2)+'</td>'+(r.ton>0?'<td class="r">R$ '+fn(r.mpTotal,2)+'</td>':'')+'</tr>'
-   +'<tr><td>Serviço de industrialização</td><td class="r">R$ '+fn(r.servico,2)+'</td>'+(r.ton>0?'<td class="r">R$ '+fn(r.servicoTotal,2)+'</td>':'')+'</tr>'
-   +'<tr style="font-weight:800;background:#eff6ff"><td>Total</td><td class="r">R$ '+fn(r.totalTon,2)+'</td>'+(r.ton>0?'<td class="r">R$ '+fn(r.total,2)+'</td>':'')+'</tr>'
-   +'</tbody></table>'
-   +'<div class="footer">Rural Nutrição Animal — cotação de industrialização</div></body></html>';
   const win=window.open('','_blank','width=950,height=1000');
   if(!win){alert('O navegador bloqueou a janela de impressão. Libere pop-ups para este site e tente de novo.');return;}
-  win.document.write(doc);
+  win.document.write(ptPrimeHTMLPDF(r));
   win.document.close();
 }
 function ptRenderPrime(){
@@ -7103,12 +7118,13 @@ function ptRenderPrime(){
   const r=ptPrimeCalcular();
   const esc=function(x){return String(x==null?'':x).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');};
   const colunas='grid-template-columns:70px 1fr 100px 150px 90px 120px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)';
+  const nb=PT_PRIME.batidas==null?1:PT_PRIME.batidas;
   cont.innerHTML=`
     <div style="max-width:960px;margin:0 auto">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap">
         <div>
           <div style="font-size:16px;font-weight:700">Industrialização Prime</div>
-          <div style="font-size:12px;color:var(--t3);margin-top:2px">Escolha a fórmula, informe o preço de venda de cada matéria-prima e o valor do serviço por tonelada. O PDF não mostra custos nem a receita.</div>
+          <div style="font-size:12px;color:var(--t3);margin-top:2px">Escolha a fórmula, informe o preço de venda de cada matéria-prima e o serviço por tonelada. Os valores são calculados por batida da fórmula.</div>
         </div>
         <div style="display:flex;align-items:center;gap:10px">
           <span id="pt-prime-save-status" style="font-size:11px;color:var(--t3)"></span>
@@ -7118,39 +7134,40 @@ function ptRenderPrime(){
       <div class="card" style="padding:16px;margin-bottom:16px">
         <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:12px">
           <div class="f"><label>Produto / fórmula (código ou nome)</label>
-            <input type="text" id="pt-prime-busca" list="pt-esp-produtos-datalist" placeholder="Ex: 125 ou o nome da fórmula..." value="${esc(PT_PRIME.produtoCod?ptFormulaLabelFor(PT_PRIME.produtoCod):'')}" onchange="ptPrimeBuscarProduto(this.value)"></div>
+            <input type="text" id="pt-prime-busca" list="pt-esp-produtos-datalist" placeholder="Ex: 1084 ou o nome da fórmula..." value="${esc(PT_PRIME.produtoCod?ptFormulaLabelFor(PT_PRIME.produtoCod):'')}" onchange="ptPrimeBuscarProduto(this.value)"></div>
           <div class="f"><label>Cliente</label><input type="text" value="${esc(PT_PRIME.cliente||'')}" onchange="ptPrimeSetCampo('cliente',this.value)"></div>
           <div class="f"><label>Serviço (R$/ton produzida)</label><input type="number" step="0.01" min="0" value="${PT_PRIME.servicoTon||''}" onchange="ptPrimeSetCampo('servicoTon',this.value)"></div>
-          <div class="f"><label>Toneladas (para o total na tela)</label><input type="number" step="0.01" min="0" value="${PT_PRIME.toneladas||''}" onchange="ptPrimeSetCampo('toneladas',this.value)"></div>
+          <div class="f"><label>Batidas a produzir</label><input type="number" step="1" min="0" value="${nb}" onchange="ptPrimeSetCampo('batidas',this.value)"></div>
         </div>
       </div>
       ${!r?'<div style="padding:30px;text-align:center;color:var(--t3)">Selecione um produto para começar.</div>':`
       <div class="card" style="padding:16px;margin-bottom:16px">
-        <label style="font-weight:700;font-size:12px;text-transform:uppercase;color:var(--t3);display:block;margin-bottom:10px">Matérias-primas — ${esc(r.f.nome)}</label>
+        <label style="font-weight:700;font-size:12px;text-transform:uppercase;color:var(--t3);display:block;margin-bottom:10px">Matérias-primas — ${esc(r.f.nome)} (batida de ${fn(r.batida,0)} kg)</label>
         <div style="display:grid;${colunas};font-size:11px;text-transform:uppercase;color:var(--t3);font-weight:700;border-bottom:2px solid var(--border)">
-          <div>Cód.</div><div>Matéria-prima</div><div style="text-align:right">Kg por ton</div><div style="text-align:right">Preço de venda (R$/ton)</div><div style="text-align:center">Estoque Prime</div><div style="text-align:right">R$ por ton produzida</div>
+          <div>Cód.</div><div>Matéria-prima</div><div style="text-align:right">Kg na batida</div><div style="text-align:right">Preço de venda (R$/ton)</div><div style="text-align:center">Estoque Prime</div><div style="text-align:right">Valor na batida</div>
         </div>
         ${r.linhas.map(l=>`
         <div style="display:grid;${colunas}">
           <div class="mono" style="color:var(--t3)">${l.cod}</div>
           <div>${esc(l.nome)}</div>
-          <div style="text-align:right">${fn(l.kgTon,2)}</div>
+          <div style="text-align:right">${fn(l.kgBatida,2)}</div>
           <input type="number" step="0.01" min="0" ${l.estoque?'disabled':''} value="${l.estoque?'0.00':((PT_PRIME.preco||{})[l.cod]!==undefined?(+(PT_PRIME.preco||{})[l.cod]).toFixed(2):'')}" placeholder="0,00" onchange="ptPrimeSetPreco(${l.cod},this.value)">
-          <div style="text-align:center"><label title="A Prime já tem esta MP em estoque: custo 0, não é cobrada"><input type="checkbox" ${l.estoque?'checked':''} onchange="ptPrimeSetEstoque(${l.cod},this.checked)"> tem</label></div>
-          <div style="text-align:right;font-weight:700" id="pt-prime-val-${l.cod}">R$ ${fn(l.valorTon,2)}</div>
+          <div style="text-align:center"><label title="A Prime já tem esta MP em estoque: custo 0, fora da soma"><input type="checkbox" ${l.estoque?'checked':''} onchange="ptPrimeSetEstoque(${l.cod},this.checked)"> tem</label></div>
+          <div style="text-align:right;font-weight:700" id="pt-prime-val-${l.cod}">R$ ${fn(l.valorBatida,2)}</div>
         </div>`).join('')}
-        <div style="font-size:11.5px;color:var(--t3);margin-top:8px">O preço de cada MP vale para qualquer fórmula. Marque "tem" quando a Prime já possui a MP em estoque: ela fica com custo 0 e sai no PDF como estoque da Prime.</div>
+        <div style="font-size:11.5px;color:var(--t3);margin-top:8px">O preço de cada MP vale para qualquer fórmula. Marque "tem" quando a Prime já possui a MP em estoque: custo 0, fora da soma das MPs.</div>
       </div>
       <div class="card" style="padding:16px">
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
-          <div><div style="font-size:11px;text-transform:uppercase;color:var(--t3);font-weight:700">MPs por tonelada produzida</div><div style="font-size:17px;font-weight:800;margin-top:3px" id="pt-prime-mp-ton">R$ ${fn(r.mpTon,2)}</div></div>
-          <div><div style="font-size:11px;text-transform:uppercase;color:var(--t3);font-weight:700">Serviço por tonelada</div><div style="font-size:17px;font-weight:800;margin-top:3px" id="pt-prime-serv-ton">R$ ${fn(r.servico,2)}</div></div>
-          <div><div style="font-size:11px;text-transform:uppercase;color:var(--t3);font-weight:700">Total por tonelada</div><div style="font-size:17px;font-weight:800;margin-top:3px;color:var(--blue)" id="pt-prime-total-ton">R$ ${fn(r.totalTon,2)}</div></div>
+          <div><div style="font-size:11px;text-transform:uppercase;color:var(--t3);font-weight:700">Total de MPs na batida</div><div style="font-size:17px;font-weight:800;margin-top:3px" id="pt-prime-mp-bat">R$ ${fn(r.mpBatida,2)}</div></div>
+          <div><div style="font-size:11px;text-transform:uppercase;color:var(--t3);font-weight:700">Serviço na batida</div><div style="font-size:17px;font-weight:800;margin-top:3px" id="pt-prime-serv-bat">R$ ${fn(r.servicoBatida,2)}</div></div>
+          <div><div style="font-size:11px;text-transform:uppercase;color:var(--t3);font-weight:700">Valor da batida de ${fn(r.batida,0)} kg</div><div style="font-size:17px;font-weight:800;margin-top:3px;color:var(--blue)" id="pt-prime-total-bat">R$ ${fn(r.totalBatida,2)}</div></div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
-          <div><div style="font-size:11px;text-transform:uppercase;color:var(--t3);font-weight:700">MPs no lote (${fn(r.ton,2)} t)</div><div style="font-size:15px;font-weight:700;margin-top:3px" id="pt-prime-tot-mp">R$ ${fn(r.mpTotal,2)}</div></div>
-          <div><div style="font-size:11px;text-transform:uppercase;color:var(--t3);font-weight:700">Serviço no lote</div><div style="font-size:15px;font-weight:700;margin-top:3px" id="pt-prime-tot-serv">R$ ${fn(r.servicoTotal,2)}</div></div>
-          <div><div style="font-size:11px;text-transform:uppercase;color:var(--t3);font-weight:700">Total do lote</div><div style="font-size:15px;font-weight:800;margin-top:3px;color:var(--blue)" id="pt-prime-tot-geral">R$ ${fn(r.total,2)}</div></div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+          <div><div style="font-size:11px;text-transform:uppercase;color:var(--t3);font-weight:700">Produção</div><div style="font-size:15px;font-weight:700;margin-top:3px" id="pt-prime-tot-ton">${fn(r.tonTotal,3)} t</div></div>
+          <div><div style="font-size:11px;text-transform:uppercase;color:var(--t3);font-weight:700">MPs</div><div style="font-size:15px;font-weight:700;margin-top:3px" id="pt-prime-tot-mp">R$ ${fn(r.mpTotal,2)}</div></div>
+          <div><div style="font-size:11px;text-transform:uppercase;color:var(--t3);font-weight:700">Serviço</div><div style="font-size:15px;font-weight:700;margin-top:3px" id="pt-prime-tot-serv">R$ ${fn(r.servicoTotal,2)}</div></div>
+          <div><div style="font-size:11px;text-transform:uppercase;color:var(--t3);font-weight:700">Valor total da produção</div><div style="font-size:15px;font-weight:800;margin-top:3px;color:var(--blue)" id="pt-prime-tot-geral">R$ ${fn(r.total,2)}</div></div>
         </div>
       </div>`}
     </div>`;
