@@ -6252,17 +6252,37 @@
 
   // ---- Certificados ----
 
+  /* produtos do certificado: os cadastrados + os que já aparecem em certificados emitidos (com os dados do mais recente) */
+  function certChaveNome_(nome){ return 'certnome:' + fcNorm_(nome); }
+  function produtosParaCertificado(){
+    var lista = produtosGarantia.slice();
+    var nomesCad = {};
+    lista.forEach(function(p){ nomesCad[fcNorm_(p.nome)] = 1; });
+    var ord = (certificados||[]).slice().sort(function(a,b){ return (b.dataFabricacao||'').localeCompare(a.dataFabricacao||''); });
+    var vistos = {};
+    ord.forEach(function(c){
+      var k = fcNorm_(c.produtoNome);
+      if(!k || nomesCad[k] || vistos[k]) return;
+      vistos[k] = 1;
+      lista.push({ id: certChaveNome_(c.produtoNome), nome: c.produtoNome, validadeDias: c.validadeDias, itens: c.itens || [], virtual: true });
+    });
+    return lista.sort(function(a,b){ return String(a.nome||'').localeCompare(String(b.nome||''), 'pt-BR'); });
+  }
+  function findProdutoCert_(id){
+    return produtosParaCertificado().filter(function(p){ return p.id === id; })[0];
+  }
   function populateCertProdutoSelect(){
     var sel = document.getElementById('certProdutoId');
     var current = sel.value;
-    sel.innerHTML = '<option value="">Selecione um produto cadastrado</option>' + produtosGarantia.map(function(p){
+    var lista = produtosParaCertificado();
+    sel.innerHTML = '<option value="">Selecione um produto</option>' + lista.map(function(p){
       return '<option value="'+p.id+'">'+(p.nome||'s/n')+'</option>';
     }).join('');
-    if(produtosGarantia.some(function(p){ return p.id === current; })) sel.value = current;
+    if(lista.some(function(p){ return p.id === current; })) sel.value = current;
   }
 
   function onCertProdutoChange(){
-    var p = findProduto(document.getElementById('certProdutoId').value);
+    var p = findProdutoCert_(document.getElementById('certProdutoId').value);
     if(!p) return;
     document.getElementById('certValidadeDias').value = p.validadeDias != null ? p.validadeDias : '';
     certItemsDraft = JSON.parse(JSON.stringify(p.itens||[])).map(function(it){ return { id: uid(), garantia: it.garantia, valor: it.valor, unidade: it.unidade }; });
@@ -6285,7 +6305,8 @@
 
   function saveCertificado(){
     var produtoId = document.getElementById('certProdutoId').value;
-    var produto = findProduto(produtoId);
+    var produto = findProdutoCert_(produtoId);
+    if(produto && produto.virtual) produtoId = '';  /* produto que veio de certificado antigo: grava só o nome */
     var cert = certEditingId ? findCertificado(certEditingId) : { id: 'cert_' + uid() };
     cert.produtoId = produtoId || null;
     cert.produtoNome = produto ? produto.nome : (cert.produtoNome || '');
@@ -6305,7 +6326,8 @@
     var cert = findCertificado(id);
     if(!cert) return;
     certEditingId = id;
-    document.getElementById('certProdutoId').value = cert.produtoId || '';
+    populateCertProdutoSelect();
+    document.getElementById('certProdutoId').value = cert.produtoId || (cert.produtoNome ? certChaveNome_(cert.produtoNome) : '');
     document.getElementById('certLote').value = cert.lote || '';
     document.getElementById('certData').value = cert.dataFabricacao || '';
     document.getElementById('certValidadeDias').value = cert.validadeDias != null ? cert.validadeDias : '';
@@ -6336,6 +6358,7 @@
   }
 
   function renderCertTable(){
+    populateCertProdutoSelect();
     var qEl = document.getElementById('certSearch');
     var q = qEl ? qEl.value.trim().toLowerCase() : '';
     var rows = certificados.filter(function(c){
