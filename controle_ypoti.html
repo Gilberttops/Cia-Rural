@@ -1005,7 +1005,7 @@ function buildInvoices(){
   Object.entries(byInv).forEach(([inv,itens])=>{
     itens.sort((a,b)=>a.data<b.data?-1:1);
     const total=itens.reduce((a,s)=>a+(s.total_usd||0),0);
-    const iv={inv,cliente:itens[0].empresa,data:itens[0].data,venc:itens.find(s=>s.venc)?.venc||null,itens,total,lines:itens.map(s=>s.id)};
+    const iv={inv,num:(itens.find(s=>s.faturaNum)||{}).faturaNum||'',cliente:itens[0].empresa,data:itens[0].data,venc:itens.find(s=>s.venc)?.venc||null,itens,total,lines:itens.map(s=>s.id)};
     INVOICES.push(iv);INVMAP[inv]=iv;
   });
   INVOICES.sort((a,b)=>a.data<b.data?-1:1);
@@ -1145,7 +1145,7 @@ function parseDate(v){
   return null;
 }
 function parseSalesRows(rows,empresaPadrao,invPrefix){
-  const out=[];let seq=0,curInv=null,curVenc=null;
+  const out=[];let seq=0,curInv=null,curVenc=null,curNum='';
   rows.forEach(row=>{
     if(!Array.isArray(row))return;
     const d=parseDate(row[0]),p=(row[1]!=null?String(row[1]).trim():'');
@@ -1155,11 +1155,11 @@ function parseSalesRows(rows,empresaPadrao,invPrefix){
     if(total==null&&qtd!=null&&unit!=null)total=qtd*unit;
     const subtotal=parseNum(row[5]),venc=parseDate(row[6]);
     const codigoRaw=row[7]!=null?String(row[7]).trim():'';
-    if(subtotal!=null){seq++;curInv=invPrefix+seq;curVenc=venc;}
-    else if(curInv==null){seq++;curInv=invPrefix+seq;curVenc=null;}
+    if(subtotal!=null){seq++;curInv=invPrefix+seq;curVenc=venc;curNum=(row[12]!=null?String(row[12]).trim():'');}
+    else if(curInv==null){seq++;curInv=invPrefix+seq;curVenc=null;curNum=(row[12]!=null?String(row[12]).trim():'');}
     if(String(row[10]||'').trim().toUpperCase().indexOf('ESTORNAD')===0)return; // estornada: fora do painel
     out.push({data:d,ano:+d.slice(0,4),mes:d.slice(0,7),produto:p,empresa:cliente||empresaPadrao,fonte:empresaPadrao===CLI_YP?'Cargas':(empresaPadrao==='Chacobras'?'Chacobras':'Outros'),
-              qtd,unit,total_usd:total,venc:curVenc,inv:curInv,codigo:codigoRaw||null,
+              qtd,unit,total_usd:total,venc:curVenc,inv:curInv,faturaNum:curNum,codigo:codigoRaw||null,
               cliente,estancia:(row[9]!=null?String(row[9]).trim():'')||(empresaPadrao===CLI_YP?'Ypoti':'')});
   });
   return out;
@@ -1486,7 +1486,7 @@ document.getElementById('lvEnviar').onclick=async(e)=>{
   if(alertas.some(m=>m.startsWith('Vencimento'))){lanlog('Corrija o vencimento antes de lançar.','v');return;}
   if(alertas.length&&!confirm('Atenção:\n- '+alertas.join('\n- ')+'\n\nLançar mesmo assim?'))return;
   const numFat=lvEl('lvFaturaNum').value.trim();
-  const j=await postLanc({tipo:'venda',data,venc:document.getElementById('lvVenc').value,cliente,estancia,itens},e.target,'v');
+  const j=await postLanc({tipo:'venda',data,venc:document.getElementById('lvVenc').value,cliente,estancia,fatura_num:numFat,itens},e.target,'v');
   if(j){
     lanlog('✓ Venda lançada: '+itens.length+' item(ns)'+(j.codigos?' · códigos '+j.codigos.join(', '):'')+'. Atualizando…','v');
     document.getElementById('lvItens').innerHTML='';addItemRow();
@@ -1628,7 +1628,7 @@ function hvLista(){
     if(st==='abertas'&&s.k==='quitadas')return false;
     if(st==='vencidas'&&s.k!=='vencidas')return false;
     if(!q)return true;
-    return iv.itens.some(s=>displayCode(s,'v').toLowerCase().includes(q)||s.produto.toLowerCase().includes(q)||(s.estancia||'').toLowerCase().includes(q))||iv.cliente.toLowerCase().includes(q)||fmtDate(iv.data).includes(q);
+    return iv.itens.some(s=>displayCode(s,'v').toLowerCase().includes(q)||s.produto.toLowerCase().includes(q)||(iv.num||'').toLowerCase().includes(q)||(s.estancia||'').toLowerCase().includes(q))||iv.cliente.toLowerCase().includes(q)||fmtDate(iv.data).includes(q);
   }).sort((a,b)=>a.data<b.data?1:a.data>b.data?-1:0);
 }
 function renderHistVendas(){
@@ -1642,7 +1642,7 @@ function renderHistVendas(){
     const cods=iv.itens.map(x=>displayCode(x,'v')),est=iv.itens.find(x=>x.estancia)?.estancia||'';
     const itens=iv.itens.slice(0,2).map(x=>escH(x.produto)+' ('+fmtN(x.qtd)+')').join('; ')+(iv.itens.length>2?' +'+(iv.itens.length-2):'');
     const dias=iv.venc?isoDiff(iv.data,iv.venc):0;
-    return `<tr><td>${escH(cods.length>1?cods[0]+' … '+cods[cods.length-1]:cods[0])}</td><td>${fmtDate(iv.data)}</td><td>${escH(iv.cliente)}${est?'<br><small>'+escH(est)+'</small>':''}</td><td>${itens}</td>
+    return `<tr><td>${iv.num?'<b>'+escH(iv.num)+'</b><br>':''}<small>${escH(cods.length>1?cods[0]+' … '+cods[cods.length-1]:cods[0])}</small></td><td>${fmtDate(iv.data)}</td><td>${escH(iv.cliente)}${est?'<br><small>'+escH(est)+'</small>':''}</td><td>${itens}</td>
       <td class="num">${fmtUSD2(iv.total)}</td><td class="num">${fmtUSD2(rem)}</td><td>${iv.venc?fmtDate(iv.venc)+'<br><small>'+dias+' dias</small>':'à vista'}</td>
       <td><span class="badge ${s.c}">${s.t}</span></td>
       <td class="acts"><button class="btn sm" data-a="pdf" data-inv="${escH(iv.inv)}">PDF</button><button class="btn sm" data-a="dup" data-inv="${escH(iv.inv)}">Duplicar</button></td></tr>`;
@@ -1711,7 +1711,7 @@ document.getElementById('lvFatura').onclick=()=>{
 };
 function faturaDeInv(iv){
   const e=iv.itens.find(s=>s.estancia)?.estancia||'';
-  return {data:iv.data,venc:iv.venc,cliente:iv.cliente,estancia:e,numero:iv.itens.map(s=>displayCode(s,'v')).join(', '),
+  return {data:iv.data,venc:iv.venc,cliente:iv.cliente,estancia:e,numero:iv.num||iv.itens.map(s=>displayCode(s,'v')).join(', '),
     itens:iv.itens.map(s=>({codigo:displayCode(s,'v'),produto:s.produto,unidade:'KG',qtd:s.qtd||0,unit:s.unit||0,total:s.total_usd}))};
 }
 function abrirFatura(f){
