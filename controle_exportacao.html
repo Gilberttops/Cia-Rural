@@ -5377,7 +5377,7 @@
   function fcNorm_(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim(); }
   function fcPrev(fc){
     var p = (fc && fc.previsao) || {};
-    return { cargas: Number(p.cargas)||0, renovacoes: Array.isArray(p.renovacoes) ? p.renovacoes : [] };
+    return { cargas: Number(p.cargas)||0, renovacoes: Array.isArray(p.renovacoes) ? p.renovacoes : [], encerrada: !!p.encerrada };
   }
   /* prazo de 30 dias a partir da emissão; cada renovação na aduana soma mais 30 */
   function fcPrazo(fc){
@@ -5413,8 +5413,9 @@
     });
     prods.forEach(function(x){ x.falta = x.plan - x.env; });
     var cargasFalta = pv.cargas > 0 ? pv.cargas - vendas.length : null;
-    var aberta = (cargasFalta != null && cargasFalta > 0) || prods.some(function(x){ return x.falta > 1; });
-    var temPrev = pv.cargas > 0 || prods.length > 0;
+    /* só controla a fatura em que você informou as cargas previstas (as antigas ficam "sem previsão"); "entregue" manual encerra */
+    var temPrev = pv.cargas > 0 || pv.encerrada;
+    var aberta = temPrev && !pv.encerrada && ((cargasFalta != null && cargasFalta > 0) || prods.some(function(x){ return x.falta > 1; }));
     return { cargasEnv: vendas.length, cargasPrev: pv.cargas, cargasFalta: cargasFalta, prods: prods, extras: extras,
              aberta: aberta, status: !temPrev ? 'semprev' : (aberta ? 'aberta' : 'encerrada') };
   }
@@ -5457,7 +5458,19 @@
     var novo = addDaysISO_(pz.vence, 30);
     if(!confirm('Registrar a renovação de +30 dias na aduana do Paraguai para a fatura ' + (fc.numero||'s/n') + '?\n\nVencimento atual: ' + dLabel(pz.vence) + '\nNovo vencimento: ' + dLabel(novo))) return;
     var pv = fcPrev(fc);
-    fc.previsao = { cargas: pv.cargas, renovacoes: pv.renovacoes.concat([{ em: todayLocalISO() }]) };
+    fc.previsao = { cargas: pv.cargas, renovacoes: pv.renovacoes.concat([{ em: todayLocalISO() }]), encerrada: pv.encerrada };
+    scheduleFcSave();
+    pushDocToSheets('faturaComercial', fc);
+    renderFcTable();
+  }
+  /* marca a fatura como totalmente entregue (ou reabre), quando as cargas não foram todas ligadas aqui */
+  function toggleEntregueFc(id){
+    var fc = findFc(id);
+    if(!fc) return;
+    var pv = fcPrev(fc);
+    var novo = !pv.encerrada;
+    if(!confirm(novo ? ('Marcar a fatura ' + (fc.numero||'s/n') + ' como TOTALMENTE ENTREGUE? O alerta de prazo some.') : ('Reabrir o controle de entrega da fatura ' + (fc.numero||'s/n') + '?'))) return;
+    fc.previsao = { cargas: pv.cargas, renovacoes: pv.renovacoes, encerrada: novo };
     scheduleFcSave();
     pushDocToSheets('faturaComercial', fc);
     renderFcTable();
@@ -5538,6 +5551,8 @@
         + '<td style="white-space:nowrap;">'
           + '<button class="btn" data-fc-print="'+fc.id+'" style="padding:5px 10px;font-size:12px;">Fatura</button> '
           + '<button class="btn" data-fc-packing="'+fc.id+'" style="padding:5px 10px;font-size:12px;">Packing List</button> '
+          + (sd.status === 'aberta' ? '<button class="btn" data-fc-entregue="'+fc.id+'" style="padding:5px 10px;font-size:12px;" title="Marcar como totalmente entregue">Entregue</button> ' : '')
+          + (fcPrev(fc).encerrada ? '<button class="btn" data-fc-entregue="'+fc.id+'" style="padding:5px 10px;font-size:12px;" title="Reabrir o controle de entrega">Reabrir</button> ' : '')
           + (sd.status === 'aberta' ? '<button class="btn" data-fc-renew="'+fc.id+'" style="padding:5px 10px;font-size:12px;" title="Registrar renovação de +30 dias na aduana">Renovar +30d</button> ' : '')
           + '<button class="btn" data-fc-edit="'+fc.id+'" style="padding:5px 10px;font-size:12px;">Editar</button>'
         + '</td>'
@@ -5738,7 +5753,7 @@
       var n = Math.max(0, Math.min(12, parseInt(document.getElementById('fcRenov').value, 10) || 0));
       var ren = pvAtual.renovacoes.slice(0, n);
       while(ren.length < n) ren.push({ em: todayLocalISO() });
-      fc.previsao = { cargas: Math.max(0, parseInt(document.getElementById('fcCargas').value, 10) || 0), renovacoes: ren };
+      fc.previsao = { cargas: Math.max(0, parseInt(document.getElementById('fcCargas').value, 10) || 0), renovacoes: ren, encerrada: pvAtual.encerrada };
     })();
     fc.itens = fcItemsDraft.filter(function(it){
       return it.descricao || it.quantidade || it.precoUnitario || it.lote || it.pesoLiquido || it.pesoBruto || it.volumes;
@@ -6027,6 +6042,8 @@
   }
 
   function handleFcTableClick(e){
+    var entBtn = e.target.closest('[data-fc-entregue]');
+    if(entBtn){ toggleEntregueFc(entBtn.getAttribute('data-fc-entregue')); return; }
     var renewBtn = e.target.closest('[data-fc-renew]');
     if(renewBtn){ renewFc(renewBtn.getAttribute('data-fc-renew')); return; }
     var del = e.target.closest('[data-fc-del]');
