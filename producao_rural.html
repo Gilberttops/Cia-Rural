@@ -7084,6 +7084,12 @@ function ptPrimeGerarPDF(){
    +'<div class="sec-titulo">Matérias-primas — preço de venda</div>'
    +'<table><thead><tr><th>Matéria-prima</th><th class="r">Preço (R$/ton)</th><th class="r">Preço (R$/kg)</th></tr></thead><tbody>'+linhas+'</tbody></table>'
    +'<div class="serv"><div><div class="lbl">Serviço de industrialização</div><div style="font-size:11px;color:#6b7280">valor cobrado por tonelada produzida</div></div><div class="val">R$ '+fn(r.servico,2)+' / ton</div></div>'
+   +'<div class="sec-titulo">Valor total da produção</div>'
+   +'<table><thead><tr><th></th><th class="r">Por tonelada produzida</th>'+(r.ton>0?'<th class="r">Lote de '+fn(r.ton,2)+' t</th>':'')+'</tr></thead><tbody>'
+   +'<tr><td>Matérias-primas (sem as do estoque da Prime)</td><td class="r">R$ '+fn(r.mpTon,2)+'</td>'+(r.ton>0?'<td class="r">R$ '+fn(r.mpTotal,2)+'</td>':'')+'</tr>'
+   +'<tr><td>Serviço de industrialização</td><td class="r">R$ '+fn(r.servico,2)+'</td>'+(r.ton>0?'<td class="r">R$ '+fn(r.servicoTotal,2)+'</td>':'')+'</tr>'
+   +'<tr style="font-weight:800;background:#eff6ff"><td>Total</td><td class="r">R$ '+fn(r.totalTon,2)+'</td>'+(r.ton>0?'<td class="r">R$ '+fn(r.total,2)+'</td>':'')+'</tr>'
+   +'</tbody></table>'
    +'<div class="footer">Rural Nutrição Animal — cotação de industrialização</div></body></html>';
   const win=window.open('','_blank','width=950,height=1000');
   if(!win){alert('O navegador bloqueou a janela de impressão. Libere pop-ups para este site e tente de novo.');return;}
