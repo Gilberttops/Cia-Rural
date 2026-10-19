@@ -402,6 +402,7 @@ body.locked .wrap{display:none}
         <button type="button" class="btn sm" data-d="15">15 dias</button>
         <button type="button" class="btn sm" data-d="30">30 dias</button>
         <button type="button" class="btn sm" data-d="45">45 dias</button>
+        <button type="button" class="btn sm" data-d="50">50 dias</button>
         <button type="button" class="btn sm" data-d="60">60 dias</button>
         <button type="button" class="btn sm" data-d="90">90 dias</button>
         <span class="prazonota" id="lvPrazoNota"></span>
@@ -409,6 +410,9 @@ body.locked .wrap{display:none}
       <div class="lanrow2">
         <div class="cfgrow"><label>Cliente <small>(vai para a planilha e a fatura; escolha um já usado ou digite outro)</small></label><input type="text" id="lvCliente" list="dlClientes" autocomplete="off"><datalist id="dlClientes"></datalist></div>
         <div class="cfgrow"><label>Estância / referência <small>(vai para a planilha e a fatura)</small></label><input type="text" id="lvEstancia" list="dlEstancias" autocomplete="off"><datalist id="dlEstancias"></datalist></div>
+      </div>
+      <div class="lanrow2" style="margin-top:10px">
+        <div class="cfgrow"><label>Fatura / Invoice nº <small>(ex.: 14-01, 16-02 · aparece no PDF)</small></label><input type="text" id="lvFaturaNum" maxlength="30" autocomplete="off" placeholder="14-01"></div>
       </div>
       <div class="cfgstatus" id="lvCliInfo" style="display:none;margin-top:8px"></div>
       <div class="itemshead"><span>Produto</span><span>Unidade</span><span>Qtd</span><span>Unit US$</span><span>Total</span><span></span></div>
@@ -1481,17 +1485,18 @@ document.getElementById('lvEnviar').onclick=async(e)=>{
   const alertas=lvAlertas(itens,itens.reduce((a,i)=>a+i.qtd*i.unit,0));
   if(alertas.some(m=>m.startsWith('Vencimento'))){lanlog('Corrija o vencimento antes de lançar.','v');return;}
   if(alertas.length&&!confirm('Atenção:\n- '+alertas.join('\n- ')+'\n\nLançar mesmo assim?'))return;
+  const numFat=lvEl('lvFaturaNum').value.trim();
   const j=await postLanc({tipo:'venda',data,venc:document.getElementById('lvVenc').value,cliente,estancia,itens},e.target,'v');
   if(j){
     lanlog('✓ Venda lançada: '+itens.length+' item(ns)'+(j.codigos?' · códigos '+j.codigos.join(', '):'')+'. Atualizando…','v');
     document.getElementById('lvItens').innerHTML='';addItemRow();
-    ['lvPrazo','lvVenc'].forEach(id=>document.getElementById(id).value='');document.getElementById('lvPrazoNota').textContent='';
+    ['lvPrazo','lvVenc','lvFaturaNum'].forEach(id=>document.getElementById(id).value='');document.getElementById('lvPrazoNota').textContent='';
     lvRecalc();lvCliInfo();
     const c=loadCfg();
     if(cfgReady(c)){
       await loadCloud(c);renderHistVendas();
       const s0=j.codigos&&SALES.find(s=>s.codigo===j.codigos[0]);
-      if(s0&&INVMAP[s0.inv]&&confirm('Venda lançada. Gerar o PDF da fatura agora?'))abrirFatura(faturaDeInv(INVMAP[s0.inv]));
+      if(s0&&INVMAP[s0.inv]&&confirm('Venda lançada. Gerar o PDF da fatura agora?'))abrirFatura({...faturaDeInv(INVMAP[s0.inv]),...(numFat?{numero:numFat}:{})});
     }
   }
 };
@@ -1602,7 +1607,7 @@ lvEl('lvCliente').addEventListener('input',()=>{lvCliInfo();lvRecalc();});
 lvEl('lvCliente').addEventListener('change',lvCliAplicaPadroes);
 lvEl('lvLimpar').onclick=()=>{
   if(!confirm('Limpar todo o formulário de nova venda?'))return;
-  ['lvCliente','lvEstancia','lvPrazo','lvVenc'].forEach(id=>lvEl(id).value='');lvEl('lvData').value=TODAY;
+  ['lvCliente','lvEstancia','lvPrazo','lvVenc','lvFaturaNum'].forEach(id=>lvEl(id).value='');lvEl('lvData').value=TODAY;
   lvEl('lvItens').innerHTML='';addItemRow();lvNotaPrazo();lvCliInfo();lvRecalc();lanlog('','v');
 };
 
@@ -1702,7 +1707,7 @@ document.getElementById('lvFatura').onclick=()=>{
   if(!itens.length){lanlog('Adicione ao menos um item válido para gerar a fatura.','v');return;}
   /* rascunho: o código sequencial só existe depois de lançar na planilha */
   abrirFatura({data:document.getElementById('lvData').value,venc:document.getElementById('lvVenc').value,
-    cliente:(document.getElementById('lvCliente').value||'').trim(),estancia:(document.getElementById('lvEstancia').value||'').trim(),itens,rascunho:true});
+    cliente:(document.getElementById('lvCliente').value||'').trim(),estancia:(document.getElementById('lvEstancia').value||'').trim(),numero:lvEl('lvFaturaNum').value.trim(),itens,rascunho:true});
 };
 function faturaDeInv(iv){
   const e=iv.itens.find(s=>s.estancia)?.estancia||'';
