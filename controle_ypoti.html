@@ -1812,7 +1812,7 @@ function recarregarDados(){
 /* ----- editar / estornar ----- */
 function mnRodape(){
   return `<div class="cfgrow"><label>Motivo <small>(obrigatório)</small></label><input type="text" id="mnMotivo" placeholder="ex.: quantidade digitada errada"></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn solid" id="mnSalvar">Salvar alterações</button><button class="btn" id="mnEstornar">Estornar lançamento</button></div>`;
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn solid" id="mnSalvar">Salvar alterações</button><button class="btn" id="mnEstornar">Estornar lançamento</button><button class="btn" id="mnExcluir" style="color:var(--open);border-color:var(--open)">Excluir lançamento</button></div>`;
 }
 function mnBuscar(){
   const cod=(document.getElementById('mnCodigo').value||'').trim().toUpperCase();
@@ -1857,9 +1857,9 @@ function mnBuscar(){
 }
 function mnLigar(){
   const m=MN_ATUAL;if(!m)return;
-  const sv=document.getElementById('mnSalvar'),es=document.getElementById('mnEstornar');
-  sv.onclick=mnSalvar;es.onclick=mnEstornar;
-  if(m.ligado){sv.disabled=true;es.disabled=true;}
+  const sv=document.getElementById('mnSalvar'),es=document.getElementById('mnEstornar'),ex=document.getElementById('mnExcluir');
+  sv.onclick=mnSalvar;es.onclick=mnEstornar;ex.onclick=mnExcluir;
+  if(m.ligado){sv.disabled=true;es.disabled=true;ex.disabled=true;}
 }
 async function mnSalvar(){
   const m=MN_ATUAL;if(!m)return;
@@ -1895,6 +1895,18 @@ async function mnEstornar(){
   if(!confirm(`Estornar ${m.codigo}? A linha fica marcada como estornada e sai do painel. Não é apagada.`))return;
   const j=await enviarServidor({tipo:'estornar',alvo:m.alvo,codigo:m.codigo,motivo},'mnLog','mn');
   if(j){log.textContent='✓ '+m.codigo+' estornado. Atualizando…';MN_ATUAL=null;document.getElementById('mnResultado').innerHTML='';recarregarDados();}
+}
+async function mnExcluir(){
+  const m=MN_ATUAL;if(!m)return;
+  const log=document.getElementById('mnLog');
+  const motivo=(document.getElementById('mnMotivo').value||'').trim();
+  if(!motivo){log.textContent='Informe o motivo da exclusão.';return;}
+  if(!confirm(`EXCLUIR ${m.codigo}?
+
+A linha é APAGADA da planilha e não volta pelo app. Só fica o registro na aba Auditoria.
+Para manter o histórico, use "Estornar".`))return;
+  const j=await enviarServidor({tipo:'excluir',alvo:m.alvo,codigo:m.codigo,motivo},'mnLog','mn');
+  if(j){log.textContent='✓ '+m.codigo+' excluído. Atualizando…';MN_ATUAL=null;document.getElementById('mnResultado').innerHTML='';recarregarDados();}
 }
 document.getElementById('mnBuscar').onclick=mnBuscar;
 document.getElementById('mnCodigo').addEventListener('keydown',e=>{if(e.key==='Enter')mnBuscar();});
