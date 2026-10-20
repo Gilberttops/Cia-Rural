@@ -45,6 +45,9 @@ header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:spac
 .seg{display:inline-flex;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px}
 .seg button{border:0;background:transparent;font:inherit;font-weight:600;font-size:13px;color:var(--muted);padding:7px 15px;border-radius:999px;cursor:pointer;transition:.15s}
 .seg button.on{background:var(--pasture);color:#fff}
+.clibar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:12px}
+.clibar .lbl{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.clibar .hint{font-size:12px;color:var(--muted)}
 .ctrl{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);font-weight:600}
 .ctrl select,.ctrl input{font:inherit;font-weight:600;font-size:13px;color:var(--ink);border:1px solid var(--line);background:var(--card);border-radius:8px;padding:7px 10px}
 .ctrl input[type=search]{width:180px}
@@ -255,6 +258,12 @@ body.locked .wrap{display:none}
   </header>
   <div class="ru-faixa no-print" aria-hidden="true"><span></span><span></span><span></span></div>
 
+  <div class="clibar no-print">
+    <span class="lbl">Cliente</span>
+    <div class="seg" id="empSeg"><button data-emp="Todas" class="on">Todos</button></div>
+    <span class="hint">vale para todas as abas</span>
+  </div>
+
   <div class="tabs" id="tabs">
     <button data-tab="resumo" class="on">Resumo</button>
     <button data-tab="pendencias">Pendências <span class="cnt" id="cntPend" style="display:none"></span></button>
@@ -271,9 +280,6 @@ body.locked .wrap{display:none}
   <!-- ============ RESUMO (home) ============ -->
   <section class="view on" id="v-resumo">
     <div class="filters">
-      <div class="seg" id="empSeg">
-        <button data-emp="Todas" class="on">Todos</button>
-      </div>
       <label class="ctrl">Estância <select id="estSel"></select></label>
       <label class="ctrl">Ano <select id="anoDe"></select></label>
       <label class="ctrl">até <select id="anoAte"></select></label>
@@ -641,6 +647,11 @@ function setCliente(v){
   st.emp=v; const c=v==='Todas'?'':v;
   fst.cli=c; est.cli=c; rst.cli=c;
   ['fCli','eCli','rCli'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=c});
+  hvPreencherCli(); document.getElementById('hvCli').value=c;
+  document.getElementById('lbCliente').value=c;
+  /* formulário de nova venda: já sugere o cliente escolhido (só se estiver vazio ou com o cliente anterior) */
+  const lv=document.getElementById('lvCliente');
+  if(lv&&(!lv.value||lv.value===lv.dataset.auto)){lv.value=c;lv.dataset.auto=c;}
   [...document.getElementById('empSeg').children].forEach(x=>x.classList.toggle('on',x.dataset.emp===v));
   render();
   refrescarAba();
@@ -652,6 +663,11 @@ function refrescarAba(){
   if(aba==='pendencias')renderFaturas();
   if(aba==='conciliar')renderRecon();
   if(aba==='extrato')renderExtrato();
+  if(aba==='lancar-venda'){renderHistVendas();lvCliInfo();}
+  if(aba==='lancar-baixa')renderLbFaturas();
+  if(aba==='gerencial')renderGerencial();
+  if(aba==='clientes')renderClientes();
+  if(aba==='manutencao'){MN_ATUAL=null;document.getElementById('mnResultado').innerHTML='';}
 }
 document.getElementById('estSel').onchange=e=>{st.est=e.target.value;render();refrescarAba()};
 /* títulos dos gráficos e tabelas mostram o cliente escolhido */
@@ -1208,6 +1224,7 @@ function hydrate(sales,pays,source,conciliacaoRows){
   refreshProdList();
   renderGerencial();
   renderClientes();
+  setCliente(st.emp); /* alinha todas as abas ao cliente escolhido no topo */
 }
 /* sugestões para os campos Cliente e Estância no lançamento de vendas */
 function preencherListasCliente(){
@@ -1631,10 +1648,13 @@ function hvLista(){
     return iv.itens.some(s=>displayCode(s,'v').toLowerCase().includes(q)||s.produto.toLowerCase().includes(q)||(iv.num||'').toLowerCase().includes(q)||(s.estancia||'').toLowerCase().includes(q))||iv.cliente.toLowerCase().includes(q)||fmtDate(iv.data).includes(q);
   }).sort((a,b)=>a.data<b.data?1:a.data>b.data?-1:0);
 }
-function renderHistVendas(){
+function hvPreencherCli(){
   const sel=lvEl('hvCli'),atual=sel.value;
   sel.innerHTML='<option value="">Todos</option>'+clientesDisponiveis().map(c=>`<option value="${escH(c)}">${escH(c)}</option>`).join('');
   sel.value=atual;
+}
+function renderHistVendas(){
+  hvPreencherCli();
   const lista=hvLista();
   let tot=0,saldo=0;
   lvEl('hvBody').innerHTML=lista.slice(0,300).map(iv=>{
@@ -1822,6 +1842,7 @@ function mnBuscar(){
   const s=SALES.find(x=>displayCode(x,'v').toUpperCase()===cod);
   const p=s?null:PAYS.find(x=>displayCode(x,'b').toUpperCase()===cod);
   if(!s&&!p){box.innerHTML='<div class="empty">Código não encontrado, ou já estornado.</div>';return;}
+  if((s&&!doCli(s.empresa))||(p&&!doCli(p.cliente))){box.innerHTML='<div class="empty">Este código é de outro cliente ('+escH(s?s.empresa:p.cliente)+'). Troque o cliente no topo para editá-lo.</div>';return;}
   if(s){
     const ligado=allocs.some(a=>a.v===s.id);
     MN_ATUAL={alvo:'venda',codigo:displayCode(s,'v'),item:s,ligado};
@@ -1917,7 +1938,7 @@ function renderClientes(){
   const extras=[...new Set(SALES.map(s=>s.empresa).concat(PAYS.map(p=>p.cliente)).filter(Boolean))]
     .filter(n=>!nomesCad.has(n.toLowerCase()))
     .map(n=>({nome:n,pais:'',documento:'',condicao:0,limite:0,ativo:true,observacao:'(sem cadastro)'}));
-  const linhas=[...CLIENTES_CAD,...extras].sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
+  const linhas=[...CLIENTES_CAD,...extras].filter(c=>doCli(c.nome)).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
   document.getElementById('clcount').textContent=linhas.length+' cliente(s)';
   document.getElementById('clTbody').innerHTML=linhas.length?linhas.map(c=>`<tr data-nome="${escH(c.nome)}" style="cursor:pointer">
       <td>${escH(c.nome)}${c.observacao==='(sem cadastro)'?' <small style="color:var(--muted)">sem cadastro</small>':''}</td>
@@ -1952,7 +1973,7 @@ document.getElementById('clSalvar').onclick=async()=>{
 /* ----- painel gerencial ----- */
 function renderGerencial(){
   const hoje=TODAY;
-  const nomes=[...new Set(SALES.map(s=>s.empresa).concat(PAYS.map(p=>p.cliente)).filter(Boolean))];
+  const nomes=[...new Set(SALES.map(s=>s.empresa).concat(PAYS.map(p=>p.cliente)).filter(Boolean))].filter(doCli);
   const diasAtraso=iv=>Math.floor((new Date(hoje+'T12:00:00')-new Date(iv.venc+'T12:00:00'))/86400000);
   const linhas=nomes.map(c=>{
     const vendas=SALES.filter(s=>s.empresa===c);
@@ -1993,7 +2014,7 @@ function renderGerencial(){
     ?`<div class="kpis"><div class="kpi"><div class="lbl">Vendido à Chacobras</div><div class="val">${fmtUSD(ch.vendido)}</div></div>
        <div class="kpi"><div class="lbl">Recebido da Chacobras</div><div class="val">${fmtUSD(ch.recebido)}</div></div>
        <div class="kpi"><div class="lbl">Ainda a receber</div><div class="val">${fmtUSD(ch.aberto)}</div></div></div>`
-    :'<div class="empty">Nenhum lançamento com a Chacobras como cliente.</div>';
+    :'<div class="empty">'+(doCli('Chacobras')?'Nenhum lançamento com a Chacobras como cliente.':'Escolha "Todos" ou "Chacobras" no topo para ver este bloco.')+'</div>';
 }
 
 /* ---------- init ---------- */
