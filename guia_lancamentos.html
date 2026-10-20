@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guia de lançamentos financeiros – Agrotis</title>
+<style>
+:root{--azul:#1B3A63;--azul2:#2c5288;--verde:#1f7a3d;--vermelho:#b32a2a;--amarelo:#f2b705;--cinza:#f4f6f9;--borda:#d9dee7;--texto:#1d2733}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",Arial,sans-serif;color:var(--texto);background:var(--cinza);font-size:15px;line-height:1.5}
+header{background:var(--azul);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:18px;position:sticky;top:0;z-index:5;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+header img{height:46px;background:#fff;border-radius:6px;padding:4px 8px}
+header h1{font-size:20px;margin:0;font-weight:600}
+header .sub{font-size:12.5px;opacity:.85}
+header .acoes{margin-left:auto;display:flex;gap:10px;align-items:center}
+header input{padding:8px 12px;border-radius:6px;border:0;width:230px;font-size:14px}
+button{font-family:inherit;cursor:pointer}
+.btn{background:var(--amarelo);color:#1d2733;border:0;border-radius:6px;padding:9px 14px;font-weight:600;font-size:14px}
+.btn.sec{background:#fff;color:var(--azul)}
+.wrap{display:flex;max-width:1280px;margin:0 auto}
+nav{width:230px;flex:none;padding:18px 10px;position:sticky;top:76px;align-self:flex-start;max-height:calc(100vh - 80px);overflow:auto}
+nav a{display:block;padding:8px 12px;border-radius:6px;color:var(--azul);text-decoration:none;font-weight:500;font-size:14px}
+nav a:hover,nav a.ativo{background:#e3e9f2}
+main{flex:1;padding:18px 24px 60px;min-width:0}
+section{background:#fff;border:1px solid var(--borda);border-radius:10px;padding:20px 24px;margin-bottom:18px}
+section h2{margin:0 0 6px;color:var(--azul);font-size:21px}
+section h3{color:var(--azul2);font-size:16.5px;margin:20px 0 6px}
+.lead{color:#4a5668;margin-top:0}
+table{border-collapse:collapse;width:100%;margin:8px 0 12px;font-size:14px}
+th{background:var(--azul);color:#fff;text-align:left;padding:7px 10px;font-weight:600}
+td{border-bottom:1px solid var(--borda);padding:6px 10px;vertical-align:top}
+tr:nth-child(even) td{background:#fafbfd}
+.cod{font-family:Consolas,monospace;font-weight:600;white-space:nowrap}
+.cod button{border:1px solid var(--borda);background:#fff;border-radius:4px;font-size:11px;padding:1px 6px;margin-left:6px;color:var(--azul)}
+.D{color:var(--azul);font-weight:700}
+.C{color:var(--verde);font-weight:700}
+.aviso{border-left:5px solid var(--vermelho);background:#fbeeee;padding:10px 14px;border-radius:6px;margin:10px 0}
+.dica{border-left:5px solid var(--verde);background:#edf6f0;padding:10px 14px;border-radius:6px;margin:10px 0}
+.nota{border-left:5px solid var(--amarelo);background:#fff8e1;padding:10px 14px;border-radius:6px;margin:10px 0}
+.regra{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:12px 0}
+.regra div{border:1px solid var(--borda);border-radius:8px;padding:12px;background:#fafbfd}
+.regra b{display:block;color:var(--azul);font-size:16px;margin-bottom:4px}
+.tag{display:inline-block;border-radius:10px;padding:0 8px;font-size:12px;font-weight:600}
+.tag.Rural{background:#e3e9f2;color:var(--azul)}
+.tag.RNA{background:#fde9c2;color:#7a5600}
+.tag.Ambas{background:#e6f2ea;color:var(--verde)}
+/* assistente */
+.passo{margin:12px 0}
+.passo .rot{font-weight:600;color:var(--azul);margin-bottom:6px}
+.opcoes{display:flex;flex-wrap:wrap;gap:8px}
+.opcoes button{border:1.5px solid var(--azul);background:#fff;color:var(--azul);border-radius:20px;padding:7px 14px;font-size:14px}
+.opcoes button.sel{background:var(--azul);color:#fff}
+.resultado{border:2px solid var(--azul);border-radius:10px;padding:14px 18px;margin-top:14px;background:#fbfcfe}
+.resultado h3{margin-top:0}
+.resultado ol{margin:6px 0 0;padding-left:20px}
+.lanc td:first-child{width:80px}
+.vazio{color:#7a8596;font-style:italic}
+.calc{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0}
+.calc input{font-size:17px;padding:8px 12px;border:2px solid var(--azul);border-radius:6px;width:200px}
+.lido{color:#4a5668;font-size:13px}
+.num{text-align:right;white-space:nowrap}
+.oculto{display:none!important}
+.impressao{display:none}
+footer{color:#7a8596;font-size:12.5px;text-align:center;padding:10px}
+mark{background:#ffe58a}
+@media (max-width:900px){nav{display:none}.regra{grid-template-columns:1fr}header input{width:140px}}
+@media print{
+  @page{size:A4;margin:14mm 12mm}
+  body{background:#fff;font-size:11.5px}
+  header{position:static;box-shadow:none;padding:8px 0;background:#fff;color:var(--azul);border-bottom:3px solid var(--azul)}
+  header img{height:40px;padding:0}
+  header .acoes,nav,.so-tela,.cod button{display:none!important}
+  .wrap{display:block}
+  main{padding:0}
+  section{border:0;padding:6px 0;margin:0 0 8px;page-break-inside:auto}
+  section.quebra{page-break-before:always}
+  .impressao{display:block}
+  th{background:#e3e9f2!important;color:var(--azul)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  tr{page-break-inside:avoid}
+  .aviso,.dica,.nota,.tag{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .oculto{display:block!important}
+  tr.oculto{display:table-row!important}
+}
+</style>
+<script>document.documentElement.classList.add("guia-espera");</script>
+<style>html.guia-espera body>*:not(#rural-auth-overlay){visibility:hidden}.btn.voltar{background:#fff;color:var(--azul);text-decoration:none}header .acoes .btn{white-space:nowrap}</style>
+</head>
+<body>
+<header>
+  <img src="logo_rural.png" alt="Rural Nutrição Animal">
+  <div><h1>Guia de lançamentos financeiros no Agrotis</h1>
+  <div class="sub">Empréstimos, ACC, duplicatas descontadas, juros e tarifas · Rural e RNA · <span id="versaoTopo"></span> · <span id="controleTopo"></span></div></div>
+  <div class="acoes">
+    <input id="busca" type="search" placeholder="Buscar conta, código ou contrato…">
+    <a class="btn voltar" href="financiamentos.html">← Financiamentos</a>
+    <button class="btn" onclick="window.print()">Imprimir / PDF</button>
+  </div>
+</header>
+<div class="wrap">
+<nav id="menu">
+  <a href="#inicio">Como usar</a>
+  <a href="#assistente">Qual lançamento eu faço?</a>
+  <a href="#emprestimos">Empréstimos e financiamentos</a>
+  <a href="#acc">ACC (câmbio)</a>
+  <a href="#descontadas">Duplicatas descontadas</a>
+  <a href="#encargos">Juros, IOF e tarifas da conta</a>
+  <a href="#contas">Contas (busca)</a>
+  <a href="#erros">Erros que já aconteceram</a>
+  <a href="#versoes">Versões do guia</a>
+</nav>
+<main>
+
+<section id="inicio">
+  <h2>Como usar este guia</h2>
+  <p class="lead">Para cada movimento do extrato que não é venda nem compra comum: empréstimo, ACC, desconto de duplicatas, juros, IOF e tarifas. O guia mostra a conta de débito e a de crédito.</p>
+  <p class="so-tela">Comece pelo <a href="#assistente"><b>Qual lançamento eu faço?</b></a>: escolha a empresa, o assunto e a operação, e o guia monta o lançamento com os códigos das contas. O botão <b>Imprimir / PDF</b> gera a versão em papel com todas as tabelas.</p>
+  <h3>A regra dos nomes das contas</h3>
+  <div class="regra">
+    <div><b>Começa com "Rural - "</b>É conta só da Rural (Eldorado). Ex.: <i>Rural - Banco do Brasil</i>, <i>Rural - BB 100209922 - PEAC</i>.</div>
+    <div><b>Começa com "RNA - "</b>É conta só da RNA (Ivinhema). Ex.: <i>RNA - Banco Bradesco</i>, <i>RNA - Juros financiamentos BB</i>.</div>
+    <div><b>Sem prefixo</b>Conta usada pelas duas empresas (ex.: IOF da conta, juros por atraso). O sistema separa Rural e RNA <u>pelo banco que pagou</u>. Tarifas e juros do limite da RNA têm conta própria (começam com "RNA - ").</div>
+  </div>
+  <h3>Três regras de ouro</h3>
+  <ol>
+    <li><b>Banco e conta da mesma empresa.</b> Movimento no banco da RNA usa as contas "RNA - ". Movimento no banco da Rural usa as contas "Rural - " (ou as sem prefixo).</li>
+    <li><b>Parcela de empréstimo nunca vai inteira para uma conta só.</b> Separe sempre: <span class="D">capital</span> na conta do contrato e <span class="D">juros</span> na conta de juros.</li>
+    <li><b>Cada contrato tem a sua conta.</b> O número do contrato está no nome da conta. Contrato novo ou quitado: avise o Gilberto antes de lançar (ele cria ou inativa a conta).</li>
+  </ol>
+  <div class="dica"><b>Débito e crédito, sem complicação:</b> o banco é <span class="D">debitado</span> quando o dinheiro <u>entra</u> e <span class="C">creditado</span> quando o dinheiro <u>sai</u>. Nas tabelas, <span class="D">D</span> = débito e <span class="C">C</span> = crédito.</div>
+</section>
+
+<section id="assistente" class="so-tela">
+  <h2>Qual lançamento eu faço?</h2>
+  <p class="lead">Clique nas opções. O lançamento aparece embaixo.</p>
+  <div id="wiz"></div>
+  <div id="wizRes"></div>
+</section>
+
+<section id="emprestimos" class="quebra">
+  <h2>Empréstimos e financiamentos</h2>
+  <p class="lead">Cada contrato tem uma conta própria no grupo 2102. O saldo da conta é o <b>capital que ainda falta pagar</b>, sem os juros futuros.</p>
+  <h3>Contratos em aberto</h3>
+  <div id="tabContratos"></div>
+  <h3>Liberação do empréstimo (o dinheiro entra no banco)</h3>
+  <div id="tabLib"></div>
+  <h3>Pagamento de parcela</h3>
+  <div class="dica so-tela">No <a href="#assistente"><b>Qual lançamento eu faço?</b></a>, escolha o contrato, "Pagamento de parcela" e a parcela. Digite o valor debitado no extrato: o guia mostra o capital pelo controle de financiamentos e calcula os juros (debitado − capital).</div>
+  <div id="tabParc"></div>
+  <div class="nota"><b>Como separar capital e juros:</b>
+    <ul>
+      <li><b>Sicredi (parcela fixa):</b> o capital de cada parcela é sempre o mesmo: o saldo do contrato dividido pelas parcelas que faltam. O resto da parcela é juros. O guia já traz esse capital. Na última parcela, o capital é o que sobrou na conta do contrato.</li>
+      <li><b>Banco do Brasil e Bradesco:</b> o extrato do contrato (ou o demonstrativo da parcela) mostra separado "amortização" (= capital) e "juros". PEAC e FCO seguem o cronograma do contrato.</li>
+      <li>IOF, mora e encargos cobrados <u>junto com a parcela</u> vão para a conta de juros do contrato.</li>
+      <li>Não conseguiu separar? <b>Não lance a parcela inteira numa conta só.</b> Pergunte ao Gilberto.</li>
+    </ul></div>
+  <h3>Próximas parcelas pelo controle de financiamentos</h3>
+  <p id="proxFonte" class="lead"></p>
+  <div id="tabProx"></div>
+  <h3>Conta garantida e rotativo</h3>
+  <div id="tabGar"></div>
+  <h3>Conferência mensal</h3>
+  <p>No fim do mês, o saldo de cada conta de contrato tem que bater com o <b>saldo devedor de capital</b> do extrato do contrato no banco. O banco também mostra o saldo "com juros a vencer", que é maior. Compare só o capital.</p>
+</section>
+
+<section id="acc" class="quebra">
+  <h2>ACC – adiantamento de contrato de câmbio <span class="tag Rural">só Rural</span></h2>
+  <p class="lead">O banco adianta em reais o valor de uma exportação que ainda vai acontecer. A dívida é quitada quando o importador paga. A RNA não tem ACC.</p>
+  <div id="tabAcc"></div>
+  <div class="nota">A liquidação usa o <b>valor em reais da liberação</b> daquele contrato, e não o valor do dia. Cada ACC tem número; anote o número do contrato no histórico do lançamento.</div>
+</section>
+
+<section id="descontadas" class="quebra">
+  <h2>Duplicatas descontadas</h2>
+  <p class="lead">O banco antecipa o valor de duplicatas de clientes. A conta "Duplicatas descontadas" guarda quanto o banco antecipou e o cliente ainda não pagou. É <b>uma conta por empresa</b>, para todos os bancos.</p>
+  <div class="aviso"><b>A partir de 21/10/2026:</b> título da <b>RNA</b> vai na conta <b>11208000002 – RNA - Duplicatas descontadas</b>. Título da Rural vai na <b>11208000001 – Rural - Duplicatas descontadas</b>.</div>
+  <div id="tabDesc"></div>
+  <h3>Conta de despesa do desconto, por banco</h3>
+  <div id="tabDescDesp"></div>
+  <h3>Conferência mensal</h3>
+  <p>O saldo da conta de cada empresa tem que bater com a soma dos relatórios "títulos descontados em aberto" dos bancos (BB + Bradesco + Sicredi) <b>da mesma empresa</b>.</p>
+</section>
+
+<section id="encargos" class="quebra">
+  <h2>Juros, IOF e tarifas da conta corrente</h2>
+  <p class="lead">Débitos do banco que não são de empréstimo, ACC nem desconto. <b>Tarifas e juros do limite:</b> a RNA tem contas próprias ("RNA - Tarifas …", "RNA - Juros …"); as contas sem prefixo ficam para a Rural. <b>IOF da conta e juros por atraso:</b> contas das duas empresas, o sistema separa pelo banco que pagou. Em todos os casos o crédito tem que ser no banco certo.</p>
+  <div id="tabEnc"></div>
+  <div class="nota"><b>Atenção:</b> juros e IOF de <u>empréstimo</u> vão na conta de juros do contrato (seção Empréstimos), e não aqui. Juros de <u>desconto de duplicatas</u> vão na conta de despesas de desconto. Juros de ACC vão na conta de juros do ACC.</div>
+</section>
+
+<section id="contas" class="quebra">
+  <h2>Contas do guia</h2>
+  <p class="lead so-tela">Digite na busca do topo para filtrar por nome, código ou número de contrato.</p>
+  <div id="tabContas"></div>
+  <h3>Contas antigas: não usar mais</h3>
+  <div id="tabAntigas"></div>
+</section>
+
+<section id="erros">
+  <h2>Erros que já aconteceram (e como evitar)</h2>
+  <table><tr><th>O que aconteceu</th><th>O certo</th></tr>
+  <tr><td>Parcela de empréstimo lançada inteira na conta de juros ou na conta do contrato.</td><td>Separar capital (conta do contrato) e juros (conta de juros), sempre.</td></tr>
+  <tr><td>Parcela da RNA lançada na conta de empréstimo da Rural (ou o contrário).</td><td>Olhar o número do contrato no extrato e escolher a conta com esse número.</td></tr>
+  <tr><td>Liberação de empréstimo da RNA lançada no banco da Rural.</td><td>O dinheiro entra no banco da empresa dona do contrato.</td></tr>
+  <tr><td>Título descontado que o banco devolveu lançado como juros ou como "empréstimo Sicredi".</td><td>Débito em Duplicatas descontadas, crédito no banco. O título continua em aberto para cobrar o cliente.</td></tr>
+  <tr><td>Exportação recebida lançada como venda de mercadorias.</td><td>Recebimento de exportação vai na 31100000007 (Recebimento Exportação Câmbio).</td></tr>
+  <tr><td>Uso de conta antiga (ex.: "Financiamentos BB", "Emprestimo Banco Sicredi").</td><td>Ver a lista de contas antigas. Na dúvida, perguntar.</td></tr>
+  </table>
+</section>
+
+<section id="versoes">
+  <h2>Versões do guia</h2>
+  <div id="tabVersoes"></div>
+  <p class="so-tela">Sugestão ou dúvida que o guia não responde: anote e passe para o Gilberto. O guia é atualizado aos poucos com outros assuntos.</p>
+</section>
+<footer>Uso interno · Rural Nutrição Animal / RNA Nutrição Animal</footer>
+</main>
+</div>
+
+<script>
+// ===================== DADOS (editar aqui ao atualizar o guia) =====================
+const VERSOES = [
+  ['1', '20/10/2026', 'Primeira versão: empréstimos por contrato, ACC, duplicatas descontadas (uma conta por empresa), juros, IOF e tarifas, com os nomes padronizados das contas.'],
+];
+VERSOES.push(['1.1', '20/10/2026', 'Parcelas do controle de financiamentos: a Rosângela escolhe a parcela, digita o valor debitado e o guia separa capital e juros.']);
+VERSOES.push(['1.2', '20/10/2026', 'Tarifas e juros do limite da RNA nas contas próprias da RNA (RNA - Tarifas / RNA - Juros de cada banco). A versão anterior mandava usar as contas sem prefixo.']);
+VERSOES.push(['1.3', '20/10/2026', 'Guia no portal da Rural, pelo botão "Guia de lançamentos" do app Financiamentos. As parcelas vêm da planilha de financiamentos na hora, com login.']);
+let CONTROLE = {data: '', arquivo: '', parcelas: {}, aviso: 'entre com o seu usuário'};   // gerado pelo build_guia.py a partir da planilha do controle de financiamentos
+const C = {   // código -> nome no Agrotis
+  '11110000004':'Rural - Caixa Dinheiro','11110000010':'RNA - Caixa Dinheiro',
+  '11120000001':'Rural - Banco do Brasil','11120000002':'Rural - Banco Bradesco','11120000004':'Rural - Banco Sicredi','11120000007':'Rural - Banco Cresol',
+  '11120000005':'RNA - Banco do Brasil','11120000006':'RNA - Banco Bradesco','11110000012':'RNA - Banco Sicredi',
+  '11208000001':'Rural - Duplicatas descontadas','11208000002':'RNA - Duplicatas descontadas',
+  '21020100013':'Rural - ACC BB (contratos de câmbio)','21020100037':'Rural - ACC Bradesco 604072951',
+  '21020100014':'Rural - Cartão de crédito BB','21020100015':'RNA - Cartão de crédito BB',
+  '31100000007':'Recebimento Exportação Cambio',
+  '42021000015':'Rural - Juros financiamentos BB','42021000016':'Rural - Juros financiamentos Bradesco','42021000017':'Rural - Juros financiamentos Sicredi',
+  '42071100001':'RNA - Juros financiamentos BB','42071100002':'RNA - Juros financiamentos Sicredi','42071100003':'RNA - Juros financiamentos Bradesco',
+  '42021000023':'Rural - Despesas desconto de duplicatas BB','42021000024':'Rural - Despesas desconto de duplicatas Sicredi','42021000025':'Rural - Despesas desconto de duplicatas Bradesco',
+  '42071100004':'RNA - Despesas desconto de duplicatas Bradesco','42071100005':'RNA - Despesas desconto de duplicatas BB','42071100006':'RNA - Despesas desconto de duplicatas Sicredi',
+  '42021000020':'Juros ACC BB (deságio)','42021000022':'Juros ACC Bradesco (deságio)',
+  '42010304005':'Tarifas bancárias BB','42010304003':'Tarifas bancárias Bradesco','42010304009':'Tarifas bancárias Sicredi','42010304011':'Tarifas bancárias Cresol',
+  '42021000010':'Juros limite BB','42021000009':'Juros limite Bradesco','42021000012':'Juros limite Sicredi','42021000021':'Juros Cresol',
+  '42021000007':'IOF BB','42021000006':'IOF Bradesco','42021000013':'IOF Sicredi','42021000003':'IOF outros bancos',
+  '42021000005':'Juros e multas por atraso',
+  '42070900001':'RNA - Tarifas Banco do Brasil','42070900003':'RNA - Tarifas Bradesco','42070900005':'RNA - Tarifas Sicredi',
+  '42070900002':'RNA - Juros Banco do Brasil','42070900004':'RNA - Juros Bradesco','42070900006':'RNA - Juros Sicredi',
+};
+const CONTRATOS = [ // empresa, banco, contrato, modalidade, conta, tipo (parcelado | garantida)
+  ['Rural','BB','100208954','Capital de giro','21020100020','parcelado'],
+  ['Rural','BB','100209044','Capital de giro','21020100021','parcelado'],
+  ['Rural','BB','100209808','Capital de giro','21020100022','parcelado'],
+  ['Rural','BB','100209551','FCO','21020100023','parcelado'],
+  ['Rural','BB','100209678','FCO','21020100024','parcelado'],
+  ['Rural','BB','100209922','PEAC','21020100025','parcelado'],
+  ['Rural','BB','100209749','Conta garantida','21020100029','garantida'],
+  ['Rural','Bradesco','6183559','BNDES Finame','21020100035','parcelado'],
+  ['Rural','Sicredi','C527312548','Capital de giro','21020100016','parcelado'],
+  ['Rural','Sicredi','rotativo','Rotativo','21020100017','garantida'],
+  ['RNA','BB','100209060','Capital de giro','21020100030','parcelado'],
+  ['RNA','BB','100209297','Conta garantida','21020100031','garantida'],
+  ['RNA','BB','100209849','PEAC','21020100032','parcelado'],
+  ['RNA','BB','100209920','PEAC','21020100033','parcelado'],
+  ['RNA','BB','100210092','PEAC','21020100034','parcelado'],
+  ['RNA','Bradesco','016361399','Pronampe','21020100036','parcelado'],
+  ['RNA','Sicredi','C527313285','Capital de giro','21020100018','parcelado'],
+  ['RNA','Sicredi','C627302218','Capital de giro','21020100019','parcelado'],
+];
+CONTRATOS.forEach(k => { C[k[4]] = C[k[4]] || `${k[0]} - ${k[1]} ${k[2]} - ${k[3]}`; });
+C['21020100017'] = 'Rural - Sicredi rotativo';
+const BANCO = {Rural:{BB:'11120000001',Bradesco:'11120000002',Sicredi:'11120000004',Cresol:'11120000007'},
+               RNA:{BB:'11120000005',Bradesco:'11120000006',Sicredi:'11110000012'}};
+const JUROS_FIN = {Rural:{BB:'42021000015',Bradesco:'42021000016',Sicredi:'42021000017'}, RNA:{BB:'42071100001',Bradesco:'42071100003',Sicredi:'42071100002'}};
+const DD = {Rural:'11208000001', RNA:'11208000002'};
+const DESP_DESC = {Rural:{BB:'42021000023',Bradesco:'42021000025',Sicredi:'42021000024'}, RNA:{BB:'42071100005',Bradesco:'42071100004',Sicredi:'42071100006'}};
+const ACC = {BB:{conta:'21020100013',juros:'42021000020'}, Bradesco:{conta:'21020100037',juros:'42021000022'}};
+const REC_EXP = '31100000007';
+const TARIFA = {BB:'42010304005',Bradesco:'42010304003',Sicredi:'42010304009',Cresol:'42010304011'};
+const JUROS_LIM = {BB:'42021000010',Bradesco:'42021000009',Sicredi:'42021000012',Cresol:'42021000021'};
+const TARIFA_RNA = {BB:'42070900001',Bradesco:'42070900003',Sicredi:'42070900005'};
+const JUROS_LIM_RNA = {BB:'42070900002',Bradesco:'42070900004',Sicredi:'42070900006'};
+const tarifa = (e, b) => e === 'RNA' ? TARIFA_RNA[b] : TARIFA[b];
+const jurosLim = (e, b) => e === 'RNA' ? JUROS_LIM_RNA[b] : JUROS_LIM[b];
+const IOF_CC = {BB:'42021000007',Bradesco:'42021000006',Sicredi:'42021000013',Cresol:'42021000003'};
+const ANTIGAS = [
+  ['21020100007','Emprestimo Banco Sicredi','usar a conta do contrato Sicredi'],
+  ['21020100009','Financiamentos BB','usar a conta do contrato BB'],
+  ['21020100010','RNA - Financiamentos BB','usar a conta do contrato BB da RNA'],
+  ['22010100002','BB Giro Flex - Emprestimo','usar a conta do contrato BB'],
+  ['21020100026 a 028','Rural - BB … - FCO (quitado)','contratos já quitados'],
+  ['42021000014','Encargos Financeiros','juros do limite: Rural usa "Juros limite" do banco; RNA usa "RNA - Juros" do banco'],
+  ['42010304006 / 008','Tarifas Desc. Titulos BB / Bradesco','usar "Despesas desconto de duplicatas" do banco e da empresa'],
+  ['42010304002','Tarifas bancarias - INATIVO','Rural: "Tarifas bancárias" do banco; RNA: "RNA - Tarifas" do banco'],
+];
+
+// ===================== MONTAGEM =====================
+const $ = s => document.querySelector(s);
+const fmt = v => (v == null || isNaN(v)) ? '–' : Number(v).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const dataBR = s => s ? s.split('-').reverse().join('/') : '';
+const parcelasDe = num => CONTROLE.parcelas[String(num).replace(/^0+/, '')] || [];
+// Leitura de números brasileiros (padrão da skill apps-script-seguro): '5.590,62', 'R$ 5590,62', '5590.62'
+function parseNumBR(input) {
+  if (typeof input === 'number') return input;
+  var s = String(input == null ? '' : input).replace(/[R$\s\u00a0]/g, '');
+  if (s === '') return NaN;
+  var neg = false;
+  if (s[0] === '-' || (s[0] === '(' && s[s.length - 1] === ')')) { neg = true; s = s.replace(/[-()]/g, ''); }
+  if (!/^[0-9.,]+$/.test(s)) return NaN;
+  var lastDot = s.lastIndexOf('.'), lastComma = s.lastIndexOf(',');
+  if (lastDot !== -1 && lastComma !== -1) {
+    if (lastComma > lastDot) s = s.replace(/\./g, '').replace(',', '.'); else s = s.replace(/,/g, '');
+  } else if (lastComma !== -1) {
+    if ((s.match(/,/g) || []).length > 1) s = s.replace(/,/g, ''); else s = s.replace(',', '.');
+  } else if (lastDot !== -1) {
+    if ((s.match(/\./g) || []).length > 1) s = s.replace(/\./g, '');
+  }
+  var n = parseFloat(s);
+  return isNaN(n) ? NaN : (neg ? -n : n);
+}
+const esc = s => String(s).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+const cod = c => `<span class="cod">${c}<button type="button" onclick="copiar('${c}',this)">copiar</button></span>`;
+const conta = c => C[c] ? `${cod(c)} – ${esc(C[c])}` : esc(c);
+function copiar(t, b) {
+  const ok = () => { const o = b.textContent; b.textContent = 'copiado'; setTimeout(() => b.textContent = o, 1200); };
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t).then(ok, () => velho());
+  else velho();
+  function velho() { const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); try { document.execCommand('copy'); ok(); } catch (e) {} a.remove(); }
+}
+function tabela(cab, linhas) {
+  return `<table><tr>${cab.map(h => `<th>${h}</th>`).join('')}</tr>${linhas.map(l => `<tr>${l.map(x => `<td>${x}</td>`).join('')}</tr>`).join('')}</table>`;
+}
+function lanc(linhas) { // [['D'|'C', código ou texto, valor]]
+  return `<table class="lanc"><tr><th>D/C</th><th>Conta</th><th>Valor</th></tr>${linhas.map(([dc, c, v]) =>
+    `<tr><td class="${dc}">${dc === 'D' ? 'Débito' : 'Crédito'}</td><td>${conta(c)}</td><td>${esc(v)}</td></tr>`).join('')}</table>`;
+}
+const tag = e => `<span class="tag ${e}">${e}</span>`;
+
+// ---- operações (usadas pelo assistente) ----
+const OPS = {
+  emp: {nome:'Empréstimo / financiamento', ops: {
+    lib: {nome:'Liberação (dinheiro entrou)', tipos:['parcelado'], f:(e,k) => ({
+      linhas:[['D',BANCO[e][k[1]],'valor que entrou no banco'],['C',k[4],'mesmo valor']],
+      passos:['Use o valor que o banco creditou como empréstimo.','Se o banco debitou IOF ou tarifa do contrato em linha separada do extrato, lance à parte: débito em ' + JUROS_FIN[e][k[1]] + ' (' + C[JUROS_FIN[e][k[1]]] + '), crédito no banco.','Contrato novo sem conta no Agrotis? Pare e avise o Gilberto antes de lançar.']})},
+    parc: {nome:'Pagamento de parcela', tipos:['parcelado'], f:(e,k) => ({
+      linhas:[['D',k[4],'capital (amortização)'],['D',JUROS_FIN[e][k[1]],'juros + IOF + mora da parcela'],['C',BANCO[e][k[1]],'total debitado no extrato']],
+      passos:['Um lançamento só, com duas linhas de débito. A soma dos débitos = valor debitado no extrato.', k[1] === 'Sicredi' ? 'Sicredi: capital fixo por parcela (líquido liberado ÷ número de parcelas).' : 'Pegue capital e juros no extrato/demonstrativo do contrato.', 'Última parcela? Confira se a conta do contrato zerou e avise o Gilberto para inativar.']})},
+    uso: {nome:'Uso do limite (banco cobriu o saldo)', tipos:['garantida'], f:(e,k) => ({
+      linhas:[['D',BANCO[e][k[1]],'valor usado'],['C',k[4],'mesmo valor']], passos:['O banco transfere da conta garantida/rotativo para a conta corrente.']})},
+    cob: {nome:'Devolução do limite (cobertura)', tipos:['garantida'], f:(e,k) => ({
+      linhas:[['D',k[4],'valor devolvido'],['C',BANCO[e][k[1]],'mesmo valor']], passos:['O banco recolhe da conta corrente o valor usado.']})},
+    jur: {nome:'Juros do mês do limite', tipos:['garantida'], f:(e,k) => ({
+      linhas:[['D',JUROS_FIN[e][k[1]],'juros + IOF cobrados'],['C',BANCO[e][k[1]],'mesmo valor']], passos:['Juros da conta garantida/rotativo vão na conta de juros de financiamentos do banco e da empresa.']})},
+  }},
+  acc: {nome:'ACC (câmbio)', so:'Rural', ops: {
+    lib: {nome:'Liberação do ACC', f:(e,b) => ({linhas:[['D',BANCO.Rural[b],'reais creditados'],['C',ACC[b].conta,'mesmo valor']], passos:['Anote no histórico o número do contrato de câmbio e o valor em dólar.']})},
+    liq: {nome:'Liquidação do ACC (exportação quitou o contrato)', f:(e,b) => ({linhas:[['D',ACC[b].conta,'valor em R$ da liberação do contrato'],['C',REC_EXP,'mesmo valor']], passos:['Não passa pelo banco: o pagamento do importador quita o contrato direto.','Use o valor em reais da liberação daquele contrato.']})},
+    jur: {nome:'Juros / deságio / comissão do ACC', f:(e,b) => ({linhas:[['D',ACC[b].juros,'valor cobrado'],['C',BANCO.Rural[b],'mesmo valor']], passos:[]})},
+    exp: {nome:'Exportação recebida em dinheiro (sem ACC)', f:(e,b) => ({linhas:[['D',BANCO.Rural[b],'reais creditados'],['C',REC_EXP,'mesmo valor']], passos:['Despesa do banco no fechamento do câmbio: débito em ' + ACC[b].juros + ', crédito no banco.']})},
+  }},
+  desc: {nome:'Duplicata descontada', ops: {
+    bor: {nome:'Desconto de um borderô (banco antecipou)', f:(e,b) => ({linhas:[['D',BANCO[e][b],'valor de face dos títulos'],['C',DD[e],'mesmo valor'],['D',DESP_DESC[e][b],'juros + IOF + tarifa do borderô'],['C',BANCO[e][b],'mesmo valor']], passos:['Lance o borderô pelo valor de face (o total dos títulos) e os encargos à parte.','Os títulos continuam em aberto no Contas a Receber até o cliente pagar.']})},
+    pag: {nome:'Cliente pagou o título descontado', f:(e,b) => ({linhas:[['D',DD[e],'valor do título'],['C','Título do cliente (baixa no Contas a Receber)','mesmo valor']], passos:['Faça a baixa do título no Contas a Receber escolhendo a conta ' + DD[e] + ' (' + C[DD[e]] + ').','Não entra dinheiro no banco: o banco já tinha antecipado.']})},
+    dev: {nome:'Banco debitou título não pago (recompra)', f:(e,b) => ({linhas:[['D',DD[e],'valor do título'],['C',BANCO[e][b],'mesmo valor'],['D',DESP_DESC[e][b],'juros/multa cobrados na recompra'],['C',BANCO[e][b],'mesmo valor']], passos:['O título continua em aberto no Contas a Receber: agora a empresa cobra o cliente direto.','Avise o financeiro/comercial para cobrar o cliente.']})},
+  }},
+  enc: {nome:'Juros, IOF e tarifas da conta', ops: {
+    tar: {nome:'Tarifa bancária', f:(e,b) => ({linhas:[['D',tarifa(e,b),'valor'],['C',BANCO[e][b],'valor']], passos:[e === 'RNA' ? 'A RNA tem conta própria de tarifa para cada banco (começa com "RNA - Tarifas").' : 'Na Rural, a conta de tarifa é a do banco, sem prefixo.']})},
+    lim: {nome:'Juros do limite / cheque especial', f:(e,b) => ({linhas:[['D',jurosLim(e,b),'valor'],['C',BANCO[e][b],'valor']], passos:['Vale também para "encargos" mensais da conta corrente.', e === 'RNA' ? 'A RNA tem conta própria de juros para cada banco (começa com "RNA - Juros").' : 'Na Rural, a conta é "Juros limite" do banco.']})},
+    iof: {nome:'IOF da conta corrente', f:(e,b) => ({linhas:[['D',IOF_CC[b],'valor'],['C',BANCO[e][b],'valor']], passos:['IOF de empréstimo não entra aqui: vai na conta de juros do contrato.']})},
+    atr: {nome:'Juros/multa por pagar fornecedor atrasado', f:(e,b) => ({linhas:[['D','42021000005','acréscimo pago'],['C',BANCO[e][b],'junto com o pagamento']], passos:['Na baixa do título a pagar, o acréscimo vai na 42021000005.']})},
+  }},
+};
+
+// ---- assistente ----
+const st = {};
+function botoes(rot, chave, ops) {
+  return `<div class="passo"><div class="rot">${rot}</div><div class="opcoes">${ops.map(([v, t]) =>
+    `<button type="button" class="${st[chave] === v ? 'sel' : ''}" onclick="escolher('${chave}','${v}')">${t}</button>`).join('')}</div></div>`;
+}
+function escolher(k, v) {
+  st[k] = v;
+  if (k !== 'parc') delete st.valor;
+  const ordem = ['emp', 'ass', 'det', 'op', 'parc'];
+  ordem.slice(ordem.indexOf(k) + 1).forEach(x => delete st[x]);
+  wiz();
+}
+function wiz() {
+  let h = botoes('1. Empresa', 'emp', [['Rural', 'Rural (Eldorado)'], ['RNA', 'RNA (Ivinhema)']]);
+  let res = '';
+  if (st.emp) {
+    h += botoes('2. Assunto', 'ass', Object.entries(OPS).filter(([k, o]) => !o.so || o.so === st.emp).map(([k, o]) => [k, o.nome]));
+  }
+  if (st.ass) {
+    const A = OPS[st.ass];
+    if (st.ass === 'emp') {
+      h += botoes('3. Contrato (veja o número no extrato)', 'det', CONTRATOS.map((k, i) => [k, i]).filter(([k]) => k[0] === st.emp).map(([k, i]) => [String(i), `${k[1]} ${k[2]} · ${k[3]}`]));
+      if (st.det) {
+        const k = CONTRATOS[+st.det];
+        h += botoes('4. Operação', 'op', Object.entries(A.ops).filter(([, o]) => o.tipos.includes(k[5])).map(([v, o]) => [v, o.nome]));
+        if (st.op === 'parc' && parcelasDe(k[2]).length) {
+          const ps = parcelasDe(k[2]);
+          h += botoes('5. Parcela (pela data de vencimento no extrato)', 'parc', ps.slice(0, 8).map((p, i) => [String(i), `${dataBR(p[1])} · nº ${p[0]}`]));
+          res = st.parc != null ? calcHTML(k, ps[+st.parc]) : resultado(A.ops.parc.nome + ` – ${k[1]} ${k[2]}`, A.ops.parc.f(st.emp, k));
+        } else if (st.op) res = resultado(A.ops[st.op].nome + ` – ${k[1]} ${k[2]}`, A.ops[st.op].f(st.emp, k));
+      }
+    } else {
+      const bancos = st.ass === 'acc' ? Object.keys(ACC) : Object.keys(BANCO[st.emp]).filter(b => st.ass !== 'desc' || b !== 'Cresol');
+      h += botoes('3. Banco', 'det', bancos.map(b => [b, b]));
+      if (st.det) {
+        h += botoes('4. Operação', 'op', Object.entries(A.ops).map(([v, o]) => [v, o.nome]));
+        if (st.op) res = resultado(A.ops[st.op].nome + ` – ${st.det}`, A.ops[st.op].f(st.emp, st.det));
+      }
+    }
+  }
+  $('#wiz').innerHTML = h;
+  $('#wizRes').innerHTML = res || '<p class="vazio">Escolha as opções acima.</p>';
+  if ($('#vlr')) calc();
+}
+function calcHTML(k, p) {
+  return `<div class="resultado"><h3>${tag(st.emp)} Parcela nº ${p[0]} de ${dataBR(p[1])} – ${k[1]} ${k[2]}</h3>`
+    + `<p>Pelo controle: capital <b>R$ ${fmt(p[2])}</b> · juros estimados R$ ${fmt(p[3])} · total previsto R$ ${fmt(p[4])}${p[2] === 0 ? ' · <b>parcela só de juros (carência)</b>' : ''}</p>`
+    + `<div class="calc"><label for="vlr"><b>Valor debitado no extrato (R$):</b></label>`
+    + `<input id="vlr" inputmode="decimal" placeholder="ex.: ${fmt(p[4])}" value="${esc(st.valor || '')}" oninput="st.valor=this.value;calc()"></div>`
+    + `<div id="calcRes"></div></div>`;
+}
+function calc() {
+  const k = CONTRATOS[+st.det], p = parcelasDe(k[2])[+st.parc], e = st.emp;
+  const cap = p[2], txt = (st.valor || '').trim(), v = parseNumBR(txt);
+  const passos = ['Um lançamento só, com duas linhas de débito. A soma dos débitos = valor debitado no extrato.',
+    'Juros = valor debitado − capital. Mora, multa e IOF cobrados junto com a parcela ficam nos juros.',
+    'Última parcela? O capital é o que sobrou na conta do contrato. Confira se zerou e avise o Gilberto para inativar.'];
+  let h = '';
+  if (!txt) {
+    h = lanc([['D', k[4], 'R$ ' + fmt(cap) + ' (capital)'], ['D', JUROS_FIN[e][k[1]], 'debitado − capital'], ['C', BANCO[e][k[1]], 'valor debitado']]);
+  } else if (isNaN(v) || v <= 0) {
+    h = '<div class="aviso">Valor não reconhecido. Digite como está no extrato, por exemplo 5.590,62.</div>';
+  } else {
+    const j = Math.round((v - cap) * 100) / 100;
+    if (j < 0) h += `<div class="aviso"><b>Não lance ainda:</b> o valor debitado (R$ ${fmt(v)}) é menor que o capital da parcela (R$ ${fmt(cap)}). Pode ser outra parcela, pagamento parcial ou valor digitado errado. Confira o extrato e, se continuar, fale com o Gilberto.</div>`;
+    else if (p[3] != null && Math.abs(j - p[3]) > Math.max(0.2 * p[3], 50)) h += `<div class="nota"><b>Confira antes de lançar:</b> os juros calculados (R$ ${fmt(j)}) estão bem diferentes da estimativa do controle (R$ ${fmt(p[3])}). Pode ser atraso, mora, IOF ou outra parcela.</div>`;
+    if (j >= 0) h += lanc((cap > 0 ? [['D', k[4], 'R$ ' + fmt(cap)]] : []).concat([['D', JUROS_FIN[e][k[1]], 'R$ ' + fmt(j)], ['C', BANCO[e][k[1]], 'R$ ' + fmt(v)]]));
+    h += `<p class="lido">Valor lido: R$ ${fmt(v)}</p>`;
+  }
+  $('#calcRes').innerHTML = h + '<ol>' + passos.map(x => `<li>${esc(x)}</li>`).join('') + '</ol>';
+}
+function resultado(tit, r) {
+  return `<div class="resultado"><h3>${tag(st.emp)} ${esc(tit)}</h3>${lanc(r.linhas)}${r.passos.length ? '<ol>' + r.passos.map(p => `<li>${esc(p)}</li>`).join('') + '</ol>' : ''}</div>`;
+}
+
+// ---- partes que dependem do controle de financiamentos (no portal, redesenhadas depois que as parcelas chegam) ----
+function desenharControle() {
+  if (CONTROLE.aviso) {
+    $('#controleTopo').textContent = CONTROLE.aviso;
+    $('#proxFonte').textContent = CONTROLE.aviso;
+    $('#tabProx').innerHTML = '';
+    return;
+  }
+  $('#controleTopo').textContent = 'parcelas do controle de ' + CONTROLE.data;
+  $('#proxFonte').textContent = `Próximas 3 parcelas de cada contrato (a partir de 15 dias atrás), pelo controle de financiamentos de ${CONTROLE.data}. Capital exato; juros estimados (o real é o debitado menos o capital).`;
+  const prox = [];
+  const corte = new Date(Date.now() - 15 * 864e5).toISOString().slice(0, 10);   // esconde parcelas vencidas há mais de 15 dias (o controle não marca as pagas)
+  CONTRATOS.filter(k => k[5] === 'parcelado').forEach(k => parcelasDe(k[2]).filter(p => p[1] >= corte).slice(0, 3).forEach((p, i) =>
+    prox.push([i ? '' : `${tag(k[0])} ${k[1]} <b>${k[2]}</b>`, `${dataBR(p[1])} (nº ${p[0]})`, `<span class="num">${fmt(p[2])}</span>`, `<span class="num">${fmt(p[3])}</span>`, `<span class="num">${fmt(p[4])}</span>`])));
+  $('#tabProx').innerHTML = tabela(['Contrato', 'Vencimento', 'Capital (R$)', 'Juros estimados (R$)', 'Total previsto (R$)'], prox);
+}
+// ---- tabelas das seções (tela e impressão) ----
+function montar() {
+  $('#versaoTopo').textContent = 'versão ' + VERSOES[VERSOES.length - 1][0] + ' de ' + VERSOES[VERSOES.length - 1][1];
+  desenharControle();
+  $('#tabContratos').innerHTML = tabela(['Empresa', 'Banco', 'Contrato', 'Modalidade', 'Conta do contrato', 'Juros vão em'],
+    CONTRATOS.map(k => [tag(k[0]), k[1], `<b>${k[2]}</b>`, k[3], cod(k[4]), conta(JUROS_FIN[k[0]][k[1]])]));
+  const linhasEmp = (fn, filtro) => {
+    const L = [];
+    ['Rural', 'RNA'].forEach(e => Object.keys(JUROS_FIN[e]).forEach(b => {
+      const k = CONTRATOS.find(x => x[0] === e && x[1] === b && x[5] === filtro);
+      if (!k) return;
+      fn(e, b, k, L);
+    }));
+    return L;
+  };
+  $('#tabLib').innerHTML = tabela(['Empresa / banco', 'Débito', 'Crédito'],
+    linhasEmp((e, b, k, L) => L.push([`${tag(e)} ${b}`, conta(BANCO[e][b]), 'conta do contrato (tabela acima)']), 'parcelado'));
+  $('#tabParc').innerHTML = tabela(['Empresa / banco', 'Débito (capital)', 'Débito (juros + IOF + mora)', 'Crédito (total)'],
+    linhasEmp((e, b, k, L) => L.push([`${tag(e)} ${b}`, 'conta do contrato', conta(JUROS_FIN[e][b]), conta(BANCO[e][b])]), 'parcelado'));
+  $('#tabGar').innerHTML = tabela(['Operação', 'Débito', 'Crédito'], [
+    ['Uso do limite (banco cobriu o saldo)', 'banco da empresa', 'conta da garantida / rotativo'],
+    ['Devolução do limite', 'conta da garantida / rotativo', 'banco da empresa'],
+    ['Juros do mês', 'juros financiamentos do banco e da empresa', 'banco da empresa']])
+    + '<p>Contas: ' + CONTRATOS.filter(k => k[5] === 'garantida').map(k => `${tag(k[0])} ${k[1]} ${k[2]}: ${cod(k[4])}`).join(' · ') + '</p>';
+  const accL = [];
+  Object.entries(OPS.acc.ops).forEach(([, o]) => Object.keys(ACC).forEach(b => {
+    const r = o.f('Rural', b);
+    accL.push([`${o.nome} – ${b}`, r.linhas.filter(l => l[0] === 'D').map(l => conta(l[1])).join('<br>'), r.linhas.filter(l => l[0] === 'C').map(l => conta(l[1])).join('<br>')]);
+  }));
+  $('#tabAcc').innerHTML = tabela(['Operação', 'Débito', 'Crédito'], accL);
+  $('#tabDesc').innerHTML = tabela(['Operação', 'Débito', 'Crédito', 'Observação'], [
+    ['Desconto do borderô', 'banco da empresa (valor de face)', 'Duplicatas descontadas da empresa', 'encargos à parte: débito na despesa de desconto do banco, crédito no banco'],
+    ['Cliente pagou o título', 'Duplicatas descontadas da empresa', 'título do cliente (baixa no Contas a Receber)', 'não entra dinheiro no banco'],
+    ['Banco debitou título não pago', 'Duplicatas descontadas da empresa', 'banco da empresa', 'título continua aberto para cobrar o cliente'],
+  ]) + `<p>${tag('Rural')} ${conta(DD.Rural)}<br>${tag('RNA')} ${conta(DD.RNA)}</p>`;
+  $('#tabDescDesp').innerHTML = tabela(['Banco', 'Rural', 'RNA'], ['BB', 'Bradesco', 'Sicredi'].map(b => [b, conta(DESP_DESC.Rural[b]), conta(DESP_DESC.RNA[b])]));
+  $('#tabEnc').innerHTML = tabela(['Banco', 'Empresa', 'Tarifas', 'Juros do limite / encargos', 'IOF da conta (as duas)'],
+    Object.keys(TARIFA).flatMap(b => ['Rural', 'RNA'].filter(e => BANCO[e][b]).map((e, i) => [i ? '' : b, tag(e), conta(tarifa(e, b)), conta(jurosLim(e, b)), i ? '' : conta(IOF_CC[b])])))
+    + `<p>Juros/multa por pagar fornecedor com atraso (qualquer banco): ${conta('42021000005')}</p>`
+    + `<p>Bancos: ${['Rural', 'RNA'].map(e => tag(e) + ' ' + Object.entries(BANCO[e]).map(([b, c]) => `${b} ${cod(c)}`).join(' · ')).join('<br>')}</p>`;
+  $('#tabContas').innerHTML = tabela(['Código', 'Nome no Agrotis', 'Empresa'],
+    Object.keys(C).sort().map(c => [cod(c), esc(C[c]), tag(C[c].startsWith('RNA - ') ? 'RNA' : C[c].startsWith('Rural - ') ? 'Rural' : 'Ambas')]));
+  $('#tabAntigas').innerHTML = tabela(['Código', 'Nome', 'Use no lugar'], ANTIGAS.map(a => [`<span class="cod">${a[0]}</span>`, esc(a[1]), esc(a[2])]));
+  $('#tabVersoes').innerHTML = tabela(['Versão', 'Data', 'O que mudou'], VERSOES.slice().reverse());
+  wiz();
+}
+// ---- busca ----
+$('#busca').addEventListener('input', e => {
+  const q = e.target.value.trim().toLowerCase();
+  document.querySelectorAll('#tabContas tr, #tabContratos tr').forEach((tr, i) => {
+    if (tr.querySelector('th')) return;
+    tr.classList.toggle('oculto', q && !tr.textContent.toLowerCase().includes(q));
+  });
+  if (q) document.querySelector('#contas').scrollIntoView({behavior: 'smooth', block: 'start'});
+});
+// ---- menu ativo ----
+const secs = [...document.querySelectorAll('main section')];
+window.addEventListener('scroll', () => {
+  let at = secs[0];
+  secs.forEach(s => { if (s.getBoundingClientRect().top < 140) at = s; });
+  document.querySelectorAll('nav a').forEach(a => a.classList.toggle('ativo', a.getAttribute('href') === '#' + at.id));
+});
+montar();
+</script>
+<script src="rural-auth.js"></script>
+<script>
+// Portal: as parcelas vêm do script do app Financiamentos, só com login (quem não tem o app Financiamentos não entra).
+const FINANCIAMENTOS_URL = 'https://script.google.com/macros/s/AKfycbxEClV1LjB2lShrsWkFmnWRAJvoFLCOYfNRKdfF_RpALazKzKUEfy-tH-wo3Jr0I5dF/exec';
+const SICREDI_CAPITAL = {"C527312548": 5000.0, "C527313285": 4081.39, "C627302218": 10000.0};   // Sicredi parcela fixa: capital = saldo do contrato no Agrotis / parcelas restantes (Gilberto, 20/10/2026)
+function controleDoServidor(r) {   // r.parcelas: [contrato, n, data, capital, juros, total, situacao]
+  const parc = {};
+  (r.parcelas || []).forEach(p => {
+    const k = String(p[0] == null ? '' : p[0]).trim();
+    if (!k || String(p[6] || '').trim().toLowerCase().startsWith('paga')) return;
+    let cap = p[3], jur = p[4];
+    const tot = p[5];
+    if (cap == null && SICREDI_CAPITAL[k] != null && tot != null) { cap = SICREDI_CAPITAL[k]; jur = Math.round((tot - cap) * 100) / 100; }
+    if (cap == null) return;
+    const kk = k.replace(/^0+/, '');
+    (parc[kk] = parc[kk] || []).push([p[1], String(p[2] || '').slice(0, 10), cap, jur, tot, p[6]]);
+  });
+  Object.values(parc).forEach(v => v.sort((a, b) => a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0));
+  const ext = (r.contratos || []).map(c => String(c.extrato_de || '').slice(0, 10)).filter(Boolean).sort().pop();
+  return {data: ext ? dataBR(ext) : 'hoje', arquivo: 'planilha de financiamentos', parcelas: parc};
+}
+RuralAuth.iniciar({app: 'financiamentos', aoEntrar: async function () {
+  document.documentElement.classList.remove('guia-espera');
+  CONTROLE = {data: '', parcelas: {}, aviso: 'carregando as parcelas do controle de financiamentos…'};
+  desenharControle();
+  let r;
+  try { r = await RuralAuth.chamar('financiamentos', FINANCIAMENTOS_URL, {acao: 'dados'}); } catch (e) { r = null; }
+  CONTROLE = (r && r.ok && Array.isArray(r.parcelas)) ? controleDoServidor(r)
+    : {data: '', parcelas: {}, aviso: 'parcelas indisponíveis agora (recarregue a página); o resto do guia funciona'};
+  desenharControle(); wiz();
+}});
+</script>
+</body>
+</html>

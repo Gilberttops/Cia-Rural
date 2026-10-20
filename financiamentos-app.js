@@ -204,12 +204,14 @@
 
     var bl = null;
     if (d.pode_lancar) { bl = el('button', { type: 'button', id: 'fn-btn-lancar', 'class': 'ru-btn prim' }, '+ Lançar pagamento'); bl.onclick = function () { formulario(); }; }
+    // link opcional para o guia de lancamentos (financiamentos.html passa guia: 'guia_lancamentos.html'); abre na mesma aba, sem novo login
+    var bg = /^[A-Za-z0-9_\-]+\.html$/.test(E.op.guia || '') ? el('a', { id: 'fn-btn-guia', 'class': 'ru-btn', href: E.op.guia }, 'Guia de lançamentos') : null;
     var extratoDe = d.contratos.map(function (x) { return x.extrato_de; }).filter(Boolean).sort().pop();
     var usuario = E.op.usuario && E.op.usuario.nome ? E.op.usuario : (d.usuario ? { nome: d.usuario } : null);
     if (global.RuralUI) {
       global.RuralUI.topo(app, { app: 'financiamentos', titulo: 'Financiamentos e empréstimos', sub: 'Rural e RNA · extratos de ' + dataBR(extratoDe),
-        logo: E.op.logo, usuario: usuario, apps: E.op.apps || [], admin: !!(E.op.usuario && E.op.usuario.admin), aoSair: E.op.aoSair, acoes: [bl] });
-    } else { add(app, el('h1', {}, 'Financiamentos e empréstimos'), bl); }
+        logo: E.op.logo, usuario: usuario, apps: E.op.apps || [], admin: !!(E.op.usuario && E.op.usuario.admin), aoSair: E.op.aoSair, acoes: [bg, bl] });
+    } else { add(app, el('h1', {}, 'Financiamentos e empréstimos'), bg, bl); }
 
     var filtros = el('div', { 'class': 'ru-filtros' });
     [['empresa', 'todas', 'Todas as empresas'], ['banco', 'todos', 'Todos os bancos']].forEach(function (f) {

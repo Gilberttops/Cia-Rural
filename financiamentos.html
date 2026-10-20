@@ -24,7 +24,7 @@
     app: 'financiamentos',
     aoEntrar: function (ctx) {
       FinanciamentosApp.montar(document.getElementById('app'), {
-        url: FINANCIAMENTOS_URL, logo: 'logo_rural.png', usuario: ctx.usuario, apps: ctx.apps, aoSair: function () { RuralAuth.sair(); }
+        url: FINANCIAMENTOS_URL, guia: 'guia_lancamentos.html', logo: 'logo_rural.png', usuario: ctx.usuario, apps: ctx.apps, aoSair: function () { RuralAuth.sair(); }
       });
     }
   });
