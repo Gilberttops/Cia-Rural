@@ -738,7 +738,7 @@ function seletor(rot,itens,atual,onPick){
   const html=`<div class="sel-ficha"><div class="t">${rot}</div><div class="sel-linha">
     <div class="sel-busca"><input placeholder="buscar por nome ou código entre ${itens.length} ${rot.toLowerCase()}s..."
       value="" autocomplete="off"><div class="sel-pop"></div></div>
-    ${cur?`<span class="sel-atual">${codTag(cur.cod)}${cur.nome}</span>`:'<span class="hint">nenhum selecionado</span>'}
+    ${cur?`<span class="sel-atual">${cur.grupo?'<span class="cod">GRUPO</span>':codTag(cur.cod)}${cur.nome}</span>`:'<span class="hint">nenhum selecionado</span>'}
     ${itens.length?`<span class="hint">· ordenados por ${mm().nome.toLowerCase()} no recorte</span>`:''}
   </div></div>`;
   return {html, liga(){
@@ -750,10 +750,10 @@ function seletor(rot,itens,atual,onPick){
       const t=(q||'').toLowerCase();
       const vis=itens.filter(x=>casa(x.nome,x.cod,t)).slice(0,60);
       pop.innerHTML=vis.length?vis.map(x=>`<div class="sel-op" data-id="${x.id}">
-        <span>${codTag(x.cod)}${x.nome}</span><span class="v">${mm().curto(x.v)}</span></div>`).join('')
+        <span>${x.grupo?'<span class="cod">GRUPO</span>':codTag(x.cod)}${x.nome}</span><span class="v">${mm().curto(x.v)}</span></div>`).join('')
         :'<div class="sel-op"><span class="hint">nada encontrado</span></div>';
       pop.querySelectorAll('.sel-op[data-id]').forEach(o=>o.onclick=()=>{
-        pop.classList.remove('open'); onPick(+o.dataset.id);});
+        pop.classList.remove('open'); onPick(/^G/.test(o.dataset.id)?o.dataset.id:+o.dataset.id);});
     };
     inp.onfocus=()=>{pinta(inp.value);pop.classList.add('open');};
     inp.oninput=()=>{pinta(inp.value);pop.classList.add('open');};
@@ -1319,9 +1319,83 @@ function gerarFichaPdf_(ci,o){
 }
 
 /* ---------- fichas (drill-down) ---------- */
-function fichaCliente(ci){
+/* ---------- grupos de clientes (varios cadastros da mesma empresa) ---------- */
+// Para criar outro grupo, basta incluir uma linha aqui: o grupo reune todo cadastro
+// cujo nome contenha alguma das palavras-chave (sem acento e sem diferenciar maiuscula).
+const GRUPOS_CLI=[
+  {nome:'Alvorada',chaves:['alvorada']},
+  {nome:'Copacol',chaves:['copacol']},
+  {nome:'Agropampa',chaves:['agropampa']},
+  {nome:'Jatobá',chaves:['jatoba']}
+];
+const semAcento_=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const GRUPO_MEMBROS=GRUPOS_CLI.map(g=>new Set(CLI.map((c,i)=>({c,i})).filter(({c})=>{
+  const n=semAcento_(c.nome); return g.chaves.some(k=>n.includes(k));}).map(({i})=>i)));
+
+function fichaGrupo(gi){
+  const g=GRUPOS_CLI[gi], mem=GRUPO_MEMBROS[gi];
   const lista=listaOrdenada(i=>CO.c[i],k=>CLI[k].nome,k=>CLI[k].cod);
-  if(ci==null&&lista.length) ci=lista[0].id;
+  const itens=listaGrupos_(lista);
+  const sel=seletor('Cliente',itens,'G'+gi,id=>{ENT.cli=id;render();});
+  const linhas=IDX.filter(i=>mem.has(CO.c[i]));
+  if(!linhas.length){document.getElementById('view').innerHTML=sel.html+
+    '<div class="card vazio">Sem lançamentos do grupo '+g.nome+' no recorte atual.</div>';sel.liga();return;}
+  const tot=linhas.reduce((s,i)=>s+mv(i),0);
+  const porA=new Array(NY).fill(0);linhas.forEach(i=>porA[CO.a[i]]+=mv(i));
+  const anosAtivos=porA.map((v,i)=>v>0?ANOS[i]:null).filter(Boolean);
+  const cliM=new Map(),prodM=new Map(),vendM=new Map();
+  linhas.forEach(i=>{cliM.set(CO.c[i],(cliM.get(CO.c[i])||0)+mv(i));
+    prodM.set(CO.p[i],(prodM.get(CO.p[i])||0)+mv(i));
+    vendM.set(CO.v[i],(vendM.get(CO.v[i])||0)+mv(i));});
+  const cls=[...cliM.entries()].map(([k,v])=>({k,lab:CLI[k].nome,v})).sort((a,b)=>b.v-a.v);
+  const prods=[...prodM.entries()].map(([k,v])=>({k,lab:PROD[k].nome,v})).sort((a,b)=>b.v-a.v);
+  const vends=[...vendM.entries()].sort((a,b)=>b[1]-a[1]);
+  const abre=d=>{ENT.cli=d.k;render();};
+  document.getElementById('view').innerHTML=sel.html+`
+  <div class="card"><h3>Grupo ${g.nome}</h3><p class="csub">${mem.size} cadastros reunidos pelo nome (${cls.length} com venda no recorte). Para pedido, PDF e histórico de notas, abra o cadastro individual abaixo.</p></div>
+  <div class="kpis">
+    <div class="kpi"><div class="lab">${mm().nome} total</div><div class="val">${mm().fmt(tot)}</div><div class="sub">${linhas.length} lançamentos</div></div>
+    <div class="kpi"><div class="lab">Cadastros com venda</div><div class="val">${cls.length}</div><div class="sub">de ${mem.size} no grupo</div></div>
+    <div class="kpi"><div class="lab">Anos ativos</div><div class="val">${anosAtivos.length}</div>
+      <div class="sub">${anosAtivos[0]} a ${anosAtivos[anosAtivos.length-1]}</div></div>
+    <div class="kpi"><div class="lab">Produtos distintos</div><div class="val">${prods.length}</div><div class="sub">no período</div></div>
+    <div class="kpi"><div class="lab">Vendedor principal</div><div class="val" style="font-size:.98rem">${VEND[vends[0][0]].nome}</div>
+      <div class="sub">${pct(vends[0][1]/tot*100)} do grupo</div></div>
+  </div>
+  <div class="card"><h3>Histórico ano a ano</h3><div id="g1"></div></div>
+  <div class="card"><h3>Cadastros do grupo</h3><p class="csub">Clique em um cadastro para abrir a ficha dele.</p><div id="g2"></div></div>
+  <div class="card"><h3>O que o grupo compra</h3><div id="g3"></div></div>
+  <div class="card"><h3>Detalhe por ano e cadastro</h3><div id="g4"></div></div>`;
+  sel.liga();
+  lineChart(document.getElementById('g1'),{labels:ANOS.map(String),
+    series:[{nome:'Grupo '+g.nome,cor:'#0F5298',vals:porA,corPonto:i=>F.anos.has(i)?'#0F5298':'#B9C0C9'}],h:240});
+  barsH(document.getElementById('g2'),{items:cls.map(d=>({...d,extra:pct(d.v/tot*100)+' do grupo'})),
+    cores:(d,i)=>i<5?SER[i]:OUTROS,labW:260,onClick:abre});
+  barsH(document.getElementById('g3'),{items:prods.slice(0,20).map(d=>({...d,extra:pct(d.v/tot*100)})),
+    cores:(d,i)=>i<5?SER[i]:OUTROS,labW:260});
+  const S=anosSel();
+  tabela(document.getElementById('g4'),
+    [{t:'Cód.',l:1},{t:'Cadastro',l:1},{t:mm().nome}].concat(S.map(y=>({t:String(y)}))),
+    cls.map(d=>{const a=new Array(NY).fill(0);
+      linhas.filter(i=>CO.c[i]===d.k).forEach(i=>a[CO.a[i]]+=mv(i));
+      return [codTag(CLI[d.k].cod),d.lab,mm().fmt(d.v)]
+        .concat(S.map(y=>{const v=a[ANOS.indexOf(y)];return v?mm().fmt(v):'<span class="muted">—</span>';}));}),
+    ri=>abre(cls[ri]));
+}
+/* grupos com venda no recorte entram no topo da lista do seletor de cliente */
+function listaGrupos_(lista){
+  const gs=[];
+  GRUPOS_CLI.forEach((g,gi)=>{
+    const mem=lista.filter(x=>GRUPO_MEMBROS[gi].has(x.id));
+    if(mem.length>1) gs.push({id:'G'+gi,grupo:true,cod:null,
+      nome:'GRUPO '+g.nome.toUpperCase()+' ('+mem.length+' cadastros)',v:mem.reduce((s,x)=>s+x.v,0)});});
+  return gs.sort((a,b)=>b.v-a.v).concat(lista);
+}
+
+function fichaCliente(ci){
+  if(typeof ci==='string'&&/^G\d+$/.test(ci)) return fichaGrupo(+ci.slice(1));
+  const lista=listaGrupos_(listaOrdenada(i=>CO.c[i],k=>CLI[k].nome,k=>CLI[k].cod));
+  if(ci==null&&lista.length) ci=(lista.find(x=>!x.grupo)||lista[0]).id;
   const sel=seletor('Cliente',lista,ci,id=>{ENT.cli=id;render();});
   if(ci==null){document.getElementById('view').innerHTML=sel.html+
     '<div class="card vazio">Escolha um cliente acima.</div>';sel.liga();return;}
