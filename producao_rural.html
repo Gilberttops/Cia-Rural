@@ -1102,7 +1102,7 @@ input:focus,select:focus{border-color:var(--ru-azul);box-shadow:0 0 0 3px rgba(3
           <th class="r" style="width:65px">% formula</th>
           <th class="r" style="width:85px" id="op-th-saco">Kg / saco</th>
           <th class="r" style="width:105px">Total producao</th>
-          <th style="width:140px;text-align:center">N lote MP</th>
+          <th style="width:300px;min-width:300px;text-align:center">N lote MP</th>
           <th style="width:60px;text-align:center">Acoes</th>
         </tr></thead>
         <tbody id="op-tbody"></tbody>
@@ -1199,7 +1199,7 @@ input:focus,select:focus{border-color:var(--ru-azul);box-shadow:0 0 0 3px rgba(3
           <th class="r" style="width:65px">% formula</th>
           <th class="r" style="width:85px" id="opi-th-saco">Kg / saco</th>
           <th class="r" style="width:105px">Total producao</th>
-          <th style="width:140px;text-align:center">N lote MP</th>
+          <th style="width:300px;min-width:300px;text-align:center">N lote MP</th>
           <th style="width:60px;text-align:center">Acoes</th>
         </tr></thead>
         <tbody id="opi-tbody"></tbody>
@@ -3328,31 +3328,31 @@ function imprimirOP(){
       var loteVal=opLotes.banco[ing.cod]||'';
       linhas+='<tr>'
         +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;font-family:monospace;font-size:13px;color:#6b7280">'+ing.cod+'</td>'
-        +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;font-size:19px;font-weight:700">'+nomeIng+'</td>'
-        +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;text-align:right;font-size:22px;font-weight:700">'+fd2(ing.qtd)+'</td>'
-        +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;text-align:right;font-size:22px;font-weight:800;color:'+bClr[bk]+'">'+fd2(acB)+'</td>'
+        +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;font-size:16px;font-weight:700">'+nomeIng+'</td>'
+        +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;text-align:right;font-size:18px;font-weight:700">'+fd2(ing.qtd)+'</td>'
+        +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;text-align:right;font-size:18px;font-weight:800;color:'+bClr[bk]+'">'+fd2(acB)+'</td>'
         +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;text-align:right;font-size:12px;color:#6b7280">'+fp(pct,2)+'%</td>'
         +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;text-align:right;font-size:13px">'+f6(porSaco)+'</td>'
         +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;text-align:right;font-size:14px;font-weight:700;color:#1d4ed8">'+fd2(totProd)+'</td>'
-        +'<td style="padding:5px 8px;border-bottom:1px solid #e2dfd7;text-align:center"><div style="border-bottom:1.5px solid #6b7280;min-height:20px;padding:2px 4px 4px;font-size:13px;color:#7c3aed;font-weight:600">'+loteVal+'</div></td>'
+        +'<td style="padding:5px 8px;border-bottom:1px solid #e2dfd7;text-align:center"><div style="border-bottom:1.5px solid #6b7280;min-height:30px;padding:2px 4px 4px;font-size:13px;color:#7c3aed;font-weight:600">'+loteVal+'</div></td>'
         +'</tr>';
     });
     var acBTot=acumBal[bk];
     linhas+='<tr style="background:'+bBg[bk]+'">'
       +'<td colspan="2" style="padding:6px 10px;font-size:13px;font-weight:700;color:'+bClr[bk]+'">Subtotal '+bNomes[bk]+'</td>'
-      +'<td style="padding:5px 8px;text-align:right;font-weight:700;color:'+bClr[bk]+'">'+fd2(acBTot)+' kg</td>'
-      +'<td style="padding:5px 8px;text-align:right;font-weight:700;color:'+bClr[bk]+'">'+fd2(acBTot)+' kg</td>'
+      +'<td style="padding:5px 4px;font-size:12px;white-space:nowrap;text-align:right;font-weight:700;color:'+bClr[bk]+'">'+fd2(acBTot)+' kg</td>'
+      +'<td style="padding:5px 4px;font-size:12px;white-space:nowrap;text-align:right;font-weight:700;color:'+bClr[bk]+'">'+fd2(acBTot)+' kg</td>'
       +'<td></td><td></td>'
-      +'<td style="padding:5px 8px;text-align:right;font-weight:700;color:'+bClr[bk]+'">'+fd2(acBTot*nBat)+' kg</td>'
+      +'<td style="padding:5px 4px;font-size:12px;white-space:nowrap;text-align:right;font-weight:700;color:'+bClr[bk]+'">'+fd2(acBTot*nBat)+' kg</td>'
       +'<td></td></tr>';
   });
   var qtdEmbBat=sacosEmbOP(), qtdEmbTot=qtdEmbBat*nBat; /* embalagens reais (nucleos: pelo peso real do saco) */
   linhas+='<tr><td colspan="8" style="padding:6px 10px;background:#fef3c7;color:#92400e;font-size:12px;font-weight:800;text-transform:uppercase;border-top:2px solid #fcd34d;border-bottom:1px solid #fcd34d">EMBALAGEM</td></tr>';
   linhas+='<tr>'
     +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;font-family:monospace;font-size:13px;color:#6b7280">—</td>'
-    +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;font-size:19px;font-weight:700">'+embDesc+'</td>'
-    +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;text-align:right;font-size:22px;font-weight:700">'+fn(qtdEmbBat,qtdEmbBat%1===0?0:1)+'</td>'
-    +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;text-align:right;font-size:22px;font-weight:800;color:#92400e">'+fn(qtdEmbBat,qtdEmbBat%1===0?0:1)+'</td>'
+    +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;font-size:16px;font-weight:700">'+embDesc+'</td>'
+    +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;text-align:right;font-size:18px;font-weight:700">'+fn(qtdEmbBat,qtdEmbBat%1===0?0:1)+'</td>'
+    +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;text-align:right;font-size:18px;font-weight:800;color:#92400e">'+fn(qtdEmbBat,qtdEmbBat%1===0?0:1)+'</td>'
     +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;text-align:right;font-size:12px;color:#6b7280">—</td>'
     +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;text-align:right;font-size:13px">1</td>'
     +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;text-align:right;font-size:14px;font-weight:700;color:#1d4ed8">'+fn(qtdEmbTot,qtdEmbTot%1===0?0:1)+' un</td>'
@@ -3370,11 +3370,11 @@ function imprimirOP(){
     +'.meta-sub{display:flex;gap:22px;padding:6px 14px;background:#f4f3ef;border-radius:0 0 8px 8px;margin-bottom:10px;font-size:11px;color:#8a8980}'
     +'.ml{font-size:9px;font-weight:700;text-transform:uppercase;color:#8a8980;margin-bottom:2px}'
     +'.mv{font-size:13px;font-weight:700}.mv.bl{color:#1d4ed8;font-size:15px}'
-    +'table{width:100%;border-collapse:collapse}'
+    +'table{width:100%;border-collapse:collapse;table-layout:fixed}'
     +'thead tr{background:#1e293b}'
-    +'thead th{color:#fff;font-size:12px;font-weight:700;text-transform:uppercase;padding:8px 8px;text-align:left;white-space:nowrap}'
+    +'thead th{color:#fff;font-size:10px;font-weight:700;text-transform:uppercase;padding:8px 8px;text-align:left;white-space:nowrap}'
     +'thead th.r{text-align:right}thead th.c{text-align:center}'
-    +'tfoot td{background:#e2dfd7;font-weight:700;font-size:14px;padding:8px 8px;border-top:2px solid #1e293b}'
+    +'tfoot td{background:#e2dfd7;font-weight:700;font-size:12px;white-space:nowrap;padding:8px 4px;border-top:2px solid #1e293b}'
     +'.emb-box{margin-top:10px;padding:10px;background:#f4f3ef;border-radius:8px;display:flex;gap:24px;font-size:12px}'
     +'.el{font-size:9px;font-weight:700;text-transform:uppercase;color:#8a8980;margin-bottom:2px}'
     +'.sign-grid{display:grid;grid-template-columns:1.4fr 0.8fr 0.8fr 0.8fr 1fr;gap:16px;margin-top:16px}'
@@ -3406,13 +3406,13 @@ function imprimirOP(){
     +'</div>'
     +(cliente?'<div style="font-size:12px;margin-bottom:10px;padding:6px 10px;background:#f4f3ef;border-radius:6px"><strong>Cliente:</strong> '+cliente+'</div>':'')
     +'<table><thead><tr>'
-    +'<th style="width:55px">Cod</th><th>Ingrediente</th>'
-    +'<th class="r" style="width:88px">Kg/batida</th>'
-    +'<th class="r" style="width:88px">Kg acum.</th>'
-    +'<th class="r" style="width:55px">%</th>'
-    +'<th class="r" style="width:88px">'+(bigBag?'Kg/kg':'Kg/saco')+'</th>'
-    +'<th class="r" style="width:100px">Total prod.</th>'
-    +'<th class="c" style="width:120px">Lote MP</th>'
+    +'<th style="width:38px">Cod</th><th>Ingrediente</th>'
+    +'<th class="r" style="width:78px">Kg/batida</th>'
+    +'<th class="r" style="width:78px">Kg acum.</th>'
+    +'<th class="r" style="width:46px">%</th>'
+    +'<th class="r" style="width:56px">'+(bigBag?'Kg/kg':'Kg/saco')+'</th>'
+    +'<th class="r" style="width:88px">Total prod.</th>'
+    +'<th class="c" style="width:210px">Lote MP</th>'
     +'</tr></thead>'
     +'<tbody>'+linhas+'</tbody>'
     +'<tfoot><tr>'
@@ -3496,31 +3496,31 @@ function imprimirOPIvinhema(){
       var loteVal=opLotes.rna[ing.cod]||'';
       linhas+='<tr>'
         +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;font-family:monospace;font-size:13px;color:#6b7280">'+ing.cod+'</td>'
-        +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;font-size:19px;font-weight:700">'+nomeIng+'</td>'
-        +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;text-align:right;font-size:22px;font-weight:700">'+fd2(ing.qtd)+'</td>'
-        +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;text-align:right;font-size:22px;font-weight:800;color:'+bClr[bk]+'">'+fd2(acB)+'</td>'
+        +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;font-size:16px;font-weight:700">'+nomeIng+'</td>'
+        +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;text-align:right;font-size:18px;font-weight:700">'+fd2(ing.qtd)+'</td>'
+        +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;text-align:right;font-size:18px;font-weight:800;color:'+bClr[bk]+'">'+fd2(acB)+'</td>'
         +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;text-align:right;font-size:12px;color:#6b7280">'+fp(pct,2)+'%</td>'
         +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;text-align:right;font-size:13px">'+f6(porSaco)+'</td>'
         +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;text-align:right;font-size:14px;font-weight:700;color:#1d4ed8">'+fd2(totProd)+'</td>'
-        +'<td style="padding:5px 8px;border-bottom:1px solid #e2dfd7;text-align:center"><div style="border-bottom:1.5px solid #6b7280;min-height:20px;padding:2px 4px 4px;font-size:13px;color:#7c3aed;font-weight:600">'+loteVal+'</div></td>'
+        +'<td style="padding:5px 8px;border-bottom:1px solid #e2dfd7;text-align:center"><div style="border-bottom:1.5px solid #6b7280;min-height:30px;padding:2px 4px 4px;font-size:13px;color:#7c3aed;font-weight:600">'+loteVal+'</div></td>'
         +'</tr>';
     });
     var acBTot=acumBal[bk];
     linhas+='<tr style="background:'+bBg[bk]+'">'
       +'<td colspan="2" style="padding:6px 10px;font-size:13px;font-weight:700;color:'+bClr[bk]+'">Subtotal '+bNomes[bk]+'</td>'
-      +'<td style="padding:5px 8px;text-align:right;font-weight:700;color:'+bClr[bk]+'">'+fd2(acBTot)+' kg</td>'
-      +'<td style="padding:5px 8px;text-align:right;font-weight:700;color:'+bClr[bk]+'">'+fd2(acBTot)+' kg</td>'
+      +'<td style="padding:5px 4px;font-size:12px;white-space:nowrap;text-align:right;font-weight:700;color:'+bClr[bk]+'">'+fd2(acBTot)+' kg</td>'
+      +'<td style="padding:5px 4px;font-size:12px;white-space:nowrap;text-align:right;font-weight:700;color:'+bClr[bk]+'">'+fd2(acBTot)+' kg</td>'
       +'<td></td><td></td>'
-      +'<td style="padding:5px 8px;text-align:right;font-weight:700;color:'+bClr[bk]+'">'+fd2(acBTot*nBat)+' kg</td>'
+      +'<td style="padding:5px 4px;font-size:12px;white-space:nowrap;text-align:right;font-weight:700;color:'+bClr[bk]+'">'+fd2(acBTot*nBat)+' kg</td>'
       +'<td></td></tr>';
   });
   var qtdEmbBat=sacosEmbOP(), qtdEmbTot=qtdEmbBat*nBat; /* embalagens reais (nucleos: pelo peso real do saco) */
   linhas+='<tr><td colspan="8" style="padding:6px 10px;background:#fef3c7;color:#92400e;font-size:12px;font-weight:800;text-transform:uppercase;border-top:2px solid #fcd34d;border-bottom:1px solid #fcd34d">EMBALAGEM</td></tr>';
   linhas+='<tr>'
     +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;font-family:monospace;font-size:13px;color:#6b7280">—</td>'
-    +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;font-size:19px;font-weight:700">'+embDesc+'</td>'
-    +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;text-align:right;font-size:22px;font-weight:700">'+fn(qtdEmbBat,qtdEmbBat%1===0?0:1)+'</td>'
-    +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;text-align:right;font-size:22px;font-weight:800;color:#92400e">'+fn(qtdEmbBat,qtdEmbBat%1===0?0:1)+'</td>'
+    +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;font-size:16px;font-weight:700">'+embDesc+'</td>'
+    +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;text-align:right;font-size:18px;font-weight:700">'+fn(qtdEmbBat,qtdEmbBat%1===0?0:1)+'</td>'
+    +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;text-align:right;font-size:18px;font-weight:800;color:#92400e">'+fn(qtdEmbBat,qtdEmbBat%1===0?0:1)+'</td>'
     +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;text-align:right;font-size:12px;color:#6b7280">—</td>'
     +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;text-align:right;font-size:13px">1</td>'
     +'<td style="padding:7px 8px;border-bottom:1px solid #e2dfd7;text-align:right;font-size:14px;font-weight:700;color:#1d4ed8">'+fn(qtdEmbTot,qtdEmbTot%1===0?0:1)+' un</td>'
@@ -3538,11 +3538,11 @@ function imprimirOPIvinhema(){
     +'.meta-sub{display:flex;gap:22px;padding:6px 14px;background:#f4f3ef;border-radius:0 0 8px 8px;margin-bottom:10px;font-size:11px;color:#8a8980}'
     +'.ml{font-size:9px;font-weight:700;text-transform:uppercase;color:#8a8980;margin-bottom:2px}'
     +'.mv{font-size:13px;font-weight:700}.mv.bl{color:#1d4ed8;font-size:15px}'
-    +'table{width:100%;border-collapse:collapse}'
+    +'table{width:100%;border-collapse:collapse;table-layout:fixed}'
     +'thead tr{background:#1e293b}'
-    +'thead th{color:#fff;font-size:12px;font-weight:700;text-transform:uppercase;padding:8px 8px;text-align:left;white-space:nowrap}'
+    +'thead th{color:#fff;font-size:10px;font-weight:700;text-transform:uppercase;padding:8px 8px;text-align:left;white-space:nowrap}'
     +'thead th.r{text-align:right}thead th.c{text-align:center}'
-    +'tfoot td{background:#e2dfd7;font-weight:700;font-size:14px;padding:8px 8px;border-top:2px solid #1e293b}'
+    +'tfoot td{background:#e2dfd7;font-weight:700;font-size:12px;white-space:nowrap;padding:8px 4px;border-top:2px solid #1e293b}'
     +'.emb-box{margin-top:10px;padding:10px;background:#f4f3ef;border-radius:8px;display:flex;gap:24px;font-size:12px}'
     +'.el{font-size:9px;font-weight:700;text-transform:uppercase;color:#8a8980;margin-bottom:2px}'
     +'.sign-grid{display:grid;grid-template-columns:1.4fr 0.8fr 0.8fr 0.8fr 1fr;gap:16px;margin-top:16px}'
@@ -3574,13 +3574,13 @@ function imprimirOPIvinhema(){
     +'</div>'
     +(cliente?'<div style="font-size:12px;margin-bottom:10px;padding:6px 10px;background:#f4f3ef;border-radius:6px"><strong>Cliente:</strong> '+cliente+'</div>':'')
     +'<table><thead><tr>'
-    +'<th style="width:55px">Cod</th><th>Ingrediente</th>'
-    +'<th class="r" style="width:88px">Kg/batida</th>'
-    +'<th class="r" style="width:88px">Kg acum.</th>'
-    +'<th class="r" style="width:55px">%</th>'
-    +'<th class="r" style="width:88px">'+(bigBag?'Kg/kg':'Kg/saco')+'</th>'
-    +'<th class="r" style="width:100px">Total prod.</th>'
-    +'<th class="c" style="width:120px">Lote MP</th>'
+    +'<th style="width:38px">Cod</th><th>Ingrediente</th>'
+    +'<th class="r" style="width:78px">Kg/batida</th>'
+    +'<th class="r" style="width:78px">Kg acum.</th>'
+    +'<th class="r" style="width:46px">%</th>'
+    +'<th class="r" style="width:56px">'+(bigBag?'Kg/kg':'Kg/saco')+'</th>'
+    +'<th class="r" style="width:88px">Total prod.</th>'
+    +'<th class="c" style="width:210px">Lote MP</th>'
     +'</tr></thead>'
     +'<tbody>'+linhas+'</tbody>'
     +'<tfoot><tr>'
