@@ -6458,7 +6458,14 @@
   var decEditingId = null;
   var decItemsDraft = [];
 
-  function seedDeclaracoes(){
+  /* produtos da declaracao: a planilha pode devolver texto/objeto em vez de lista */
+function decProdutos_(d){
+  var p=d&&d.produtos;
+  if(Array.isArray(p)) return p;
+  if(typeof p==='string'&&p.trim()){ try{ var j=JSON.parse(p); if(Array.isArray(j)) return j; }catch(e){} }
+  return [];
+}
+function seedDeclaracoes(){
     var el = document.getElementById('seed-declaracoes');
     return el ? JSON.parse(el.textContent) : [];
   }
@@ -6648,7 +6655,7 @@
       }
     });
     if(!decEditingId) document.getElementById('decData').value = todayLocalISO();
-    decItemsDraft = dec ? JSON.parse(JSON.stringify(dec.produtos||[])) : [];
+    decItemsDraft = dec ? JSON.parse(JSON.stringify(decProdutos_(dec))) : [];
     if(decItemsDraft.length === 0) decItemsDraft.push(blankDecItem());
     renderDecItemsDraft();
     populateDecLoadFromFc();
@@ -6702,7 +6709,7 @@
     var q = qEl ? qEl.value.trim().toLowerCase() : '';
     var rows = declaracoes.filter(function(d){
       if(!q) return true;
-      var hay = [d.numeroFatura, (d.produtos||[]).map(function(p){return p.marca;}).join(' ')].join(' ').toLowerCase();
+      var hay = [d.numeroFatura, decProdutos_(d).map(function(p){return p.marca;}).join(' ')].join(' ').toLowerCase();
       return hay.indexOf(q) !== -1;
     }).sort(function(a,b){ return (b.data||'').localeCompare(a.data||''); });
 
@@ -6712,7 +6719,7 @@
       return;
     }
     body.innerHTML = rows.map(function(d){
-      var produtosLabel = (d.produtos||[]).map(function(p){ return p.marca; }).filter(Boolean).join(', ') || '—';
+      var produtosLabel = decProdutos_(d).map(function(p){ return p.marca; }).filter(Boolean).join(', ') || '—';
       return '<tr>'
         + '<td><button class="row-del" data-dec-del="'+d.id+'" title="Excluir">×</button></td>'
         + '<td>'+ dLabel(d.data) +'</td>'
@@ -6728,7 +6735,7 @@
   }
 
   function decPrintHTML(dec){
-    var rows = (dec.produtos||[]).map(function(p){
+    var rows = decProdutos_(dec).map(function(p){
       return '<tr>'
         + '<td>'+ (p.marca||'') +'</td>'
         + '<td>'+ (p.numeroRegistro||'') +'</td>'
@@ -6740,7 +6747,7 @@
         + '<td class="num">'+ fmtNumPlain(p.peso,0) +'</td>'
         + '</tr>';
     }).join('');
-    var pesoTotal = (dec.produtos||[]).reduce(function(s,p){ return s+(p.peso||0); }, 0);
+    var pesoTotal = decProdutos_(dec).reduce(function(s,p){ return s+(p.peso||0); }, 0);
     var conformidadeHtml = (dec.conformidade||'').split('\n').map(function(line){
       return '<p style="margin:0 0 6px;">'+ line + '</p>';
     }).join('');
