@@ -58,6 +58,7 @@ header{display:flex;justify-content:space-between;align-items:center;border-bott
 .pick-item{display:flex;align-items:center;gap:7px;padding:4px 5px;border-radius:5px;cursor:pointer;font-size:.81rem;}
 .pick-item:hover{background:var(--azul-claro);}
 .pick-item input{width:auto;margin:0;}
+.pick-grupos{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;margin:0 0 7px;font-size:.78rem}
 .pick-acoes{display:flex;justify-content:space-between;border-top:1px solid var(--line);margin-top:6px;padding-top:6px;}
 .tag{display:inline-flex;align-items:center;gap:5px;background:var(--azul-claro);border:1px solid #C6D9EE;color:var(--azul-esc);border-radius:6px;padding:2px 7px;font-size:.75rem;font-weight:600;margin:2px 3px 0 0;}
 .tag b{cursor:pointer;color:var(--danger);}
@@ -530,25 +531,30 @@ function topN(arr,n){const t=arr.slice(0,n),r=arr.slice(n);
   return{top:t,outros:r.reduce((s,d)=>s+d.v,0),nResto:r.length};}
 
 /* ---------- seletores múltiplos ---------- */
-function montaPick(hostId,titulo,itens,setF,comBusca){
+function montaPick(hostId,titulo,itens,setF,comBusca,grupos){
   const host=document.getElementById(hostId);
   const sel=setF;
-  const txt=sel.size===0?`${titulo}: todos`:`${titulo}: ${sel.size} selec.`;
-  host.innerHTML=`<button class="pick-btn ${sel.size?'ativo':''}">${txt}<span>▾</span></button>
-    <div class="pick-pop">${comBusca?'<input placeholder="nome ou código...">':''}
+  const rotulo=()=>sel.size===0?`${titulo}: todos`:`${titulo}: ${sel.size} selec.`;
+  const chips=(grupos&&grupos.length)?`<div class="pick-grupos"><span class="hint">grupos:</span>${grupos.map((g,gi)=>
+    `<button type="button" class="linkbtn" data-g="${gi}" title="marca ou desmarca todos os cadastros do grupo">${g.nome} (${g.ids.length})</button>`).join('')}</div>`:'';
+  host.innerHTML=`<button class="pick-btn ${sel.size?'ativo':''}">${rotulo()}<span>▾</span></button>
+    <div class="pick-pop">${comBusca?'<input placeholder="nome ou código...">':''}${chips}
       <div class="pick-list"></div>
-      <div class="pick-acoes"><button class="linkbtn" data-a="none">limpar</button>
+      <div class="pick-acoes"><span><button class="linkbtn" data-a="all">marcar os resultados</button> · <button class="linkbtn" data-a="none">limpar</button></span>
         <span class="hint" style="align-self:center">${itens.length} itens</span></div></div>`;
   const btn=host.querySelector('.pick-btn'),pop=host.querySelector('.pick-pop'),
         list=host.querySelector('.pick-list'),busca=host.querySelector('input');
+  let vis=[];
+  // o popup NAO e refeito a cada clique: so atualiza o rotulo e as etiquetas,
+  // assim da pra marcar varios sem a lista fechar
+  const atualiza=()=>{btn.innerHTML=rotulo()+'<span>▾</span>';btn.classList.toggle('ativo',sel.size>0);montaTags();render();};
   function pinta(f){
     const q=(f||'').toLowerCase();
-    const vis=itens.filter(it=>casa(it.nome,it.cod,q)).slice(0,300);
+    vis=itens.filter(it=>casa(it.nome,it.cod,q)).slice(0,300);
     list.innerHTML=vis.map(it=>`<label class="pick-item"><input type="checkbox" data-v="${it.id}" ${sel.has(it.id)?'checked':''}>${it.cod?codTag(it.cod):''}${it.nome}</label>`).join('')
       || '<div class="hint" style="padding:8px">nada encontrado</div>';
     list.querySelectorAll('input').forEach(cb=>cb.onchange=()=>{
-      const v=+cb.dataset.v; cb.checked?sel.add(v):sel.delete(v);
-      btn.textContent=''; montaPicks(); render();});
+      const v=+cb.dataset.v; cb.checked?sel.add(v):sel.delete(v); atualiza();});
   }
   pinta('');
   btn.onclick=e=>{e.stopPropagation();
@@ -556,14 +562,21 @@ function montaPick(hostId,titulo,itens,setF,comBusca){
     pop.classList.toggle('open'); if(busca){busca.value='';pinta('');busca.focus();}};
   pop.onclick=e=>e.stopPropagation();
   if(busca)busca.oninput=()=>pinta(busca.value);
-  host.querySelector('[data-a="none"]').onclick=()=>{sel.clear();montaPicks();render();};
+  host.querySelector('[data-a="none"]').onclick=()=>{sel.clear();pinta(busca?busca.value:'');atualiza();};
+  host.querySelector('[data-a="all"]').onclick=()=>{vis.forEach(it=>sel.add(it.id));pinta(busca?busca.value:'');atualiza();};
+  host.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{
+    const ids=grupos[+b.dataset.g].ids, todos=ids.every(id=>sel.has(id));
+    ids.forEach(id=>todos?sel.delete(id):sel.add(id)); pinta(busca?busca.value:''); atualiza();});
 }
 function montaPicks(){
   montaPick('pick-vend','Vendedor',VEND.map((v,i)=>({id:i,nome:v.nome,cod:v.cod})),F.vend,true);
   montaPick('pick-fil','Filial',FIL.map((f,i)=>({id:i,nome:f})),F.fil,false);
   montaPick('pick-cat','Categoria',CATS.map((c,i)=>({id:i,nome:c})),F.cat,true);
-  montaPick('pick-cli','Cliente',CLI.map((c,i)=>({id:i,nome:c.nome,cod:c.cod})),F.cli,true);
+  montaPick('pick-cli','Cliente',CLI.map((c,i)=>({id:i,nome:c.nome,cod:c.cod})),F.cli,true,GRUPOS_CLI.map((g,gi)=>({nome:g.nome,ids:[...GRUPO_MEMBROS[gi]]})).filter(g=>g.ids.length>1));
   montaPick('pick-prod','Produto',PROD.map((p,i)=>({id:i,nome:p.nome,cod:p.cod})),F.prod,true);
+  montaTags();
+}
+function montaTags(){
   const tags=[];
   const add=(set,arr,rot,key)=>[...set].forEach(i=>tags.push(
     `<span class="tag">${rot}: ${arr[i]} <b data-k="${key}" data-i="${i}">✕</b></span>`));
@@ -1332,6 +1345,15 @@ const semAcento_=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,''
 const GRUPO_MEMBROS=GRUPOS_CLI.map(g=>new Set(CLI.map((c,i)=>({c,i})).filter(({c})=>{
   const n=semAcento_(c.nome); return g.chaves.some(k=>n.includes(k));}).map(({i})=>i)));
 
+/* Agrupar na aba Clientes: cada grupo vira UMA linha (chave negativa = -(grupo+1)) */
+let GRUPAR_CLI=false;
+const CLI_GRUPO=new Map();
+GRUPO_MEMBROS.forEach((m,gi)=>m.forEach(ci=>{if(!CLI_GRUPO.has(ci)&&m.size>1)CLI_GRUPO.set(ci,gi);}));
+const chaveCli_=ci=>CLI_GRUPO.has(ci)?-(CLI_GRUPO.get(ci)+1):ci;
+const nomeCli_=k=>k<0?'GRUPO '+GRUPOS_CLI[-k-1].nome.toUpperCase()+' ('+GRUPO_MEMBROS[-k-1].size+' cadastros)':CLI[k].nome;
+const codCli_=k=>k<0?'GRUPO':CLI[k].cod;
+const abreCli_=k=>{ENT.cli=k<0?'G'+(-k-1):k;TAB='fcli';marcaAba();render();};
+
 function fichaGrupo(gi){
   const g=GRUPOS_CLI[gi], mem=GRUPO_MEMBROS[gi];
   const lista=listaOrdenada(i=>CO.c[i],k=>CLI[k].nome,k=>CLI[k].cod);
@@ -1351,6 +1373,13 @@ function fichaGrupo(gi){
   const prods=[...prodM.entries()].map(([k,v])=>({k,lab:PROD[k].nome,v})).sort((a,b)=>b.v-a.v);
   const vends=[...vendM.entries()].sort((a,b)=>b[1]-a[1]);
   const abre=d=>{ENT.cli=d.k;render();};
+  let pesoG=0,rsPesoG=0,mgR=0,mgM=0,mgL=0;
+  linhas.forEach(i=>{const pp=PESO[CO.p[i]]; if(pp){const [v,k]=valKg(i); rsPesoG+=v; pesoG+=k;}
+    if(CMES){const g=mgLinha(i); if(g){mgR+=g[0];mgM+=g[1];mgL+=g[2];}}});
+  const rsT=pesoG>0?rsPesoG/(pesoG/1000):null;
+  const kpiMg=CMES&&mgR>0?`
+    <div class="kpi"><div class="lab">Margem de contribuição</div><div class="val">R$ ${nf(mgM,2)}</div><div class="sub">${pct(mgM/mgR*100)} da receita com custo</div></div>
+    <div class="kpi"><div class="lab">Lucro líq. estimado</div><div class="val">R$ ${nf(mgL,2)}</div><div class="sub">${pct(mgL/mgR*100)} da receita com custo</div></div>`:'';
   document.getElementById('view').innerHTML=sel.html+`
   <div class="card"><h3>Grupo ${g.nome}</h3><p class="csub">${mem.size} cadastros reunidos pelo nome (${cls.length} com venda no recorte). Para pedido, PDF e histórico de notas, abra o cadastro individual abaixo.</p></div>
   <div class="kpis">
@@ -1361,10 +1390,14 @@ function fichaGrupo(gi){
     <div class="kpi"><div class="lab">Produtos distintos</div><div class="val">${prods.length}</div><div class="sub">no período</div></div>
     <div class="kpi"><div class="lab">Vendedor principal</div><div class="val" style="font-size:.98rem">${VEND[vends[0][0]].nome}</div>
       <div class="sub">${pct(vends[0][1]/tot*100)} do grupo</div></div>
+    <div class="kpi"><div class="lab">Média por ano ativo</div><div class="val">${mm().fmt(tot/anosAtivos.length)}</div><div class="sub">&nbsp;</div></div>
+    <div class="kpi"><div class="lab">Peso vendido</div><div class="val">${nf(pesoG/1000,1)} t</div><div class="sub">${rsT?'R$ '+nf(rsT,0)+' por tonelada':'sem peso definido'}</div></div>
+    ${kpiMg}
   </div>
   <div class="card"><h3>Histórico ano a ano</h3><div id="g1"></div></div>
   <div class="card"><h3>Cadastros do grupo</h3><p class="csub">Clique em um cadastro para abrir a ficha dele.</p><div id="g2"></div></div>
   <div class="card"><h3>O que o grupo compra</h3><div id="g3"></div></div>
+  ${vends.length>1?'<div class="card"><h3>Vendedores que atenderam</h3><div id="g5"></div></div>':''}
   <div class="card"><h3>Detalhe por ano e cadastro</h3><div id="g4"></div></div>`;
   sel.liga();
   lineChart(document.getElementById('g1'),{labels:ANOS.map(String),
@@ -1373,6 +1406,13 @@ function fichaGrupo(gi){
     cores:(d,i)=>i<5?SER[i]:OUTROS,labW:260,onClick:abre});
   barsH(document.getElementById('g3'),{items:prods.slice(0,20).map(d=>({...d,extra:pct(d.v/tot*100)})),
     cores:(d,i)=>i<5?SER[i]:OUTROS,labW:260});
+  if(vends.length>1){
+    const cams=vends.map(([k,v],i)=>{const a=new Array(NY).fill(0);
+      linhas.filter(i2=>CO.v[i2]===k).forEach(i2=>a[CO.a[i2]]+=mv(i2));
+      return{nome:VEND[k].nome,cor:i<5?SER[i]:OUTROS,vals:a};});
+    stackChart(document.getElementById('g5'),{anos:anosSel(),
+      cams:cams.map(c=>({...c,vals:anosSel().map(y=>c.vals[ANOS.indexOf(y)])})),h:250});
+  }
   const S=anosSel();
   tabela(document.getElementById('g4'),
     [{t:'Cód.',l:1},{t:'Cadastro',l:1},{t:mm().nome}].concat(S.map(y=>({t:String(y)}))),
@@ -1945,7 +1985,13 @@ function render(){
     '<div class="card vazio">Nenhum lançamento com esses filtros. Tente remover alguma restrição.</div>';return;}
   if(TAB==='geral')viewGeral();
   else if(TAB==='vend')viewRank(i=>CO.v[i],'Vendedores',k=>VEND[k].nome,k=>{ENT.vend=k;TAB='fvend';marcaAba();render();},k=>VEND[k].cod,{canais:true});
-  else if(TAB==='cli'){viewRank(i=>CO.c[i],'Clientes',k=>CLI[k].nome,k=>{ENT.cli=k;TAB='fcli';marcaAba();render();},k=>CLI[k].cod,{abc:true});movimentoCarteira();}
+  else if(TAB==='cli'){
+    if(GRUPAR_CLI) viewRank(i=>chaveCli_(CO.c[i]),'Clientes',nomeCli_,abreCli_,codCli_,{abc:true});
+    else viewRank(i=>CO.c[i],'Clientes',k=>CLI[k].nome,k=>{ENT.cli=k;TAB='fcli';marcaAba();render();},k=>CLI[k].cod,{abc:true});
+    document.getElementById('view').insertAdjacentHTML('afterbegin','<label class="chk" style="display:block;margin:0 0 10px"><input type="checkbox" id="chk-grupar"'+(GRUPAR_CLI?' checked':'')+'> Agrupar cadastros do mesmo grupo ('+GRUPOS_CLI.map(g=>g.nome).join(', ')+') como um cliente só</label>');
+    document.getElementById('chk-grupar').onchange=e=>{GRUPAR_CLI=e.target.checked;render();};
+    if(!GRUPAR_CLI) movimentoCarteira();
+  }
   else if(TAB==='prod')viewRank(i=>CO.p[i],'Produtos',k=>PROD[k].nome,k=>{ENT.prod=k;TAB='fprod';marcaAba();render();},k=>PROD[k].cod,{abc:true});
   else if(TAB==='fil')viewFil();
   else if(TAB==='risco')viewRisco();
