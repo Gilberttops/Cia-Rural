@@ -65,6 +65,12 @@ header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:spac
 .kpi .bar{position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:3px;background:var(--gold)}
 
 .grid{display:grid;grid-template-columns:1.35fr 1fr;gap:18px;margin-bottom:18px}
+.ovl{position:fixed;inset:0;background:rgba(30,30,25,.45);display:flex;align-items:flex-start;justify-content:center;z-index:60;overflow-y:auto;padding:4vh 12px}
+.ovl[hidden]{display:none}
+.mdl{background:var(--card);border-radius:16px;width:980px;max-width:100%;padding:18px 18px 14px;box-shadow:0 12px 40px rgba(0,0,0,.2)}
+.mdlhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.mdlhead h2{margin:0;font-size:18px}
+.lanbar{display:flex;justify-content:flex-end;margin-bottom:14px}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px 12px}
 .panel h3{font-family:'Outfit',sans-serif;font-weight:700;font-size:16px;letter-spacing:-.01em;margin-bottom:2px}
 .panel .cap{font-size:12px;color:var(--muted);margin-bottom:14px;font-weight:500}
@@ -394,6 +400,10 @@ body.locked .wrap{display:none}
 
   <!-- ============ LANÇAR ============ -->
   <section class="view" id="v-lancar-venda">
+    <div class="lanbar"><button class="btn solid" id="btnOpenLv" type="button">+ Lançar vendas</button></div>
+    <div class="cfglog" id="lanLogVp" style="margin-bottom:12px"></div>
+    <div class="ovl" id="ovlLv" hidden><div class="mdl">
+    <div class="mdlhead"><h2>Lançar vendas</h2><button class="btn" id="btnCloseLv" type="button">Fechar</button></div>
     <div class="cfgstatus" id="lanstatusV"></div>
     <div class="panel">
       <h3>Nova venda</h3>
@@ -433,6 +443,7 @@ body.locked .wrap{display:none}
 
     </div>
     <div id="lanLogV" class="cfglog" style="margin-top:14px"></div>
+    </div></div>
 
     <div class="panel" style="margin-top:16px" id="hvPanel">
       <h3>Vendas anteriores</h3>
@@ -453,6 +464,10 @@ body.locked .wrap{display:none}
 
   <!-- ============ LANÇAR BAIXA ============ -->
   <section class="view" id="v-lancar-baixa">
+    <div class="lanbar"><button class="btn solid" id="btnOpenLb" type="button">+ Lançar baixas</button></div>
+    <div class="cfglog" id="lanLogBp" style="margin-bottom:12px"></div>
+    <div class="ovl" id="ovlLb" hidden><div class="mdl">
+    <div class="mdlhead"><h2>Lançar baixas</h2><button class="btn" id="btnCloseLb" type="button">Fechar</button></div>
     <div class="cfgstatus" id="lanstatusB"></div>
     <div class="panel">
       <h3>Nova baixa</h3>
@@ -479,6 +494,7 @@ body.locked .wrap{display:none}
       <button class="btn solid" id="lbEnviar" style="margin-top:12px">Lançar baixa e conciliar</button>
     </div>
     <div id="lanLogB" class="cfglog" style="margin-top:14px"></div>
+    </div></div>
   </section>
 
   <!-- ============ PAINEL GERENCIAL ============ -->
@@ -1317,7 +1333,16 @@ document.getElementById('cfgRefresh').onclick=()=>loadCloud(loadCfg());
 
 /* ----- lançar (venda/baixa) ----- */
 function lanApiCfg(){const c=loadCfg();return c.api?c:null;}
-function lanlog(m,which){document.getElementById(which==='b'?'lanLogB':'lanLogV').textContent=m;}
+function lanlog(m,which){
+  const k=which==='b'?'B':'V';
+  document.getElementById('lanLog'+k).textContent=m;
+  const pg=document.getElementById('lanLog'+k+'p'); if(pg) pg.textContent=m;
+}
+function lanModal(id,abrir){const o=document.getElementById(id); if(o) o.hidden=!abrir;}
+document.getElementById('btnOpenLv').onclick=()=>lanModal('ovlLv',true);
+document.getElementById('btnCloseLv').onclick=()=>lanModal('ovlLv',false);
+document.getElementById('btnOpenLb').onclick=()=>lanModal('ovlLb',true);
+document.getElementById('btnCloseLb').onclick=()=>lanModal('ovlLb',false);
 
 function renderLancarVenda(){
   const el=document.getElementById('lanstatusV');el.className='cfgstatus nuvem';el.textContent='✓ Conectado ao login central. Os lançamentos vão direto para a planilha, com o código sequencial.';
@@ -1508,7 +1533,7 @@ document.getElementById('lvEnviar').onclick=async(e)=>{
     lanlog('✓ Venda lançada: '+itens.length+' item(ns)'+(j.codigos?' · códigos '+j.codigos.join(', '):'')+'. Atualizando…','v');
     document.getElementById('lvItens').innerHTML='';addItemRow();
     ['lvPrazo','lvVenc','lvFaturaNum'].forEach(id=>document.getElementById(id).value='');document.getElementById('lvPrazoNota').textContent='';
-    lvRecalc();lvCliInfo();
+    lvRecalc();lvCliInfo();lanModal('ovlLv',false);
     const c=loadCfg();
     if(cfgReady(c)){
       await loadCloud(c);renderHistVendas();
@@ -1528,6 +1553,7 @@ document.getElementById('lbEnviar').onclick=async(e)=>{
   if(!cliente){lanlog('Informe o cliente da baixa.','b');return;}
   const j=await postLanc({tipo:'baixa',cliente,data,valor_usd:usd,desconto:desc||null,acrescimo:acr||null,obs:document.getElementById('lbObs').value.trim()},e.target,'b');
   if(!j)return;
+  lanModal('ovlLb',false);
   lanlog('✓ Baixa lançada'+(j.codigo?' · código '+j.codigo:'')+'. Atualizando…','b');
   document.getElementById('lbUsd').value='';document.getElementById('lbDesc').value='';document.getElementById('lbAcr').value='';document.getElementById('lbObs').value='';
   const c=loadCfg();

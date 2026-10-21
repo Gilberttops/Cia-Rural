@@ -855,7 +855,7 @@
         <option value="nf">Ordenar por número da NF</option>
       </select>
       <span class="spacer"></span>
-      <button class="btn primary" id="btnAdd">+ Nova venda</button>
+      <button class="btn primary" id="btnAdd">+ Lançar vendas</button>
     </div>
     <div class="overdue-total" id="salesFilterSummary" style="display:none;"></div>
     <div class="table-scroll">
@@ -897,6 +897,16 @@
         <input type="date" id="receiptsDateTo">
       </span>
       <button class="btn" data-print="receipts"><i class="ti ti-printer" aria-hidden="true"></i> Gerar relatório PDF</button>
+    </div>
+    <div class="toolbar no-print">
+      <span class="spacer"></span>
+      <button class="btn primary" id="btnOpenBaixas" type="button">+ Lançar baixas</button>
+    </div>
+    <div class="overlay" id="baixasOverlay" hidden>
+    <div class="modal" style="width:980px;max-width:96vw;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <h3 style="margin:0;">Lançar baixas</h3>
+      <button class="btn" id="btnCloseBaixas" type="button">Fechar</button>
     </div>
     <div class="card no-print" style="margin-bottom:16px;">
       <h3>Baixar fatura</h3>
@@ -1015,6 +1025,9 @@
       </div>
     </div>
 
+    </div>
+    </div>
+
     <div class="card">
       <h3>Histórico de recebimentos</h3>
       <div class="toolbar no-print" style="margin-bottom:10px;">
@@ -1075,6 +1088,12 @@
       </div>
     </div>
 
+    <div class="overlay" id="accBaixasOverlay" hidden>
+    <div class="modal" style="width:820px;max-width:96vw;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <h3 style="margin:0;">Lançar baixas</h3>
+      <button class="btn" id="btnCloseAccBaixas" type="button">Fechar</button>
+    </div>
     <div class="card no-print" style="margin-bottom:16px;">
       <h3>Baixar ACC</h3>
       <div class="sub" style="color:var(--ink-soft);font-size:12.5px;margin-bottom:16px;">Escolha o contrato de ACC e informe a fatura de exportação que está sendo usada para liquidá-lo.</div>
@@ -1131,6 +1150,8 @@
         <button class="btn primary" id="btnAccConfirmSettle" disabled>Confirmar baixa</button>
       </div>
     </div>
+    </div>
+    </div>
 
     <div class="toolbar no-print">
       <input type="text" id="accSearch" placeholder="Buscar código ou fatura">
@@ -1141,6 +1162,7 @@
         <option value="quitado">Quitados</option>
       </select>
       <span class="spacer"></span>
+      <button class="btn" id="btnOpenAccBaixas" type="button">+ Lançar baixas</button>
       <button class="btn primary" id="btnAccAdd">+ Novo ACC</button>
     </div>
     <div class="table-scroll" style="margin-bottom:16px;">
@@ -3094,6 +3116,14 @@
     document.getElementById('modalOverlay').hidden = false;
   }
 
+  function closeAccBaixas_(){
+    var o = document.getElementById('accBaixasOverlay'); if(o) o.hidden = true;
+  }
+
+  function closeBaixas_(){
+    var o = document.getElementById('baixasOverlay'); if(o) o.hidden = true;
+  }
+
   function closeModal(){
     document.getElementById('modalOverlay').hidden = true;
   }
@@ -3379,6 +3409,7 @@
     renderSalesTable();
     renderReceiptsHistory();
     renderDashboard();
+    closeBaixas_();
   }
 
   // ---------- RECEBIMENTO EM LOTE ----------
@@ -3532,6 +3563,7 @@
     safe(populateSettleSelect, 'populateSettleSelect');
     safe(renderBatch_, 'renderBatch_');
     showImportSummary('Recebimento em lote lançado: ' + fmtUSD.format(total) + ' distribuídos em ' + rows.length + ' fatura(s).');
+    closeBaixas_();
   }
 
   function setupBatch_(){
@@ -4095,6 +4127,7 @@
     clearAccSettleForm();
     document.getElementById('accSettleSelect').value = '';
     populateAccSettleSelect();
+    closeAccBaixas_();
   }
 
   // ---------- ACC: history ----------
@@ -6858,6 +6891,8 @@ function seedDeclaracoes(){
     document.getElementById('salesVencFrom').addEventListener('change', renderSalesTable);
     document.getElementById('salesVencTo').addEventListener('change', renderSalesTable);
     document.getElementById('btnAdd').addEventListener('click', openModal);
+    document.getElementById('btnOpenBaixas').addEventListener('click', function(){ document.getElementById('baixasOverlay').hidden = false; });
+    document.getElementById('btnCloseBaixas').addEventListener('click', closeBaixas_);
     document.getElementById('btnCancel').addEventListener('click', cancelarVenda);
     document.getElementById('btnSave').addEventListener('click', saveNewInvoice);
     document.getElementById('new_faturaComercialId').addEventListener('change', onNewVendaFcChange);
@@ -6910,6 +6945,8 @@ function seedDeclaracoes(){
     document.getElementById('accDateFrom').addEventListener('change', renderAccTable);
     document.getElementById('accDateTo').addEventListener('change', renderAccTable);
     document.getElementById('btnAccAdd').addEventListener('click', openAccModal);
+    document.getElementById('btnOpenAccBaixas').addEventListener('click', function(){ document.getElementById('accBaixasOverlay').hidden = false; });
+    document.getElementById('btnCloseAccBaixas').addEventListener('click', closeAccBaixas_);
     document.getElementById('btnAccCancel').addEventListener('click', cancelarAcc);
     document.getElementById('btnAccSave').addEventListener('click', saveNewAcc);
     document.getElementById('accBody').addEventListener('input', handleAccInput);
