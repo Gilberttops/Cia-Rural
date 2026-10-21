@@ -986,6 +986,7 @@ input:focus,select:focus{border-color:var(--ru-azul);box-shadow:0 0 0 3px rgba(3
             </div>
           </div>
           <div id="lucro-vs-mm" style="margin-top:10px"></div>
+          <div id="pv-regua"></div>
         </div>
       </div>
 
@@ -2756,6 +2757,50 @@ function salvarDespesasFixas(){
 /* Modo atual do PV: 'preco' (PV digitado fixado) ou 'margem'. Antes, mudar ICMS/comissao chamava calcPV() no modo
    margem e o PV fixado era abandonado sem aviso. Agora so digitar o lucro objetivo (ou limpar o PV) sai do modo preco. */
 var pvModoAtual='margem',pvLucroAntesDeFixar=null;
+/* ===== "Compensa vender?" -- regua de preco (Formacao do Preco e Cotacao Especial) =====
+   Valores em R$/t. pVar = % do preco que existe POR CAUSA da venda (impostos, IR presumido, comissao, fretes,
+   capital de giro...); pFix = % de despesas fixas rateadas. Piso de contribuicao = custo / (1 - pVar): abaixo dele
+   cada tonelada vendida REDUZ o lucro. Preco de equilibrio = custo / (1 - pVar - pFix): paga a parte da estrutura.
+   Entre os dois, vender ainda compensa se houver capacidade ociosa (e o caso de uma venda grande com lucro negativo). */
+function htmlCompensaPreco_(o){
+  const custo=o.custo,pVar=o.pVar,pFix=o.pFix,pv=o.pv;
+  if(!(custo>0)||!(pv>0)||pVar>=1) return '';
+  const piso=custo/(1-pVar), eq=(pVar+pFix)<1?custo/(1-pVar-pFix):null;
+  const ganho=pv*(1-pVar)-custo, lucro=ganho-pv*pFix;
+  const tk=v=>'R$ '+fn(v,2)+'/t <span style="color:var(--t3)">('+fn(v/1000,3)+'/kg)</span>';
+  let cor,bg,tit,txt;
+  if(eq!==null&&pv>=eq){cor='#166534';bg='#dcfce7';tit='✓ Compensa vender e paga a parte da estrutura';
+    txt='Ganho real de R$ '+fn(ganho,2)+'/t (sem fixos) e lucro de R$ '+fn(lucro,2)+'/t depois do rateio de fixos. Folga até o piso: R$ '+fn(pv-piso,2)+'/t.';}
+  else if(pv>=piso){cor='#854d0e';bg='#fef3c7';tit='⚠ Compensa vender só com capacidade ociosa';
+    txt='Ganho real de R$ '+fn(ganho,2)+'/t: vender ainda deixa mais lucro do que não vender, mas não paga a parte da estrutura (resultado de R$ '+fn(lucro,2)+'/t no rateio).'+
+      (eq!==null?' Faltam R$ '+fn(eq-pv,2)+'/t para o equilíbrio.':'')+' Folga até o piso: R$ '+fn(pv-piso,2)+'/t.';}
+  else {cor='#991b1b';bg='#fee2e2';tit='⛔ Abaixo do piso: cada tonelada vendida reduz o lucro';
+    txt='O preço não cobre o custo e os encargos da própria venda (ganho real de R$ '+fn(ganho,2)+'/t). Faltam R$ '+fn(piso-pv,2)+'/t para o piso.';}
+  /* regua */
+  const marcas=[{v:piso,r:'Piso'}];
+  if(eq!==null) marcas.push({v:eq,r:'Equilíbrio'});
+  if(o.min>0) marcas.push({v:o.min,r:'Mínimo'});
+  if(o.sug>0) marcas.push({v:o.sug,r:'Sugerido'});
+  const todos=marcas.map(m=>m.v).concat([pv]);
+  const lo=Math.min.apply(null,todos)*0.94, hi=Math.max.apply(null,todos)*1.04, x=v=>Math.max(0,Math.min(100,(v-lo)/(hi-lo)*100));
+  const zona=(a,b,c)=>'<div style="position:absolute;top:0;bottom:0;left:'+x(a)+'%;width:'+Math.max(0,x(b)-x(a))+'%;background:'+c+'"></div>';
+  let barra=zona(lo,piso,'#fecaca')+zona(piso,eq!==null?eq:hi,'#fde68a')+(eq!==null?zona(eq,hi,'#bbf7d0'):'');
+  marcas.forEach((m,i)=>{barra+='<div style="position:absolute;top:-3px;bottom:-3px;left:'+x(m.v)+'%;width:2px;background:#334155"></div>'+
+    '<div style="position:absolute;'+(i%2?'top:24px':'top:-17px')+';left:'+x(m.v)+'%;transform:translateX(-50%);font-size:10px;color:#334155;white-space:nowrap">'+m.r+' '+fn(m.v,0)+'</div>';});
+  barra+='<div style="position:absolute;top:-6px;bottom:-6px;left:calc('+x(pv)+'% - 4px);width:8px;border-radius:3px;background:'+cor+'" title="'+(o.rotPv||'Preço')+'"></div>';
+  return '<div style="border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-top:10px">'+
+    '<div style="font-weight:700;font-size:13px;margin-bottom:6px">Compensa vender?</div>'+
+    '<div style="background:'+bg+';color:'+cor+';border-radius:8px;padding:8px 12px;font-weight:600;font-size:12.5px">'+tit+
+      '<div style="font-weight:400;margin-top:3px">'+txt+'</div></div>'+
+    '<div style="position:relative;height:16px;border-radius:5px;overflow:visible;margin:26px 4px 30px;background:#f1f5f9">'+barra+'</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:6px 14px;font-size:12px">'+
+      '<div><b>'+(o.rotPv||'Preço avaliado')+':</b> '+tk(pv)+'</div>'+
+      '<div><b>Piso de contribuição:</b> '+tk(piso)+'</div>'+
+      (eq!==null?'<div><b>Preço de equilíbrio:</b> '+tk(eq)+'</div>':'<div><b>Preço de equilíbrio:</b> impossível (encargos ≥ 100%)</div>')+
+    '</div>'+
+    '<div style="font-size:10.5px;color:var(--t3);margin-top:6px">Piso = custo ÷ (1 − encargos da venda: '+fn(pVar*100,1)+'%). Equilíbrio = custo ÷ (1 − encargos − despesas fixas: '+fn(pFix*100,1)+'%). Entre os dois, vender compensa se a fábrica tiver capacidade ociosa e o prazo não exigir juro acima do ganho real.</div></div>';
+}
+
 function calcPV(modo){
   if(modo==='preco'&&pvModoAtual!=='preco'&&$('pv-lucro'))pvLucroAntesDeFixar=$('pv-lucro').value;
   if(modo==='margem')pvLucroAntesDeFixar=null; /* digitou o lucro: vale o que foi digitado */
@@ -2831,6 +2876,10 @@ function calcPV(modo){
     ?`<div class="alert alert-ok">✓ Lucro objetivo (${fn(pLucro*100,1)}%) ≥ lucro mínimo (${fn(pLucroMin*100,1)}%).</div>`
     :`<div class="alert alert-warn">⚠ Lucro objetivo (${fn(pLucro*100,1)}%) abaixo do mínimo (${fn(pLucroMin*100,1)}%).</div>`;
 
+  { const rg=$('pv-regua');
+    if(rg){ const pvAval=(modo==='preco'&&pvManual>0)?pvManual*1000:(encSug<1?pvKg*1000:0);
+      rg.innerHTML=htmlCompensaPreco_({custo:cmvKg*1000,pVar:encA,pFix:encB,pv:pvAval,
+        min:encMin<1?pvMinKg*1000:0,sug:0,rotPv:(modo==='preco'&&pvManual>0)?'Preço digitado':'Preço sugerido'}); } }
   set('mk-sug',fnum(mkSug,4));
   set('mk-min',fnum(mkMin,4));
   set('r-pv-kg',encSug<1?f3(pvKg):'—');
@@ -6900,6 +6949,12 @@ function ptRenderEspecialCalculo(){
       $('pt-esp2-teste-resultado').style.display='none';
     }
   }
+  if($('pt-esp2-regua')){
+    const pVarE=r.enc.total-r.enc.fixas;
+    $('pt-esp2-regua').innerHTML=htmlCompensaPreco_({custo:r.custoFixoTon,pVar:pVarE,pFix:r.enc.fixas,
+      pv:r.teste?r.teste.pvTesteTon:(r.pvValido?r.pvTon:0),sug:r.teste&&r.pvValido?r.pvTon:0,
+      rotPv:r.teste?'Preço testado':'Preço calculado'});
+  }
 }
 function ptEspecialOpcoesProdutos(){
   return '<option value="">— selecione um produto —</option>'+opcoesProdutosComCotacoes(PT_ESPECIAL.produtoCod);
@@ -7275,6 +7330,7 @@ function ptRenderEspecial(){
           <div class="pt-exp-kpi" style="background:var(--s1)"><div class="lbl">Margem em %</div><div class="val" id="pt-esp2-teste-margem-pct">—</div></div>
         </div>
         <div style="font-size:10px;color:var(--t3);margin-top:6px" id="pt-esp2-teste-margem-ton"></div>
+        <div id="pt-esp2-regua"></div>
       </div>
       `}
     </div>`;
