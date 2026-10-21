@@ -1332,6 +1332,71 @@ function gerarFichaPdf_(ci,o){
 }
 
 /* ---------- fichas (drill-down) ---------- */
+/* ---------- "Compensa vender?" (ficha do cliente e do grupo) ----------
+   Ganho real = margem de contribuicao - frete - IR/CSLL: o que entra ou sai POR
+   CAUSA da venda. Os custos fixos ficam de fora: existiriam mesmo sem o cliente. */
+/* Totais da EMPRESA no periodo dos filtros (anos/meses), ignorando os filtros de cliente,
+   vendedor etc.: margem de contribuicao, custos fixos rateados (receita x % fixo do perfil)
+   e quantos dias o periodo tem (meses com venda x 30,4). Base do "dias de estrutura". */
+let EMP_CACHE=null;
+function totEmpresa_(){
+  const ms=(F.meses.size>0&&F.meses.size<12)?[...F.meses]:ALL12;
+  const chave=[...F.anos].join(',')+'|'+ms.join(',');
+  if(EMP_CACHE&&EMP_CACHE.k===chave) return EMP_CACHE;
+  let mc=0,fix=0; const mesesComVenda=new Set();
+  for(let i=0;i<N;i++){
+    if(!F.anos.has(CO.a[i])) continue;
+    const g=mgLinha(i,ms); if(!g) continue;
+    mc+=g[1]; fix+=g[0]*RATES[RP[i]].fix;
+    for(const j of ms) if(MES[j][i]) mesesComVenda.add(CO.a[i]*12+j);
+  }
+  EMP_CACHE={k:chave,mc,fix,dias:mesesComVenda.size*30.4};
+  return EMP_CACHE;
+}
+function compensaCard_(linhas,quem){
+  if(!CMES) return '';
+  let rec=0,mc=0,ll=0,gr=0,kg=0,dGr=0,dLl=0;
+  for(const i of linhas){
+    const g=mgLinha(i); if(!g) continue;
+    const r=RATES[RP[i]];
+    rec+=g[0]; mc+=g[1]; ll+=g[2]; gr+=g[1]-g[0]*(r.fr+r.ir);
+    dGr+=g[0]*(r.pis+r.com+r.fr+r.ir); dLl+=g[0]*(r.pis+r.com+r.fr+r.fix+r.ir);
+    if(PESO[CO.p[i]]) kg+=valKg(i)[1];
+  }
+  if(rec<=0) return `<div class="card"><h3>Compensa vender?</h3><p class="csub">Sem vendas com custo conhecido neste recorte (a análise vale de 2025 em diante).</p></div>`;
+  const t=kg/1000, pc=v=>pct(v/rec*100);
+  // quanto o preco por tonelada pode mudar: cada R$ a mais na receita vira (1 - % que acompanha a receita)
+  const kGr=1-dGr/rec, kLl=1-dLl/rec;
+  const folgaT=t>0&&kGr>0?gr/(t*kGr):null, zeraT=t>0&&kLl>0&&ll<0?-ll/(t*kLl):null;
+  const precoT=t>0?rec/t:null;
+  const E=totEmpresa_();
+  const fixDia=E.dias>0?E.fix/E.dias:0;
+  const diasEstr=fixDia>0?mc/fixDia:null, diasAno=diasEstr!=null&&E.dias>0?diasEstr*365/E.dias:null;
+  const pMg=E.mc>0?mc/E.mc*100:null, pEq=E.fix>0?mc/E.fix*100:null;
+  let cor,bg,tit,txt;
+  if(ll>=0){cor='#1E6B3A';bg='#E8F5EC';tit='Compensa e paga a sua parte da estrutura';
+    txt=`Depois de frete, IR e da fatia de custos fixos, ainda sobra lucro.`;}
+  else if(gr>0){cor='#7A5A00';bg='#FFF4D6';tit='Compensa vender, mas não paga a sua parte da estrutura';
+    txt=`Cada venda deixa ${'R$ '+nf(gr,0)} a mais no caixa do que não vender, mas abaixo da fatia de custos fixos rateada.`+(zeraT?` Com cerca de <b>R$ ${nf(zeraT,0)}/t a mais</b> deixaria de dar prejuízo no rateio.`:'');}
+  else {cor='#9B2C2C';bg='#FDECEA';tit='Não compensa: cada venda reduz o lucro';
+    txt=`A margem não cobre nem o frete e o IR desta venda.`+(folgaT!=null&&t>0?` Faltam cerca de <b>R$ ${nf(-folgaT,0)}/t</b> para empatar.`:'');}
+  return `<div class="card"><h3>Compensa vender?</h3>
+    <p class="csub">Ganho real = margem de contribuição − frete − IR/CSLL: o que entra ou sai por causa das vendas ${quem}. Custos fixos e financeiros não entram, porque existiriam sem elas. Só 2025 em diante, linhas com custo conhecido. Valores aproximados.</p>
+    <div style="background:${bg};color:${cor};border-radius:10px;padding:10px 14px;margin:8px 0 12px;font-weight:600">${tit}<div style="font-weight:400;margin-top:3px">${txt}</div></div>
+    <div class="kpis">
+      <div class="kpi"><div class="lab">Receita com custo</div><div class="val">R$ ${nf(rec,0)}</div><div class="sub">${t>0?nf(t,1)+' t · R$ '+nf(precoT,0)+'/t':'sem peso'}</div></div>
+      <div class="kpi"><div class="lab">Margem de contribuição</div><div class="val">R$ ${nf(mc,0)}</div><div class="sub">${pc(mc)} da receita</div></div>
+      <div class="kpi"><div class="lab">Ganho real</div><div class="val" style="color:${gr>0?'#1E6B3A':'#9B2C2C'}">R$ ${nf(gr,0)}</div><div class="sub">${pc(gr)} · sem frete e IR</div></div>
+      <div class="kpi"><div class="lab">Lucro líq. estimado</div><div class="val">R$ ${nf(ll,0)}</div><div class="sub">${pc(ll)} · com rateio de fixos</div></div>
+      <div class="kpi"><div class="lab">Dias de estrutura pagos</div><div class="val">${diasEstr!=null?nf(diasEstr,1)+' dias':'—'}</div><div class="sub">${diasAno!=null?'≈ '+nf(diasAno,1)+' dias por ano':'&nbsp;'}</div></div>
+      <div class="kpi"><div class="lab">Na margem da empresa</div><div class="val">${pMg!=null?pct(pMg):'—'}</div><div class="sub">da margem de contribuição total</div></div>
+      <div class="kpi"><div class="lab">No ponto de equilíbrio</div><div class="val">${pEq!=null?pct(pEq):'—'}</div><div class="sub">dos custos fixos do período</div></div>
+      <div class="kpi"><div class="lab">Folga de preço</div><div class="val">${folgaT!=null&&gr>0?'R$ '+nf(folgaT,0)+'/t':'—'}</div><div class="sub">${folgaT!=null&&gr>0?'pode cair até ≈ R$ '+nf(precoT-folgaT,0)+'/t':'sem folga'}</div></div>
+    </div>
+    <p class="csub" style="margin-top:8px">Dias de estrutura = margem de contribuição ÷ custo fixo por dia da empresa no mesmo período (custos fixos pelo rateio do painel: receita × % de custo fixo do perfil). Ponto de equilíbrio = quanto dessa estrutura a margem ${quem} paga.</p>
+    <p class="csub" style="margin-top:4px">Até quando compensa: preço acima do piso (folga acima), juro do prazo menor que o ganho real, capacidade que estaria parada e o resto da carteira pagando os fixos.</p></div>`;
+}
+
 /* ---------- grupos de clientes (varios cadastros da mesma empresa) ---------- */
 // Para criar outro grupo, basta incluir uma linha aqui: o grupo reune todo cadastro
 // cujo nome contenha alguma das palavras-chave (sem acento e sem diferenciar maiuscula).
@@ -1394,6 +1459,7 @@ function fichaGrupo(gi){
     <div class="kpi"><div class="lab">Peso vendido</div><div class="val">${nf(pesoG/1000,1)} t</div><div class="sub">${rsT?'R$ '+nf(rsT,0)+' por tonelada':'sem peso definido'}</div></div>
     ${kpiMg}
   </div>
+  ${compensaCard_(linhas,'para o grupo')}
   <div class="card"><h3>Histórico ano a ano</h3><div id="g1"></div></div>
   <div class="card"><h3>Cadastros do grupo</h3><p class="csub">Clique em um cadastro para abrir a ficha dele.</p><div id="g2"></div></div>
   <div class="card"><h3>O que o grupo compra</h3><div id="g3"></div></div>
@@ -1505,6 +1571,7 @@ function fichaCliente(ci){
     <div class="kpi"><div class="lab">Vendedor principal</div><div class="val" style="font-size:.98rem">${VEND[vends[0][0]].nome}</div>
       <div class="sub">${pct(vends[0][1]/tot*100)} do cliente</div></div>
   </div>
+  ${compensaCard_(linhas,'para este cliente')}
   <div class="card"><h3>Histórico ano a ano</h3><div id="fc1"></div></div>
   <div class="card"><h3>O que este cliente compra</h3>
     <p class="csub">Todos os produtos do período, do maior para o menor.</p><div id="fc2"></div></div>
