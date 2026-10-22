@@ -6533,8 +6533,27 @@ function seedDeclaracoes(){
       return null;
     }).catch(function(){ return null; }).then(function(tmpl){
       // Sem modelo salvo neste navegador, copia a declaração mais recente da planilha.
-      return limparModeloDec_(tmpl || ultimaDecComoModelo_());
+      return completarModeloDec_(limparModeloDec_(tmpl || ultimaDecComoModelo_()));
     });
+  }
+  // Campo vazio no modelo (ex.: importador, endereço do exportador) é preenchido
+  // com o valor da declaração mais recente que o tenha. Número, data, container,
+  // fatura e produtos continuam vazios: são de cada declaração.
+  var DEC_CAMPOS_POR_DECLARACAO = ['data','numeroFatura','numeroContainer'];
+  function completarModeloDec_(t){
+    if(!t) t = limparModeloDec_(ultimaDecComoModelo_());
+    if(!t) return t;
+    var ord = (declaracoes||[]).slice().sort(function(a,b){ return (a.data||'') < (b.data||'') ? 1 : -1; });
+    Object.keys(DEC_FIELD_TO_PROP).forEach(function(fieldId){
+      var prop = DEC_FIELD_TO_PROP[fieldId];
+      if(DEC_CAMPOS_POR_DECLARACAO.indexOf(prop) !== -1) return;
+      if(t[prop] != null && String(t[prop]).trim() !== '') return;
+      for(var i=0;i<ord.length;i++){
+        var v = ord[i][prop];
+        if(v != null && String(v).trim() !== ''){ t[prop] = v; break; }
+      }
+    });
+    return t;
   }
   function ultimaDecComoModelo_(){
     if(!declaracoes || !declaracoes.length) return null;
