@@ -224,8 +224,22 @@ const VERSOES = [
 VERSOES.push(['1.1', '20/10/2026', 'Parcelas do controle de financiamentos: a Rosângela escolhe a parcela, digita o valor debitado e o guia separa capital e juros.']);
 VERSOES.push(['1.2', '20/10/2026', 'Tarifas e juros do limite da RNA nas contas próprias da RNA (RNA - Tarifas / RNA - Juros de cada banco). A versão anterior mandava usar as contas sem prefixo.']);
 VERSOES.push(['1.3', '20/10/2026', 'Guia no portal da Rural, pelo botão "Guia de lançamentos" do app Financiamentos. As parcelas vêm da planilha de financiamentos na hora, com login.']);
+VERSOES.push(['1.4', '22/10/2026', 'Ourocap (compra e resgate separando o rendimento) e juros/multa recebidos de cliente em atraso (vão em Juros ativos). Contas BB Renda Fixa e Capitalização Bradesco na lista de não usar.']);
+VERSOES.push(['1.5', '22/10/2026', 'Parcela de seguro vai direto na despesa Seguros (Rural 42010301006 / RNA 42070600007). As contas Seguro imóveis e Seguro veículos (a apropriar) entram na lista de não usar.']);
+VERSOES.push(['1.6', '22/10/2026', 'Tarifa de câmbio/exportação (Tarifa Única Exportação ~550 por carga, Orpag Exterior ~500) vai em 42021000019 Despesas com recebimento de Exportação, não em Tarifas bancárias.']);
+VERSOES.push(['1.7', '22/10/2026', 'Empréstimo de pessoa (não bancário, pessoa física): dinheiro recebido credita a conta da dívida (21020200011), juros mensais em 42021000026 Juros de empréstimos não bancários, cheque de garantia não se lança.']);
+VERSOES.push(['1.8', '22/10/2026', 'Nova seção Impostos, guias e taxas: conta certa de cada guia (PIS, Cofins, IRPJ, CSLL, ICMS, DIFAL, INSS, FGTS, IRRF, ISS, taxas, IPTU, IPVA, parcelamentos, retenções, restituição) na Rural e na RNA. Imposto pago vai direto na despesa, nunca nas contas a pagar.']);
+VERSOES.push(['1.9', '22/10/2026', 'Impostos: PIS e Cofins da RNA nas contas RNA - PIS / RNA - COFINS; IPVA por departamento (entregas, diretoria, vendas, escritório); IPTU da loja de Iguatemi e da casa de Ivinhema nas contas delas.']);
+VERSOES.push(['2.0', '22/10/2026', 'A conta 42031000006 Taxas Anuais passou a se chamar Taxas, Licenças e Contribuições Diversas: junta comercial, certidões, INMETRO, bombeiros, alvará, ISS. Outras Taxas (42021000004) é despesa financeira: não use para taxa de órgão público. Anuidade de conselho (CRMV) vai na conta do conselho.']);
+VERSOES.push(['2.1', '22/10/2026', 'Nova seção Descontos, juros e multas: desconto dado ao cliente vai em Descontos concedidos (31210000002), nunca em Descontos obtidos; desconto recebido de fornecedor em Descontos obtidos; juros/multa por atraso pagos em 42021000005, nunca como desconto negativo.']);
+VERSOES.push(['2.2', '22/10/2026', 'Novo assunto Investimentos: máquina ou equipamento comprado (à vista ou parcelado, ex.: Grantec 1745-1752) vai no ativo Máquinas e equipamentos (13210000001), não em manutenção; reforma ou obra no imóvel vai em Imóveis (13210000005). Conserto comum continua na despesa de manutenção.']);
 let CONTROLE = {data: '', arquivo: '', parcelas: {}, aviso: 'entre com o seu usuário'};   // gerado pelo build_guia.py a partir da planilha do controle de financiamentos
 const C = {   // código -> nome no Agrotis
+  '31210000002':'Descontos e abatimentos concedidos','31330000002':'Descontos obtidos','31100000001':'Venda de Mercadorias Rural','31100000005':'RNA - Venda de Mercadorias',
+  '31220000002':'PIS sobre vendas','31220000003':'Cofins sobre vendas','42031000003':'Imposto de Renda','42070800002':'RNA - IRPJ','42031000005':'Contribuição Social','42070800003':'RNA - CSLL','42031000004':'ICMS normal','42070800001':'RNA - ICMS','42031000008':'ICMS Diferencial de Alíquota','42070800009':'RNA - ICMS DIF ALIQUOTA','42010200001':'INSS','42070200002':'RNA - INSS a Pagar','42010200002':'FGTS','42070200001':'RNA - FGTS','42010200005':'FGTS ronei','42010200004':'IRRF (Imp. Renda Folha)','42070200003':'RNA - Imposto de Renda Pessoa Física','42031000006':'Taxas, Licenças e Contribuições Diversas','42070600004':'RNA - Outras Despesas Gerais','42031000007':'DARF ITR','42010301007':'IPTU','42070800006':'RNA - IPTU','42033000001':'Cofins (Parcelamento)','42033000002':'Pis (Parcelamento)','42033000003':'Contribuição Social (parcelamento)','42033000004':'Imposto de Renda PJ (parcelamento)','42033000005':'INSS (parcelamento)','42033000006':'ICMS (parcelamento)','42033000007':'Outros Parcelamentos','42070800007':'RNA - Parcelamento IRPJ','42070800008':'RNA - Parcelamento CSLL','42032000001':'Multas fiscais compensatórias','32310000001':'RNA - Restituição de impostos','42070800004':'RNA - PIS','42070800005':'RNA - COFINS','42070600001':'RNA - Despesas CASA','42010306009':'Despesas Loja Iguatemi',
+  '13210000001':'Maquinas e equipamentos','13210000005':'Imóveis','13210000012':'Compra de equipamentos para Fabrica RNA','42010305022':'Manutenção Balanças','42010301001':'Manutenção de Imovel',
+  '21020200011':'Empréstimo de pessoa física','42021000026':'Juros de empréstimos não bancários',
+  '42021000019':'Despesas com recebimento de Exportação',
   '11110000004':'Rural - Caixa Dinheiro','11110000010':'RNA - Caixa Dinheiro',
   '11120000001':'Rural - Banco do Brasil','11120000002':'Rural - Banco Bradesco','11120000004':'Rural - Banco Sicredi','11120000007':'Rural - Banco Cresol',
   '11120000005':'RNA - Banco do Brasil','11120000006':'RNA - Banco Bradesco','11110000012':'RNA - Banco Sicredi',
@@ -233,6 +247,7 @@ const C = {   // código -> nome no Agrotis
   '21020100013':'Rural - ACC BB (contratos de câmbio)','21020100037':'Rural - ACC Bradesco 604072951',
   '21020100014':'Rural - Cartão de crédito BB','21020100015':'RNA - Cartão de crédito BB',
   '31100000007':'Recebimento Exportação Cambio',
+  '11203000001':'Ourocap','31320000001':'Rendimento de aplicações de renda fixa','31330000001':'Juros ativos','42010301006':'Seguros','42070600007':'RNA - Seguros',
   '42021000015':'Rural - Juros financiamentos BB','42021000016':'Rural - Juros financiamentos Bradesco','42021000017':'Rural - Juros financiamentos Sicredi',
   '42071100001':'RNA - Juros financiamentos BB','42071100002':'RNA - Juros financiamentos Sicredi','42071100003':'RNA - Juros financiamentos Bradesco',
   '42021000023':'Rural - Despesas desconto de duplicatas BB','42021000024':'Rural - Despesas desconto de duplicatas Sicredi','42021000025':'Rural - Despesas desconto de duplicatas Bradesco',
@@ -289,6 +304,10 @@ const ANTIGAS = [
   ['21020100026 a 028','Rural - BB … - FCO (quitado)','contratos já quitados'],
   ['42021000014','Encargos Financeiros','juros do limite: Rural usa "Juros limite" do banco; RNA usa "RNA - Juros" do banco'],
   ['42010304006 / 008','Tarifas Desc. Titulos BB / Bradesco','usar "Despesas desconto de duplicatas" do banco e da empresa'],
+  ['11130000003','BB Renda Fixa (inativa)','aplicação automática do BB: "Aplicação BB (Rende Fácil)" da empresa'],
+  ['11203000002','Titulos Capitalização Bradesco','zerada em 31/12/2025; não há título ativo'],
+  ['11202000003','Venda Ranger a receber P. Moller','conta encerrada; acréscimo de cliente vai em Juros ativos (31330000001)'],
+  ['11301000001 / 002','Seguro imóveis / Seguro veículos (a apropriar)','parcela de seguro: Rural "Seguros" (42010301006); RNA "RNA - Seguros" (42070600007)'],
   ['42010304002','Tarifas bancarias - INATIVO','Rural: "Tarifas bancárias" do banco; RNA: "RNA - Tarifas" do banco'],
 ];
 
@@ -329,6 +348,7 @@ function tabela(cab, linhas) {
   return `<table><tr>${cab.map(h => `<th>${h}</th>`).join('')}</tr>${linhas.map(l => `<tr>${l.map(x => `<td>${x}</td>`).join('')}</tr>`).join('')}</table>`;
 }
 function lanc(linhas) { // [['D'|'C', código ou texto, valor]]
+  if (!linhas.length) return '<p><b>Sem lançamento no Agrotis.</b></p>';
   return `<table class="lanc"><tr><th>D/C</th><th>Conta</th><th>Valor</th></tr>${linhas.map(([dc, c, v]) =>
     `<tr><td class="${dc}">${dc === 'D' ? 'Débito' : 'Crédito'}</td><td>${conta(c)}</td><td>${esc(v)}</td></tr>`).join('')}</table>`;
 }
@@ -336,6 +356,10 @@ const tag = e => `<span class="tag ${e}">${e}</span>`;
 
 // ---- operações (usadas pelo assistente) ----
 const OPS = {
+  apl: {nome:'Ourocap (título de capitalização BB)', so:'Rural', ops: {
+    cmp: {nome:'Compra de Ourocap (ex.: no fechamento do ACC)', f:(e,b) => ({linhas:[['D','11203000001','valor do título'],['C',BANCO.Rural.BB,'mesmo valor']], passos:['Ourocap é aplicação, nunca despesa.','Anote no histórico o número do título e o vencimento (está no comprovante do BB).']})},
+    res: {nome:'Resgate de Ourocap', f:(e,b) => ({linhas:[['D',BANCO.Rural.BB,'valor recebido no extrato'],['C','11203000001','valor do título (o que foi pago na compra)'],['C','31320000001','rendimento = recebido − valor do título']], passos:['Um lançamento com duas linhas de crédito: o título sai pelo valor de compra e a diferença é rendimento.','Ex.: título de 30.000,00 resgatado por 30.511,31 → crédito 30.000,00 no Ourocap e 511,31 no Rendimento.','Recebeu MENOS que o valor do título (resgate antes do vencimento)? Não lance: avise o Gilberto.']})},
+  }},
   emp: {nome:'Empréstimo / financiamento', ops: {
     lib: {nome:'Liberação (dinheiro entrou)', tipos:['parcelado'], f:(e,k) => ({
       linhas:[['D',BANCO[e][k[1]],'valor que entrou no banco'],['C',k[4],'mesmo valor']],
@@ -354,7 +378,42 @@ const OPS = {
     lib: {nome:'Liberação do ACC', f:(e,b) => ({linhas:[['D',BANCO.Rural[b],'reais creditados'],['C',ACC[b].conta,'mesmo valor']], passos:['Anote no histórico o número do contrato de câmbio e o valor em dólar.']})},
     liq: {nome:'Liquidação do ACC (exportação quitou o contrato)', f:(e,b) => ({linhas:[['D',ACC[b].conta,'valor em R$ da liberação do contrato'],['C',REC_EXP,'mesmo valor']], passos:['Não passa pelo banco: o pagamento do importador quita o contrato direto.','Use o valor em reais da liberação daquele contrato.']})},
     jur: {nome:'Juros / deságio / comissão do ACC', f:(e,b) => ({linhas:[['D',ACC[b].juros,'valor cobrado'],['C',BANCO.Rural[b],'mesmo valor']], passos:[]})},
-    exp: {nome:'Exportação recebida em dinheiro (sem ACC)', f:(e,b) => ({linhas:[['D',BANCO.Rural[b],'reais creditados'],['C',REC_EXP,'mesmo valor']], passos:['Despesa do banco no fechamento do câmbio: débito em ' + ACC[b].juros + ', crédito no banco.']})},
+    exp: {nome:'Exportação recebida em dinheiro (sem ACC)', f:(e,b) => ({linhas:[['D',BANCO.Rural[b],'reais creditados'],['C',REC_EXP,'mesmo valor']], passos:['Deságio/juros do câmbio: débito em ' + ACC[b].juros + ', crédito no banco.','Tarifa da exportação (cerca de 550 por carga): use a operação "Tarifa de câmbio / exportação" (conta 42021000019).']})},
+    tar: {nome:'Tarifa de câmbio / exportação (por carga)', f:(e,b) => ({linhas:[['D','42021000019','valor da tarifa'],['C',BANCO.Rural[b],'mesmo valor']], passos:['No extrato aparece como "Tarifa Única Exportação" (cerca de 550 por carga) ou "Tar Liquid Orpag Exterior" (cerca de 500).','É custo da exportação: vai SEMPRE na 42021000019 (Despesas com recebimento de Exportação).','Nunca lance em Tarifas bancárias nem em Juros ACC (deságio).']})},
+  }},
+  nb: {nome:'Empréstimo de pessoa (não bancário, pessoa física)', so:'Rural', ops: {
+    rec: {nome:'Dinheiro do empréstimo entrou', f:(e,b) => ({linhas:[['D',BANCO[e][b] + ' (ou o caixa, se veio em dinheiro)','valor recebido'],['C','21020200011','mesmo valor']], passos:['Empréstimo recebido é dívida (passivo), nunca "Empréstimo a terceiros" (11206000002), que é dinheiro que NÓS emprestamos.','Pessoa nova, sem conta própria? Pare e avise o Gilberto para criar a conta antes de lançar.']})},
+    jur: {nome:'Juros do mês', f:(e,b) => ({linhas:[['D','42021000026','juros pagos'],['C',BANCO[e][b],'mesmo valor']], passos:['Juros são despesa do mês: nunca debite na conta do empréstimo.','Cheques pré-datados de juros: lance cada um na sua data de compensação.']})},
+    gar: {nome:'Cheque de garantia entregue', f:(e,b) => ({linhas:[], passos:['NÃO LANCE. Cheque de garantia não é pagamento: se for lançado, derruba o saldo do banco sem o dinheiro sair.','Anote numa planilha de controle (número, valor, para quem) e avise o Gilberto.']})},
+    dev: {nome:'Devolução do capital (quitação)', f:(e,b) => ({linhas:[['D','21020200011','valor do capital devolvido'],['C',BANCO[e][b],'mesmo valor']], passos:['Se no mesmo pagamento vierem juros, separe: juros em 42021000026.']})},
+  }},
+  imp: {nome:'Impostos, guias e taxas', ops: {
+    pis: {nome:'PIS sobre vendas (DARF 8109)', f:(e,b) => ({linhas:[['D',e === 'RNA' ? '42070800004' : '31220000002','valor da guia'],['C',BANCO[e][b],'total pago']], passos:['A guia de PIS da RNA vai em RNA - PIS, mesmo que o fornecedor no Agrotis se chame "DARF PIS RNA" para as duas empresas: veja quem pagou.','Multa e juros por atraso em linha separada: ' + (e === 'RNA' ? 'avise o Gilberto (a RNA não tem conta de multa).' : '42032000001 Multas fiscais compensatórias.')]})},
+    cof: {nome:'Cofins sobre vendas (DARF 2172)', f:(e,b) => ({linhas:[['D',e === 'RNA' ? '42070800005' : '31220000003','valor da guia'],['C',BANCO[e][b],'total pago']], passos:['A guia de Cofins da RNA vai em RNA - COFINS.']})},
+    irpj: {nome:'IRPJ (DARF 2089 / 5993 / 2362)', f:(e,b) => ({linhas:[['D',e === 'RNA' ? '42070800002' : '42031000003','valor'],['C',BANCO[e][b],'valor']], passos:['Só o IRPJ do mês/trimestre. DARF 1124 é PARCELAMENTO: use "Parcela de parcelamento".','ITR (DARF 1070) não é IRPJ: use "Taxas e outros tributos".']})},
+    csll: {nome:'CSLL (DARF 2372 / 2484)', f:(e,b) => ({linhas:[['D',e === 'RNA' ? '42070800003' : '42031000005','valor'],['C',BANCO[e][b],'valor']], passos:[]})},
+    icms: {nome:'ICMS próprio / FUNDERSUL (DAEMS)', f:(e,b) => ({linhas:[['D',e === 'RNA' ? '42070800001' : '42031000004','valor'],['C',BANCO[e][b],'valor']], passos:['Anote no histórico a nota fiscal ou o mês de referência.','Diferencial de alíquota tem conta própria: use "ICMS diferencial de alíquota".']})},
+    dif: {nome:'ICMS diferencial de alíquota (DAEMS)', f:(e,b) => ({linhas:[['D',e === 'RNA' ? '42070800009' : '42031000008','valor'],['C',BANCO[e][b],'valor']], passos:['Anote no histórico a nota fiscal da compra.']})},
+    inss: {nome:'INSS da folha (GPS / DCTFWeb)', f:(e,b) => ({linhas:[['D',e === 'RNA' ? '42070200002' : '42010200001','valor'],['C',BANCO[e][b],'valor']], passos:['Parcelamento de INSS não entra aqui: use "Parcela de parcelamento".']})},
+    fgts: {nome:'FGTS (mensal ou rescisão)', f:(e,b) => ({linhas:[['D',e === 'RNA' ? '42070200001' : '42010200002','valor'],['C',BANCO[e][b],'valor']], passos:e === 'RNA' ? [] : ['FGTS do Ronei tem conta própria: 42010200005 FGTS ronei.']})},
+    irrf: {nome:'IRRF da folha (DARF 0561)', f:(e,b) => ({linhas:[['D',e === 'RNA' ? '42070200003' : '42010200004','valor'],['C',BANCO[e][b],'valor']], passos:['É o imposto descontado do salário dos funcionários, não é IRPJ.']})},
+    iss: {nome:'ISS / ISSQN (guia da prefeitura)', f:(e,b) => ({linhas:[['D',e === 'RNA' ? '42070600004' : '42031000006','valor'],['C',BANCO[e][b],'valor']], passos:['Nunca use ISS a pagar nem Outras Taxas (42021000004, que é despesa financeira).']})},
+    tax: {nome:'Taxas e outros tributos (alvará, bombeiros, licenças, ITR)', f:(e,b) => ({linhas:[['D',e === 'RNA' ? '42070600004' : '42031000006','valor'],['C',BANCO[e][b],'valor']], passos:e === 'RNA' ? ['Bombeiros e alvará da RNA vão em RNA - Outras Despesas Gerais.'] : ['ITR (DARF 1070): use 42031000007 DARF ITR.']})},
+    iptu: {nome:'IPTU', f:(e,b) => ({linhas:[['D',e === 'RNA' ? '42070800006' : '42010301007','valor'],['C',BANCO[e][b],'valor']], passos:e === 'RNA' ? ['IPTU da casa de Ivinhema: 42070600001 RNA - Despesas CASA.','Taxa de lixo cobrada junto com o IPTU vai junto.'] : ['IPTU da loja de Iguatemi: 42010306009 Despesas Loja Iguatemi.','Taxa de lixo cobrada junto com o IPTU vai junto.']})},
+    ipva: {nome:'IPVA / licenciamento de veículo', f:(e,b) => ({linhas:[['D',e === 'RNA' ? 'conta de manutenção do veículo (ex.: RNA - Saveiro Manutenção)' : 'IPVA do departamento do veículo (ver passos)','valor'],['C',BANCO[e][b],'valor']], passos:(e === 'RNA' ? [] : ['Entregas (caminhões): 42010302004 IPVA Caminhão.','Diretoria (Ronei): IPVA Diretoria.','Vendas (Deivid e Eydson): IPVA Vendas.','Escritório (Strada, Biz e outros): 42010302052 IPVA Escritório.']).concat(['Anote a placa no histórico.','Nunca lance IPVA em conta de Veículos do ativo (imobilizado) nem em manutenção.'])})},
+    par: {nome:'Parcela de parcelamento (DARF 1124, PERT, INSS, ICMS)', f:(e,b) => ({linhas:[['D',e === 'RNA' ? '42070800007 (IRPJ) ou 42070800008 (CSLL)' : 'conta do parcelamento do imposto (42033000001 a 42033000007)','valor da parcela'],['C',BANCO[e][b],'valor']], passos:e === 'RNA' ? ['Parcelamento da RNA de outro imposto: avise o Gilberto.'] : ['Cofins 42033000001 · PIS 42033000002 · CSLL 42033000003 · IRPJ 42033000004 · INSS 42033000005 · ICMS 42033000006 · outros ou não sabe 42033000007.','DARF 1124 é sempre parcelamento: nunca lance em Imposto de Renda.']})},
+    ret: {nome:'Retenção na fonte de terceiros (DARF 5952, 1708)', f:(e,b) => ({linhas:[['D','mesma conta da despesa do serviço que gerou a retenção','valor'],['C',BANCO[e][b],'valor']], passos:['O imposto retido faz parte do custo do serviço contratado.']})},
+    res: {nome:'Restituição de imposto recebida', f:(e,b) => ({linhas:[['D',BANCO[e][b],'valor recebido'],['C',e === 'RNA' ? '32310000001' : 'avise o Gilberto antes de lançar','mesmo valor']], passos:[]})},
+  }},
+  dcj: {nome:'Descontos, juros e multas (clientes e fornecedores)', ops: {
+    dcli: {nome:'Desconto que NÓS DEMOS ao cliente no recebimento', f:(e,b) => ({linhas:[['D',BANCO[e][b],'valor que entrou no banco'],['D','31210000002','desconto dado'],['C',e === 'RNA' ? '31100000005' : '31100000001','valor cheio da duplicata']], passos:['Desconto dado ao cliente é Descontos concedidos (31210000002). NUNCA use Descontos obtidos (31330000002): ela é só para desconto que nós recebemos.']})},
+    dfor: {nome:'Desconto que RECEBEMOS do fornecedor no pagamento', f:(e,b) => ({linhas:[['D','conta da compra ou despesa','valor cheio da duplicata'],['C',BANCO[e][b],'valor que saiu do banco'],['C','31330000002','desconto recebido']], passos:['Só quando pagamos menos em dinheiro. Título baixado sem pagar não é desconto: avise o Gilberto.']})},
+    jat: {nome:'Juros ou multa por atraso pagos a fornecedor', f:(e,b) => ({linhas:[['D','conta da compra ou despesa','valor da duplicata'],['D','42021000005','juros/multa pagos a mais'],['C',BANCO[e][b],'total que saiu do banco']], passos:['Nunca lance juros como desconto com valor negativo: vira receita negativa e esconde a despesa de juros.','Juros ou multa recebidos de cliente atrasado vão em 31330000001 Juros ativos.']})},
+  }},
+  inv: {nome:'Investimentos (máquina, equipamento, reforma)', ops: {
+    maq: {nome:'Compra de máquina ou equipamento (à vista ou parcela)', f:(e,b) => ({linhas:[['D',e === 'RNA' ? '13210000012' : '13210000001','valor pago (ou da parcela)'],['C',BANCO[e][b],'mesmo valor']], passos:['Máquina, equipamento ou balança nova é investimento: vai no ativo, nunca em Manutenção.','Vale para cada parcela de compra parcelada. Ex.: Grantec duplicatas 1745-1752 (parcelas 7 e 8, nov e dez/2026): D 13210000001 Maquinas e equipamentos.','Anote no histórico o fornecedor, a nota e o número da parcela.','Na dúvida entre conserto e compra, avise o Gilberto.']})},
+    ref: {nome:'Reforma ou obra no imóvel', f:(e,b) => ({linhas:[['D',e === 'RNA' ? 'avise o Gilberto (a RNA não tem conta de imóveis)' : '13210000005','valor pago'],['C',BANCO[e][b],'mesmo valor']], passos:['Reforma, ampliação ou obra (ex.: reforma do escritório, set–out/2026) é investimento: vai em Imóveis, não em Manutenção de Imóvel.','Anote no histórico o que foi feito e o fornecedor (pedreiro, material, etc.): sem histórico não dá para conferir depois.']})},
+    man: {nome:'Conserto ou manutenção comum', f:(e,b) => ({linhas:[['D','conta de manutenção do bem (ex.: 42010301001 Manutenção de Imovel, 42010305022 Manutenção Balanças)','valor'],['C',BANCO[e][b],'valor']], passos:['Só conserto, peça de reposição ou serviço que mantém o bem como estava. Se o bem ficou novo ou maior, é investimento (opções acima).']})},
   }},
   desc: {nome:'Duplicata descontada', ops: {
     bor: {nome:'Desconto de um borderô (banco antecipou)', f:(e,b) => ({linhas:[['D',BANCO[e][b],'valor de face dos títulos'],['C',DD[e],'mesmo valor'],['D',DESP_DESC[e][b],'juros + IOF + tarifa do borderô'],['C',BANCO[e][b],'mesmo valor']], passos:['Lance o borderô pelo valor de face (o total dos títulos) e os encargos à parte.','Os títulos continuam em aberto no Contas a Receber até o cliente pagar.']})},
@@ -362,9 +421,11 @@ const OPS = {
     dev: {nome:'Banco debitou título não pago (recompra)', f:(e,b) => ({linhas:[['D',DD[e],'valor do título'],['C',BANCO[e][b],'mesmo valor'],['D',DESP_DESC[e][b],'juros/multa cobrados na recompra'],['C',BANCO[e][b],'mesmo valor']], passos:['O título continua em aberto no Contas a Receber: agora a empresa cobra o cliente direto.','Avise o financeiro/comercial para cobrar o cliente.']})},
   }},
   enc: {nome:'Juros, IOF e tarifas da conta', ops: {
-    tar: {nome:'Tarifa bancária', f:(e,b) => ({linhas:[['D',tarifa(e,b),'valor'],['C',BANCO[e][b],'valor']], passos:[e === 'RNA' ? 'A RNA tem conta própria de tarifa para cada banco (começa com "RNA - Tarifas").' : 'Na Rural, a conta de tarifa é a do banco, sem prefixo.']})},
+    tar: {nome:'Tarifa bancária', f:(e,b) => ({linhas:[['D',tarifa(e,b),'valor'],['C',BANCO[e][b],'valor']], passos:['Tarifa de exportação/câmbio (Tarifa Única Exportação, Orpag Exterior) NÃO é aqui: vá em ACC (câmbio) > Tarifa de câmbio / exportação.', e === 'RNA' ? 'A RNA tem conta própria de tarifa para cada banco (começa com "RNA - Tarifas").' : 'Na Rural, a conta de tarifa é a do banco, sem prefixo.']})},
     lim: {nome:'Juros do limite / cheque especial', f:(e,b) => ({linhas:[['D',jurosLim(e,b),'valor'],['C',BANCO[e][b],'valor']], passos:['Vale também para "encargos" mensais da conta corrente.', e === 'RNA' ? 'A RNA tem conta própria de juros para cada banco (começa com "RNA - Juros").' : 'Na Rural, a conta é "Juros limite" do banco.']})},
     iof: {nome:'IOF da conta corrente', f:(e,b) => ({linhas:[['D',IOF_CC[b],'valor'],['C',BANCO[e][b],'valor']], passos:['IOF de empréstimo não entra aqui: vai na conta de juros do contrato.']})},
+    seg: {nome:'Parcela de seguro (imóveis, veículos, máquinas)', f:(e,b) => ({linhas:[['D',e === 'RNA' ? '42070600007' : '42010301006','valor da parcela'],['C',BANCO[e][b],'mesmo valor']], passos:['Parcela mensal de seguro é despesa do mês: lance direto em Seguros da empresa dona do bem.','Nunca use Seguro imóveis / Seguro veículos (11301...): essas contas não são mais usadas.','Seguro da RNA pago pela conta da RNA vai em RNA - Seguros; se uma empresa pagar seguro da outra, avise o Gilberto.']})},
+    rec: {nome:'Juros/multa recebidos de cliente em atraso', f:(e,b) => ({linhas:[['D',BANCO[e][b] + ' (ou ' + DD[e] + ' se o título estava descontado)','acréscimo recebido'],['C','31330000001','mesmo valor']], passos:['Na baixa do título a receber, o acréscimo (juros/multa) vai SEMPRE na 31330000001 (Juros ativos).','Nunca escolha outra conta do ativo para o acréscimo (já aconteceu de cair em "Venda Ranger a receber").']})},
     atr: {nome:'Juros/multa por pagar fornecedor atrasado', f:(e,b) => ({linhas:[['D','42021000005','acréscimo pago'],['C',BANCO[e][b],'junto com o pagamento']], passos:['Na baixa do título a pagar, o acréscimo vai na 42021000005.']})},
   }},
 };
@@ -402,7 +463,7 @@ function wiz() {
         } else if (st.op) res = resultado(A.ops[st.op].nome + ` – ${k[1]} ${k[2]}`, A.ops[st.op].f(st.emp, k));
       }
     } else {
-      const bancos = st.ass === 'acc' ? Object.keys(ACC) : Object.keys(BANCO[st.emp]).filter(b => st.ass !== 'desc' || b !== 'Cresol');
+      const bancos = st.ass === 'apl' ? ['BB'] : st.ass === 'acc' ? Object.keys(ACC) : Object.keys(BANCO[st.emp]).filter(b => st.ass !== 'desc' || b !== 'Cresol');
       h += botoes('3. Banco', 'det', bancos.map(b => [b, b]));
       if (st.det) {
         h += botoes('4. Operação', 'op', Object.entries(A.ops).map(([v, o]) => [v, o.nome]));
