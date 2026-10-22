@@ -605,7 +605,11 @@ let SALES=[], PAYS=[], salesById={}, paysById={}, codeToSaleId={}, codeToPayId={
 let dataSource='embutida', lastSync=null;
 /* cliente dono; Ypoti é uma das estâncias dele (ver estancia) */
 const CLI_YP='Mauricio Moller';
-const CO = {[CLI_YP]:cssv('--pasture-mid'), Chacobras:cssv('--chac')};
+/* Chacobras: a planilha tem "Chacobras" (aba Chacobras sem cliente preenchido, baixas antigas) e
+   "Chacobras S. A." (cliente preenchido). No app tudo vira um cliente so; a planilha nao e alterada. */
+const CLI_CH='Chacobras S. A.';
+const nomeCli=n=>/^chacobras/i.test(String(n||'').trim())?CLI_CH:n;
+const CO = {[CLI_YP]:cssv('--pasture-mid'), Chacobras:cssv('--chac'), [CLI_CH]:cssv('--chac')};
 function cssv(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
 const fmtUSD = n => 'US$ ' + Math.round(n||0).toLocaleString('pt-BR');
 const fmtUSD2 = n => 'US$ ' + (n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -1194,7 +1198,7 @@ function parseSalesRows(rows,empresaPadrao,invPrefix){
     if(subtotal!=null){seq++;curInv=invPrefix+seq;curVenc=venc;curNum=(row[12]!=null?String(row[12]).trim():'');}
     else if(curInv==null){seq++;curInv=invPrefix+seq;curVenc=null;curNum=(row[12]!=null?String(row[12]).trim():'');}
     if(String(row[10]||'').trim().toUpperCase().indexOf('ESTORNAD')===0)return; // estornada: fora do painel
-    out.push({data:d,ano:+d.slice(0,4),mes:d.slice(0,7),produto:p,empresa:cliente||empresaPadrao,fonte:empresaPadrao===CLI_YP?'Cargas':(empresaPadrao==='Chacobras'?'Chacobras':'Outros'),
+    out.push({data:d,ano:+d.slice(0,4),mes:d.slice(0,7),produto:p,empresa:nomeCli(cliente||empresaPadrao),fonte:empresaPadrao===CLI_YP?'Cargas':(empresaPadrao==='Chacobras'?'Chacobras':'Outros'),
               qtd,unit,total_usd:total,venc:curVenc,inv:curInv,faturaNum:curNum,codigo:codigoRaw||null,
               cliente,estancia:(row[9]!=null?String(row[9]).trim():'')||(empresaPadrao===CLI_YP?'Ypoti':'')});
   });
@@ -1209,7 +1213,7 @@ function parseBaixasRows(rows){
     if(usd==null&&brl==null)return;
     const codigoRaw=row[5]!=null?String(row[5]).trim():'';
     const desconto=parseNum(row[6])||0,acrescimo=parseNum(row[7])||0;
-    const cliente=row[8]!=null&&String(row[8]).trim()?String(row[8]).trim():CLI_YP; // baixas antigas sem cliente = Mauricio Moller
+    const cliente=nomeCli(row[8]!=null&&String(row[8]).trim()?String(row[8]).trim():CLI_YP); // baixas antigas sem cliente = Mauricio Moller
     if(String(row[9]||'').trim().toUpperCase().indexOf('ESTORNAD')===0)return; // estornada: fora do painel
     out.push({data:d,ano:+d.slice(0,4),mes:d.slice(0,7),valor_usd:usd,valor_brl:brl,fonte:'Baixas',codigo:codigoRaw||null,desconto,acrescimo,cliente});
   });
@@ -2039,12 +2043,12 @@ function renderGerencial(){
   document.getElementById('gAging').innerHTML=comAtraso.length?comAtraso.map(l=>
     `<tr><td>${escH(l.c)}</td>${l.faixas.map(v=>`<td class="num">${v>TOL?fmtN(v):'—'}</td>`).join('')}</tr>`).join('')
     :'<tr><td colspan="5"><div class="empty">Nada vencido.</div></td></tr>';
-  const ch=linhas.find(l=>l.c==='Chacobras');
+  const ch=linhas.find(l=>l.c===CLI_CH);
   document.getElementById('gChac').innerHTML=ch
     ?`<div class="kpis"><div class="kpi"><div class="lbl">Vendido à Chacobras</div><div class="val">${fmtUSD(ch.vendido)}</div></div>
        <div class="kpi"><div class="lbl">Recebido da Chacobras</div><div class="val">${fmtUSD(ch.recebido)}</div></div>
        <div class="kpi"><div class="lbl">Ainda a receber</div><div class="val">${fmtUSD(ch.aberto)}</div></div></div>`
-    :'<div class="empty">'+(doCli('Chacobras')?'Nenhum lançamento com a Chacobras como cliente.':'Escolha "Todos" ou "Chacobras" no topo para ver este bloco.')+'</div>';
+    :'<div class="empty">'+(doCli(CLI_CH)?'Nenhum lançamento com a Chacobras como cliente.':'Escolha "Todos" ou "Chacobras" no topo para ver este bloco.')+'</div>';
 }
 
 /* ---------- init ---------- */
