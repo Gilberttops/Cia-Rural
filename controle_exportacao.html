@@ -952,9 +952,12 @@
           <label>Observação</label>
           <input type="text" class="txt" id="settleObs" placeholder="opcional">
         </div>
-        <div class="form-field span2" style="flex-direction:row;align-items:center;gap:8px;border-top:1px solid var(--border);padding-top:14px;margin-top:4px;">
-          <input type="checkbox" id="settleUseForAcc" style="width:16px;height:16px;">
-          <label for="settleUseForAcc" style="font-size:13px;color:var(--ink);">Usar este recebimento para quitar um ACC</label>
+        <div class="form-field span2" style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px;">
+          <label>Destino do recebimento (obrigatório)</label>
+          <div style="display:flex;gap:20px;flex-wrap:wrap;">
+            <label style="font-size:13px;color:var(--ink);display:flex;align-items:center;gap:6px;"><input type="radio" name="settleDest" id="settleDestCambio" value="cambio" style="width:16px;height:16px;"> Câmbio normal (entra em caixa)</label>
+            <label style="font-size:13px;color:var(--ink);display:flex;align-items:center;gap:6px;"><input type="radio" name="settleDest" id="settleDestAcc" value="acc" style="width:16px;height:16px;"> Baixa de ACC</label>
+          </div>
         </div>
         <div class="form-field span2" id="settleAccWrap" style="display:none;">
           <label>Contrato de ACC em aberto</label>
@@ -1007,6 +1010,17 @@
         <div class="form-field span2">
           <label for="batchObs">Observação (ex.: banco, nº da transferência)</label>
           <input type="text" class="txt" id="batchObs" placeholder="opcional">
+        </div>
+        <div class="form-field span2" style="border-top:1px solid var(--border);padding-top:14px;">
+          <label>Destino do recebimento (obrigatório)</label>
+          <div style="display:flex;gap:20px;flex-wrap:wrap;">
+            <label style="font-size:13px;color:var(--ink);display:flex;align-items:center;gap:6px;"><input type="radio" name="batchDest" id="batchDestCambio" value="cambio" style="width:16px;height:16px;"> Câmbio normal (entra em caixa)</label>
+            <label style="font-size:13px;color:var(--ink);display:flex;align-items:center;gap:6px;"><input type="radio" name="batchDest" id="batchDestAcc" value="acc" style="width:16px;height:16px;"> Baixa de ACC</label>
+          </div>
+        </div>
+        <div class="form-field span2" id="batchAccWrap" style="display:none;">
+          <label for="batchAccSelect">Contrato de ACC em aberto</label>
+          <select id="batchAccSelect"><option value="">Selecione um contrato em aberto</option></select>
         </div>
       </div>
       <div class="table-scroll batch-table" style="margin-top:14px;box-shadow:none;max-height:340px;">
@@ -3224,7 +3238,8 @@
     document.getElementById('settlePartial').checked = false;
     document.getElementById('settleObs').value = '';
     document.getElementById('settleFee').value = defaultFeeText_();
-    document.getElementById('settleUseForAcc').checked = false;
+    document.getElementById('settleDestCambio').checked = false;
+    document.getElementById('settleDestAcc').checked = false;
     document.getElementById('settleAccWrap').style.display = 'none';
     document.getElementById('settleAccUsdWrap').style.display = 'none';
     document.getElementById('settleAccPartialWrap').style.display = 'none';
@@ -3252,12 +3267,17 @@
     if(open.some(function(c){ return c.id === current; })) sel.value = current;
   }
 
+  function settleDest_(){
+    return document.getElementById('settleDestAcc').checked ? 'acc' : (document.getElementById('settleDestCambio').checked ? 'cambio' : null);
+  }
+
   function onSettleUseForAccChange(){
-    var checked = document.getElementById('settleUseForAcc').checked;
+    var checked = settleDest_() === 'acc';
     document.getElementById('settleAccWrap').style.display = checked ? 'block' : 'none';
     document.getElementById('settleAccUsdWrap').style.display = checked ? 'block' : 'none';
     document.getElementById('settleAccPartialWrap').style.display = checked ? 'flex' : 'none';
     if(checked) populateSettleAccOptions();
+    updateSettlePreview();
   }
 
   function onSettleAccSelectChange(){
@@ -3329,7 +3349,7 @@
     gpEl.className = 'kpi-value ' + (gp == null ? '' : (gp >= 0 ? 'pos' : 'neg'));
     comEl.textContent = (sp.comercial == null || sp.comercial === 0) ? '—' : fmtBRL.format(sp.comercial);
     comEl.className = 'kpi-value ' + ((sp.comercial == null || sp.comercial === 0) ? '' : (sp.comercial > 0 ? 'pos' : 'neg'));
-    btn.disabled = !document.getElementById('settleDate').value;
+    btn.disabled = !document.getElementById('settleDate').value || !settleDest_();
   }
 
   // Conferências antes de lançar um recebimento. Devolve false se o lançamento
@@ -3375,6 +3395,17 @@
     var isPartial = document.getElementById('settlePartial').checked;
     var obs = document.getElementById('settleObs').value.trim();
     if(usd == null || rate == null || !dateStr) return;
+    var dest = settleDest_();
+    if(!dest){ alert('Escolha o destino do recebimento: Câmbio normal ou Baixa de ACC.'); return; }
+    var accContract = null, accUsd = null, accPartial = false;
+    if(dest === 'acc'){
+      var accId = document.getElementById('settleAccSelect').value;
+      accContract = accId ? findAcc(accId) : null;
+      accUsd = parseNum(document.getElementById('settleAccUSD').value);
+      accPartial = document.getElementById('settleAccPartial').checked;
+      if(!accContract){ alert('Selecione o contrato de ACC que será baixado.'); return; }
+      if(!(accUsd > 0)){ alert('Informe o valor em USD a abater do ACC.'); return; }
+    }
     if(!validateSettle_(row, usd, rate, dateStr, isPartial, obs)) return;
     var fee = parseNum(document.getElementById('settleFee').value);
     if(!validateFee_(fee, usd)) return;
@@ -3390,18 +3421,13 @@
         if(!proceedVenda) return;
       }
     }
-    addReceipt(row, usd, rate, dateStr, isPartial, obs || null, fee);
+    var destTag = dest === 'acc' ? 'Baixa de ACC ' + (accContract.codAcc || 's/n') : 'Câmbio normal';
+    addReceipt(row, usd, rate, dateStr, isPartial, obs ? obs + ' · ' + destTag : destTag, fee);
     rememberFee_(fee);
     scheduleSave();
     enqueue_('create', 'recebimento', row.recebimentos[row.recebimentos.length - 1], null, {parentLid: row.id, parentGs: row.gsId || null});
-    if(document.getElementById('settleUseForAcc').checked){
-      var accId = document.getElementById('settleAccSelect').value;
-      var accContract = accId ? findAcc(accId) : null;
-      if(accContract){
-        var accUsd = parseNum(document.getElementById('settleAccUSD').value);
-        var accPartial = document.getElementById('settleAccPartial').checked;
-        performAccBaixa_(accContract, accUsd, rate, dateStr, row.id, null, accPartial, 'Quitação a partir do recebimento da fatura ' + (row.ano||'') + '/' + (row.fatura||''));
-      }
+    if(dest === 'acc'){
+      performAccBaixa_(accContract, accUsd, rate, dateStr, row.id, null, accPartial, 'Quitação a partir do recebimento da fatura ' + (row.ano||'') + '/' + (row.fatura||''));
     }
     clearSettleForm();
     document.getElementById('settleSelect').value = '';
@@ -3493,7 +3519,29 @@
       (Math.abs(gap) < 0.005 ? '<b class="gap">tudo distribuído</b>' : (gap > 0 ? 'falta distribuir <b class="gap">' + fmtUSD.format(gap) + '</b>' : 'passou <b class="gap">' + fmtUSD.format(-gap) + '</b>'));
     var rate = parseNum(document.getElementById('batchRate').value);
     var dateStr = document.getElementById('batchDate').value;
-    document.getElementById('btnBatchConfirm').disabled = !(total > 0 && sum > 0 && Math.abs(gap) < 0.005 && !anyOver && rate > 0 && dateStr);
+    var dest = batchDest_();
+    var accOk = dest === 'cambio' || (dest === 'acc' && !!document.getElementById('batchAccSelect').value);
+    document.getElementById('btnBatchConfirm').disabled = !(total > 0 && sum > 0 && Math.abs(gap) < 0.005 && !anyOver && rate > 0 && dateStr && accOk);
+  }
+
+  function batchDest_(){
+    return document.getElementById('batchDestAcc').checked ? 'acc' : (document.getElementById('batchDestCambio').checked ? 'cambio' : null);
+  }
+
+  function onBatchDestChange_(){
+    var isAcc = batchDest_() === 'acc';
+    document.getElementById('batchAccWrap').style.display = isAcc ? 'block' : 'none';
+    if(isAcc){
+      var sel = document.getElementById('batchAccSelect');
+      var current = sel.value;
+      var open = accOpenList();
+      sel.innerHTML = '<option value="">Selecione um contrato em aberto</option>' + open.map(function(c){
+        var venc = c.vencimento ? ' · vence ' + dLabel(c.vencimento) : '';
+        return '<option value="' + c.id + '">ACC ' + (c.codAcc || 's/n') + ' · saldo ' + fmtUSD.format(accSaldoUSD(c)) + venc + '</option>';
+      }).join('');
+      if(open.some(function(c){ return c.id === current; })) sel.value = current;
+    }
+    updateBatchTotals_();
   }
 
   function handleBatchBodyInput_(e){
@@ -3530,6 +3578,18 @@
     for(var i = 0; i < rows.length; i++){
       if(batchAlloc[rows[i].id] > saldoUSD(rows[i]) + 0.005){ alert('O valor da fatura ' + (rows[i].fatura || '') + ' passa do saldo dela.'); return; }
     }
+    var dest = batchDest_();
+    if(!dest){ alert('Escolha o destino do recebimento: Câmbio normal ou Baixa de ACC.'); return; }
+    var accC = null;
+    if(dest === 'acc'){
+      accC = findAcc(document.getElementById('batchAccSelect').value);
+      if(!accC){ alert('Selecione o contrato de ACC que será baixado.'); return; }
+      var accSaldo0 = accSaldoUSD(accC);
+      if(accSaldo0 != null && total > accSaldo0 + 0.5){
+        alert('O valor do lote (' + fmtUSD.format(total) + ') é maior que o saldo do ACC ' + (accC.codAcc || '') + ' (' + fmtUSD.format(accSaldo0) + '). Divida em dois lançamentos.');
+        return;
+      }
+    }
     if(!validateFee_(fee, total)) return;
     if(dateStr > todayLocalISO() && !confirm('A data do recebimento (' + dLabel(dateStr) + ') está no futuro. Lançar mesmo assim?')) return;
     var before = rows.filter(function(r){ return r.dataFatura && dateStr < r.dataFatura; });
@@ -3541,19 +3601,29 @@
       return '• ' + (r.ano || '') + '/' + (r.fatura || 's/n') + ': ' + fmtUSD.format(batchAlloc[r.id]) + (batchAlloc[r.id] >= saldoUSD(r) - 0.5 ? ' (quita)' : ' (parcial)');
     }).join('\n') + (rows.length > 8 ? '\n• … e mais ' + (rows.length - 8) + ' fatura(s)' : '');
     if(!confirm('Lançar ' + fmtUSD.format(total) + ' a R$ ' + rate + ' em ' + dLabel(dateStr) + ', distribuídos em ' + rows.length + ' fatura(s)?\n\n' + resumo +
+      '\n\nDestino: ' + (accC ? 'BAIXA DE ACC ' + (accC.codAcc || 's/n') : 'Câmbio normal (entra em caixa)') +
       (fee > 0 ? '\n\nTaxa bancária: ' + fmtUSD.format(fee) : ''))) return;
 
-    var tag = 'Lote ' + fmtUSD.format(total) + ' em ' + rows.length + ' fatura(s)';
+    var tag = 'Lote ' + fmtUSD.format(total) + ' em ' + rows.length + ' fatura(s)' + ' · ' + (accC ? 'Baixa de ACC ' + (accC.codAcc || 's/n') : 'Câmbio normal');
     var obs = userObs ? userObs + ' · ' + tag : tag;
+    var accRestante = accC ? accSaldoUSD(accC) : null;
     rows.forEach(function(r, idx){
       var a = round2(batchAlloc[r.id]);
       var isFinal = a >= saldoUSD(r) - 0.5;
       addReceipt(r, a, rate, dateStr, !isFinal, obs, idx === 0 ? fee : null);
       enqueue_('create', 'recebimento', r.recebimentos[r.recebimentos.length - 1], null, {parentLid: r.id, parentGs: r.gsId || null});
+      if(accC){
+        accRestante = round2(accRestante - a);
+        performAccBaixa_(accC, a, rate, dateStr, r.id, null, accRestante > 0.5, 'Quitação a partir do lote (fatura ' + (r.ano || '') + '/' + (r.fatura || '') + ')');
+      }
     });
     rememberFee_(fee);
     scheduleSave();
     batchAlloc = {}; batchOff = {};
+    document.getElementById('batchDestCambio').checked = false;
+    document.getElementById('batchDestAcc').checked = false;
+    document.getElementById('batchAccWrap').style.display = 'none';
+    document.getElementById('batchAccSelect').value = '';
     ['batchUSD', 'batchRate', 'batchObs'].forEach(function(id){ document.getElementById(id).value = ''; });
     document.getElementById('batchFee').value = defaultFeeText_();
     document.getElementById('batchDate').value = todayLocalISO();
@@ -3571,6 +3641,9 @@
     document.getElementById('batchFee').value = defaultFeeText_();
     document.getElementById('batchUSD').addEventListener('input', batchAuto_);
     ['batchRate', 'batchDate'].forEach(function(id){ document.getElementById(id).addEventListener('input', updateBatchTotals_); });
+    document.getElementById('batchDestCambio').addEventListener('change', onBatchDestChange_);
+    document.getElementById('batchDestAcc').addEventListener('change', onBatchDestChange_);
+    document.getElementById('batchAccSelect').addEventListener('change', updateBatchTotals_);
     document.getElementById('btnBatchAuto').addEventListener('click', batchAuto_);
     document.getElementById('btnBatchConfirm').addEventListener('click', confirmBatch_);
     document.getElementById('batchBody').addEventListener('input', handleBatchBodyInput_);
@@ -6948,7 +7021,8 @@ function seedDeclaracoes(){
     bindPtaxButton_('btnSettlePtax', 'settleDate', 'settleRate');
     bindPtaxButton_('btnBatchPtax', 'batchDate', 'batchRate');
     bindPtaxButton_('btnAccPtax', 'accSettleDate', 'accSettleRate');
-    document.getElementById('settleUseForAcc').addEventListener('change', onSettleUseForAccChange);
+    document.getElementById('settleDestCambio').addEventListener('change', onSettleUseForAccChange);
+    document.getElementById('settleDestAcc').addEventListener('change', onSettleUseForAccChange);
     document.getElementById('settleAccSelect').addEventListener('change', onSettleAccSelectChange);
 
     document.getElementById('receiptsSearch').addEventListener('input', renderReceiptsHistory);
