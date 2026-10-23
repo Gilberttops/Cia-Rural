@@ -9,7 +9,7 @@
   var ARQUIVOS = {
     vendas: 'vendas.html', compras: 'compras.html', fluxo: 'fluxo_de_caixa.html', ypoti: 'controle_ypoti.html',
     exportacao: 'controle_exportacao.html', consorcios: 'consorcios.html', producao: 'producao_rural.html',
-    parcelamentos: 'parcelamentos.html', dre: 'dre.html'
+    parcelamentos: 'parcelamentos.html', dre: 'dre.html', financiamentos: 'financiamentos.html' // onda1-2026-10-23
   };
 
   function el(tag, attrs, texto) {

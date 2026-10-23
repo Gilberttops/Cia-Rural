@@ -211,6 +211,7 @@ tr.overdue:hover td{background:#f6e2da}
 .fitem .fmain .t1{font-weight:600;font-size:13px;display:flex;gap:7px;align-items:center;flex-wrap:wrap}
 .fitem .fmain .t2{font-size:12px;color:var(--muted);margin-top:2px}
 .fitem .famt{text-align:right;font-weight:600;width:100%}
+input.numerr{border-color:#c0392b!important;background:#fdecea!important}
 .fitem .famt:disabled{background:#f2f1e9;color:var(--muted)}
 .btn.sm{padding:5px 10px;font-size:12px}
 .prazochips{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px}
@@ -476,11 +477,11 @@ body.locked .wrap{display:none}
       <div class="lanrow2">
         <div class="cfgrow"><label>Cliente</label><input type="text" id="lbCliente" list="dlClientes" autocomplete="off"></div>
         <div class="cfgrow"><label>Data do recebimento</label><input type="date" id="lbData"></div>
-        <div class="cfgrow"><label>Valor em dólares (US$)</label><input type="number" step="0.01" min="0" id="lbUsd" placeholder="0,00"></div>
+        <div class="cfgrow"><label>Valor em dólares (US$)</label><input type="text" inputmode="decimal" autocomplete="off" data-num="m" id="lbUsd" placeholder="0,00"></div>
       </div>
       <div class="lanrow2">
-        <div class="cfgrow"><label>Desconto concedido <small>(opcional, US$)</small></label><input type="number" step="0.01" min="0" id="lbDesc" placeholder="0,00"></div>
-        <div class="cfgrow"><label>Acréscimo (cliente pagou a mais) <small>(opcional, US$)</small></label><input type="number" step="0.01" min="0" id="lbAcr" placeholder="0,00"></div>
+        <div class="cfgrow"><label>Desconto concedido <small>(opcional, US$)</small></label><input type="text" inputmode="decimal" autocomplete="off" data-num="m" id="lbDesc" placeholder="0,00"></div>
+        <div class="cfgrow"><label>Acréscimo (cliente pagou a mais) <small>(opcional, US$)</small></label><input type="text" inputmode="decimal" autocomplete="off" data-num="m" id="lbAcr" placeholder="0,00"></div>
       </div>
       <div class="cap" style="margin-top:-4px">Desconto aumenta e acréscimo diminui a parte da baixa que vai para as faturas escolhidas abaixo, sem alterar o valor em dólares realmente recebido. Use o desconto para diferenças pequenas ou descontos combinados com o cliente, e o acréscimo quando o cliente pagou a mais.</div>
       <div class="cfgrow"><label>Observação <small>(opcional)</small></label><input type="text" id="lbObs" placeholder="ex.: referente às cargas de junho"></div>
@@ -544,7 +545,7 @@ body.locked .wrap{display:none}
       </div>
       <div class="lanrow2">
         <div class="cfgrow"><label>Condição de pagamento <small>(dias)</small></label><input type="number" id="clCond" min="0" step="1"></div>
-        <div class="cfgrow"><label>Limite de crédito <small>(US$)</small></label><input type="number" id="clLimite" min="0" step="0.01"></div>
+        <div class="cfgrow"><label>Limite de crédito <small>(US$)</small></label><input type="text" inputmode="decimal" autocomplete="off" data-num="m" id="clLimite" placeholder="0,00"></div>
         <div class="cfgrow"><label>Ativo</label><select id="clAtivo"><option value="SIM">Sim</option><option value="NAO">Não</option></select></div>
       </div>
       <div class="cfgrow"><label>Observação</label><input type="text" id="clObs"></div>
@@ -933,7 +934,7 @@ function addForm(p){
     .map(s=>`<option value="${s.id}" data-rem="${vendaRem(s)}">${displayCode(s,'v')} · ${fmtDate(s.data)} · ${s.produto} · saldo ${fmtUSD(vendaRem(s))}</option>`).join('');
   return `<div class="addrow" data-bid="${p.id}">
     <div class="flt"><select class="vsel">${opts?'<option value="">selecione a venda…</option>'+opts:'<option value="">todas as vendas quitadas</option>'}</select></div>
-    <input class="amt" type="number" step="0.01" min="0" placeholder="valor US$">
+    <input class="amt" type="text" inputmode="decimal" autocomplete="off" data-num="m" placeholder="valor US$">
     <button class="btn solid doAlloc">Alocar</button>
     <span class="hint" style="margin:0">saldo desta baixa: <b>${fmtUSD(rem)}</b></span>
   </div>`;
@@ -954,7 +955,7 @@ function bindAcc(){
     const row=b.closest('.addrow'),bid=row.dataset.bid,vid=row.querySelector('.vsel').value,amtEl=row.querySelector('.amt');
     if(!vid){toast('Selecione uma venda');return;}
     const p=paysById[bid],s=salesById[vid];
-    let val=parseFloat((amtEl.value||'').replace(',','.'));
+    let val=numCampo(amtEl);
     if(!val||val<=0)val=Math.min(baixaRem(p),vendaRem(s));
     if(val<=0){toast('Sem saldo para alocar');return;}
     allocs.push({v:vid,b:bid,val:+val.toFixed(2)});
@@ -1175,6 +1176,50 @@ function parseNum(v){
   else if(hasC){ s=s.replace(/\./g,'').replace(',','.'); }
   const n=parseFloat(s);return isNaN(n)?null:n;
 }
+/* onda1-2026-10-23: leitura de valor digitado no padrao brasileiro.
+   Os campos de valor eram do tipo "numero" do navegador: no Chrome em portugues, "15.000" virava 15
+   e "15.000,00" virava vazio. Agora sao campos de texto (teclado numerico no celular) lidos aqui:
+   "15.000,00" "15.000" "15000,5" "15000.50" "1.234.567" -> certos. Ao sair do campo, o valor e
+   reescrito no formato brasileiro (ex.: 15.000,00), para a pessoa ver o que foi entendido.
+   data-num="m" dinheiro | "q" quantidade: "15.000" = quinze mil (ninguem digita 3 casas em US$ ou kg)
+   data-num="u" unitario: ponto e sempre decimal ("1.067" = 1,067 US$; foi a confusao do C0020).
+   O total da linha e os alertas de preco fora do historico continuam conferindo. */
+function numDigitado(v,modo){
+  if(v==null)return null;
+  if(typeof v==='number')return isFinite(v)?v:null;
+  let s=String(v).trim().replace(/\s|US\$|R\$|\$/g,'');if(!s)return null;
+  let neg=false;if(s[0]==='-'){neg=true;s=s.slice(1);}
+  if(!/^\d[\d.,]*$/.test(s)&&!/^[.,]\d+$/.test(s))return null;
+  const c=s.lastIndexOf(','),d=s.lastIndexOf('.');
+  if(c>-1&&d>-1){s=c>d?s.replace(/\./g,'').replace(',','.'):s.replace(/,/g,'');}
+  else if(c>-1){s=s.indexOf(',')!==c?s.replace(/,/g,''):s.replace(',','.');}
+  else if(d>-1){
+    if(s.indexOf('.')!==d)s=s.replace(/\./g,'');
+    else if(modo!=='u'&&/^[1-9]\d{0,2}\.\d{3}$/.test(s))s=s.replace('.','');
+  }
+  const n=parseFloat(s);if(isNaN(n))return null;
+  return neg?-n:n;
+}
+function numCampo(el){
+  if(!el)return null;
+  const n=numDigitado(el.value,el.dataset?el.dataset.num:'');
+  return (n==null||n<0)?null:n;
+}
+function fmtCampo(n,tipo){
+  if(n==null||n===''||isNaN(+n))return '';
+  const casas={m:[2,4],q:[2,6],u:[2,6]}[tipo]||[2,4]; /* sempre com virgula: "1.067" nunca fica ambiguo na tela */
+  return (+n).toLocaleString('pt-BR',{minimumFractionDigits:casas[0],maximumFractionDigits:casas[1]});
+}
+document.addEventListener('focusout',e=>{
+  const el=e.target;
+  if(!el||!el.matches||!el.matches('input[data-num]'))return;
+  if(!el.value.trim()){el.classList.remove('numerr');return;}
+  const n=numCampo(el);
+  if(n==null){el.classList.add('numerr');el.title='Valor não entendido. Use, por exemplo, 15.000,00';return;}
+  el.classList.remove('numerr');el.title='';
+  el.value=fmtCampo(n,el.dataset.num);
+});
+document.addEventListener('input',e=>{const el=e.target;if(el&&el.classList&&el.classList.contains('numerr'))el.classList.remove('numerr');});
 function parseDate(v){
   if(v==null)return null;
   let s=String(v).trim();if(!s)return null;
@@ -1382,7 +1427,7 @@ function renderLbFaturas(){
     return `<div class="fitem" data-inv="${iv.inv}">
       <input type="checkbox" class="fchk">
       <div class="fmain"><div class="t1"><span class="cod">${cod}</span> ${prods}</div><div class="t2">${fmtDate(iv.data)}${iv.venc?' · vence '+fmtDate(iv.venc):''} · saldo em aberto ${fmtUSD2(rem)}</div></div>
-      <input class="famt" type="number" step="0.01" min="0" placeholder="US$" disabled>
+      <input class="famt" type="text" inputmode="decimal" autocomplete="off" data-num="m" placeholder="US$" disabled>
     </div>`;
   }).join(''):'<div class="empty">Nenhuma fatura em aberto para o filtro.</div>';
   lbBindFaturas();lbResumo();
@@ -1392,7 +1437,7 @@ function lbBindFaturas(){
     const chk=row.querySelector('.fchk'),amt=row.querySelector('.famt'),inv=row.dataset.inv,iv=INVMAP[inv];
     chk.onchange=()=>{
       amt.disabled=!chk.checked;
-      if(chk.checked&&!amt.value)amt.value=invRem(iv).toFixed(2);
+      if(chk.checked&&!amt.value)amt.value=fmtCampo(invRem(iv),'m');
       if(!chk.checked)amt.value='';
       lbResumo();
     };
@@ -1405,16 +1450,16 @@ function lbSelecionadas(){
   document.querySelectorAll('#lbFaturas .fitem').forEach(row=>{
     const chk=row.querySelector('.fchk'),amt=row.querySelector('.famt');
     if(chk.checked){
-      const val=parseFloat((amt.value||'').replace(',','.'))||0;
+      const val=numCampo(amt)||0;
       if(val>0)out.push({inv:row.dataset.inv,val});
     }
   });
   return out;
 }
 function lbCapacidadeForm(){
-  const usd=parseFloat(document.getElementById('lbUsd').value)||0;
-  const desc=parseFloat(document.getElementById('lbDesc').value)||0;
-  const acr=parseFloat(document.getElementById('lbAcr').value)||0;
+  const usd=numCampo(document.getElementById('lbUsd'))||0;
+  const desc=numCampo(document.getElementById('lbDesc'))||0;
+  const acr=numCampo(document.getElementById('lbAcr'))||0;
   return {usd,desc,acr,cap:usd+desc-acr};
 }
 function lbResumo(){
@@ -1451,16 +1496,16 @@ function refreshProdList(){
 }
 function addItemRow(){
   const div=document.createElement('div');div.className='itemrow';
-  div.innerHTML=`<input class="ip" list="prodList" placeholder="produto"><input class="iu2" value="KG" placeholder="un."><input class="iq" type="number" step="0.01" min="0" placeholder="qtd"><input class="iu" type="number" step="0.01" min="0" placeholder="unit US$"><span class="itot">US$ 0</span><button class="rm" title="remover">×</button>`;
+  div.innerHTML=`<input class="ip" list="prodList" placeholder="produto"><input class="iu2" value="KG" placeholder="un."><input class="iq" type="text" inputmode="decimal" autocomplete="off" data-num="q" placeholder="qtd"><input class="iu" type="text" inputmode="decimal" autocomplete="off" data-num="u" placeholder="unit US$"><span class="itot">US$ 0</span><button class="rm" title="remover">×</button>`;
   document.getElementById('lvItens').appendChild(div);
   const q=div.querySelector('.iq'),u=div.querySelector('.iu'),tot=div.querySelector('.itot');
-  const upd=()=>{const t=(parseFloat(q.value)||0)*(parseFloat(u.value)||0);tot.textContent='US$ '+t.toLocaleString('pt-BR',{maximumFractionDigits:2});lvRecalc()};
+  const upd=()=>{const t=(numCampo(q)||0)*(numCampo(u)||0);tot.textContent='US$ '+t.toLocaleString('pt-BR',{maximumFractionDigits:2});lvRecalc()};
   q.oninput=upd;u.oninput=upd;
   /* ao escolher o produto, sugere o último preço praticado com este cliente (ou o último geral) */
   div.querySelector('.ip').addEventListener('change',()=>{
     if(u.value)return;
     const sug=lvUltimoPreco(div.querySelector('.ip').value,document.getElementById('lvCliente').value);
-    if(sug){u.value=sug.unit;u.title='Sugerido: último preço '+(sug.cli?'deste cliente':'geral')+' ('+fmtDate(sug.data)+')';upd();}
+    if(sug){u.value=fmtCampo(sug.unit,'u');u.title='Sugerido: último preço '+(sug.cli?'deste cliente':'geral')+' ('+fmtDate(sug.data)+')';upd();}
   });
   div.querySelector('.rm').onclick=()=>{div.remove();lvRecalc()};
 }
@@ -1469,8 +1514,8 @@ function lvItems(){
   return [...document.querySelectorAll('#lvItens .itemrow')].map(r=>({
     produto:r.querySelector('.ip').value.trim(),
     unidade:(r.querySelector('.iu2').value||'').trim()||'KG',
-    qtd:parseFloat(r.querySelector('.iq').value)||0,
-    unit:parseFloat(r.querySelector('.iu').value)||0
+    qtd:numCampo(r.querySelector('.iq'))||0,
+    unit:numCampo(r.querySelector('.iu'))||0
   })).filter(i=>i.produto&&i.qtd>0&&i.unit>0);
 }
 function lvRecalc(){
@@ -1716,7 +1761,7 @@ function lvDuplicar(iv){
   lvEl('lvItens').innerHTML='';
   iv.itens.forEach(s=>{
     addItemRow();const r=lvEl('lvItens').lastElementChild;
-    r.querySelector('.ip').value=s.produto;r.querySelector('.iq').value=s.qtd||'';r.querySelector('.iu').value=s.unit||'';
+    r.querySelector('.ip').value=s.produto;r.querySelector('.iq').value=s.qtd?fmtCampo(s.qtd,'q'):'';r.querySelector('.iu').value=s.unit?fmtCampo(s.unit,'u'):'';
     r.querySelector('.iq').dispatchEvent(new Event('input'));
   });
   if(lvEl('lvPrazo').value!=='')lvVencDePrazo();else lvNotaPrazo();
@@ -1839,9 +1884,21 @@ function parseClientesRows(rows){
       condicao:parseNum(r[3])||0,limite:parseNum(r[4])||0,ativo:!/^n(ã|a)o$/i.test(String(r[5]||'').trim()),observacao:String(r[6]||'').trim()}));
 }
 /* chamada ao Apps Script com o token do login central (leitura e gravação) */
+/* onda1-2026-10-23: cada gravacao leva um codigo unico (opId). Se o pedido for repetido (o login central
+   repete sozinho quando o Google responde fora do formato, ou a pessoa clica de novo depois de um erro
+   de rede), o servidor reconhece o codigo e devolve a resposta da primeira vez, sem lancar em dobro.
+   O mesmo pedido (mesmos dados) reaproveita o codigo ate dar certo; depois de gravado, o proximo e novo. */
+const OP_PENDENTE={};
+function novoOpId_(){return (window.crypto&&crypto.randomUUID)?crypto.randomUUID():(Date.now()+'-'+Math.random().toString(16).slice(2)+Math.random().toString(16).slice(2));}
 async function enviarApp(payload){
+  let marca=null;
+  if(payload&&payload.tipo&&payload.tipo!=='dados'&&!payload.opId){
+    marca=JSON.stringify(payload);
+    payload=Object.assign({},payload,{opId:OP_PENDENTE[marca]||(OP_PENDENTE[marca]=novoOpId_())});
+  }
   const j=await RuralAuth.chamar('ypoti',CFG_PADRAO.api,payload);
   if(!j||j.ok===false)throw new Error(mensagemErroApp(j));
+  if(marca)delete OP_PENDENTE[marca];
   return j;
 }
 function mensagemErroApp(j){
@@ -1885,8 +1942,8 @@ function mnBuscar(){
       <div class="lanrow2">
         <div class="cfgrow"><label>Data de emissão</label><input type="date" id="meData" value="${escH(s.data)}"></div>
         <div class="cfgrow"><label>Produto</label><input type="text" id="meProduto" value="${escH(s.produto)}"></div>
-        <div class="cfgrow"><label>Quantidade</label><input type="number" id="meQtd" step="0.01" value="${escH(s.qtd)}"></div>
-        <div class="cfgrow"><label>Unitário US$</label><input type="number" id="meUnit" step="0.0001" value="${escH(s.unit)}"></div>
+        <div class="cfgrow"><label>Quantidade</label><input type="text" inputmode="decimal" autocomplete="off" data-num="q" id="meQtd" value="${escH(fmtCampo(s.qtd,'q'))}"></div>
+        <div class="cfgrow"><label>Unitário US$</label><input type="text" inputmode="decimal" autocomplete="off" data-num="u" id="meUnit" value="${escH(fmtCampo(s.unit,'u'))}"></div>
       </div>
       <div class="lanrow2">
         <div class="cfgrow"><label>Vencimento da fatura</label><input type="date" id="meVenc" value="${escH(s.venc||'')}"></div>
@@ -1901,9 +1958,9 @@ function mnBuscar(){
       ${ligado?'<div class="banner">Esta baixa está ligada a faturas na conciliação. Remova as ligações antes de editar ou estornar.</div>':''}
       <div class="lanrow2">
         <div class="cfgrow"><label>Data do recebimento</label><input type="date" id="meData" value="${escH(p.data)}"></div>
-        <div class="cfgrow"><label>Valor US$</label><input type="number" id="meValor" step="0.01" value="${escH(p.valor_usd)}"></div>
-        <div class="cfgrow"><label>Desconto US$</label><input type="number" id="meDesc" step="0.01" value="${escH(p.desconto||0)}"></div>
-        <div class="cfgrow"><label>Acréscimo US$</label><input type="number" id="meAcr" step="0.01" value="${escH(p.acrescimo||0)}"></div>
+        <div class="cfgrow"><label>Valor US$</label><input type="text" inputmode="decimal" autocomplete="off" data-num="m" id="meValor" value="${escH(fmtCampo(p.valor_usd,'m'))}"></div>
+        <div class="cfgrow"><label>Desconto US$</label><input type="text" inputmode="decimal" autocomplete="off" data-num="m" id="meDesc" value="${escH(fmtCampo(p.desconto||0,'m'))}"></div>
+        <div class="cfgrow"><label>Acréscimo US$</label><input type="text" inputmode="decimal" autocomplete="off" data-num="m" id="meAcr" value="${escH(fmtCampo(p.acrescimo||0,'m'))}"></div>
       </div>
       <div class="cfgrow"><label>Cliente</label><input type="text" id="meCliente" list="dlClientes" value="${escH(p.cliente)}"></div>
       ${mnRodape()}</div>`;
@@ -1925,14 +1982,14 @@ async function mnSalvar(){
   if(m.alvo==='venda'){
     const s=m.item;
     novo={data:document.getElementById('meData').value,produto:document.getElementById('meProduto').value.trim(),
-      qtd:parseFloat(document.getElementById('meQtd').value),unit:parseFloat(document.getElementById('meUnit').value),
+      qtd:numCampo(document.getElementById('meQtd')),unit:numCampo(document.getElementById('meUnit')),
       venc:document.getElementById('meVenc').value,cliente:document.getElementById('meCliente').value.trim(),
       estancia:document.getElementById('meEstancia').value.trim()};
     orig={data:s.data,produto:s.produto,qtd:s.qtd,unit:s.unit,venc:s.venc||'',cliente:s.empresa,estancia:s.estancia||''};
   }else{
     const p=m.item;
-    novo={data:document.getElementById('meData').value,valor_usd:parseFloat(document.getElementById('meValor').value),
-      desconto:parseFloat(document.getElementById('meDesc').value)||0,acrescimo:parseFloat(document.getElementById('meAcr').value)||0,
+    novo={data:document.getElementById('meData').value,valor_usd:numCampo(document.getElementById('meValor')),
+      desconto:numCampo(document.getElementById('meDesc'))||0,acrescimo:numCampo(document.getElementById('meAcr'))||0,
       cliente:document.getElementById('meCliente').value.trim()};
     orig={data:p.data,valor_usd:p.valor_usd,desconto:p.desconto||0,acrescimo:p.acrescimo||0,cliente:p.cliente};
   }
@@ -1986,7 +2043,7 @@ function renderClientes(){
     document.getElementById('clPais').value=c.pais||'PY';
     document.getElementById('clDoc').value=c.documento||'';
     document.getElementById('clCond').value=c.condicao||'';
-    document.getElementById('clLimite').value=c.limite||'';
+    document.getElementById('clLimite').value=c.limite?fmtCampo(c.limite,'m'):'';
     document.getElementById('clAtivo').value=c.ativo?'SIM':'NAO';
     document.getElementById('clObs').value=c.observacao==='(sem cadastro)'?'':c.observacao;
   };
@@ -1998,7 +2055,7 @@ document.getElementById('clSalvar').onclick=async()=>{
     pais:document.getElementById('clPais').value.trim()||'PY',
     documento:document.getElementById('clDoc').value.trim(),
     condicao:parseFloat(document.getElementById('clCond').value)||0,
-    limite:parseFloat(document.getElementById('clLimite').value)||0,
+    limite:numCampo(document.getElementById('clLimite'))||0,
     ativo:document.getElementById('clAtivo').value==='SIM',
     observacao:document.getElementById('clObs').value.trim()},'clLog','cl');
   if(j){document.getElementById('clLog').textContent='✓ Cliente salvo: '+nome+'. Atualizando…';recarregarDados();}
