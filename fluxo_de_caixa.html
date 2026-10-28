@@ -286,6 +286,17 @@
   /* foco visivel para navegacao por teclado (nao remove os estilos de campo existentes) */
   button:focus-visible, select:focus-visible, input:focus-visible{outline:2px solid var(--real-blue);outline-offset:1px;}
 
+  /* Caixa previsto do dia (28/10/2026) */
+  .cx-prev{margin:0 0 18px 0;}
+  .cx-prev table{width:100%;border-collapse:collapse;font-size:0.86rem;}
+  .cx-prev th,.cx-prev td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums;}
+  .cx-prev th:first-child,.cx-prev td:first-child{text-align:left;}
+  .cx-prev tr.cx-total td{font-weight:700;border-top:2px solid var(--green-deep);}
+  .cx-prev td.cx-res{font-weight:700;}
+  .cx-prev .neg{color:var(--danger);}
+  .cx-prev .cx-nota{font-size:0.75rem;color:var(--ink-soft);margin-top:6px;line-height:1.5;}
+  .bank-prev{display:flex;justify-content:space-between;gap:10px;margin-top:4px;font-size:0.82rem;color:var(--ink-soft);}
+  .bank-prev b.neg{color:var(--danger);}
   footer{text-align:center;color:var(--ink-soft);font-size:0.78rem;margin-top:30px;}
   /* ===== Kit Rural (14/10/2026): mesmas cores, fonte e topo dos outros apps (rural-ui.css) ===== */
   :root{--green-deep:var(--ru-azul-esc);--cream:var(--ru-papel);--line:var(--ru-linha);--ink:var(--ru-tinta);--ink-soft:var(--ru-tinta2);--real-blue:var(--ru-azul);--danger:var(--ru-vermelho)}
@@ -761,6 +772,7 @@
       <h2><span id="diarioHojeTitulo">Hoje</span> — <span id="diarioHojeLabel"></span></h2>
       <p class="recebimentos-note" style="margin-top:-6px;margin-bottom:10px;">O que vence no dia selecionado, a pagar e a receber, nas duas unidades. Vencimentos em sábado, domingo ou feriado nacional aparecem aqui no próximo dia útil (o item mostra entre parênteses a data original).</p>
       <div id="diarioKpiHoje" class="rec-summary-row" style="margin-bottom:14px;"></div>
+      <div id="diarioCaixaPrevisto" class="cx-prev"></div>
       <div class="card chart-card" style="max-width:360px;margin:0 auto 18px auto;">
         <h3 style="text-align:center;margin:0 0 8px 0;font-size:0.9rem;">Categorias do dia (a pagar)</h3>
         <canvas id="diarioHojePieChart" style="max-height:220px"></canvas>
@@ -977,6 +989,8 @@ function applySheetData(data){
   if(Array.isArray(data.historicoSaldos)){
     HISTORICO_SALDOS = data.historicoSaldos.map(h=>({ ...h, date: normalizeDateBR_(h.date) }));
   }
+  EXPORTACOES_SHEET = (data.exportacoes && typeof data.exportacoes === 'object') ? data.exportacoes : null;
+  garantirPtaxExportacao_();
   state.__recebimentosFromSheet = data.recebimentos || null;
   state.__recebimentosReaisFromSheet = Array.isArray(data.recebimentosReais) ? data.recebimentosReais.map(comAno_) : null;
   state.__antecipacoesFromSheet = Array.isArray(data.antecipacoes) ? data.antecipacoes.map(comAno_) : null;
@@ -1105,7 +1119,11 @@ function num(n){ return (n===null||n===undefined||isNaN(n)) ? 0 : n; }
 
 let DEFAULT_BANKS = { Rural: [], RNA: [] };
 // Histórico diário de saldos bancários — um registro por (data, unidade, banco). Vem da planilha.
-let HISTORICO_SALDOS = [];function ensureBankAccounts(){
+let HISTORICO_SALDOS = [];
+// Faturas de exportacao em aberto lidas do Controle de Exportacao pelo script (29/10/2026). So leitura:
+// nunca vao para state.recebimentosReais, entao o "Gravar" nao as manda para a planilha.
+let EXPORTACOES_SHEET = null;
+function ensureBankAccounts(){
   if(!state.bankAccounts){
     state.bankAccounts = JSON.parse(JSON.stringify(DEFAULT_BANKS));
   }
@@ -1914,15 +1932,93 @@ function duplicatasPendentesForMonth(month, unit){
     .reduce((s,d)=>s+num(d.valor),0);
 }
 
+// ---- Exportacao automatica (29/10/2026) ----
+// Faturas em aberto do Controle de Exportacao: entram como recebimento da Rural no
+// VENCIMENTO + 7 DIAS (tempo estimado do cambio cair na conta no Brasil; Gilberto, 29/10/2026),
+// jogado para o proximo dia util, pelo saldo em US$ x PTAX venda mais recente.
+// Previsao de entrada ja passada (fatura vencida e nao recebida) fica fora das projecoes e
+// aparece a parte, em Recebiveis > Exportacoes. ACC nao entra (o pagamento de um libera a
+// linha de credito para outro). Lancamento manual pendente que parece a mesma fatura
+// (ate 10 dias e 10% de diferenca) deixa de ser somado, para nao contar duas vezes.
+const EXPORT_DIAS_CAMBIO = 7;
+// PTAX venda buscada pelo proprio navegador no Banco Central (como no app de exportacao),
+// quando o script nao conseguiu trazer. Guardada no navegador por 6 h.
+const PTAX_LOCAL_KEY = 'fluxoPtaxVenda';
+let ptaxBuscando_ = false;
+function garantirPtaxExportacao_(){
+  const ex = EXPORTACOES_SHEET;
+  if(!ex || num(ex.ptax) > 0 || !Array.isArray(ex.itens) || !ex.itens.length) return;
+  const limparAviso = () => { if(ex.erro && /PTAX/.test(ex.erro)) ex.erro = ''; };
+  try{
+    const g = JSON.parse(localStorage.getItem(PTAX_LOCAL_KEY) || 'null');
+    if(g && g.valor > 0 && (Date.now() - g.em) < 6*3600*1000){ ex.ptax = g.valor; ex.ptaxData = g.data; limparAviso(); return; }
+  }catch(e){}
+  if(ptaxBuscando_) return;
+  ptaxBuscando_ = true;
+  const f = d => String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + '-' + d.getFullYear();
+  const fim = new Date(), ini = new Date(Date.now() - 10*86400000);
+  const url = 'https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/CotacaoDolarPeriodo(dataInicial=@dataInicial,dataFinalCotacao=@dataFinalCotacao)'
+    + "?@dataInicial='" + f(ini) + "'&@dataFinalCotacao='" + f(fim) + "'"
+    + '&$orderby=dataHoraCotacao%20desc&$top=1&$format=json&$select=cotacaoVenda,dataHoraCotacao';
+  fetch(url).then(r=>{ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(j=>{
+    const v = j && j.value && j.value[0];
+    if(!v || !(v.cotacaoVenda > 0)) throw new Error('sem PTAX nos últimos 10 dias');
+    const m = String(v.dataHoraCotacao).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    const data = m ? `${m[3]}/${m[2]}/${m[1]}` : '';
+    try{ localStorage.setItem(PTAX_LOCAL_KEY, JSON.stringify({ valor: v.cotacaoVenda, data, em: Date.now() })); }catch(e){}
+    if(EXPORTACOES_SHEET === ex){ ex.ptax = v.cotacaoVenda; ex.ptaxData = data; limparAviso(); if(typeof renderAll === 'function') renderAll(); }
+  }).catch(err=>{
+    ex.erro = 'Faturas lidas, mas a PTAX não veio do Banco Central (' + String(err.message || err).slice(0,80) + '): exportações fora das projeções até a próxima leitura.';
+    if(typeof renderAll === 'function') renderAll();
+  }).finally(()=>{ ptaxBuscando_ = false; });
+}
+function exportacoesAuto_(){
+  const ex = EXPORTACOES_SHEET;
+  if(!ex || !Array.isArray(ex.itens)) return [];
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const ptax = num(ex.ptax);
+  return ex.itens.map(it=>{
+    const venc = it.vencimento ? inferDate(it.vencimento) : null;
+    let entrada = null, day = '';
+    if(venc){
+      entrada = new Date(venc); entrada.setDate(entrada.getDate() + EXPORT_DIAS_CAMBIO);
+      entrada = proximoDiaUtil(entrada); day = ddmmyyyy(entrada);
+    }
+    // numero da fatura que a planilha transformou em data ("16-02" virou "Mon Feb 16 2026 ...")
+    const MESES = {Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
+    const fatura = String(it.fatura||'').replace(/[A-Z][a-z]{2} ([A-Z][a-z]{2}) (\d{2}) \d{4} [\d:]+ GMT[-+]\d{4}.*$/, (m0,mes,d)=>`${d}-${MESES[mes]||mes}`);
+    return { ...it, fatura, auto: true, unit: 'Rural', day, entrada, status: 'Pendente',
+             valor: ptax ? num(it.saldo_usd) * ptax : 0,
+             week: day ? weekKeyFromDay(day) : null,
+             vencida: !!entrada && entrada < hoje, semData: !venc };
+  });
+}
+function exportManualDuplicada_(r, autos){
+  if(r.unit !== 'Rural' || !num(r.valor)) return null;
+  const d = inferDate(r.day); if(!d) return null;
+  return autos.find(a=>{
+    if(!a.valor) return false;
+    const perto = [a.entrada, a.vencimento ? inferDate(a.vencimento) : null]
+      .some(x=>x && Math.abs((x - d) / 86400000) <= 10);
+    return perto && Math.abs(num(r.valor) - a.valor) <= 0.10 * a.valor;
+  }) || null;
+}
+function recebimentosExportacaoLista_(){
+  const autos = exportacoesAuto_();
+  const validos = autos.filter(a=>!a.vencida && !a.semData && a.valor > 0);
+  const manuais = (state.recebimentosReais||[]).filter(r=>r.status !== 'Recebido' && !exportManualDuplicada_(r, autos));
+  return manuais.concat(validos);
+}
+
 function recebimentosExportacaoPendentesForWeek(week, unit){
-  return state.recebimentosReais
-    .filter(r => r.status !== 'Recebido' && r.week === week && (unit==='Comparar'||unit==='Total'||r.unit===unit))
+  return recebimentosExportacaoLista_()
+    .filter(r => r.week === week && (unit==='Comparar'||unit==='Total'||r.unit===unit))
     .reduce((s,r)=>s+num(r.valor),0);
 }
 
 function recebimentosExportacaoPendentesForMonth(month, unit){
-  return state.recebimentosReais
-    .filter(r => r.status !== 'Recebido' && r.day && r.day.split('/')[1]===month && (unit==='Comparar'||unit==='Total'||r.unit===unit))
+  return recebimentosExportacaoLista_()
+    .filter(r => r.day && r.day.split('/')[1]===month && (unit==='Comparar'||unit==='Total'||r.unit===unit))
     .reduce((s,r)=>s+num(r.valor),0);
 }
 
@@ -1957,6 +2053,36 @@ function weekKeyFromDay(dayStr){
 
 function rowId(prefix){ return prefix + '_' + Math.random().toString(36).slice(2,9); }
 
+function quadroExportacoesControle_(autos){
+  const ex = EXPORTACOES_SHEET;
+  const card = document.createElement('div');
+  card.className = 'card';
+  const esc = t => String(t==null?'':t).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  if(!ex){
+    card.innerHTML = `<h2>Faturas em aberto no Controle de Exportação</h2><p class="recebimentos-note">O script do Fluxo ainda não mandou as faturas de exportação (falta implantar a versão nova do script ou configurar a planilha). Até lá, só os lançamentos manuais abaixo entram no fluxo.</p>`;
+    return card;
+  }
+  const ord = autos.slice().sort((a,b)=>(a.entrada||0)-(b.entrada||0));
+  const noPrazo = ord.filter(a=>!a.vencida && !a.semData), vencidas = ord.filter(a=>a.vencida), semData = ord.filter(a=>a.semData);
+  const soma = (l,k) => l.reduce((s,a)=>s+num(a[k]),0);
+  const sit = a => a.semData ? '<span class="pill" style="background:#F2F3F4;">Sem vencimento</span>'
+    : a.vencida ? '<span class="pill" style="background:#FADBD8;">Vencida: fora da previsão</span>'
+    : '<span class="pill" style="background:#DDF0E2;">No fluxo</span>';
+  const linhas = ord.map(a=>`<tr${a.vencida?' style="color:var(--danger)"':''}><td>${esc(a.fatura)}</td><td>${esc(a.nf)}</td><td>${esc(a.vencimento)||'—'}</td><td>${a.day||'—'}</td><td class="num">US$ ${fmt(a.saldo_usd)}${a.parcial?' <small>(parcial)</small>':''}</td><td class="num">${a.valor?'R$ '+fmt(a.valor):'—'}</td><td>${sit(a)}</td></tr>`).join('');
+  card.innerHTML = `
+    <h2>Faturas em aberto no Controle de Exportação</h2>
+    <p class="recebimentos-note" style="margin-top:-6px;">Lidas automaticamente do Controle de Exportação (só leitura). Entram no fluxo da Matriz no <b>vencimento + ${EXPORT_DIAS_CAMBIO} dias</b> (tempo estimado do câmbio cair na conta), pelo saldo em US$ × PTAX venda ${ex.ptax ? `de ${esc(ex.ptaxData)}: <b>${num(ex.ptax).toFixed(4)}</b>` : '(indisponível)'}. ACC não entra. Vencidas e sem vencimento ficam fora das projeções.</p>
+    ${ex.erro ? `<p class="recebimentos-note" style="color:var(--danger)">${esc(ex.erro)}</p>` : ''}
+    <div class="rec-summary-row" style="margin-bottom:10px;">
+      <span class="pill" style="background:#DDF0E2;">No fluxo: <b>US$ ${fmt(soma(noPrazo,'saldo_usd'))}</b> = R$ ${fmt(soma(noPrazo,'valor'))} (${noPrazo.length})</span>
+      <span class="pill" style="background:#FADBD8;">Vencidas, fora da previsão: <b>US$ ${fmt(soma(vencidas,'saldo_usd'))}</b> = R$ ${fmt(soma(vencidas,'valor'))} (${vencidas.length})</span>
+      ${semData.length ? `<span class="pill">Sem vencimento: US$ ${fmt(soma(semData,'saldo_usd'))} (${semData.length})</span>` : ''}
+    </div>
+    ${ord.length ? `<div style="overflow-x:auto;"><table class="rec-table"><thead><tr><th>Fatura</th><th>NF</th><th>Vencimento</th><th>Previsão de entrada</th><th style="text-align:right">Saldo US$</th><th style="text-align:right">Valor R$</th><th>Situação</th></tr></thead><tbody>${linhas}</tbody></table></div>` : '<p style="color:var(--ink-soft);font-size:0.85rem;">Nenhuma fatura em aberto no Controle de Exportação.</p>'}
+    <h3 style="margin:16px 0 4px 0;font-size:0.9rem;">Lançamentos manuais</h3>`;
+  return card;
+}
+
 function renderRecebimentosView(){
   const cotEl = document.querySelector('input[name=rec-cotacao]');
   if(cotEl && !cotEl.value && state.ultimaCotacaoExportacao){
@@ -1965,6 +2091,8 @@ function renderRecebimentosView(){
   }
   const container = document.getElementById('recebimentosWeeks');
   container.innerHTML = '';
+  const autosExp = exportacoesAuto_();
+  container.appendChild(quadroExportacoesControle_(autosExp));
 
   const byWeek = {};
   state.recebimentosReais.forEach(r=>{
@@ -1981,7 +2109,7 @@ function renderRecebimentosView(){
   });
 
   if(weekKeys.length===0){
-    container.innerHTML = '<p style="color:var(--ink-soft);font-size:0.85rem;">Nenhum recebimento lançado ainda.</p>';
+    container.insertAdjacentHTML('beforeend', '<p style="color:var(--ink-soft);font-size:0.85rem;">Nenhum recebimento lançado ainda.</p>');
     return;
   }
 
@@ -2013,7 +2141,9 @@ function renderRecebimentosView(){
       const tr = document.createElement('tr');
       const usdCell = (item.valor_usd!=null && item.valor_usd!=='') ? ('US$ ' + fmt(item.valor_usd)) : '—';
       const cotCell = (item.cotacao!=null && item.cotacao!=='') ? num(item.cotacao).toFixed(4) : '—';
-      tr.innerHTML = `<td>${item.day}</td><td>${UNIT_LABEL[item.unit]||item.unit}</td><td class="num">${usdCell}</td><td class="num">${cotCell}</td><td class="num">R$ ${fmt(item.valor)}</td><td>${item.obs||''}</td>`;
+      const dupExp = item.status !== 'Recebido' ? exportManualDuplicada_(item, autosExp) : null;
+      const obsTxt = (item.obs||'') + (dupExp ? ` <span class="pill" style="background:#FEF3CD;color:#7A5B00;" title="Parece a fatura ${dupExp.fatura} do Controle de Exportação: não é somado de novo">já no controle de exportação (${dupExp.fatura}), não somado</span>` : '');
+      tr.innerHTML = `<td>${item.day}</td><td>${UNIT_LABEL[item.unit]||item.unit}</td><td class="num">${usdCell}</td><td class="num">${cotCell}</td><td class="num">R$ ${fmt(item.valor)}</td><td>${obsTxt}</td>`;
       const tdDel = document.createElement('td');
       const delBtn = document.createElement('button');
       delBtn.className = 'rec-del'; delBtn.textContent = '✕';
@@ -2526,6 +2656,131 @@ function renderDiarioPie(canvasId, prevChartRef, setChartRef, records){
   return new Chart(ctx, cfg);
 }
 
+// ---- Previsao de saldo dia a dia (28-29/10/2026, pedido do Gilberto) ----
+// No dia 29 (de manha): saldo de 28 lancado - previsto de 29 = saldo previsto no fim de 29;
+// dai encadeia: saldo previsto de 29 - previsto de 30 = saldo previsto de 30, e assim por diante.
+// Por empresa. Saldo de partida = ultimo lancamento de cada banco no Historico ANTES do dia.
+// Se faltar lancar algum dia entre esse saldo e o dia escolhido, os vencimentos desse
+// intervalo entram como ajuste antes do primeiro dia (o saldo lancado ainda nao os reflete).
+// A pagar: obrigacao paga pelo real; em aberto/parcial pelo maior entre previsto e real.
+// A receber: duplicatas bancarizadas em aberto nao descontadas + recebimentos de exportacao
+// pendentes. US$ fica fora (nota). Itens ocultados no Diario ficam fora. So leitura.
+const CX_PREV_DIAS = 5;
+let cxPrevUnid = 'Total';
+function caixaPrevistoDia_(dataSel, nDias){
+  nDias = nDias || CX_PREV_DIAS;
+  const d0 = new Date(dataSel); d0.setHours(0,0,0,0);
+  const primeiro = proximoDiaUtil(d0);
+  const dias = [primeiro];
+  while(dias.length < nDias){ const n = new Date(dias[dias.length-1]); n.setDate(n.getDate()+1); dias.push(proximoDiaUtil(n)); }
+  const diaKeys = dias.map(ymd), ultimoKey = diaKeys[diaKeys.length-1], primeiroKey = diaKeys[0];
+  const primeiroNum = histSaldoDayKey(ddmmyyyy(primeiro));
+  const res = { dia: ddmmyyyy(primeiro), dias: dias.map(ddmmyyyy), usd: 0, usdQtd: 0, unidades: {} };
+  const keyBR = br => { const [d,m,a] = br.split('/').map(Number); return ymd(new Date(a,m-1,d)); };
+  ['Rural','RNA'].forEach(unit=>{
+    const porBanco = {};
+    (state.historicoSaldos||[]).forEach(h=>{
+      if(h.unit !== unit) return;
+      const k = histSaldoDayKey(h.date);
+      if(!k || k >= primeiroNum) return;
+      const atual = porBanco[h.banco];
+      if(!atual || k >= histSaldoDayKey(atual.date)) porBanco[h.banco] = h;
+    });
+    const bancos = Object.values(porBanco);
+    const saldo = bancos.reduce((s,h)=>s+num(h.saldo),0);
+    let dataSaldo = null, dataSaldoNum = 0;
+    bancos.forEach(h=>{ const k = histSaldoDayKey(h.date); if(k > dataSaldoNum){ dataSaldoNum = k; dataSaldo = h.date; } });
+    const defasados = bancos.filter(h=>histSaldoDayKey(h.date) < dataSaldoNum).map(h=>`${h.banco} (${h.date})`);
+    const iniKey = dataSaldo ? keyBR(dataSaldo) : null;
+    const pagarDia = {}, receberDia = {};
+    let gapPagar = 0, gapReceber = 0;
+    // devolve 'gap', a chave do dia, ou null
+    const balde = dayStr => {
+      const d = effectiveDate(dayStr); if(!d) return null;
+      const k = ymd(d);
+      if(k > ultimoKey) return null;
+      if(k >= primeiroKey) return k;
+      return (iniKey && k > iniKey) ? 'gap' : null;
+    };
+    const soma = (b, v, mapa, gap) => { if(b === 'gap') return gap + v; mapa[b] = (mapa[b]||0) + v; return gap; };
+    (state.records||[]).forEach(r=>{
+      if(r.unit !== unit || diarioOcultos.has(chaveDiarioObr_(r))) return;
+      const b = balde(r.day); if(!b) return;
+      if((r.currency||'BRL') !== 'BRL'){ if(b !== 'gap'){ res.usd += num(r.previsto); res.usdQtd++; } return; }
+      const v = obrigacaoStatus(r) === 'Pago' ? num(r.real) : Math.max(num(r.previsto), num(r.real));
+      gapPagar = soma(b, v, pagarDia, gapPagar);
+    });
+    (state.duplicatasReceber||[]).forEach(d=>{
+      if(d.unit !== unit || !duplicataContaComoRecebimento(d) || diarioOcultos.has(chaveDiarioDup_(d))) return;
+      const b = balde(d.day); if(!b) return;
+      gapReceber = soma(b, num(d.valor), receberDia, gapReceber);
+    });
+    recebimentosExportacaoLista_().forEach(r=>{
+      if(r.unit !== unit) return;
+      const b = balde(r.day); if(!b) return;
+      gapReceber = soma(b, num(r.valor), receberDia, gapReceber);
+    });
+    let corrente = saldo + gapReceber - gapPagar;
+    const linhas = diaKeys.map((k,i)=>{
+      const pagar = pagarDia[k]||0, receber = receberDia[k]||0;
+      const l = { dia: res.dias[i], ini: corrente, pagar, receber, fim: corrente + receber - pagar };
+      corrente = l.fim;
+      return l;
+    });
+    res.unidades[unit] = { saldo, dataSaldo, temSaldo: bancos.length > 0, defasados, gapPagar, gapReceber, linhas,
+                           atrasado: !!dataSaldo && keyBR(dataSaldo) < ymd(diaUtilAnterior(primeiro)) };
+  });
+  const R = res.unidades.Rural, N = res.unidades.RNA;
+  res.unidades.Total = {
+    saldo: R.saldo + N.saldo, temSaldo: R.temSaldo || N.temSaldo,
+    dataSaldo: R.dataSaldo === N.dataSaldo ? R.dataSaldo : null,
+    gapPagar: R.gapPagar + N.gapPagar, gapReceber: R.gapReceber + N.gapReceber,
+    atrasado: R.atrasado || N.atrasado, defasados: [],
+    linhas: R.linhas.map((l,i)=>{ const n = N.linhas[i]; return { dia: l.dia, ini: l.ini + n.ini, pagar: l.pagar + n.pagar, receber: l.receber + n.receber, fim: l.fim + n.fim }; })
+  };
+  return res;
+}
+
+function renderCaixaPrevistoDia_(dataSel){
+  const el = document.getElementById('diarioCaixaPrevisto');
+  if(!el) return;
+  const c = caixaPrevistoDia_(dataSel);
+  const x = c.unidades[cxPrevUnid] || c.unidades.Total;
+  const v = n => { n = Math.abs(n) < 0.005 ? 0 : n; return `<span class="${n<0?'neg':''}">R$ ${fmt(n)}</span>`; };
+  const dCurto = d => d ? d.slice(0,5) : '—';
+  const sem = ['dom','seg','ter','qua','qui','sex','sáb'];
+  const semDia = br => { const [d,m,a] = br.split('/').map(Number); return sem[new Date(a,m-1,d).getDay()]; };
+  const dataSaldoTxt = x.dataSaldo ? dCurto(x.dataSaldo)
+    : ['Rural','RNA'].map(u=>`${u} ${dCurto(c.unidades[u].dataSaldo)}`).join(', ');
+  const hoje = x.linhas[0];
+  const botoes = ['Total','Rural','RNA'].map(u=>`<button type="button" data-cxu="${u}" style="padding:3px 10px;border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:0.8rem;cursor:pointer;${u===cxPrevUnid?'background:var(--green-deep);color:#fff;':'background:var(--paper);'}">${u==='Rural'?'Matriz (Rural)':u==='RNA'?'Filial (RNA)':'Total'}</button>`).join(' ');
+  const notas = [];
+  ['Rural','RNA'].forEach(un=>{
+    const u = c.unidades[un];
+    if(!u.temSaldo) notas.push(`${un}: nenhum saldo lançado antes de ${c.dia} (saldo de partida = 0).`);
+    if(u.defasados.length) notas.push(`${un}: banco(s) com saldo mais antigo: ${u.defasados.join(', ')}.`);
+  });
+  if(c.usdQtd) notas.push(`${c.usdQtd} obrigação(ões) em US$ (US$ ${fmt(c.usd)}) fora da soma.`);
+  const gap = (x.gapPagar || x.gapReceber)
+    ? `<tr><td colspan="2" style="text-align:left;color:var(--ink-soft)">Vencimentos depois do saldo lançado (${dataSaldoTxt}) e antes de ${dCurto(c.dia)}</td><td>${v(x.gapPagar ? -x.gapPagar : 0)}</td><td>${v(x.gapReceber)}</td><td></td></tr>` : '';
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin:0 0 6px 0;">
+      <h3 style="margin:0;font-size:0.95rem;">Previsão de saldo dia a dia</h3>
+      <div class="cx-unid">${botoes}</div>
+    </div>
+    ${x.atrasado ? `<div style="margin:0 0 8px 0;padding:6px 10px;border-radius:8px;background:#FEF3CD;color:#7A5B00;font-size:0.85rem;">O saldo de ${dCurto(ddmmyyyy(diaUtilAnterior(inferDate(c.dia))))} ainda não foi lançado: a previsão parte do último saldo lançado (${dataSaldoTxt}) e desconta também os vencimentos desde então.</div>` : ''}
+    <div style="margin:0 0 8px 0;font-size:0.9rem;">Saldo lançado (${dataSaldoTxt}): <b>${v(x.saldo)}</b>. Previsto para ${dCurto(c.dia)}: <b>${v(hoje.pagar)}</b> a pagar${hoje.receber ? ` e <b>${v(hoje.receber)}</b> a receber` : ''}. Saldo previsto no fim de ${dCurto(c.dia)}: <b>${v(hoje.fim)}</b>.</div>
+    <div style="overflow-x:auto;"><table>
+      <thead><tr><th>Dia</th><th>Saldo inicial</th><th>− A pagar</th><th>+ A receber</th><th>= Saldo previsto</th></tr></thead>
+      <tbody>
+        ${gap}
+        ${x.linhas.map((l,i)=>`<tr${i===0?' style="background:#F4F8F5"':''}><td>${semDia(l.dia)} ${dCurto(l.dia)}</td><td>${v(l.ini)}</td><td>${v(l.pagar ? -l.pagar : 0)}</td><td>${v(l.receber)}</td><td class="cx-res">${v(l.fim)}</td></tr>`).join('')}
+      </tbody>
+    </table></div>
+    <div class="cx-nota">Saldo lançado no Histórico diário de saldos; cada dia parte do saldo previsto do dia anterior. A pagar = obrigações do dia (pagas pelo valor real, em aberto pelo previsto). A receber = duplicatas bancarizadas em aberto e não descontadas + exportação (faturas em aberto do Controle de Exportação no vencimento + ${EXPORT_DIAS_CAMBIO} dias, pela PTAX, e lançamentos manuais pendentes). Só cálculo: nada é gravado na planilha.${notas.length ? '<br>' + notas.join('<br>') : ''}</div>`;
+  el.querySelectorAll('button[data-cxu]').forEach(b=>b.addEventListener('click', ()=>{ cxPrevUnid = b.dataset.cxu; renderCaixaPrevistoDia_(dataSel); }));
+}
+
 function renderDiarioView(){
   const hoje = new Date(); hoje.setHours(0,0,0,0);
   const dataInput = document.getElementById('diarioDataInput');
@@ -2604,6 +2859,7 @@ function renderDiarioView(){
     <span class="pill">A receber: <b>R$ ${fmt(totalReceberHoje)}</b> (${receberHoje.length})</span>
     <span class="pill">Saldo líquido: <b>R$ ${fmt(totalReceberHoje-totalPagarHoje)}</b></span>
     ${pagasOcultasHoje ? `<span class="pill" style="background:#F2F3F4;color:var(--ink-soft);">${pagasOcultasHoje} obrigação(ões) já paga(s) fora da lista</span>` : ''}`;
+  try{ renderCaixaPrevistoDia_(selecionada); }catch(e){ console.warn('Caixa previsto do dia não pôde ser calculado:', e); }
   renderDiarioPagarTable('diarioHojePagarBody', naLista(pagarHoje), false, hojeLabel, pagasOcultasHoje > 0);
   renderDiarioReceberTable('diarioHojeReceberBody', receberHoje, false, hojeLabel);
 
@@ -3090,6 +3346,9 @@ function renderBankAccounts(){
     state.bankUpdatedAt ? ('atualizado em ' + state.bankUpdatedAt) : '';
 
   let grandTotal = 0;
+  let cxPrev = null;
+  try{ cxPrev = caixaPrevistoDia_(new Date()); }catch(e){ console.warn('Caixa previsto do dia não pôde ser calculado:', e); }
+  const prevHtml_ = (rot, n) => `<span>${rot}</span><b class="${n<0?'neg':''}">R$ ${fmt(n)}</b>`;
 
   [['Rural','Matriz (Rural)'],['RNA','Filial (RNA)']].forEach(([unitKey,label])=>{
     const col = document.createElement('div');
@@ -3145,6 +3404,13 @@ function renderBankAccounts(){
     totalRow.className = 'bank-total';
     totalRow.innerHTML = `<span>Total ${label}</span><span>R$ ${fmt(unitTotal)}</span>`;
     col.appendChild(totalRow);
+    if(cxPrev){
+      const prevRow = document.createElement('div');
+      prevRow.className = 'bank-prev';
+      prevRow.title = `Último saldo lançado − a pagar + a receber até ${cxPrev.dia} (só leitura; dia a dia em Hoje › Diário)`;
+      prevRow.innerHTML = prevHtml_(`Saldo previsto fim de ${cxPrev.dia.slice(0,5)}`, cxPrev.unidades[unitKey].linhas[0].fim);
+      col.appendChild(prevRow);
+    }
 
     grandTotal += unitTotal;
     grid.appendChild(col);
@@ -3159,6 +3425,15 @@ function renderBankAccounts(){
     card.appendChild(grandEl);
   }
   grandEl.innerHTML = `<span class="label">Saldo total em caixa</span><span class="value">R$ ${fmt(grandTotal)}</span>`;
+  let grandPrev = document.getElementById('bankGrandPrev');
+  if(!grandPrev){
+    grandPrev = document.createElement('div');
+    grandPrev.className = 'bank-prev';
+    grandPrev.id = 'bankGrandPrev';
+    card.appendChild(grandPrev);
+  }
+  grandPrev.style.display = cxPrev ? '' : 'none';
+  if(cxPrev) grandPrev.innerHTML = prevHtml_(`Saldo previsto no fim de ${cxPrev.dia.slice(0,5)} = último saldo lançado − a pagar + a receber`, cxPrev.unidades.Total.linhas[0].fim);
 }
 
 function touchBankUpdated(){
