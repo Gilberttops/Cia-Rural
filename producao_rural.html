@@ -7604,7 +7604,7 @@ function ptRenderTroca(){
           <div class="r">${fn(l.qtd,2)} kg</div>
           <div class="r">R$ ${fn(l.custoPadrao,2)}</div>
           <input type="number" step="0.01" class="${l.temOverride?'alterado':''}" value="${(l.custoUsado||0).toFixed(2)}" onchange="ptTrocaAtualizarMP(${l.cod},this.value)">
-          <div style="text-align:center"><label title="O cliente entrega esta MP: sai do custo"><input type="checkbox" style="width:auto" ${l.doCliente?'checked':''} onchange="ptTrocaSetFornece(${l.cod},this.checked)"></label></div>
+          <div style="text-align:center"><label title="O cliente entrega esta MP: sai do custo"><input type="checkbox" style="width:auto;padding:0;margin:0" ${l.doCliente?'checked':''} onchange="ptTrocaSetFornece(${l.cod},this.checked)"></label></div>
           <div class="r" style="font-weight:700;${l.doCliente?'color:var(--t3);text-decoration:line-through':''}">R$ ${fn((l.qtd/r.batida)*l.custoUsado,2)}</div>
           <div style="text-align:center">${l.temOverride?`<button type="button" class="nf-del-btn" onclick="ptTrocaResetarMP(${l.cod})" title="Restaurar preço padrão">↺</button>`:''}</div>
         </div>`).join('')}
@@ -7614,7 +7614,7 @@ function ptRenderTroca(){
       <div class="card" style="padding:16px;margin-bottom:16px">
         <label style="font-weight:700;font-size:12px;text-transform:uppercase;color:var(--t3);display:block;margin-bottom:8px">Opções dos relatórios (matérias-primas que o cliente pode entregar)</label>
         <div style="display:flex;flex-wrap:wrap;gap:6px 16px">
-          ${r.linhas.map(l=>`<label style="font-size:13px;white-space:nowrap"><input type="checkbox" ${(PT_TROCA.opcoes||{})[l.cod]?'checked':''} onchange="ptTrocaSetOpcao(${l.cod},this.checked)"> ${esc(l.nome)}</label>`).join('')}
+          ${r.linhas.map(l=>`<label style="font-size:13px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" style="width:auto;padding:0;margin:0" ${(PT_TROCA.opcoes||{})[l.cod]?'checked':''} onchange="ptTrocaSetOpcao(${l.cod},this.checked)"> ${esc(l.nome)}</label>`).join('')}
         </div>
         <div style="font-size:11.5px;color:var(--t3);margin-top:8px">Os relatórios trazem o preço completo e uma opção para cada combinação das marcadas (com mais de 3, cada uma sozinha e todas juntas). Sem nenhuma marcada, usa milho e sorgo da fórmula.</div>
       </div>
