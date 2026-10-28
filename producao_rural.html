@@ -7532,24 +7532,26 @@ function ptTrocaRelatorioPrecos(){
     const r=s.r;
     const ent=r.entregas.length?r.entregas.map(function(e){return esc(e.nome)+': '+fn(e.kgTotal,0)+' kg';}).join('<br>'):'—';
     return '<tr data-i="'+i+'"><td><strong>'+s.rot+'</strong></td><td>'+ent+'</td>'
-      +'<td class="r"><span class="ed">R$ <input class="pv" value="'+fmt(r.pvTon)+'" oninput="calc()" onfocus="this.select()"></span></td>'
-      +'<td class="r" id="kg'+i+'"></td>'+(b.pesoSaco===1?'':'<td class="r" id="sc'+i+'"></td>')+'<td class="r" id="tt'+i+'"></td></tr>';
+      +'<td class="r"><span class="ed">R$ <input class="pv" value="'+fmt(r.pvTon)+'" oninput="calc(this)" onfocus="this.select()"></span></td>'
+      +'<td class="r" id="kg'+i+'"></td>'+(b.pesoSaco===1?'':'<td class="r"><span class="ed">R$ <input class="sc" oninput="calc(this)" onfocus="this.select()"></span></td>')+'<td class="r" id="tt'+i+'"></td></tr>';
   }).join('');
-  const css=PT_TROCA_CSS+'.ed{white-space:nowrap}.pv{width:110px;text-align:right;font:inherit;font-weight:800;color:#1d4ed8;border:1px dashed #94a3b8;border-radius:4px;padding:3px 6px;background:#fffbeb}'
-    +'@media print{.pv{border:none;background:none;padding:0;width:auto}.dica{display:none}}.dica{font-size:11px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:8px 10px;margin-bottom:12px}';
+  const css=PT_TROCA_CSS+'.ed{white-space:nowrap}.pv,.sc{width:100px;text-align:right;font:inherit;font-weight:800;color:#1d4ed8;border:1px dashed #94a3b8;border-radius:4px;padding:3px 6px;background:#fffbeb}'
+    +'@media print{.pv,.sc{border:none;background:none;padding:0;width:80px}.dica{display:none}}.dica{font-size:11px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:8px 10px;margin-bottom:12px}';
   const script='var peso='+(+b.pesoSaco||0)+',ton='+(+b.ton||0)+';'
     +'function lerBR(t){t=String(t).replace(/[^0-9,.-]/g,"");if(t.indexOf(",")>=0)t=t.replace(/\\./g,"").replace(",",".");return parseFloat(t)||0;}'
     +'function f2(v){return v.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});}'
-    +'function calc(){document.querySelectorAll("tr[data-i]").forEach(function(tr){var i=tr.dataset.i,pv=lerBR(tr.querySelector(".pv").value);'
-    +'document.getElementById("kg"+i).textContent="R$ "+v4(pv/1000);var sc=document.getElementById("sc"+i);if(sc)sc.textContent="R$ "+f2(pv/1000*peso);'
-    +'document.getElementById("tt"+i).textContent="R$ "+f2(pv*ton);});}'
+    +'function atu(tr,src){var pvI=tr.querySelector(".pv"),scI=tr.querySelector(".sc"),i=tr.dataset.i,pv;'
+    +'if(src&&src===scI&&peso>0){pv=lerBR(scI.value)/peso*1000;pvI.value=f2(pv);}'
+    +'else{pv=lerBR(pvI.value);if(scI&&src!==scI)scI.value=f2(pv/1000*peso);}'
+    +'document.getElementById("kg"+i).textContent="R$ "+v4(pv/1000);document.getElementById("tt"+i).textContent="R$ "+f2(pv*ton);}'
+    +'function calc(src){if(src){atu(src.closest("tr"),src);}else{document.querySelectorAll("tr[data-i]").forEach(function(tr){atu(tr,null);});}}'
     +'function v4(v){return v.toLocaleString("pt-BR",{minimumFractionDigits:4,maximumFractionDigits:4});}'
     +'calc();';
   ptTrocaAbrirJanela('<html><head><meta charset="UTF-8"><title>Preços — Troca por Matéria-prima</title><style>'+css+'</style></head><body>'
     +'<button class="pbtn" onclick="window.print()">Imprimir / Salvar PDF</button>'
     +'<div class="hdr"><img src="'+LOGO_RURAL+'" alt="Rural"><div><div class="hdr-titulo">Proposta de preços</div><div class="hdr-sub">Opções com e sem entrega de matéria-prima pelo cliente</div></div></div>'
     +'<div class="info"><strong>Cliente:</strong> '+esc(PT_TROCA.cliente||'—')+' &nbsp;|&nbsp; <strong>Produto:</strong> '+esc(b.f._cotacao?b.f.nome:(b.f.cod+' — '+b.f.nome))+'<br><strong>Quantidade:</strong> '+fn(b.ton,3)+' t &nbsp;|&nbsp; <strong>Data:</strong> '+dataHoje+'</div>'
-    +'<div class="dica">Os preços por tonelada abaixo podem ser editados para arredondar; o restante recalcula sozinho. Depois use Imprimir / Salvar PDF.</div>'
+    +'<div class="dica">Os preços por tonelada e por saco podem ser editados para arredondar (um ajusta o outro); o restante recalcula sozinho. Depois use Imprimir / Salvar PDF.</div>'
     +'<table><thead><tr><th>Opção</th><th>Cliente entrega</th><th class="r">Preço por tonelada</th><th class="r">Preço por kg</th>'+(b.pesoSaco===1?'':'<th class="r">Preço por saco ('+fn(b.pesoSaco,b.pesoSaco%1===0?0:2)+' kg)</th>')+'<th class="r">Total ('+fn(b.ton,3)+' t)</th></tr></thead><tbody>'+linhas+'</tbody></table>'
     +'<div class="footer">Rural Nutrição Animal</div>'
     +'<script>'+script+'<\/script></body></html>');
