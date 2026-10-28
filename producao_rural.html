@@ -286,7 +286,7 @@ table input:focus{border-color:var(--blue)}
    rola normalmente, sem a altura fixa que cortava Custos & Margens / Exportacao / Cotacao Especial. */
 .pt-builder-view.pt-hidden{display:none}
 .pt-shell.pt-flow{height:auto !important;min-height:0}
-.pt-shell.pt-flow #pt-margins-view,.pt-shell.pt-flow #pt-export-view,.pt-shell.pt-flow #pt-especial-view,.pt-shell.pt-flow #pt-prime-view{flex:none;overflow:visible}
+.pt-shell.pt-flow #pt-margins-view,.pt-shell.pt-flow #pt-export-view,.pt-shell.pt-flow #pt-especial-view,.pt-shell.pt-flow #pt-prime-view,.pt-shell.pt-flow #pt-troca-view{flex:none;overflow:visible}
 #pt-sidebar{width:300px;min-width:260px;background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
 .pt-sidebar-hdr{padding:12px 14px;border-bottom:1px solid var(--border)}
 #pt-catalog{flex:1;overflow-y:auto;padding:8px}
@@ -339,6 +339,8 @@ table.pt-price-table td[contenteditable="true"]:focus{outline:2px solid var(--am
 #pt-especial-view.visible{display:block}
 #pt-prime-view{display:none;flex:1;overflow-y:auto;padding:18px 26px 40px}
 #pt-prime-view.visible{display:block}
+#pt-troca-view{display:none;flex:1;overflow-y:auto;padding:18px 26px 40px}
+#pt-troca-view.visible{display:block}
 .pt-esp2-row{display:grid;grid-template-columns:56px 2fr 85px 105px 105px 115px 30px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px}
 .pt-esp2-row input{padding:5px 7px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;width:100%}
 .pt-esp2-row input.alterado{border-color:var(--amber);background:var(--amb-lt);font-weight:700}
@@ -420,7 +422,7 @@ body[data-unidade="banco"] [data-unid="rna"],body[data-unidade="rna"] [data-unid
   *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;color-adjust:exact !important;}
 }
 @media print{
-  .tabs,.hdr,#pt-sidebar,.pt-subtabs,#pt-add-page-btn,.pt-page-toolbar,.pt-add-item-row,.pt-doc-group-controls,#pt-margins-view,#pt-export-view,#pt-especial-view,#pt-prime-view{display:none !important}
+  .tabs,.hdr,#pt-sidebar,.pt-subtabs,#pt-add-page-btn,.pt-page-toolbar,.pt-add-item-row,.pt-doc-group-controls,#pt-margins-view,#pt-export-view,#pt-especial-view,#pt-prime-view,#pt-troca-view{display:none !important}
   body,.page,#pg-precos,.pt-shell,#pt-doc-scroll{background:#fff !important;overflow:visible !important;height:auto !important;padding:0 !important;margin:0 !important}
   .page{display:none !important}
   .page.active{display:block !important}
@@ -1397,6 +1399,7 @@ input:focus,select:focus{border-color:var(--ru-azul);box-shadow:0 0 0 3px rgba(3
       <button class="pt-subtab" data-pt-tab="export" onclick="ptSwitchTab('export')">Precificação Exportação</button>
       <button class="pt-subtab" data-pt-tab="especial" onclick="ptSwitchTab('especial')">Cotação Especial</button>
       <button class="pt-subtab" data-pt-tab="prime" onclick="ptSwitchTab('prime')">Industrialização Prime</button>
+      <button class="pt-subtab" data-pt-tab="troca" onclick="ptSwitchTab('troca')">Troca por Matéria-prima</button>
       <span style="flex:1"></span>
       <span id="pt-save-status" style="font-size:11px;color:var(--t3);margin-right:4px"></span>
       <button class="btn btn-ghost" onclick="ptClearDoc()">Limpar tudo</button>
@@ -1418,6 +1421,7 @@ input:focus,select:focus{border-color:var(--ru-azul);box-shadow:0 0 0 3px rgba(3
     <div id="pt-export-view"></div>
     <div id="pt-especial-view"></div>
     <div id="pt-prime-view"></div>
+    <div id="pt-troca-view"></div>
   </div>
 </div>
 
@@ -5577,7 +5581,7 @@ const PT_KEY_DOC='RURAL_TABELA_DOC_v1', PT_KEY_OV='RURAL_TABELA_CATALOG_OV_v1',
       PT_KEY_RATES='RURAL_TABELA_RATES_v1', PT_KEY_LINKS='RURAL_TABELA_LINKS_v1',
       PT_KEY_EXTRA='RURAL_TABELA_EXTRA_PRICES_v1', PT_KEY_EMBSIZE='RURAL_TABELA_EMBSIZE_v1',
       PT_KEY_CDFTON='RURAL_TABELA_CDFTON_v1', PT_KEY_ACTIVE='RURAL_TABELA_ACTIVE_v1', PT_KEY_CDFOV='RURAL_TABELA_CDFOVERRIDES_v1',
-      PT_KEY_EXPORT='RURAL_TABELA_EXPORT_v1', PT_KEY_ESPECIAL='RURAL_TABELA_ESPECIAL_v1', PT_KEY_PRIME='RURAL_TABELA_PRIME_v1';
+      PT_KEY_EXPORT='RURAL_TABELA_EXPORT_v1', PT_KEY_ESPECIAL='RURAL_TABELA_ESPECIAL_v1', PT_KEY_PRIME='RURAL_TABELA_PRIME_v1', PT_KEY_TROCA='RURAL_TABELA_TROCA_v1';
 
 function ptUid(){ return Math.random().toString(36).slice(2,10); }
 function ptFmtPrice(v){
@@ -5619,7 +5623,7 @@ function ptColetarEstadoRemoto(){
   return {
     doc:ptDoc,activePageId:ptActivePageId,overrides:ov,rates:PT_GROUP_RATES,links:PT_LINKS,
     extraPrices:PT_EXTRA_PRICES,embSizes:PT_EMB_SIZES,cdfTon:PT_CDF_TON,active:PT_ACTIVE,
-    cdfOverrides:PT_CDF_OVERRIDES,exportPricing:PT_EXPORT,especial:PT_ESPECIAL,prime:PT_PRIME
+    cdfOverrides:PT_CDF_OVERRIDES,exportPricing:PT_EXPORT,especial:PT_ESPECIAL,prime:PT_PRIME,troca:PT_TROCA
   };
 }
 /* So publica na planilha depois que a versao da planilha foi carregada com sucesso nesta sessao.
@@ -5690,6 +5694,7 @@ function ptEspelharLocal(){
     localStorage.setItem(PT_KEY_EXPORT,JSON.stringify(e.exportPricing));
     localStorage.setItem(PT_KEY_ESPECIAL,JSON.stringify(e.especial));
     localStorage.setItem(PT_KEY_PRIME,JSON.stringify(e.prime));
+    localStorage.setItem(PT_KEY_TROCA,JSON.stringify(e.troca));
   }catch(err){}
 }
 function ptCarregarRemoto(){
@@ -5711,6 +5716,7 @@ function ptCarregarRemoto(){
       if(estado.exportPricing)PT_EXPORT=estado.exportPricing;
       if(estado.especial)PT_ESPECIAL=estado.especial;
       if(estado.prime)PT_PRIME=estado.prime;
+      if(estado.troca)PT_TROCA=estado.troca;
       ptRemotoPronto=true;ptAvisouNaoPublicado=false;ptVersaoConhecida=ptAssinaturaReg(reg);
       ptUltimoEstadoPublicado=JSON.stringify(ptColetarEstadoRemoto());
       ptEspelharLocal();
@@ -5736,6 +5742,7 @@ function ptLoadAll(){
   try{ const ex=JSON.parse(localStorage.getItem(PT_KEY_EXPORT)||'null'); if(ex) PT_EXPORT=ex; }catch(e){}
   try{ const es=JSON.parse(localStorage.getItem(PT_KEY_ESPECIAL)||'null'); if(es) PT_ESPECIAL=es; }catch(e){}
   try{ const pr=JSON.parse(localStorage.getItem(PT_KEY_PRIME)||'null'); if(pr) PT_PRIME=pr; }catch(e){}
+  try{ const tr=JSON.parse(localStorage.getItem(PT_KEY_TROCA)||'null'); if(tr) PT_TROCA=tr; }catch(e){}
   try{
     const raw=localStorage.getItem(PT_KEY_DOC);
     if(raw){ const parsed=JSON.parse(raw); ptDoc=parsed.doc||[]; ptActivePageId=parsed.activePageId||(ptDoc.length?ptDoc[0].id:null); return true; }
@@ -6762,6 +6769,7 @@ function ptRenderExport(){
 /* Industrialização Prime: preço de venda de cada MP (R$/ton, vale para qualquer fórmula), MPs que a Prime já tem em estoque (custo 0)
    e o valor do serviço por tonelada produzida. Salva no navegador e na planilha junto com a Tabela de Preços. */
 let PT_PRIME={ produtoCod:null, cliente:'Prime', batidas:1, servicoTon:0, preco:{}, estoque:{} };
+let PT_TROCA={ produtoCod:null, cliente:'', batidas:1, servicoTon:0, preco:{}, fornece:{}, graos:[] };
 let PT_ESPECIAL={ produtoCod:null, mpOverrides:{}, custoProducao:350, frete:60, impostos:7, comissao:7, pvTestadoTon:null };
 function ptEspecialSalvar(){
   try{ localStorage.setItem(PT_KEY_ESPECIAL, JSON.stringify(PT_ESPECIAL));
@@ -7227,6 +7235,241 @@ function ptRenderPrime(){
       </div>`}
     </div>`;
 }
+/* ===== Troca por Matéria-prima =====
+   O cliente fornece parte das MPs (milho, sorgo...). Marcadas como "cliente fornece", elas saem do custo:
+   o total a pagar em R$ = demais MPs + serviço. Os kg dessas MPs na produção são o que o cliente entrega para ela.
+   Se quiser quitar o total a pagar em grão, escolhe os grãos e a divisão (%): o sistema mostra quanto de cada um cobre. */
+function ptTrocaSalvar(){
+  try{
+    localStorage.setItem(PT_KEY_TROCA, JSON.stringify(PT_TROCA));
+    const s=$('pt-troca-save-status'); if(s){ s.textContent='salvo ✓'; setTimeout(()=>{ if(s.textContent==='salvo ✓') s.textContent=''; },1200); }
+  }catch(e){}
+  ptSalvarRemoto();
+}
+function ptTrocaFormula(){
+  if(!PT_TROCA.produtoCod)return null;
+  return ptIndexComCotacoes()[String(PT_TROCA.produtoCod)]||null;
+}
+function ptTrocaCalcular(){
+  const f=ptTrocaFormula();
+  if(!f)return null;
+  const banco=f._banco||bancoDoCat(f.cat);
+  const batida=parseFloat(f.batida)||0;
+  const nBat=Math.max(0,parseFloat(PT_TROCA.batidas==null?1:PT_TROCA.batidas)||0);
+  const servicoTon=Math.max(0,parseFloat(PT_TROCA.servicoTon)||0);
+  const preco=PT_TROCA.preco||{}, fornece=PT_TROCA.fornece||{};
+  let mpBatida=0, mpForneceBatida=0;
+  const linhas=(f.ings||[]).filter(function(i){return i.qtd>0;}).map(function(ing){
+    const item=MPitens.find(function(m){return m.cod===ing.cod;});
+    const kgBatida=ing.qtd||0;
+    const padrao=custoMPBase(ing.cod,banco)||0;                         /* R$/ton do banco de MPs */
+    const p=preco[ing.cod]!==undefined?preco[ing.cod]:padrao;
+    const doCliente=!!fornece[ing.cod];
+    const valorBatida=kgBatida*p/1000;
+    if(doCliente)mpForneceBatida+=valorBatida; else mpBatida+=valorBatida;
+    return {cod:ing.cod,nome:item?item.d:('cod '+ing.cod),kgBatida:kgBatida,kgTotal:kgBatida*nBat,preco:p,padrao:padrao,temPreco:preco[ing.cod]!==undefined,doCliente:doCliente,valorBatida:valorBatida};
+  });
+  const servicoBatida=servicoTon*batida/1000;
+  const aPagarBatida=mpBatida+servicoBatida;
+  const aPagar=aPagarBatida*nBat;
+  const tonTotal=nBat*batida/1000;
+  const gr=PT_TROCA.graos||[];
+  const somaPct=gr.reduce(function(a,g){return a+(parseFloat(g.pct)||0);},0);
+  const graos=gr.map(function(g){
+    const item=MPitens.find(function(m){return m.cod===g.cod;});
+    const pad=custoMPBase(g.cod,banco)||0;
+    const p=(parseFloat(g.preco)>0)?parseFloat(g.preco):pad;
+    const share=somaPct>0?(parseFloat(g.pct)||0)/somaPct:(gr.length?1/gr.length:0);
+    const valor=aPagar*share;
+    const kg=p>0?valor/p*1000:0;
+    return {cod:g.cod,nome:item?item.d:('cod '+g.cod),preco:p,padrao:pad,temPreco:parseFloat(g.preco)>0,pct:g.pct,share:share,valor:valor,kg:kg,kgPorTon:tonTotal>0?kg/tonTotal:0};
+  });
+  return {f:f,batida:batida,nBat:nBat,servicoTon:servicoTon,linhas:linhas,mpBatida:mpBatida,mpForneceBatida:mpForneceBatida,servicoBatida:servicoBatida,
+    aPagarBatida:aPagarBatida,aPagar:aPagar,tonTotal:tonTotal,aPagarTon:tonTotal>0?aPagar/tonTotal:0,graos:graos,
+    kgEntrega:linhas.filter(function(l){return l.doCliente;}).reduce(function(a,l){return a+l.kgTotal;},0)};
+}
+function ptTrocaSelecionarProduto(cod){ PT_TROCA.produtoCod=cod||null; ptTrocaSalvar(); ptRenderTroca(); }
+function ptTrocaBuscarProduto(texto){
+  const cod=ptParseFormulaCode(texto);
+  const idx=ptIndexComCotacoes();
+  if(cod && idx[String(cod)] && String(cod)!==String(PT_TROCA.produtoCod)) ptTrocaSelecionarProduto(cod);
+}
+function ptTrocaSetPreco(cod,valor){
+  if(!PT_TROCA.preco)PT_TROCA.preco={};
+  const v=lerNumeroBR(valor);
+  if(isNaN(v)||v<0)delete PT_TROCA.preco[cod]; else PT_TROCA.preco[cod]=v;
+  ptTrocaSalvar(); ptRenderTroca();
+}
+function ptTrocaSetFornece(cod,marcado){
+  if(!PT_TROCA.fornece)PT_TROCA.fornece={};
+  if(marcado)PT_TROCA.fornece[cod]=true; else delete PT_TROCA.fornece[cod];
+  ptTrocaSalvar(); ptRenderTroca();
+}
+function ptTrocaSetCampo(campo,valor){
+  if(campo==='cliente')PT_TROCA.cliente=String(valor||'').trim();
+  else{ const v=lerNumeroBR(valor); PT_TROCA[campo]=(isNaN(v)||v<0)?0:v; }
+  ptTrocaSalvar(); ptRenderTroca();
+}
+function ptTrocaCodMP(texto){
+  const m=String(texto||'').match(/^\s*(\d+)/);
+  if(!m)return null;
+  const cod=parseInt(m[1],10);
+  return MPitens.some(function(x){return x.cod===cod;})?cod:null;
+}
+function ptTrocaAddGrao(texto){
+  const cod=ptTrocaCodMP(texto);
+  if(cod===null){ if(String(texto||'').trim())toast('Matéria-prima não encontrada. Escolha uma da lista.'); return; }
+  if(!PT_TROCA.graos)PT_TROCA.graos=[];
+  if(PT_TROCA.graos.some(function(g){return g.cod===cod;})){toast('Esse grão já está na lista.');return;}
+  PT_TROCA.graos.push({cod:cod,preco:null,pct:0});
+  ptTrocaSalvar(); ptRenderTroca();
+}
+function ptTrocaDelGrao(i){ PT_TROCA.graos.splice(i,1); ptTrocaSalvar(); ptRenderTroca(); }
+function ptTrocaSetGrao(i,campo,valor){
+  const g=PT_TROCA.graos[i]; if(!g)return;
+  const v=lerNumeroBR(valor);
+  if(campo==='preco')g.preco=(isNaN(v)||v<=0)?null:v; else g.pct=(isNaN(v)||v<0)?0:v;
+  ptTrocaSalvar(); ptRenderTroca();
+}
+function ptTrocaHTMLPDF(r){
+  const esc=function(x){return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};
+  const dataHoje=new Date().toLocaleDateString('pt-BR');
+  const linhas=r.linhas.map(function(l){
+    return '<tr><td>'+esc(l.nome)+'</td><td class="r">'+fn(l.kgBatida,2)+' kg</td>'
+      +(l.doCliente
+        ?'<td class="r est" colspan="2">Fornecida pelo cliente — fora do valor</td>'
+        :'<td class="r">R$ '+fn(l.preco,2)+'</td><td class="r">R$ '+fn(l.valorBatida,2)+'</td>')
+      +'</tr>';
+  }).join('');
+  const graos=r.graos.map(function(g){
+    return '<tr><td>'+esc(g.nome)+'</td><td class="r">'+fn(g.share*100,1)+'%</td><td class="r">R$ '+fn(g.preco,2)+'/ton</td><td class="r">R$ '+fn(g.valor,2)+'</td><td class="r"><strong>'+fn(g.kg,0)+' kg</strong> ('+fn(g.kg/60,1)+' sacas de 60 kg)</td></tr>';
+  }).join('');
+  const entregas=r.linhas.filter(function(l){return l.doCliente;}).map(function(l){
+    return '<tr><td>'+esc(l.nome)+'</td><td class="r">'+fn(l.kgBatida,2)+' kg por batida</td><td class="r"><strong>'+fn(l.kgTotal,0)+' kg</strong></td></tr>';
+  }).join('');
+  const zoom=Math.max(0.55,Math.min(1,28/(r.linhas.length+r.graos.length+16))).toFixed(2);
+  return '<html><head><meta charset="UTF-8"><title>Cotação Troca por Matéria-prima</title><style>'
+   +'*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,sans-serif;font-size:11px;color:#18180f;padding:16px;zoom:'+zoom+'}'
+   +'@media print{@page{margin:8mm;size:A4 portrait}body{padding:0}}'
+   +'.hdr{display:flex;align-items:center;gap:14px;border-bottom:3px solid #1d4ed8;padding-bottom:8px;margin-bottom:10px}.hdr img{height:40px}'
+   +'.hdr-titulo{font-size:17px;font-weight:800;color:#1d4ed8}.hdr-sub{font-size:10px;color:#6b7280;margin-top:1px}'
+   +'.info{font-size:11px;color:#374151;margin-bottom:8px;line-height:1.5}.sec-titulo{font-size:12px;font-weight:800;margin:10px 0 4px;color:#1e293b}'
+   +'table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:4px}'
+   +'th{background:#f4f3ef;text-align:left;padding:3px 7px;font-size:9.5px;text-transform:uppercase;color:#6b7280;border-bottom:1px solid #e2dfd7}'
+   +'td{padding:3px 7px;border-bottom:1px solid #eeece5}.r{text-align:right}.est{color:#6b7280;font-style:italic}'
+   +'tr.tot td{font-weight:800;background:#f4f3ef;border-top:2px solid #cbd5e1}'
+   +'tr.dest td{font-weight:800;background:#eff6ff;color:#1d4ed8;font-size:12.5px}'
+   +'.footer{margin-top:12px;border-top:2px solid #1d4ed8;padding-top:6px;text-align:center;font-size:10px;font-weight:700;color:#1d4ed8}'
+   +'.pbtn{position:fixed;top:16px;right:16px;padding:10px 18px;background:#1d4ed8;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer}@media print{.pbtn{display:none}}'
+   +'</style></head><body><button class="pbtn" onclick="window.print()">Imprimir / Salvar PDF</button>'
+   +'<div class="hdr"><img src="'+LOGO_RURAL+'" alt="Rural"><div><div class="hdr-titulo">Cotação — Troca por Matéria-prima</div><div class="hdr-sub">Valor a pagar e quantidade de grão para cobrir</div></div></div>'
+   +'<div class="info"><strong>Cliente:</strong> '+esc(PT_TROCA.cliente||'—')+' &nbsp;|&nbsp; <strong>Produto:</strong> '+esc(r.f._cotacao?('Cotação — '+r.f.nome):(r.f.cod+' — '+r.f.nome))+'<br><strong>Batida:</strong> '+fn(r.batida,0)+' kg &nbsp;|&nbsp; <strong>Batidas:</strong> '+fn(r.nBat,0)+' ('+fn(r.tonTotal,3)+' t) &nbsp;|&nbsp; <strong>Data:</strong> '+dataHoje+'</div>'
+   +'<div class="sec-titulo">1. Matérias-primas por batida</div>'
+   +'<table><thead><tr><th>Matéria-prima</th><th class="r">Qtd na batida</th><th class="r">Preço (R$/ton)</th><th class="r">Valor na batida</th></tr></thead><tbody>'+linhas
+   +'<tr class="tot"><td>Total das matérias-primas cobradas</td><td class="r"></td><td class="r"></td><td class="r">R$ '+fn(r.mpBatida,2)+'</td></tr></tbody></table>'
+   +'<div class="sec-titulo">2. Total a pagar</div>'
+   +'<table><tbody><tr><td>Matérias-primas cobradas ('+fn(r.nBat,0)+' batidas)</td><td class="r">R$ '+fn(r.mpBatida*r.nBat,2)+'</td></tr>'
+   +'<tr><td>Serviço de industrialização (R$ '+fn(r.servicoTon,2)+' por tonelada)</td><td class="r">R$ '+fn(r.servicoBatida*r.nBat,2)+'</td></tr>'
+   +'<tr class="dest"><td>Total a pagar</td><td class="r">R$ '+fn(r.aPagar,2)+'</td></tr>'
+   +'<tr><td>Equivale a</td><td class="r">R$ '+fn(r.aPagarTon,2)+' por tonelada produzida</td></tr></tbody></table>'
+   +(entregas?'<div class="sec-titulo">3. Matéria-prima entregue pelo cliente para a produção</div><table><tbody>'+entregas+'</tbody></table>':'')
+   +(graos?'<div class="sec-titulo">'+(entregas?'4':'3')+'. Para cobrir o total a pagar em grão</div><table><thead><tr><th>Grão</th><th class="r">Parte</th><th class="r">Preço</th><th class="r">Valor coberto</th><th class="r">Cliente entrega</th></tr></thead><tbody>'+graos+'</tbody></table>':'')
+   +'<div class="footer">Rural Nutrição Animal — cotação de troca por matéria-prima</div></body></html>';
+}
+function ptTrocaGerarPDF(){
+  const r=ptTrocaCalcular();
+  if(!r){alert('Selecione um produto (fórmula) antes de gerar o PDF.');return;}
+  const win=window.open('','_blank','width=950,height=1000');
+  if(!win){alert('O navegador bloqueou a janela de impressão. Libere pop-ups para este site e tente de novo.');return;}
+  win.document.write(ptTrocaHTMLPDF(r));
+  win.document.close();
+}
+function ptRenderTroca(){
+  const cont=$('pt-troca-view');
+  if(!cont)return;
+  ptEnsureEspecialDatalist();
+  const r=ptTrocaCalcular();
+  const esc=function(x){return String(x==null?'':x).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');};
+  const num=function(v){return (v===undefined||v===null||v==='')?'':(+v).toFixed(2).replace('.',',');};
+  const colunas='grid-template-columns:70px 1fr 100px 150px 90px 120px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)';
+  const colG='grid-template-columns:1fr 90px 150px 120px 200px 36px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)';
+  const kpi=function(rot,id,val,cor){return '<div><div style="font-size:11px;text-transform:uppercase;color:var(--t3);font-weight:700">'+rot+'</div><div style="font-size:17px;font-weight:800;margin-top:3px'+(cor?';color:'+cor:'')+'" id="'+id+'">'+val+'</div></div>';};
+  const nb=PT_TROCA.batidas==null?1:PT_TROCA.batidas;
+  cont.innerHTML=`
+    <datalist id="pt-troca-mp-datalist">${MPitens.map(m=>'<option value="'+m.cod+' — '+esc(m.d)+'"></option>').join('')}</datalist>
+    <div style="max-width:960px;margin:0 auto">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:16px;font-weight:700">Troca por Matéria-prima</div>
+          <div style="font-size:12px;color:var(--t3);margin-top:2px">O cliente fornece parte das matérias-primas (milho, sorgo...). Marque o que ele fornece para tirar do custo e veja o total a pagar e quanto de cada grão cobre esse valor.</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span id="pt-troca-save-status" style="font-size:11px;color:var(--t3)"></span>
+          <button class="btn btn-primary" onclick="ptTrocaGerarPDF()">📄 Gerar PDF</button>
+        </div>
+      </div>
+      <div class="card" style="padding:16px;margin-bottom:16px">
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:12px">
+          <div class="f"><label>Produto / fórmula (código ou nome)</label>
+            <input type="text" list="pt-esp-produtos-datalist" placeholder="Ex: 1084 ou o nome da fórmula..." value="${esc(PT_TROCA.produtoCod?ptFormulaLabelFor(PT_TROCA.produtoCod):'')}" onchange="ptTrocaBuscarProduto(this.value)"></div>
+          <div class="f"><label>Cliente</label><input type="text" value="${esc(PT_TROCA.cliente||'')}" onchange="ptTrocaSetCampo('cliente',this.value)"></div>
+          <div class="f"><label>Serviço (R$/ton produzida)</label><input type="text" inputmode="decimal" autocomplete="off" value="${PT_TROCA.servicoTon?num(PT_TROCA.servicoTon):''}" placeholder="0,00" onchange="ptTrocaSetCampo('servicoTon',this.value)"></div>
+          <div class="f"><label>Batidas a produzir</label><input type="number" step="1" min="0" value="${nb}" onchange="ptTrocaSetCampo('batidas',this.value)"></div>
+        </div>
+      </div>
+      ${!r?'<div style="padding:30px;text-align:center;color:var(--t3)">Selecione um produto para começar.</div>':`
+      <div class="card" style="padding:16px;margin-bottom:16px">
+        <label style="font-weight:700;font-size:12px;text-transform:uppercase;color:var(--t3);display:block;margin-bottom:10px">Matérias-primas — ${esc(r.f.nome)} (batida de ${fn(r.batida,0)} kg)</label>
+        <div style="display:grid;${colunas};font-size:11px;text-transform:uppercase;color:var(--t3);font-weight:700;border-bottom:2px solid var(--border)">
+          <div>Cód.</div><div>Matéria-prima</div><div style="text-align:right">Kg na batida</div><div style="text-align:right">Preço (R$/ton)</div><div style="text-align:center">Cliente fornece</div><div style="text-align:right">Valor na batida</div>
+        </div>
+        ${r.linhas.map(l=>`
+        <div style="display:grid;${colunas};${l.doCliente?'background:var(--grn-lt)':''}">
+          <div class="mono" style="color:var(--t3)">${l.cod}</div>
+          <div>${esc(l.nome)}</div>
+          <div style="text-align:right">${fn(l.kgBatida,2)}</div>
+          <input type="text" inputmode="decimal" autocomplete="off" style="text-align:right" value="${l.temPreco?num(l.preco):''}" placeholder="${num(l.padrao)||'0,00'}" title="Vazio = custo do banco de MPs" onchange="ptTrocaSetPreco(${l.cod},this.value)">
+          <div style="text-align:center"><label title="O cliente entrega esta MP: sai do valor a pagar"><input type="checkbox" ${l.doCliente?'checked':''} onchange="ptTrocaSetFornece(${l.cod},this.checked)"> fornece</label></div>
+          <div style="text-align:right;font-weight:700;${l.doCliente?'color:var(--t3);text-decoration:line-through':''}">R$ ${fn(l.valorBatida,2)}</div>
+        </div>`).join('')}
+        <div style="font-size:11.5px;color:var(--t3);margin-top:8px">Preço vazio usa o custo do banco de MPs. O preço de cada MP vale para qualquer fórmula. MPs que o cliente fornece ficam fora do total a pagar.</div>
+      </div>
+      <div class="card" style="padding:16px;margin-bottom:16px">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+          ${kpi('MPs cobradas (batida)','pt-troca-mp-bat','R$ '+fn(r.mpBatida,2))}
+          ${kpi('Serviço (batida)','pt-troca-serv-bat','R$ '+fn(r.servicoBatida,2))}
+          ${kpi('Produção','pt-troca-ton',fn(r.tonTotal,3)+' t')}
+          ${kpi('Total a pagar','pt-troca-pagar','R$ '+fn(r.aPagar,2),'var(--blue)')}
+        </div>
+        <div style="font-size:12px;color:var(--t3);margin-top:10px">Equivale a <strong>R$ ${fn(r.aPagarTon,2)}</strong> por tonelada produzida.</div>
+        ${r.kgEntrega>0?`
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+          <div style="font-size:11px;text-transform:uppercase;color:var(--t3);font-weight:700;margin-bottom:6px">O cliente entrega para a produção</div>
+          ${r.linhas.filter(l=>l.doCliente).map(l=>`<div style="display:flex;justify-content:space-between;padding:3px 0"><span>${esc(l.nome)}</span><span><strong>${fn(l.kgTotal,0)} kg</strong> <span style="color:var(--t3)">(${fn(l.kgBatida,2)} kg × ${fn(r.nBat,0)} batidas)</span></span></div>`).join('')}
+        </div>`:''}
+      </div>
+      <div class="card" style="padding:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+          <label style="font-weight:700;font-size:12px;text-transform:uppercase;color:var(--t3)">Cobrir o total a pagar em grão (R$ ${fn(r.aPagar,2)})</label>
+          <input type="text" list="pt-troca-mp-datalist" placeholder="+ adicionar grão (ex.: milho)" style="width:260px" onchange="ptTrocaAddGrao(this.value);this.value=''">
+        </div>
+        ${!r.graos.length?'<div style="color:var(--t3);font-size:12px">Adicione os grãos que o cliente pode entregar (milho, sorgo...). Informe a parte de cada um em % — vazio divide igual.</div>':`
+        <div style="display:grid;${colG};font-size:11px;text-transform:uppercase;color:var(--t3);font-weight:700;border-bottom:2px solid var(--border)">
+          <div>Grão</div><div style="text-align:right">Parte (%)</div><div style="text-align:right">Preço (R$/ton)</div><div style="text-align:right">Valor coberto</div><div style="text-align:right">Cliente entrega</div><div></div>
+        </div>
+        ${r.graos.map((g,i)=>`
+        <div style="display:grid;${colG}">
+          <div>${esc(g.nome)}</div>
+          <input type="text" inputmode="decimal" autocomplete="off" style="text-align:right" value="${g.pct?num(g.pct):''}" placeholder="${fn(g.share*100,1)}" onchange="ptTrocaSetGrao(${i},'pct',this.value)">
+          <input type="text" inputmode="decimal" autocomplete="off" style="text-align:right" value="${g.temPreco?num(g.preco):''}" placeholder="${num(g.padrao)||'0,00'}" title="Vazio = custo do banco de MPs" onchange="ptTrocaSetGrao(${i},'preco',this.value)">
+          <div style="text-align:right">R$ ${fn(g.valor,2)}</div>
+          <div style="text-align:right;font-weight:800;color:var(--blue)">${fn(g.kg,0)} kg <span style="font-weight:500;color:var(--t3);font-size:11px">(${fn(g.kg/60,1)} sc)</span></div>
+          <button class="btn btn-ghost" title="Remover" onclick="ptTrocaDelGrao(${i})">×</button>
+        </div>`).join('')}
+        <div style="font-size:11.5px;color:var(--t3);margin-top:8px">Sacas de 60 kg. Preço vazio usa o custo do banco de MPs. Por tonelada de produto: ${r.graos.map(g=>esc(g.nome)+' '+fn(g.kgPorTon,1)+' kg').join(' · ')}.</div>`}
+      </div>`}
+    </div>`;
+}
 function ptRenderEspecial(){
   const cont=$('pt-especial-view');
   if(!cont)return;
@@ -7620,7 +7863,7 @@ window.addEventListener('resize',ptAjustarAlturaShell);
 function ptSwitchTab(tab){
   ptCurrentSubTab=tab;
   document.querySelectorAll('.pt-subtab').forEach(b=>b.classList.toggle('active', b.dataset.ptTab===tab));
-  const sidebar=$('pt-sidebar'), docScroll=$('pt-doc-scroll'), marginsView=$('pt-margins-view'), exportView=$('pt-export-view'), especialView=$('pt-especial-view'), primeView=$('pt-prime-view');
+  const sidebar=$('pt-sidebar'), docScroll=$('pt-doc-scroll'), marginsView=$('pt-margins-view'), exportView=$('pt-export-view'), especialView=$('pt-especial-view'), primeView=$('pt-prime-view'), trocaView=$('pt-troca-view');
   const builderView=$('pt-builder-view'), shell=document.querySelector('#pg-precos .pt-shell');
   sidebar.classList.add('pt-hidden');
   docScroll.classList.add('pt-hidden');
@@ -7630,6 +7873,7 @@ function ptSwitchTab(tab){
   exportView.classList.remove('visible');
   especialView.classList.remove('visible');
   if(primeView)primeView.classList.remove('visible');
+  if(trocaView)trocaView.classList.remove('visible');
   if(tab==='builder'){
     sidebar.classList.remove('pt-hidden');
     docScroll.classList.remove('pt-hidden');
@@ -7647,6 +7891,9 @@ function ptSwitchTab(tab){
   } else if(tab==='prime'){
     primeView.classList.add('visible');
     ptRenderPrime();
+  } else if(tab==='troca'){
+    trocaView.classList.add('visible');
+    ptRenderTroca();
   }
 }
 
