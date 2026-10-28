@@ -104,6 +104,7 @@ mark{background:#ffe58a}
   <a href="#acc">ACC (câmbio)</a>
   <a href="#descontadas">Duplicatas descontadas</a>
   <a href="#encargos">Juros, IOF e tarifas da conta</a>
+  <a href="#veiculos">Veículos (combustível e manutenção)</a>
   <a href="#contas">Contas (busca)</a>
   <a href="#erros">Erros que já aconteceram</a>
   <a href="#versoes">Versões do guia</a>
@@ -187,6 +188,36 @@ mark{background:#ffe58a}
   <div class="nota"><b>Atenção:</b> juros e IOF de <u>empréstimo</u> vão na conta de juros do contrato (seção Empréstimos), e não aqui. Juros de <u>desconto de duplicatas</u> vão na conta de despesas de desconto. Juros de ACC vão na conta de juros do ACC.</div>
 </section>
 
+<section id="veiculos" class="quebra">
+  <h2>Veículos: combustível, manutenção e compra</h2>
+  <p class="lead">A conta é escolhida pelo <b>uso do carro</b> (entrega, diretoria, gerência, vendas ou escritório), e não pela pessoa. Nos carros que mudam de mão, <b>escreva sempre a placa no histórico</b> do lançamento.</p>
+  <table><tr><th>Conta</th><th>Para que serve / quem usa</th><th>Empresa</th></tr>
+  <tr><th colspan="3" style="background:#e3e9f2">Entregas (caminhões) · Rural</th></tr>
+  <tr><td><b>42010302014</b> Combustível Caminhão Ford Cargo HTT0A78<br><b>42010302013</b> Manutenção Caminhão Ford Cargo HTT0A78</td><td>Abastecimento e manutenção do caminhão Ford Cargo, placa HTT0A78.</td><td>Rural</td></tr>
+  <tr><td><b>42010302039</b> Combustível Caminhão MB L1620 JQF3D59<br><b>42010302040</b> Manutenção Caminhão MB L1620 JQF3D59</td><td>Abastecimento e manutenção do caminhão Mercedes L1620, placa JQF3D59.</td><td>Rural</td></tr>
+  <tr><td><b>42010302018</b> Pedágio - Entregas</td><td>Pedágio de caminhão e de entrega de produto.</td><td>Rural</td></tr>
+  <tr><th colspan="3" style="background:#e3e9f2">Diretoria · Rural</th></tr>
+  <tr><td><b>42010302044</b> Combustível Veículo Diretoria<br><b>42010302045</b> Manutenção Veículo Diretoria</td><td>Carro da diretoria (hoje a Hilux SW4, placa SMA3B01). Se o carro trocar, a conta continua a mesma.</td><td>Rural</td></tr>
+  <tr><th colspan="3" style="background:#e3e9f2">Gerência (gerente geral) · Rural</th></tr>
+  <tr><td><b>42010302031</b> Combustível Veículo Gerência<br><b>42010302032</b> Manutenção Veículo Gerência</td><td>Carros usados pela gerência geral. Esses carros mudam com frequência: continue usando a mesma conta e <b>escreva a placa no histórico</b>.</td><td>Rural</td></tr>
+  <tr><td><b>42010305033</b> Aluguel Veículo Gerência</td><td>Aluguel do carro da gerência.</td><td>Rural</td></tr>
+  <tr><th colspan="3" style="background:#e3e9f2">Vendas · Rural</th></tr>
+  <tr><td><b>42010302053</b> Combustível Veículo Vendas<br><b>42010302054</b> Manutenção Veículo Vendas</td><td>Carro usado pelo setor de vendas.</td><td>Rural</td></tr>
+  <tr><td><b>42010305026</b> Aluguel Veículo Vendas</td><td>Aluguel do carro de vendas.</td><td>Rural</td></tr>
+  <tr><th colspan="3" style="background:#e3e9f2">Escritório · Rural</th></tr>
+  <tr><td><b>42010302021</b> Combustível Veículo Escritório<br><b>42010302020</b> Manutenção Veículo Escritório</td><td>Carro do escritório (Strada Endurance, placa RUS6D37).</td><td>Rural</td></tr>
+  <tr><td><b>42010302041</b> Combustível Biz Escritório<br><b>42010302055</b> Manutenção Biz Escritório</td><td>Moto Honda Biz do escritório.</td><td>Rural</td></tr>
+  <tr><td><b>42010302022</b> Pedágio Escritório</td><td>Pedágio de administração, vendas e diretoria (tudo que não é entrega).</td><td>Rural</td></tr>
+  <tr><th colspan="3" style="background:#e3e9f2">RNA</th></tr>
+  <tr><td><b>42071000001</b> RNA - Combustível Veículo Escritório<br><b>42071000002</b> RNA - Manutenção Veículo Escritório</td><td>Saveiro TL 2019, placa QPJ0D98, carro do escritório da RNA.</td><td>RNA</td></tr>
+  <tr><td><b>42071000003</b> RNA - Pedágios Escritório</td><td>Pedágio do carro do escritório da RNA.</td><td>RNA</td></tr>
+  <tr><th colspan="3" style="background:#e3e9f2">Compra do veículo (Ativo)</th></tr>
+  <tr><td><b>13210000019</b> Veículo - Caminhão Ford Cargo HTT0A78<br><b>13210000020</b> Veículo - Caminhão MB L1620 JQF3D59<br><b>13210000018</b> Veículo - Hilux SW4 SMA3B01 (diretoria)<br><b>13210000021</b> Veículo - Strada Endurance RUS6D37 (escritório)<br><b>13210000022</b> Veículo - Honda Biz (50% Rural)<br><b>13210000013</b> RNA - Veículo - Saveiro TL 2019 QPJ0D98 (escritório)</td><td>Uma conta para cada veículo, ao valor de compra. Só a <b>compra</b> do veículo vai aqui; combustível e manutenção nunca. As contas antigas (Compra de caminhão, Veículos Escritório, Compra Hilux e outras) foram encerradas: <b>não use mais</b>.</td><td>Rural / RNA</td></tr>
+  </table>
+  <div class="nota"><b>Seguro</b> do veículo vai direto em Seguros (Rural 42010301006 / RNA 42070600007). <b>IPVA</b> segue a seção de impostos: cada departamento tem a sua conta de IPVA. <b>Multas de trânsito</b> têm conta própria (42010302006).</div>
+  <div class="aviso"><b>Contas "(encerrada)":</b> são de carros que não temos mais (Hilux Branca, Preta, Saveiro Prata, Dodge RAM, Amarok, Strada CD). Não use. A conta da Hilux SW4 antiga foi unificada na de Diretoria.</div>
+</section>
+
 <section id="contas" class="quebra">
   <h2>Contas do guia</h2>
   <p class="lead so-tela">Digite na busca do topo para filtrar por nome, código ou número de contrato.</p>
@@ -234,6 +265,7 @@ VERSOES.push(['2.0', '22/10/2026', 'A conta 42031000006 Taxas Anuais passou a se
 VERSOES.push(['2.1', '22/10/2026', 'Nova seção Descontos, juros e multas: desconto dado ao cliente vai em Descontos concedidos (31210000002), nunca em Descontos obtidos; desconto recebido de fornecedor em Descontos obtidos; juros/multa por atraso pagos em 42021000005, nunca como desconto negativo.']);
 VERSOES.push(['2.2', '22/10/2026', 'Novo assunto Investimentos: máquina ou equipamento comprado (à vista ou parcelado, ex.: Grantec 1745-1752) vai no ativo Máquinas e equipamentos (13210000001), não em manutenção; reforma ou obra no imóvel vai em Imóveis (13210000005). Conserto comum continua na despesa de manutenção.']);
 VERSOES.push(['2.3', '22/10/2026', 'Desconto dado ao cliente na baixa do título (antecipação, arredondamento) é custo financeiro: vai em 42022000002 Descontos concedidos, a conta que o Agrotis já usa sozinho na baixa. 31210000002 fica só para abatimento comercial (preço, qualidade, bonificação), sempre com aviso ao Gilberto.']);
+VERSOES.push(['2.4', '27/10/2026', 'Nova seção Veículos: conta de combustível, manutenção, aluguel e pedágio de cada área (entregas, diretoria, gerência, vendas, escritório e RNA), com a placa de cada veículo e a conta de compra no Ativo. Contas dos carros que não temos mais ficam como "(encerrada)".']);
 let CONTROLE = {data: '', arquivo: '', parcelas: {}, aviso: 'entre com o seu usuário'};   // gerado pelo build_guia.py a partir da planilha do controle de financiamentos
 const C = {   // código -> nome no Agrotis
   '31210000002':'Descontos e abatimentos concedidos','42022000002':'Descontos concedidos','31330000002':'Descontos obtidos','31100000001':'Venda de Mercadorias Rural','31100000005':'RNA - Venda de Mercadorias',
