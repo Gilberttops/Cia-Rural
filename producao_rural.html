@@ -7279,7 +7279,7 @@ function ptTrocaCalcular(){
 }
 function ptTrocaSelecionarProduto(cod){
   PT_TROCA.produtoCod=cod||null;
-  PT_TROCA.mpOverrides={}; PT_TROCA.fornece={}; PT_TROCA.pct={};
+  PT_TROCA.mpOverrides={}; PT_TROCA.fornece={}; PT_TROCA.pct={}; PT_TROCA.opcoes={};
   ptTrocaSalvar(); ptRenderTroca();
 }
 function ptTrocaBuscarProduto(texto){
@@ -7322,6 +7322,11 @@ function ptTrocaAtualizarPVTesteSaco(valor){
   const f=ptTrocaFormula();
   const pesoSaco=f?(parseFloat(f.pesoSaco)||0):0;
   PT_TROCA.pvTestadoTon=(isNaN(v)||pesoSaco<=0)?null:(v/pesoSaco*1000);
+  ptTrocaSalvar(); ptRenderTroca();
+}
+function ptTrocaSetOpcao(cod,marcado){
+  if(!PT_TROCA.opcoes)PT_TROCA.opcoes={};
+  if(marcado)PT_TROCA.opcoes[cod]=true; else delete PT_TROCA.opcoes[cod];
   ptTrocaSalvar(); ptRenderTroca();
 }
 function ptTrocaCodMP(texto){
@@ -7416,6 +7421,139 @@ function ptTrocaGerarPDF(){
   win.document.write(doc);
   win.document.close();
 }
+/* ===== Relatórios da Troca por MP: 4 cenários (completo, com milho, com sorgo, com os dois) =====
+   Milho/sorgo são achados pelo nome das MPs da fórmula. Cada cenário usa o "fornece" próprio (ignora as caixas marcadas na tela),
+   mas mantém preços negociados, percentuais, lucro, extras e toneladas. */
+function ptTrocaCenarios(){
+  const base=ptTrocaCalcular();
+  if(!base)return null;
+  /* grupos de MP que o cliente pode entregar: as escolhidas na tela; sem escolha, milho e sorgo pelo nome */
+  const op=PT_TROCA.opcoes||{};
+  let grupos=base.linhas.filter(function(l){return op[l.cod];}).map(function(l){return {nome:l.nome,cods:[l.cod]};});
+  if(!grupos.length){
+    const acha=function(re){return base.linhas.filter(function(l){return re.test(l.nome);}).map(function(l){return l.cod;});};
+    const milho=acha(/milho/i), sorgo=acha(/sorgo/i);
+    if(milho.length)grupos.push({nome:'milho',cods:milho});
+    if(sorgo.length)grupos.push({nome:'sorgo',cods:sorgo});
+  }
+  /* até 3 grupos: todas as combinações; mais que isso: cada um sozinho + todos juntos */
+  const n=grupos.length, combos=[];
+  if(n<=3){ for(let m=1;m<(1<<n);m++){ combos.push(grupos.filter(function(g,i){return m&(1<<i);})); } combos.sort(function(a,b){return a.length-b.length;}); }
+  else { grupos.forEach(function(g){combos.push([g]);}); combos.push(grupos); }
+  const lista=function(a){const nm=a.map(function(g){return g.nome;}); return nm.length>1?nm.slice(0,-1).join(', ')+' e '+nm[nm.length-1]:nm[0];};
+  const defs=[{id:'completo',rot:'Preço completo',cods:[]}].concat(combos.map(function(cb,i){
+    return {id:'c'+i,rot:'Com entrega de '+lista(cb),cods:cb.reduce(function(a,g){return a.concat(g.cods);},[])};
+  }));
+  const cen=defs.map(function(d){
+    const fx={}; d.cods.forEach(function(c){fx[c]=true;});
+    const sv=PT_TROCA.fornece;
+    PT_TROCA.fornece=fx;
+    let r; try{ r=ptTrocaCalcular(); } finally { PT_TROCA.fornece=sv; }
+    return Object.assign({},d,{r:r});
+  });
+  return {base:base,cenarios:cen,semGrupos:!grupos.length};
+}
+const PT_TROCA_CSS='*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,sans-serif;font-size:12px;color:#18180f;padding:22px}'
+  +'@media print{@page{margin:12mm;size:A4 portrait}body{padding:0}}'
+  +'.hdr{display:flex;align-items:center;gap:16px;border-bottom:3px solid #1d4ed8;padding-bottom:12px;margin-bottom:16px}.hdr img{height:48px}'
+  +'.hdr-titulo{font-size:19px;font-weight:800;color:#1d4ed8}.hdr-sub{font-size:11px;color:#6b7280;margin-top:2px}'
+  +'.info{font-size:12px;color:#374151;margin-bottom:14px;line-height:1.7}.sec-titulo{font-size:13px;font-weight:800;margin:16px 0 6px;color:#1e293b}'
+  +'table{width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:8px}'
+  +'th{background:#f4f3ef;text-align:left;padding:5px 7px;font-size:10px;text-transform:uppercase;color:#6b7280;border-bottom:1px solid #e2dfd7}'
+  +'td{padding:5px 7px;border-bottom:1px solid #eeece5}.r{text-align:right}.est{color:#6b7280;font-style:italic}'
+  +'tr.dest td{font-weight:800;background:#eff6ff;color:#1d4ed8}tr.tot td{font-weight:800;background:#f4f3ef}'
+  +'.footer{margin-top:22px;border-top:2px solid #1d4ed8;padding-top:8px;text-align:center;font-size:11px;font-weight:700;color:#1d4ed8}'
+  +'.pbtn{position:fixed;top:14px;right:14px;padding:10px 18px;background:#1d4ed8;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer}@media print{.pbtn{display:none}}'
+  +'.quebra{page-break-before:always}';
+function ptTrocaAbrirJanela(html){
+  const win=window.open('','_blank','width=1000,height=1000');
+  if(!win){alert('O navegador bloqueou a janela de impressão. Libere pop-ups para este site e tente de novo.');return;}
+  win.document.write(html);
+  win.document.close();
+}
+function ptTrocaRelatorioCustos(){
+  const c=ptTrocaCenarios();
+  if(!c){alert('Selecione um produto antes de gerar o relatório.');return;}
+  const esc=function(x){return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};
+  const b=c.base, dataHoje=new Date().toLocaleDateString('pt-BR');
+  const R=function(v){return 'R$ '+fn(v,2);};
+  const resumo=c.cenarios.map(function(s){
+    const r=s.r;
+    const margem=r.pvValido?r.contribLucro:0;
+    return '<tr><td><strong>'+s.rot+'</strong></td><td class="r">'+R(r.custoFixoTon)+'</td><td class="r">'+(r.pvValido?R(r.pvTon):'—')+'</td>'
+      +'<td class="r">'+(r.pvValido?R(r.totalPagar):'—')+'</td><td class="r">'+(r.entregas.length?r.entregas.map(function(e){return esc(e.nome)+': '+fn(e.kgTotal,0)+' kg';}).join('<br>'):'—')+'</td>'
+      +'<td class="r">'+(r.pvValido?R(margem):'—')+'/ton</td></tr>';
+  }).join('');
+  const detalhes=c.cenarios.map(function(s){
+    const r=s.r;
+    const mp=r.linhas.map(function(l){
+      const contrib=(l.qtd/r.batida)*l.custoUsado;
+      return '<tr><td>'+l.cod+'</td><td>'+esc(l.nome)+'</td><td class="r">'+fn(l.qtd,2)+' kg</td><td class="r">'+R(l.custoUsado)+'/ton</td>'
+        +(l.doCliente?'<td class="r est">Fornecida pelo cliente (vale '+R(contrib)+'/ton)</td>':'<td class="r">'+R(contrib)+'/ton</td>')+'</tr>';
+    }).join('');
+    return '<div class="quebra"></div><div class="sec-titulo" style="font-size:15px;color:#1d4ed8">'+s.rot+'</div>'
+      +'<table><thead><tr><th>Cód.</th><th>Ingrediente</th><th class="r">Qtd/batida</th><th class="r">Custo negociado</th><th class="r">Contribuição no custo</th></tr></thead><tbody>'+mp+'</tbody></table>'
+      +'<table><thead><tr><th>Item</th><th class="r">Percentual / valor</th><th class="r">R$/ton</th></tr></thead><tbody>'
+      +'<tr><td>Custo de MP</td><td class="r">—</td><td class="r">'+R(r.custoMPTon)+'</td></tr>'
+      +'<tr><td>Frete específico + outros custos</td><td class="r">'+R(r.extrasTon)+'</td><td class="r">'+R(r.extrasTon)+'</td></tr>'
+      +'<tr class="tot"><td>Custo total (base do preço)</td><td class="r"></td><td class="r">'+R(r.custoFixoTon)+'</td></tr>'
+      +(r.pvValido?
+        '<tr><td>Tributos</td><td class="r">'+fn(r.enc.trib*100,2)+'%</td><td class="r">'+R(r.contribImpostos)+'</td></tr>'
+        +'<tr><td>Comissão</td><td class="r">'+fn(r.enc.comis*100,2)+'%</td><td class="r">'+R(r.contribComissao)+'</td></tr>'
+        +'<tr><td>Fretes e comerciais</td><td class="r">'+fn((r.enc.fretes+r.enc.outrosCom)*100,2)+'%</td><td class="r">'+R(r.contribFretes)+'</td></tr>'
+        +'<tr><td>Despesas fixas da unidade</td><td class="r">'+fn(r.enc.fixas*100,2)+'%</td><td class="r">'+R(r.contribFixas)+'</td></tr>'
+        +'<tr><td>Lucro líquido</td><td class="r">'+fn(r.lucroAlvo,2)+'%</td><td class="r">'+R(r.contribLucro)+'</td></tr>'
+        +'<tr class="dest"><td>Preço de venda por tonelada</td><td class="r"></td><td class="r">'+R(r.pvTon)+'</td></tr>'
+        +'<tr class="dest"><td>Total a pagar ('+fn(r.ton,3)+' t)</td><td class="r"></td><td class="r">'+R(r.totalPagar)+'</td></tr>'
+        :'<tr><td colspan="3">Percentuais + lucro somam 100% ou mais: preço inválido.</td></tr>')
+      +'</tbody></table>'
+      +(r.entregas.length?'<div class="sec-titulo">O cliente entrega para a produção</div><table><tbody>'+r.entregas.map(function(e){return '<tr><td>'+esc(e.nome)+'</td><td class="r"><strong>'+fn(e.kgTotal,0)+' kg</strong> ('+fn(e.kgTon,1)+' kg/ton)</td><td class="r">vale '+R(e.valor)+'</td></tr>';}).join('')+'</tbody></table>':'');
+  }).join('');
+  const aviso=c.semGrupos?'<div class="info" style="color:#92400e">Nenhuma matéria-prima foi escolhida em "Opções dos relatórios" e a fórmula não tem milho nem sorgo: só o preço completo foi gerado.</div>':'';
+  ptTrocaAbrirJanela('<html><head><meta charset="UTF-8"><title>Relatório de custos — Troca por MP</title><style>'+PT_TROCA_CSS+'</style></head><body>'
+    +'<button class="pbtn" onclick="window.print()">Imprimir / Salvar PDF</button>'
+    +'<div class="hdr"><img src="'+LOGO_RURAL+'" alt="Rural"><div><div class="hdr-titulo">Troca por Matéria-prima — Controle de custos</div><div class="hdr-sub">Uso interno · emitido em '+dataHoje+' por '+esc(getNomeColaborador())+'</div></div></div>'
+    +'<div class="info"><strong>Cliente:</strong> '+esc(PT_TROCA.cliente||'—')+' &nbsp;|&nbsp; <strong>Produto:</strong> '+esc(b.f._cotacao?('Cotação — '+b.f.nome):(b.f.cod+' — '+b.f.nome))+'<br><strong>Produção:</strong> '+fn(b.ton,3)+' t &nbsp;|&nbsp; <strong>Batida:</strong> '+fn(b.batida,0)+' kg</div>'
+    +aviso
+    +'<div class="sec-titulo">Comparativo dos cenários</div>'
+    +'<table><thead><tr><th>Cenário</th><th class="r">Custo (R$/ton)</th><th class="r">Preço de venda (R$/ton)</th><th class="r">Total a pagar</th><th class="r">Cliente entrega</th><th class="r">Lucro</th></tr></thead><tbody>'+resumo+'</tbody></table>'
+    +detalhes
+    +'<div class="footer">Rural Nutrição Animal — uso interno, não enviar ao cliente</div></body></html>');
+}
+function ptTrocaRelatorioPrecos(){
+  const c=ptTrocaCenarios();
+  if(!c){alert('Selecione um produto antes de gerar o relatório.');return;}
+  const esc=function(x){return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};
+  const b=c.base, dataHoje=new Date().toLocaleDateString('pt-BR');
+  const fmt=function(v){return fn(v,2);};
+  const validos=c.cenarios.filter(function(s){return s.r.pvValido;});
+  if(!validos.length){alert('Nenhum cenário com preço válido. Ajuste os percentuais antes.');return;}
+  const linhas=validos.map(function(s,i){
+    const r=s.r;
+    const ent=r.entregas.length?r.entregas.map(function(e){return esc(e.nome)+': '+fn(e.kgTotal,0)+' kg';}).join('<br>'):'—';
+    return '<tr data-i="'+i+'"><td><strong>'+s.rot+'</strong></td><td>'+ent+'</td>'
+      +'<td class="r"><span class="ed">R$ <input class="pv" value="'+fmt(r.pvTon)+'" oninput="calc()" onfocus="this.select()"></span></td>'
+      +'<td class="r" id="kg'+i+'"></td>'+(b.pesoSaco===1?'':'<td class="r" id="sc'+i+'"></td>')+'<td class="r" id="tt'+i+'"></td></tr>';
+  }).join('');
+  const css=PT_TROCA_CSS+'.ed{white-space:nowrap}.pv{width:110px;text-align:right;font:inherit;font-weight:800;color:#1d4ed8;border:1px dashed #94a3b8;border-radius:4px;padding:3px 6px;background:#fffbeb}'
+    +'@media print{.pv{border:none;background:none;padding:0;width:auto}.dica{display:none}}.dica{font-size:11px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:8px 10px;margin-bottom:12px}';
+  const script='var peso='+(+b.pesoSaco||0)+',ton='+(+b.ton||0)+';'
+    +'function lerBR(t){t=String(t).replace(/[^0-9,.-]/g,"");if(t.indexOf(",")>=0)t=t.replace(/\\./g,"").replace(",",".");return parseFloat(t)||0;}'
+    +'function f2(v){return v.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});}'
+    +'function calc(){document.querySelectorAll("tr[data-i]").forEach(function(tr){var i=tr.dataset.i,pv=lerBR(tr.querySelector(".pv").value);'
+    +'document.getElementById("kg"+i).textContent="R$ "+v4(pv/1000);var sc=document.getElementById("sc"+i);if(sc)sc.textContent="R$ "+f2(pv/1000*peso);'
+    +'document.getElementById("tt"+i).textContent="R$ "+f2(pv*ton);});}'
+    +'function v4(v){return v.toLocaleString("pt-BR",{minimumFractionDigits:4,maximumFractionDigits:4});}'
+    +'calc();';
+  ptTrocaAbrirJanela('<html><head><meta charset="UTF-8"><title>Preços — Troca por Matéria-prima</title><style>'+css+'</style></head><body>'
+    +'<button class="pbtn" onclick="window.print()">Imprimir / Salvar PDF</button>'
+    +'<div class="hdr"><img src="'+LOGO_RURAL+'" alt="Rural"><div><div class="hdr-titulo">Proposta de preços</div><div class="hdr-sub">Opções com e sem entrega de matéria-prima pelo cliente</div></div></div>'
+    +'<div class="info"><strong>Cliente:</strong> '+esc(PT_TROCA.cliente||'—')+' &nbsp;|&nbsp; <strong>Produto:</strong> '+esc(b.f._cotacao?b.f.nome:(b.f.cod+' — '+b.f.nome))+'<br><strong>Quantidade:</strong> '+fn(b.ton,3)+' t &nbsp;|&nbsp; <strong>Data:</strong> '+dataHoje+'</div>'
+    +'<div class="dica">Os preços por tonelada abaixo podem ser editados para arredondar; o restante recalcula sozinho. Depois use Imprimir / Salvar PDF.</div>'
+    +'<table><thead><tr><th>Opção</th><th>Cliente entrega</th><th class="r">Preço por tonelada</th><th class="r">Preço por kg</th>'+(b.pesoSaco===1?'':'<th class="r">Preço por saco ('+fn(b.pesoSaco,b.pesoSaco%1===0?0:2)+' kg)</th>')+'<th class="r">Total ('+fn(b.ton,3)+' t)</th></tr></thead><tbody>'+linhas+'</tbody></table>'
+    +'<div class="footer">Rural Nutrição Animal</div>'
+    +'<script>'+script+'<\/script></body></html>');
+}
 function ptRenderTroca(){
   const cont=$('pt-troca-view');
   if(!cont)return;
@@ -7437,6 +7575,8 @@ function ptRenderTroca(){
         <div style="display:flex;align-items:center;gap:10px">
           <span class="chave-cmv-slot">${htmlChaveCMV()}</span>
           <span id="pt-troca-save-status" style="font-size:11px;color:var(--t3)"></span>
+          <button class="btn btn-ghost" onclick="ptTrocaRelatorioCustos()" title="Uso interno: todos os custos dos 4 cenários">📊 Relatório de custos</button>
+          <button class="btn btn-ghost" onclick="ptTrocaRelatorioPrecos()" title="Para o vendedor e o cliente: só preços, editáveis">💲 Relatório de preços</button>
           <button class="btn btn-primary" onclick="ptTrocaGerarPDF()">📄 Gerar PDF</button>
         </div>
       </div>
@@ -7469,6 +7609,14 @@ function ptRenderTroca(){
           <div style="text-align:center">${l.temOverride?`<button type="button" class="nf-del-btn" onclick="ptTrocaResetarMP(${l.cod})" title="Restaurar preço padrão">↺</button>`:''}</div>
         </div>`).join('')}
         <div style="font-size:11.5px;color:var(--t3);margin-top:8px">Marcando "Cliente fornece", a MP sai do custo e do preço de venda. O custo riscado é o que ela custaria.</div>
+      </div>
+
+      <div class="card" style="padding:16px;margin-bottom:16px">
+        <label style="font-weight:700;font-size:12px;text-transform:uppercase;color:var(--t3);display:block;margin-bottom:8px">Opções dos relatórios (matérias-primas que o cliente pode entregar)</label>
+        <div style="display:flex;flex-wrap:wrap;gap:6px 16px">
+          ${r.linhas.map(l=>`<label style="font-size:13px;white-space:nowrap"><input type="checkbox" ${(PT_TROCA.opcoes||{})[l.cod]?'checked':''} onchange="ptTrocaSetOpcao(${l.cod},this.checked)"> ${esc(l.nome)}</label>`).join('')}
+        </div>
+        <div style="font-size:11.5px;color:var(--t3);margin-top:8px">Os relatórios trazem o preço completo e uma opção para cada combinação das marcadas (com mais de 3, cada uma sozinha e todas juntas). Sem nenhuma marcada, usa milho e sorgo da fórmula.</div>
       </div>
 
       <div class="card" style="padding:16px;margin-bottom:16px">
