@@ -1293,20 +1293,21 @@ function gerarFichaPdf_(ci,o){
     const uns=[...new Set(vs.map(v=>unP(v.prod)))], un=uns.length===1?' '+esc(uns[0]):'';
     const blocos=vs.map(v=>{
       let corr=v.qtd; const ent=v.qtd-v.saldo, pc=v.qtd?ent/v.qtd*100:0, u=esc(unP(v.prod));
-      const ents=[]; v.ent.forEach(([d,cod,q])=>{const k=ents.find(e=>e[0]===d&&e[1]===cod); if(k) k[2]+=q; else ents.push([d,cod,q]);});   // mesma remessa em 2 linhas de item: uma linha so
-      const linhas=ents.map(([d,cod,q])=>{corr-=q; return `<tr><td class="l">${dt(d)}</td><td class="l">Remessa ${cod}</td><td>−${nf(q,0)}</td><td>${nf(corr,0)}</td><td>${nf(q*v.unit,2)}</td></tr>`;}).join('');
+      const ents=[]; v.ent.forEach(([d,cod,q,a])=>{const k=ents.find(e=>e[0]===d&&e[1]===cod); if(k) k[2]+=q; else ents.push([d,cod,q,a]);});   // mesma remessa em 2 linhas de item: uma linha so
+      const nRem=ents.filter(e=>!e[3]).length, nAc=ents.length-nRem;
+      const linhas=ents.map(([d,cod,q,a])=>{corr-=q; return `<tr${a?' class="ef-ac"':''}><td class="l">${dt(d)}</td><td class="l">${a?'Acerto de venda futura':'Remessa'} ${cod}</td><td>−${nf(q,0)}</td><td>${nf(corr,0)}</td><td>${nf(q*v.unit,2)}</td></tr>`;}).join('');
       return `<table class="ef-v"><colgroup><col style="width:14%"><col style="width:34%"><col style="width:17%"><col style="width:17%"><col style="width:18%"></colgroup>
-        <tr class="ef-h"><td class="l" colspan="5"><b>${esc(nomeP(v.prod))}</b> · venda futura ${v.cod} de ${dt(v.data)} · ${nf(v.qtd,0)} ${u} × R$ ${nf(v.unit,2)} = <b>${R(v.qtd*v.unit)}</b></td></tr>
+        <tr class="ef-h"><td class="l" colspan="5"><b>${esc(nomeP(v.prod))}</b> · ${v.fil===5?'RNA':'Rural'} · venda futura ${v.cod} de ${dt(v.data)} · ${nf(v.qtd,0)} ${u} × R$ ${nf(v.unit,2)} = <b>${R(v.qtd*v.unit)}</b></td></tr>
         <tr><th class="l">Data</th><th class="l">Documento</th><th>Quantidade</th><th>Saldo</th><th>Valor (R$)</th></tr>
         <tr><td class="l">${dt(v.data)}</td><td class="l">Venda futura ${v.cod}</td><td>${nf(v.qtd,0)}</td><td>${nf(v.qtd,0)}</td><td>${nf(v.qtd*v.unit,2)}</td></tr>
         ${linhas}
-        <tr class="tot"><td class="l" colspan="2">Entregue ${nf(ent,0)} ${u} (${pct(pc)}) em ${ents.length} remessa${ents.length===1?'':'s'}<span class="ef-bar"><i style="width:${Math.min(100,pc).toFixed(1)}%"></i></span></td><td>Saldo</td><td>${nf(v.saldo,0)}</td><td>${nf(v.saldo*v.unit,2)}</td></tr>
+        <tr class="tot"><td class="l" colspan="2">Entregue ${nf(ent,0)} ${u} (${pct(pc)}) em ${nRem} remessa${nRem===1?'':'s'}${nAc?` e ${nAc} acerto${nAc===1?'':'s'}`:''}<span class="ef-bar"><i style="width:${Math.min(100,pc).toFixed(1)}%"></i></span></td><td>Saldo</td><td>${nf(v.saldo,0)}</td><td>${nf(v.saldo*v.unit,2)}</td></tr>
       </table>`;}).join('');
     return `<div class="card ef"><h2>Entrega futura: vendas com saldo a entregar</h2>
       <div class="mini"><div><span>Saldo a entregar (R$)</span><b>${R(ef.saldo_val||0)}</b></div><div><span>Saldo a entregar</span><b>${nf(qSaldo,0)}${un}</b></div>
       <div><span>Vendas em aberto</span><b>${vs.length} · ${pct(qVend?(qVend-qSaldo)/qVend*100:0)} entregue</b></div><div><span>Última entrega</span><b>${dt(ef.ult_entrega)}</b></div></div>
       ${blocos}
-      <p class="nota">Cada venda futura (CFOP 5922/6922) com o que já saiu em remessa (5116/6116). O Agrotis não grava qual remessa é de qual venda: a remessa baixa a venda do mesmo preço, da mais antiga para a mais nova (mesma regra do relatório Saldos das transações do Agrotis); remessa sem venda do mesmo preço baixa a venda aberta mais antiga. Saldo em R$ pelo preço de cada venda.</p></div>`;
+      <p class="nota">Cada venda futura (CFOP 5922/6922) com o que já saiu em remessa (5116/6116) ou foi encerrado por acerto de venda futura (516D/616D), por filial. O Agrotis não grava qual remessa é de qual venda: a remessa baixa a venda do mesmo preço, da mais antiga para a mais nova (mesma regra do relatório Saldos das transações do Agrotis); remessa sem venda do mesmo preço baixa a venda aberta mais antiga. Saldo em R$ pelo preço de cada venda.</p></div>`;
   })();
   B.parou=`<div class="card"><h2>Produtos que comprava e parou</h2><table><tr><th class="l">Produto</th><th>Última compra</th><th>Meses sem comprar</th></tr>
     ${parou.map(d=>`<tr><td class="l">${esc(PROD[d.p].nome)}</td><td>${MS[d.u%12]}/${String(Math.floor(d.u/12)).slice(2)}</td><td>${d.sem}</td></tr>`).join('')||'<tr><td class="l">Nenhum</td><td></td><td></td></tr>'}</table>
@@ -1340,7 +1341,7 @@ function gerarFichaPdf_(ci,o){
     .mini{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:6px}.mini.m2{grid-template-columns:1fr 1fr}.mini span{display:block;font-size:7.5pt;color:#5b6472}.mini b{font-size:10pt}
     .duas{display:grid;grid-template-columns:1fr 1fr;gap:9px}
     .card.ef{page-break-inside:auto}.ef-v{margin-bottom:8px;page-break-inside:avoid;table-layout:fixed}.ef-v tr.ef-h td{background:#eef3ea;color:#1e2430;border-bottom:1px solid #d5dfd0;padding:5px}
-    .ef-v td:nth-child(3){color:inherit}.ef-bar{display:inline-block;vertical-align:middle;width:90px;height:6px;background:#e2e6ec;border-radius:3px;margin-left:8px;overflow:hidden}.ef-bar i{display:block;height:100%;background:#2f6b3a}.restrito{border-color:#FECA39;background:#fffdf5}
+    .ef-v tr.ef-ac td{color:#8a5a00;font-style:italic}.ef-bar{display:inline-block;vertical-align:middle;width:90px;height:6px;background:#e2e6ec;border-radius:3px;margin-left:8px;overflow:hidden}.ef-bar i{display:block;height:100%;background:#2f6b3a}.restrito{border-color:#FECA39;background:#fffdf5}
     .tag{font-size:7pt;background:#FECA39;color:#1B3A63;border-radius:5px;padding:1px 6px;font-weight:600;margin-left:6px}
     .totano{display:flex;gap:10px;border-top:1px solid #e2e6ec;margin-top:6px;padding-top:6px}.totano div{flex:1}.totano span{display:block;font-size:7.5pt;color:#5b6472}.totano b{font-size:11pt;color:#1B3A63}
     .nota{font-size:7.5pt;color:#5b6472;margin:4px 0 0}.rod{font-size:7.3pt;color:#6b7480;border-top:1px solid #e2e6ec;padding-top:5px;margin-top:4px}
