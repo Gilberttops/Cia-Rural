@@ -1283,8 +1283,31 @@ function gerarFichaPdf_(ci,o){
   B.produtos=`<div class="card"><h2>Por produto</h2><table><tr><th class="l">Cód.</th><th class="l">Produto</th><th>Un.</th><th>Qtd.</th><th>Ton.</th><th>Preço médio</th>${anos.map(a=>`<th>${a} (R$)</th>`).join('')}<th>Total (R$)</th><th>%</th></tr>
     ${linhasP.map(([p,P])=>`<tr><td>${esc(PROD[p].cod)}</td><td class="l">${esc(PROD[p].nome)}</td><td>${esc(PROD[p].un||'')}</td><td>${N0(P.qtd)}</td><td>${nf(P.qtd*(PESO[p]||0)/1000,1)}</td><td>${P.qtd?R(P.val/P.qtd):'–'}</td>${anos.map(a=>`<td>${N0(P.ano.get(a)||0)}</td>`).join('')}<td><b>${nf(P.val,2)}</b></td><td>${total?pct(P.val/total*100):'–'}</td></tr>`).join('')}
     <tr class="tot"><td></td><td class="l">Total</td><td></td><td>${N0(linhasP.reduce((s,[p,P])=>s+P.qtd,0))}</td><td>${nf(ton,1)}</td><td></td>${anos.map(a=>`<td>${N0(anosV.get(a))}</td>`).join('')}<td>${nf(total,2)}</td><td>100%</td></tr></table></div>`;
-  B.entrega=`<div class="card"><h2>Entrega futura: saldo a entregar</h2><div class="mini m2"><div><span>Saldo em R$</span><b>${R(ef.saldo_val||0)}</b></div><div><span>Última entrega</span><b>${dt(ef.ult_entrega)}</b></div></div>
-    <table><tr><th class="l">Produto</th><th>Qtd. a entregar</th></tr>${(ef.itens||[]).map(it=>`<tr><td class="l">${esc(nomeP(it.prod))}</td><td>${N0(it.qtd)}</td></tr>`).join('')||'<tr><td class="l">Sem saldo</td><td></td></tr>'}</table></div>`;
+  // Entrega futura venda a venda (29/10/2026): cada venda futura com saldo e as remessas que baixaram ela.
+  // Mesma regra do relatorio "Saldos das transacoes" do Agrotis (remessa abate a venda do mesmo preco).
+  B.entrega=(()=>{
+    const vs=ef.vendas||[], unP=c=>{const p=PROD_POR_COD.get(c); return (p&&p.un)||'';};
+    if(!vs.length) return `<div class="card"><h2>Entrega futura: saldo a entregar</h2><div class="mini m2"><div><span>Saldo em R$</span><b>${R(ef.saldo_val||0)}</b></div><div><span>Última entrega</span><b>${dt(ef.ult_entrega)}</b></div></div>
+      <table><tr><th class="l">Produto</th><th>Qtd. a entregar</th></tr>${(ef.itens||[]).map(it=>`<tr><td class="l">${esc(nomeP(it.prod))}</td><td>${N0(it.qtd)}</td></tr>`).join('')||'<tr><td class="l">Sem saldo</td><td></td></tr>'}</table></div>`;
+    const qVend=vs.reduce((s,v)=>s+v.qtd,0), qSaldo=vs.reduce((s,v)=>s+v.saldo,0);
+    const uns=[...new Set(vs.map(v=>unP(v.prod)))], un=uns.length===1?' '+esc(uns[0]):'';
+    const blocos=vs.map(v=>{
+      let corr=v.qtd; const ent=v.qtd-v.saldo, pc=v.qtd?ent/v.qtd*100:0, u=esc(unP(v.prod));
+      const ents=[]; v.ent.forEach(([d,cod,q])=>{const k=ents.find(e=>e[0]===d&&e[1]===cod); if(k) k[2]+=q; else ents.push([d,cod,q]);});   // mesma remessa em 2 linhas de item: uma linha so
+      const linhas=ents.map(([d,cod,q])=>{corr-=q; return `<tr><td class="l">${dt(d)}</td><td class="l">Remessa ${cod}</td><td>−${nf(q,0)}</td><td>${nf(corr,0)}</td><td>${nf(q*v.unit,2)}</td></tr>`;}).join('');
+      return `<table class="ef-v"><colgroup><col style="width:14%"><col style="width:34%"><col style="width:17%"><col style="width:17%"><col style="width:18%"></colgroup>
+        <tr class="ef-h"><td class="l" colspan="5"><b>${esc(nomeP(v.prod))}</b> · venda futura ${v.cod} de ${dt(v.data)} · ${nf(v.qtd,0)} ${u} × R$ ${nf(v.unit,2)} = <b>${R(v.qtd*v.unit)}</b></td></tr>
+        <tr><th class="l">Data</th><th class="l">Documento</th><th>Quantidade</th><th>Saldo</th><th>Valor (R$)</th></tr>
+        <tr><td class="l">${dt(v.data)}</td><td class="l">Venda futura ${v.cod}</td><td>${nf(v.qtd,0)}</td><td>${nf(v.qtd,0)}</td><td>${nf(v.qtd*v.unit,2)}</td></tr>
+        ${linhas}
+        <tr class="tot"><td class="l" colspan="2">Entregue ${nf(ent,0)} ${u} (${pct(pc)}) em ${ents.length} remessa${ents.length===1?'':'s'}<span class="ef-bar"><i style="width:${Math.min(100,pc).toFixed(1)}%"></i></span></td><td>Saldo</td><td>${nf(v.saldo,0)}</td><td>${nf(v.saldo*v.unit,2)}</td></tr>
+      </table>`;}).join('');
+    return `<div class="card ef"><h2>Entrega futura: vendas com saldo a entregar</h2>
+      <div class="mini"><div><span>Saldo a entregar (R$)</span><b>${R(ef.saldo_val||0)}</b></div><div><span>Saldo a entregar</span><b>${nf(qSaldo,0)}${un}</b></div>
+      <div><span>Vendas em aberto</span><b>${vs.length} · ${pct(qVend?(qVend-qSaldo)/qVend*100:0)} entregue</b></div><div><span>Última entrega</span><b>${dt(ef.ult_entrega)}</b></div></div>
+      ${blocos}
+      <p class="nota">Cada venda futura (CFOP 5922/6922) com o que já saiu em remessa (5116/6116). O Agrotis não grava qual remessa é de qual venda: a remessa baixa a venda do mesmo preço, da mais antiga para a mais nova (mesma regra do relatório Saldos das transações do Agrotis); remessa sem venda do mesmo preço baixa a venda aberta mais antiga. Saldo em R$ pelo preço de cada venda.</p></div>`;
+  })();
   B.parou=`<div class="card"><h2>Produtos que comprava e parou</h2><table><tr><th class="l">Produto</th><th>Última compra</th><th>Meses sem comprar</th></tr>
     ${parou.map(d=>`<tr><td class="l">${esc(PROD[d.p].nome)}</td><td>${MS[d.u%12]}/${String(Math.floor(d.u/12)).slice(2)}</td><td>${d.sem}</td></tr>`).join('')||'<tr><td class="l">Nenhum</td><td></td><td></td></tr>'}</table>
     <p class="nota">Comprou em pelo menos 2 meses nos 2 anos até a última compra e está há 6 meses ou mais sem comprar.</p></div>`;
@@ -1303,7 +1326,8 @@ function gerarFichaPdf_(ci,o){
     <div><span>Margem de contribuição</span><b>${R(mg.mc,0)} · ${pct(mg.mc/mg.rec*100)}</b></div><div><span>Lucro líquido estimado</span><b>${R(mg.ll,0)} · ${pct(mg.ll/mg.rec*100)}</b></div></div>
     <p class="nota">Mesmas regras da aba Margem do painel.</p></div>`:'';
   const corpo=['indicadores','grafico','produtos'].filter(tem).map(k=>B[k]).join('')
-    +(tem('entrega')||tem('parou')?`<div class="duas">${tem('entrega')?B.entrega:''}${tem('parou')?B.parou:''}</div>`:'')
+    +(tem('entrega')&&(ef.vendas||[]).length?B.entrega:'')
+    +((tem('entrega')&&!(ef.vendas||[]).length)||tem('parou')?`<div class="duas">${tem('entrega')&&!(ef.vendas||[]).length?B.entrega:''}${tem('parou')?B.parou:''}</div>`:'')
     +(tem('titulos')?B.titulos:'')+(tem('dolar')?B.dolar:'')+(tem('margem')?B.margem:'');
   const css=`@page{size:A4;margin:12mm 11mm 14mm}body{font-family:Arial,sans-serif;color:#1e2430;font-size:9.5pt;margin:0}
     .hdr{display:flex;align-items:center;gap:14px;border-bottom:3px solid #2f6b3a;padding-bottom:8px;margin-bottom:10px}.hdr img{width:118px}
@@ -1314,7 +1338,9 @@ function gerarFichaPdf_(ci,o){
     h2{font-size:10.5pt;color:#1B3A63;margin:0 0 6px}table{width:100%;border-collapse:collapse;font-size:8.3pt}th{background:#1B3A63;color:#fff;font-weight:600;padding:4px 5px;text-align:right}
     td{padding:3px 5px;border-bottom:1px solid #eef0f3;text-align:right}.l{text-align:left}tr.tot td{font-weight:700;background:#fcefc7}
     .mini{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:6px}.mini.m2{grid-template-columns:1fr 1fr}.mini span{display:block;font-size:7.5pt;color:#5b6472}.mini b{font-size:10pt}
-    .duas{display:grid;grid-template-columns:1fr 1fr;gap:9px}.restrito{border-color:#FECA39;background:#fffdf5}
+    .duas{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+    .card.ef{page-break-inside:auto}.ef-v{margin-bottom:8px;page-break-inside:avoid;table-layout:fixed}.ef-v tr.ef-h td{background:#eef3ea;color:#1e2430;border-bottom:1px solid #d5dfd0;padding:5px}
+    .ef-v td:nth-child(3){color:inherit}.ef-bar{display:inline-block;vertical-align:middle;width:90px;height:6px;background:#e2e6ec;border-radius:3px;margin-left:8px;overflow:hidden}.ef-bar i{display:block;height:100%;background:#2f6b3a}.restrito{border-color:#FECA39;background:#fffdf5}
     .tag{font-size:7pt;background:#FECA39;color:#1B3A63;border-radius:5px;padding:1px 6px;font-weight:600;margin-left:6px}
     .totano{display:flex;gap:10px;border-top:1px solid #e2e6ec;margin-top:6px;padding-top:6px}.totano div{flex:1}.totano span{display:block;font-size:7.5pt;color:#5b6472}.totano b{font-size:11pt;color:#1B3A63}
     .nota{font-size:7.5pt;color:#5b6472;margin:4px 0 0}.rod{font-size:7.3pt;color:#6b7480;border-top:1px solid #e2e6ec;padding-top:5px;margin-top:4px}
