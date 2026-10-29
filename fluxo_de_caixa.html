@@ -2663,8 +2663,10 @@ function renderDiarioPie(canvasId, prevChartRef, setChartRef, records){
 // Se faltar lancar algum dia entre esse saldo e o dia escolhido, os vencimentos desse
 // intervalo entram como ajuste antes do primeiro dia (o saldo lancado ainda nao os reflete).
 // A pagar: obrigacao paga pelo real; em aberto/parcial pelo maior entre previsto e real.
-// A receber: duplicatas bancarizadas em aberto nao descontadas + recebimentos de exportacao
-// pendentes. US$ fica fora (nota). Itens ocultados no Diario ficam fora. So leitura.
+// A receber: duplicatas bancarizadas em aberto nao descontadas. Exportacao (Controle de
+// Exportacao + lancamentos manuais pendentes) fica SEPARADA: dois saldos previstos, um sem e
+// outro com exportacao (Gilberto, 29/10/2026). US$ fica fora (nota). Itens ocultados no
+// Diario ficam fora. So leitura.
 const CX_PREV_DIAS = 5;
 let cxPrevUnid = 'Total';
 function caixaPrevistoDia_(dataSel, nDias){
@@ -2692,8 +2694,8 @@ function caixaPrevistoDia_(dataSel, nDias){
     bancos.forEach(h=>{ const k = histSaldoDayKey(h.date); if(k > dataSaldoNum){ dataSaldoNum = k; dataSaldo = h.date; } });
     const defasados = bancos.filter(h=>histSaldoDayKey(h.date) < dataSaldoNum).map(h=>`${h.banco} (${h.date})`);
     const iniKey = dataSaldo ? keyBR(dataSaldo) : null;
-    const pagarDia = {}, receberDia = {};
-    let gapPagar = 0, gapReceber = 0;
+    const pagarDia = {}, receberDia = {}, exportDia = {};
+    let gapPagar = 0, gapReceber = 0, gapExport = 0;
     // devolve 'gap', a chave do dia, ou null
     const balde = dayStr => {
       const d = effectiveDate(dayStr); if(!d) return null;
@@ -2718,25 +2720,28 @@ function caixaPrevistoDia_(dataSel, nDias){
     recebimentosExportacaoLista_().forEach(r=>{
       if(r.unit !== unit) return;
       const b = balde(r.day); if(!b) return;
-      gapReceber = soma(b, num(r.valor), receberDia, gapReceber);
+      gapExport = soma(b, num(r.valor), exportDia, gapExport);
     });
-    let corrente = saldo + gapReceber - gapPagar;
+    // fim = saldo previsto SEM exportacao; fimCom = COM exportacao (soma acumulada das entradas)
+    let corrente = saldo + gapReceber - gapPagar, expAcum = gapExport;
     const linhas = diaKeys.map((k,i)=>{
-      const pagar = pagarDia[k]||0, receber = receberDia[k]||0;
-      const l = { dia: res.dias[i], ini: corrente, pagar, receber, fim: corrente + receber - pagar };
+      const pagar = pagarDia[k]||0, receber = receberDia[k]||0, exp = exportDia[k]||0;
+      const l = { dia: res.dias[i], ini: corrente, pagar, receber, fim: corrente + receber - pagar, exp };
+      expAcum += exp;
+      l.fimCom = l.fim + expAcum;
       corrente = l.fim;
       return l;
     });
-    res.unidades[unit] = { saldo, dataSaldo, temSaldo: bancos.length > 0, defasados, gapPagar, gapReceber, linhas,
+    res.unidades[unit] = { saldo, dataSaldo, temSaldo: bancos.length > 0, defasados, gapPagar, gapReceber, gapExport, linhas,
                            atrasado: !!dataSaldo && keyBR(dataSaldo) < ymd(diaUtilAnterior(primeiro)) };
   });
   const R = res.unidades.Rural, N = res.unidades.RNA;
   res.unidades.Total = {
     saldo: R.saldo + N.saldo, temSaldo: R.temSaldo || N.temSaldo,
     dataSaldo: R.dataSaldo === N.dataSaldo ? R.dataSaldo : null,
-    gapPagar: R.gapPagar + N.gapPagar, gapReceber: R.gapReceber + N.gapReceber,
+    gapPagar: R.gapPagar + N.gapPagar, gapReceber: R.gapReceber + N.gapReceber, gapExport: R.gapExport + N.gapExport,
     atrasado: R.atrasado || N.atrasado, defasados: [],
-    linhas: R.linhas.map((l,i)=>{ const n = N.linhas[i]; return { dia: l.dia, ini: l.ini + n.ini, pagar: l.pagar + n.pagar, receber: l.receber + n.receber, fim: l.fim + n.fim }; })
+    linhas: R.linhas.map((l,i)=>{ const n = N.linhas[i]; return { dia: l.dia, ini: l.ini + n.ini, pagar: l.pagar + n.pagar, receber: l.receber + n.receber, fim: l.fim + n.fim, exp: l.exp + n.exp, fimCom: l.fimCom + n.fimCom }; })
   };
   return res;
 }
@@ -2761,23 +2766,24 @@ function renderCaixaPrevistoDia_(dataSel){
     if(u.defasados.length) notas.push(`${un}: banco(s) com saldo mais antigo: ${u.defasados.join(', ')}.`);
   });
   if(c.usdQtd) notas.push(`${c.usdQtd} obrigação(ões) em US$ (US$ ${fmt(c.usd)}) fora da soma.`);
-  const gap = (x.gapPagar || x.gapReceber)
-    ? `<tr><td colspan="2" style="text-align:left;color:var(--ink-soft)">Vencimentos depois do saldo lançado (${dataSaldoTxt}) e antes de ${dCurto(c.dia)}</td><td>${v(x.gapPagar ? -x.gapPagar : 0)}</td><td>${v(x.gapReceber)}</td><td></td></tr>` : '';
+  const EXP = 'background:#EEF4FB;';
+  const gap = (x.gapPagar || x.gapReceber || x.gapExport)
+    ? `<tr><td colspan="2" style="text-align:left;color:var(--ink-soft)">Vencimentos depois do saldo lançado (${dataSaldoTxt}) e antes de ${dCurto(c.dia)}</td><td>${v(x.gapPagar ? -x.gapPagar : 0)}</td><td>${v(x.gapReceber)}</td><td></td><td style="${EXP}">${v(x.gapExport)}</td><td style="${EXP}"></td></tr>` : '';
   el.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin:0 0 6px 0;">
       <h3 style="margin:0;font-size:0.95rem;">Previsão de saldo dia a dia</h3>
       <div class="cx-unid">${botoes}</div>
     </div>
     ${x.atrasado ? `<div style="margin:0 0 8px 0;padding:6px 10px;border-radius:8px;background:#FEF3CD;color:#7A5B00;font-size:0.85rem;">O saldo de ${dCurto(ddmmyyyy(diaUtilAnterior(inferDate(c.dia))))} ainda não foi lançado: a previsão parte do último saldo lançado (${dataSaldoTxt}) e desconta também os vencimentos desde então.</div>` : ''}
-    <div style="margin:0 0 8px 0;font-size:0.9rem;">Saldo lançado (${dataSaldoTxt}): <b>${v(x.saldo)}</b>. Previsto para ${dCurto(c.dia)}: <b>${v(hoje.pagar)}</b> a pagar${hoje.receber ? ` e <b>${v(hoje.receber)}</b> a receber` : ''}. Saldo previsto no fim de ${dCurto(c.dia)}: <b>${v(hoje.fim)}</b>.</div>
+    <div style="margin:0 0 8px 0;font-size:0.9rem;">Saldo lançado (${dataSaldoTxt}): <b>${v(x.saldo)}</b>. Previsto para ${dCurto(c.dia)}: <b>${v(hoje.pagar)}</b> a pagar${hoje.receber ? ` e <b>${v(hoje.receber)}</b> a receber` : ''}. Saldo previsto no fim de ${dCurto(c.dia)}: <b>${v(hoje.fim)}</b> sem exportação${(hoje.fimCom - hoje.fim) > 0.005 ? ` e <b>${v(hoje.fimCom)}</b> com exportação` : ''}.</div>
     <div style="overflow-x:auto;"><table>
-      <thead><tr><th>Dia</th><th>Saldo inicial</th><th>− A pagar</th><th>+ A receber</th><th>= Saldo previsto</th></tr></thead>
+      <thead><tr><th>Dia</th><th>Saldo inicial</th><th>− A pagar</th><th>+ A receber</th><th>= Saldo previsto<br><small>sem exportação</small></th><th style="${EXP}">+ Exportação<br><small>(acumula)</small></th><th style="${EXP}">= Saldo previsto<br><small>com exportação</small></th></tr></thead>
       <tbody>
         ${gap}
-        ${x.linhas.map((l,i)=>`<tr${i===0?' style="background:#F4F8F5"':''}><td>${semDia(l.dia)} ${dCurto(l.dia)}</td><td>${v(l.ini)}</td><td>${v(l.pagar ? -l.pagar : 0)}</td><td>${v(l.receber)}</td><td class="cx-res">${v(l.fim)}</td></tr>`).join('')}
+        ${x.linhas.map((l,i)=>`<tr${i===0?' style="background:#F4F8F5"':''}><td>${semDia(l.dia)} ${dCurto(l.dia)}</td><td>${v(l.ini)}</td><td>${v(l.pagar ? -l.pagar : 0)}</td><td>${v(l.receber)}</td><td class="cx-res">${v(l.fim)}</td><td style="${EXP}">${v(l.exp)}</td><td class="cx-res" style="${EXP}">${v(l.fimCom)}</td></tr>`).join('')}
       </tbody>
     </table></div>
-    <div class="cx-nota">Saldo lançado no Histórico diário de saldos; cada dia parte do saldo previsto do dia anterior. A pagar = obrigações do dia (pagas pelo valor real, em aberto pelo previsto). A receber = duplicatas bancarizadas em aberto e não descontadas + exportação (faturas em aberto do Controle de Exportação no vencimento + ${EXPORT_DIAS_CAMBIO} dias, pela PTAX, e lançamentos manuais pendentes). Só cálculo: nada é gravado na planilha.${notas.length ? '<br>' + notas.join('<br>') : ''}</div>`;
+    <div class="cx-nota">Saldo lançado no Histórico diário de saldos; cada dia parte do saldo previsto do dia anterior. A pagar = obrigações do dia (pagas pelo valor real, em aberto pelo previsto). A receber = duplicatas bancarizadas em aberto e não descontadas. Exportação fica à parte (colunas em azul): faturas em aberto do Controle de Exportação no vencimento + ${EXPORT_DIAS_CAMBIO} dias, pela PTAX, e lançamentos manuais pendentes; o saldo com exportação soma tudo o que entrou de exportação até o dia. Só cálculo: nada é gravado na planilha.${notas.length ? '<br>' + notas.join('<br>') : ''}</div>`;
   el.querySelectorAll('button[data-cxu]').forEach(b=>b.addEventListener('click', ()=>{ cxPrevUnid = b.dataset.cxu; renderCaixaPrevistoDia_(dataSel); }));
 }
 
@@ -3408,8 +3414,15 @@ function renderBankAccounts(){
       const prevRow = document.createElement('div');
       prevRow.className = 'bank-prev';
       prevRow.title = `Último saldo lançado − a pagar + a receber até ${cxPrev.dia} (só leitura; dia a dia em Hoje › Diário)`;
-      prevRow.innerHTML = prevHtml_(`Saldo previsto fim de ${cxPrev.dia.slice(0,5)}`, cxPrev.unidades[unitKey].linhas[0].fim);
+      prevRow.innerHTML = prevHtml_(`Previsto fim de ${cxPrev.dia.slice(0,5)} sem exportação`, cxPrev.unidades[unitKey].linhas[0].fim);
       col.appendChild(prevRow);
+      const lu = cxPrev.unidades[unitKey].linhas[0];
+      if(Math.abs(lu.fimCom - lu.fim) > 0.005){
+        const prevCom = document.createElement('div');
+        prevCom.className = 'bank-prev';
+        prevCom.innerHTML = prevHtml_(`Previsto fim de ${cxPrev.dia.slice(0,5)} com exportação`, lu.fimCom);
+        col.appendChild(prevCom);
+      }
     }
 
     grandTotal += unitTotal;
@@ -3433,7 +3446,12 @@ function renderBankAccounts(){
     card.appendChild(grandPrev);
   }
   grandPrev.style.display = cxPrev ? '' : 'none';
-  if(cxPrev) grandPrev.innerHTML = prevHtml_(`Saldo previsto no fim de ${cxPrev.dia.slice(0,5)} = último saldo lançado − a pagar + a receber`, cxPrev.unidades.Total.linhas[0].fim);
+  if(cxPrev){
+    const lt = cxPrev.unidades.Total.linhas[0];
+    grandPrev.innerHTML = `<div style="flex:1">`
+      + `<div style="display:flex;justify-content:space-between;gap:10px;">${prevHtml_(`Saldo previsto no fim de ${cxPrev.dia.slice(0,5)} sem exportação`, lt.fim)}</div>`
+      + `<div style="display:flex;justify-content:space-between;gap:10px;">${prevHtml_(`Saldo previsto no fim de ${cxPrev.dia.slice(0,5)} com exportação`, lt.fimCom)}</div></div>`;
+  }
 }
 
 function touchBankUpdated(){
