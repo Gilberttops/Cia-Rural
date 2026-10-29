@@ -2667,6 +2667,16 @@ function renderDiarioPie(canvasId, prevChartRef, setChartRef, records){
 // Exportacao + lancamentos manuais pendentes) fica SEPARADA: dois saldos previstos, um sem e
 // outro com exportacao (Gilberto, 29/10/2026). US$ fica fora (nota). Itens ocultados no
 // Diario ficam fora. So leitura.
+// Boleto: o banco so libera o dinheiro no dia util SEGUINTE ao recebimento (Gilberto, 29/10/2026).
+// Na previsao, cada boleto entra no saldo no dia da liberacao (vencimento efetivo + 1 dia util).
+// Conta o boleto em aberto, parcial ou ja recebido (o recebido ontem ainda nao esta no saldo de ontem).
+function boletoContaNoCaixa_(d){
+  return d.origem === 'Boleto Banco' && d.descontada !== 'S' && ['Pendente','Parcial','Recebido'].includes(d.status);
+}
+function liberacaoBoleto_(d){
+  const e = effectiveDate(d.day); if(!e) return null;
+  const n = new Date(e); n.setDate(n.getDate()+1); return proximoDiaUtil(n);
+}
 const CX_PREV_DIAS = 5;
 let cxPrevUnid = 'Total';
 function caixaPrevistoDia_(dataSel, nDias){
@@ -2698,7 +2708,7 @@ function caixaPrevistoDia_(dataSel, nDias){
     let gapPagar = 0, gapReceber = 0, gapExport = 0;
     // devolve 'gap', a chave do dia, ou null
     const balde = dayStr => {
-      const d = effectiveDate(dayStr); if(!d) return null;
+      const d = (dayStr instanceof Date) ? dayStr : effectiveDate(dayStr); if(!d) return null;
       const k = ymd(d);
       if(k > ultimoKey) return null;
       if(k >= primeiroKey) return k;
@@ -2713,8 +2723,8 @@ function caixaPrevistoDia_(dataSel, nDias){
       gapPagar = soma(b, v, pagarDia, gapPagar);
     });
     (state.duplicatasReceber||[]).forEach(d=>{
-      if(d.unit !== unit || !duplicataContaComoRecebimento(d) || diarioOcultos.has(chaveDiarioDup_(d))) return;
-      const b = balde(d.day); if(!b) return;
+      if(d.unit !== unit || !boletoContaNoCaixa_(d) || diarioOcultos.has(chaveDiarioDup_(d))) return;
+      const b = balde(liberacaoBoleto_(d)); if(!b) return;   // liberado no dia util seguinte
       gapReceber = soma(b, num(d.valor), receberDia, gapReceber);
     });
     recebimentosExportacaoLista_().forEach(r=>{
@@ -2783,7 +2793,7 @@ function renderCaixaPrevistoDia_(dataSel){
         ${x.linhas.map((l,i)=>`<tr${i===0?' style="background:#F4F8F5"':''}><td>${semDia(l.dia)} ${dCurto(l.dia)}</td><td>${v(l.ini)}</td><td>${v(l.pagar ? -l.pagar : 0)}</td><td>${v(l.receber)}</td><td class="cx-res">${v(l.fim)}</td><td style="${EXP}">${v(l.exp)}</td><td class="cx-res" style="${EXP}">${v(l.fimCom)}</td></tr>`).join('')}
       </tbody>
     </table></div>
-    <div class="cx-nota">Saldo lançado no Histórico diário de saldos; cada dia parte do saldo previsto do dia anterior. A pagar = obrigações do dia (pagas pelo valor real, em aberto pelo previsto). A receber = duplicatas bancarizadas em aberto e não descontadas. Exportação fica à parte (colunas em azul): faturas em aberto do Controle de Exportação no vencimento + ${EXPORT_DIAS_CAMBIO} dias, pela PTAX, e lançamentos manuais pendentes; o saldo com exportação soma tudo o que entrou de exportação até o dia. Só cálculo: nada é gravado na planilha.${notas.length ? '<br>' + notas.join('<br>') : ''}</div>`;
+    <div class="cx-nota">Saldo lançado no Histórico diário de saldos; cada dia parte do saldo previsto do dia anterior. A pagar = obrigações do dia (pagas pelo valor real, em aberto pelo previsto). A receber = boletos bancarizados não descontados, no dia útil seguinte ao vencimento (o banco só libera o dinheiro no dia seguinte ao recebimento). Exportação fica à parte (colunas em azul): faturas em aberto do Controle de Exportação no vencimento + ${EXPORT_DIAS_CAMBIO} dias, pela PTAX, e lançamentos manuais pendentes; o saldo com exportação soma tudo o que entrou de exportação até o dia. Só cálculo: nada é gravado na planilha.${notas.length ? '<br>' + notas.join('<br>') : ''}</div>`;
   el.querySelectorAll('button[data-cxu]').forEach(b=>b.addEventListener('click', ()=>{ cxPrevUnid = b.dataset.cxu; renderCaixaPrevistoDia_(dataSel); }));
 }
 
